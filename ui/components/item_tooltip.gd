@@ -111,6 +111,12 @@ func display_resource(res: Resource, mouse_pos: Vector2) -> void:
 	call_deferred("_update_position_clamped", mouse_pos)
 
 
+## Reemplaza la línea de valor en monedas (el comercio muestra el precio de compra o de venta).
+func set_price_text(text: String) -> void:
+	if gold_value_label != null:
+		gold_value_label.text = text
+
+
 ## Oculta el tooltip y limpia referencias.
 func hide_tooltip() -> void:
 	visible = false

@@ -50,6 +50,11 @@ var _rarity_border: Color = Color(0, 0, 0, 0)
 var _drop_state: int = DROP_NONE
 var _pulse_time: float = 0.0
 var _is_carried: bool = false
+## Datos de comercio (solo dibujo y tooltip): precio y cantidad que se muestran sobre el ícono.
+var _price_text: String = ""
+var _price_color: Color = Color(1.0, 0.85, 0.3, 1.0)
+var _count_text: String = ""
+var _tooltip_price_text: String = ""
 
 
 func _ready() -> void:
@@ -79,6 +84,16 @@ func get_item() -> Resource:
 func clear_slot() -> void:
 	item_resource = null
 	update_visuals()
+
+
+## Muestra precio (abajo a la derecha) y cantidad (arriba a la izquierda) sobre el ícono. Texto vacío los oculta.
+## `tooltip_price` reemplaza el valor en monedas de la ficha del tooltip (ej.: "Compra: 120 Monedas").
+func set_trade_badges(price_text: String, price_color: Color, count_text: String = "", tooltip_price: String = "") -> void:
+	_price_text = price_text
+	_price_color = price_color
+	_count_text = count_text
+	_tooltip_price_text = tooltip_price
+	queue_redraw()
 
 
 ## Resalta visualmente el casillero (por ejemplo, para indicar el arma actualmente activa/equipada).
@@ -275,6 +290,22 @@ func _draw() -> void:
 		DROP_HOVER_BAD:
 			draw_rect(rect, Color(1.0, 0.25, 0.2, 0.25))
 			draw_rect(rect, Color(1.0, 0.3, 0.25, 1.0), false, 2.0)
+	if item_resource != null:
+		_draw_badge(_price_text, _price_color, false)
+		_draw_badge(_count_text, Color(0.9, 0.95, 1.0, 1.0), true)
+
+
+## Placa pequeña con texto en una esquina del casillero (precio abajo a la derecha, cantidad arriba a la izquierda).
+func _draw_badge(text: String, color: Color, top_left: bool) -> void:
+	if text.is_empty():
+		return
+	var font: Font = ThemeDB.fallback_font
+	var font_size: int = 10
+	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
+	var plate_size: Vector2 = Vector2(text_size.x + 6.0, text_size.y + 1.0)
+	var plate_pos: Vector2 = Vector2(2.0, 2.0) if top_left else Vector2(size.x - plate_size.x - 2.0, size.y - plate_size.y - 2.0)
+	draw_rect(Rect2(plate_pos, plate_size), Color(0.04, 0.04, 0.06, 0.82))
+	draw_string(font, plate_pos + Vector2(3.0, plate_size.y - 3.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
 func _border_box(color: Color, width: int) -> StyleBoxFlat:
@@ -362,6 +393,8 @@ func _show_custom_tooltip() -> void:
 	var tt: ItemTooltip = ItemSlot.get_shared_tooltip(get_tree())
 	if tt != null:
 		tt.display_resource(item_resource, get_global_mouse_position())
+		if not _tooltip_price_text.is_empty():
+			tt.set_price_text(_tooltip_price_text)
 
 
 func _hide_custom_tooltip() -> void:

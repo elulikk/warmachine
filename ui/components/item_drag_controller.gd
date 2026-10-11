@@ -15,6 +15,8 @@ extends CanvasLayer
 ##   - set_drop_state(state: int)             0 ninguno, 1 candidato, 2 sobre válido, 3 sobre inválido
 ##   - get_item() -> Resource
 ##   - play_drop_pop()                        (opcional) rebote al recibir
+##   - wants_cursor_ghost()                   (opcional) si existe, el ítem en mano sigue al cursor
+##                                            en vez de acomodarse en el centro (zonas grandes)
 ##
 ## PAYLOAD (Dictionary, lo arma el origen): "resource" y lo que cada ventana necesite
 ## ("context_tag", "slot_index", ...) más datos de dibujo: "display_color", "display_text",
@@ -491,7 +493,8 @@ func _update_ghost(delta: float) -> void:
 	var target_scale: float = CARRY_SCALE
 
 	# Sobre un destino válido el ítem se acomoda en el centro del casillero
-	if _hover != null and is_instance_valid(_hover) and _hover != _source and _candidates.has(_hover):
+	# (salvo las zonas grandes, que declaran `wants_cursor_ghost`: el ítem sigue al cursor)
+	if _hover != null and is_instance_valid(_hover) and _hover != _source and _candidates.has(_hover) 			and not _hover.has_method(&"wants_cursor_ghost"):
 		target_pos = _hover.get_global_rect().get_center() - _ghost.size * 0.5
 		target_scale = SETTLE_SCALE
 

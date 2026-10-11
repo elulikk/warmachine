@@ -1,6 +1,6 @@
 extends RefCounted
 ## Íconos de ítems en pixel art 16x16, definidos como texto (no hay assets de arte en el proyecto).
-## Sin class_name a propósito: se carga por `preload` (ver ItemSlot y ShopWindow).
+## Sin class_name a propósito: se carga por `preload` (ver ItemSlot y TradeWindow).
 ##
 ## Cada ícono es de colores neutros (acero, cuero, etc.): la rareza NO se pinta en el ícono sino
 ## en el borde del casillero, como en WoW. Para sumar un ícono: agregar sus 16 filas a ICON_ROWS y
