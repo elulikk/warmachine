@@ -1,0 +1,107 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://entities/interactables/checkpoint_terminal.gd" id="1_term"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_term"]
+size = Vector2(64, 64)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_prompt"]
+bg_color = Color(0.06, 0.08, 0.12, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.5, 0.75, 0.9)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+
+[node name="CheckpointTerminal" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_term")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -32)
+shape = SubResource("RectangleShape2D_term")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="BasePillar" type="ColorRect" parent="Visuals"]
+offset_left = -10.0
+offset_top = -64.0
+offset_right = 10.0
+offset_bottom = 0.0
+color = Color(0.18, 0.22, 0.28, 1)
+
+[node name="BorderLeft" type="ColorRect" parent="Visuals"]
+offset_left = -10.0
+offset_top = -64.0
+offset_right = -8.0
+offset_bottom = 0.0
+color = Color(0.35, 0.45, 0.58, 1)
+
+[node name="BorderRight" type="ColorRect" parent="Visuals"]
+offset_left = 8.0
+offset_top = -64.0
+offset_right = 10.0
+offset_bottom = 0.0
+color = Color(0.35, 0.45, 0.58, 1)
+
+[node name="ScreenPanel" type="ColorRect" parent="Visuals"]
+offset_left = -6.0
+offset_top = -48.0
+offset_right = 6.0
+offset_bottom = -18.0
+color = Color(0.08, 0.1, 0.15, 1)
+
+[node name="StatusLight" type="ColorRect" parent="Visuals"]
+offset_left = -4.0
+offset_top = -58.0
+offset_right = 4.0
+offset_bottom = -50.0
+color = Color(1, 0.22, 0.22, 1)
+
+[node name="PromptUI" type="Node2D" parent="."]
+position = Vector2(0, -90)
+
+[node name="PanelContainer" type="PanelContainer" parent="PromptUI"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -110.0
+offset_top = -48.0
+offset_right = 110.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_prompt")
+
+[node name="VBox" type="VBoxContainer" parent="PromptUI/PanelContainer"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="PromptUI/PanelContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.75, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "CHECKPOINT"
+horizontal_alignment = 1
+
+[node name="InfoLabel" type="Label" parent="PromptUI/PanelContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 10
+text = "Avance guardado"
+horizontal_alignment = 1

@@ -1,0 +1,120 @@
+class_name LevelBase
+extends Node2D
+## Controlador base para todos los niveles de expedición y campaña.
+## Gestiona el spawn del jugador, la carga de datos del slot, la cámara,
+## el HUD, la detección de caída al vacío y el enlace con la ExitGate.
+
+const LevelSkinScript = preload("res://levels/level_skin.gd")
+
+@export var level_id: String = "1_01"
+@export var level_title: String = "Sector 1-01"
+@export var chapter_number: int = 1
+@export var next_level_path: String = ""
+@export var abyss_threshold: float = 950.0
+
+## Tier del botín de equipo que sueltan los enemigos de este nivel (0 = no sueltan equipo).
+## Sube la probabilidad (+50% por tier) y las rarezas posibles. Ver LootTable.roll_gear().
+@export var gear_loot_tier: int = 0
+
+## Rutas de armas que el jugador debe tener al entrar. Solo se agregan las que falten (sin duplicar).
+@export var guaranteed_weapon_paths: Array[String] = []
+
+@onready var player: Player = get_node_or_null("Player") as Player
+@onready var spawn_point: Marker2D = get_node_or_null("SpawnPoint") as Marker2D
+@onready var exit_gate: ExitGate = get_node_or_null("ExitGate") as ExitGate
+
+var initial_spawn_position: Vector2 = Vector2(160, 545)
+
+
+func _ready() -> void:
+	LevelSkinScript.apply(self, chapter_number)
+	GameFeel.music_start_level(self)
+	if spawn_point != null:
+		initial_spawn_position = spawn_point.global_position
+	elif player != null:
+		initial_spawn_position = player.global_position
+	
+	if player != null:
+		player.global_position = initial_spawn_position
+		
+		# Cargar datos de progresión e inventario del personaje activo
+		var sm: SaveManager = SaveManager.get_instance()
+		if sm != null:
+			var preview: Dictionary = sm.get_slot_preview(sm.current_slot)
+			if bool(preview.get("exists", false)):
+				sm.load_from_disk(sm.current_slot)
+			
+			var hud: HUD = get_tree().get_first_node_in_group(&"hud") as HUD
+			if hud == null:
+				hud = get_node_or_null("HUD") as HUD
+			if hud != null:
+				hud.setup_with_player(player)
+	
+	_grant_guaranteed_weapons()
+	SaveManager.set_respawn_point(initial_spawn_position)
+
+	# Conectar ExitGate con el siguiente nivel si existe
+	if exit_gate != null and not next_level_path.is_empty():
+		exit_gate.set_meta("next_level_path", next_level_path)
+	
+	print("[%s] %s inicializado. Spawn: %s" % [level_id, level_title, initial_spawn_position])
+
+
+## Agrega al arsenal las armas de `guaranteed_weapon_paths` que el jugador aún no posea.
+func _grant_guaranteed_weapons() -> void:
+	if player == null or player.weapon_manager == null:
+		return
+
+	var wm: WeaponManager = player.weapon_manager
+	for path in guaranteed_weapon_paths:
+		if _player_has_weapon(path) or not ResourceLoader.exists(path):
+			continue
+		var weapon: WeaponData = load(path) as WeaponData
+		if weapon != null:
+			wm.add_weapon(weapon, false)
+
+	if wm.current_weapon == null and not wm.weapons.is_empty():
+		wm.select_weapon(0)
+
+
+## true si el jugador posee el arma en el arsenal, la mochila o el baúl del campamento.
+## Dejarla guardada en el baúl es una decisión del jugador: el nivel no se la devuelve.
+func _player_has_weapon(path: String) -> bool:
+	for existing: WeaponData in player.weapon_manager.weapons:
+		if existing != null and existing.source_resource_path == path:
+			return true
+	if player.inventory_manager != null:
+		for stored: Resource in player.inventory_manager.backpack:
+			var stored_weapon: WeaponData = stored as WeaponData
+			if stored_weapon == null:
+				continue
+			var stored_path: String = stored_weapon.resource_path if not stored_weapon.resource_path.is_empty() else stored_weapon.source_resource_path
+			if stored_path == path:
+				return true
+	var sm: SaveManager = SaveManager.get_instance()
+	return sm != null and sm.stash_has_path(path)
+
+
+func _physics_process(_delta: float) -> void:
+	if player != null and player.global_position.y > abyss_threshold:
+		_on_player_fell_into_abyss()
+
+
+func _on_player_fell_into_abyss() -> void:
+	print("[%s] Jugador cayó al abismo." % level_id)
+	var gm: GameManager = GameManager.get_instance() if GameManager != null else null
+	if gm != null:
+		gm.on_player_died(player)
+	else:
+		respawn_player()
+
+
+func respawn_player() -> void:
+	if player != null:
+		var target_pos: Vector2 = SaveManager.get_respawn_point(initial_spawn_position)
+		player.respawn(target_pos)
+		print("[%s] Jugador reaparecido en: %s" % [level_id, target_pos])
+
+
+func set_respawn_position(pos: Vector2) -> void:
+	initial_spawn_position = pos

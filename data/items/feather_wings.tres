@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "feather_wings"
+item_name = "Alas de Plumas (Cuerpo)"
+item_color = Color(0.9, 0.9, 0.95, 1)
+equip_slot = "BACK"
+elemental_infusion = ""
+tags = ["WINGS"]
+modifiers = []
+grants_extra_jump = 0
+rarity = 3
+gold_value = 120
+description = "Estructura alar biomecanica que concede multiples aleteos de elevacion sostenida en el aire."
+

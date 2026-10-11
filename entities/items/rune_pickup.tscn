@@ -1,0 +1,41 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://entities/items/rune_pickup.gd" id="1_rune_pickup"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rune"]
+size = Vector2(20, 20)
+
+[node name="RunePickup" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_rune_pickup")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_rune")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="Visuals"]
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+color = Color(0.85, 0.25, 1, 1)
+
+[node name="InnerRect" type="ColorRect" parent="Visuals"]
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+color = Color(1, 0.85, 1, 0.9)
+
+[node name="NameLabel" type="Label" parent="Visuals"]
+offset_left = -60.0
+offset_top = -24.0
+offset_right = 60.0
+offset_bottom = -9.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 9
+text = "Runa"
+horizontal_alignment = 1

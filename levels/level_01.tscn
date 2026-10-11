@@ -1,0 +1,306 @@
+[gd_scene format=3 uid="uid://x0euxdlwdq05"]
+
+[ext_resource type="Script" uid="uid://b856dv7qxj4pl" path="res://levels/level_01.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://c3db7p4458crf" path="res://core/camera_follow.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="4_hud"]
+[ext_resource type="Script" uid="uid://ch2cnohmm7xlt" path="res://core/projectile_pool.gd" id="5_pool"]
+[ext_resource type="Script" uid="uid://ce8mo5yb72bfq" path="res://core/managers/save_manager.gd" id="6_save"]
+[ext_resource type="Script" uid="uid://bck4yi5i6lh6m" path="res://core/managers/zone_modifier_manager.gd" id="7_zone"]
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="8_runner"]
+[ext_resource type="Resource" path="res://data/runes/sharpen_rune.tres" id="9_sharpen_rune"]
+[ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="10_checkpoint"]
+[ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="11_gate"]
+[ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="12_wpickup"]
+[ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="13_knife"]
+[ext_resource type="Resource" uid="uid://qsjysq12r8dc" path="res://data/weapons/revolver.tres" id="14_revolver"]
+[ext_resource type="Texture2D" uid="uid://bokdx1ew8hk65" path="res://assets/sprites/metal_platform_tile.png" id="15_metaltile"]
+[ext_resource type="PackedScene" path="res://entities/enemies/training_dummy.tscn" id="16_d3o6j"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_linear_floor"]
+size = Vector2(3600, 48)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(40, 800)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_step_obstacle_1"]
+size = Vector2(64, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_step_obstacle_2"]
+size = Vector2(80, 50)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_step_obstacle_3"]
+size = Vector2(96, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tactical_plat"]
+size = Vector2(180, 20)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tip"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.08, 0.1, 0.14, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.4, 0.55, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="Level01" type="Node2D" unique_id=1210943058]
+script = ExtResource("1_level")
+
+[node name="Background" type="CanvasLayer" parent="." unique_id=1207307811]
+layer = -100
+
+[node name="ColorRect" type="ColorRect" parent="Background" unique_id=264075154]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.08, 0.11, 1)
+
+[node name="Environment" type="Node2D" parent="." unique_id=903340244]
+
+[node name="MainFloor" type="StaticBody2D" parent="Environment" unique_id=32301600 groups=["world"]]
+position = Vector2(1750, 580)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/MainFloor" unique_id=1179033867]
+shape = SubResource("RectangleShape2D_linear_floor")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/MainFloor" unique_id=810690758]
+offset_left = -1800.0
+offset_top = -24.0
+offset_right = 1800.0
+offset_bottom = 24.0
+color = Color(0.12, 0.15, 0.2, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/MainFloor" unique_id=1032875824]
+offset_left = -1800.0
+offset_top = -24.0
+offset_right = 1800.0
+offset_bottom = -21.0
+color = Color(0.28, 0.38, 0.5, 1)
+
+[node name="LeftWall" type="StaticBody2D" parent="Environment" unique_id=270783815 groups=["world"]]
+position = Vector2(-20, 240)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/LeftWall" unique_id=1570153392]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/LeftWall" unique_id=549654844]
+offset_left = -20.0
+offset_top = -400.0
+offset_right = 20.0
+offset_bottom = 400.0
+color = Color(0.1, 0.12, 0.16, 1)
+
+[node name="RightWall" type="StaticBody2D" parent="Environment" unique_id=385304539 groups=["world"]]
+position = Vector2(3520, 240)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall" unique_id=509640284]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/RightWall" unique_id=519793636]
+offset_left = -20.0
+offset_top = -400.0
+offset_right = 20.0
+offset_bottom = 400.0
+color = Color(0.1, 0.12, 0.16, 1)
+
+[node name="Obstacle1" type="StaticBody2D" parent="Environment" unique_id=1521188462 groups=["world"]]
+position = Vector2(620, 536)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Obstacle1" unique_id=1663631318]
+shape = SubResource("RectangleShape2D_step_obstacle_1")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Obstacle1" unique_id=1538631972]
+offset_left = -32.0
+offset_top = -20.0
+offset_right = 32.0
+offset_bottom = 20.0
+color = Color(0.18, 0.22, 0.3, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Obstacle1" unique_id=445662177]
+offset_left = -32.0
+offset_top = -20.0
+offset_right = 32.0
+offset_bottom = -17.0
+color = Color(0.4, 0.65, 0.85, 1)
+
+[node name="Obstacle2" type="StaticBody2D" parent="Environment" unique_id=1260112604 groups=["world"]]
+position = Vector2(1200, 531)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Obstacle2" unique_id=2034957387]
+shape = SubResource("RectangleShape2D_step_obstacle_2")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Obstacle2" unique_id=1480436414]
+offset_left = -40.0
+offset_top = -25.0
+offset_right = 40.0
+offset_bottom = 25.0
+color = Color(0.18, 0.22, 0.3, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Obstacle2" unique_id=1259323109]
+offset_left = -40.0
+offset_top = -25.0
+offset_right = 40.0
+offset_bottom = -22.0
+color = Color(0.4, 0.65, 0.85, 1)
+
+[node name="Obstacle3" type="StaticBody2D" parent="Environment" unique_id=579521202 groups=["world"]]
+position = Vector2(2050, 526)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Obstacle3" unique_id=1317396660]
+shape = SubResource("RectangleShape2D_step_obstacle_3")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Obstacle3" unique_id=1445088365]
+offset_left = -48.0
+offset_top = -30.0
+offset_right = 48.0
+offset_bottom = 30.0
+color = Color(0.18, 0.22, 0.3, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Obstacle3" unique_id=1728083240]
+offset_left = -48.0
+offset_top = -30.0
+offset_right = 48.0
+offset_bottom = -27.0
+color = Color(0.4, 0.65, 0.85, 1)
+
+[node name="TacticalPlatform" type="StaticBody2D" parent="Environment" unique_id=1322888656 groups=["world"]]
+position = Vector2(3050, 470)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/TacticalPlatform" unique_id=1884539003]
+shape = SubResource("RectangleShape2D_tactical_plat")
+
+[node name="NinePatchRect" type="NinePatchRect" parent="Environment/TacticalPlatform" unique_id=37897659]
+texture_filter = 1
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+texture = ExtResource("15_metaltile")
+patch_margin_left = 6
+patch_margin_top = 4
+patch_margin_right = 6
+patch_margin_bottom = 4
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+
+[node name="TutorialTip1" type="PanelContainer" parent="Environment" unique_id=974732338]
+offset_left = 60.0
+offset_top = 460.0
+offset_right = 260.0
+offset_bottom = 488.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_tip")
+
+[node name="Label" type="Label" parent="Environment/TutorialTip1" unique_id=326012334]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "[A / D] Desplazarse sin armas"
+horizontal_alignment = 1
+
+[node name="TutorialTip2" type="PanelContainer" parent="Environment" unique_id=2064938122]
+offset_left = 530.0
+offset_top = 460.0
+offset_right = 710.0
+offset_bottom = 488.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_tip")
+
+[node name="Label" type="Label" parent="Environment/TutorialTip2" unique_id=2143545265]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "[Espacio / A] Saltar Obstáculo"
+horizontal_alignment = 1
+
+[node name="TutorialTip3" type="PanelContainer" parent="Environment" unique_id=1938674602]
+offset_left = 2380.0
+offset_top = 460.0
+offset_right = 2650.0
+offset_bottom = 488.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_tip")
+
+[node name="Label" type="Label" parent="Environment/TutorialTip3" unique_id=1922671292]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "[Click Izq] Revólver / [R] Recargar / [Q] Alternar"
+horizontal_alignment = 1
+
+[node name="KnifePickup" parent="." unique_id=200370422 instance=ExtResource("12_wpickup")]
+position = Vector2(360, 540)
+weapon_data = ExtResource("13_knife")
+
+[node name="Duel1_Runner" parent="." unique_id=1713422213 instance=ExtResource("8_runner")]
+position = Vector2(880, 555)
+
+[node name="Duel2_Runner" parent="." unique_id=1684931347 instance=ExtResource("8_runner")]
+position = Vector2(1480, 555)
+drop_rune_on_death = ExtResource("9_sharpen_rune")
+
+[node name="CheckpointTerminal" parent="." unique_id=602035104 instance=ExtResource("10_checkpoint")]
+position = Vector2(1780, 556)
+checkpoint_id = "checkpoint_sector_01"
+
+[node name="Duel3_Runner" parent="." unique_id=812416383 instance=ExtResource("8_runner")]
+position = Vector2(2280, 555)
+
+[node name="RevolverPickup" parent="." unique_id=631019975 instance=ExtResource("12_wpickup")]
+position = Vector2(2500, 540)
+weapon_data = ExtResource("14_revolver")
+
+[node name="ArenaRunner1" parent="." unique_id=1247617237 groups=["arena_enemies"] instance=ExtResource("8_runner")]
+position = Vector2(2980, 555)
+aggro_range = 350.0
+
+[node name="ArenaRunner2" parent="." unique_id=1918241565 groups=["arena_enemies"] instance=ExtResource("8_runner")]
+position = Vector2(3180, 555)
+aggro_range = 350.0
+
+[node name="ExitGate" parent="." unique_id=424131217 instance=ExtResource("11_gate")]
+position = Vector2(3400, 556)
+monitored_enemies = Array[NodePath]([NodePath("../ArenaRunner1"), NodePath("../ArenaRunner2")])
+
+[node name="HUD" parent="." unique_id=1049039732 instance=ExtResource("4_hud")]
+
+[node name="SaveManager" type="Node" parent="." unique_id=1418899684 groups=["save_manager"]]
+script = ExtResource("6_save")
+
+[node name="ZoneModifierManager" type="Node" parent="." unique_id=1471792814 groups=["zone_modifier_manager"]]
+script = ExtResource("7_zone")
+
+[node name="ProjectilePool" type="Node" parent="." unique_id=933657253 groups=["projectile_pool"]]
+script = ExtResource("5_pool")
+
+[node name="Player" parent="." unique_id=1322337500 instance=ExtResource("2_player")]
+position = Vector2(140, 545)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=246029746 node_paths=PackedStringArray("target")]
+position = Vector2(140, 513)
+zoom = Vector2(1.25, 1.25)
+limit_left = 0
+limit_top = 100
+limit_right = 3520
+limit_bottom = 650
+position_smoothing_enabled = true
+script = ExtResource("3_camera")
+target = NodePath("../Player")
+smooth_speed = 5.0
+
+[node name="TrainingDummy" parent="." unique_id=768758293 instance=ExtResource("16_d3o6j")]
+position = Vector2(34, 556)

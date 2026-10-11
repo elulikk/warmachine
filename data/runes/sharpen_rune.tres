@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RuneData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/runes/rune_data.gd" id="1_rune"]
+
+[resource]
+script = ExtResource("1_rune")
+rune_id = "sharpen_rune"
+rune_name = "Runa de Filo"
+rarity = 1
+gold_value = 35
+description = "Aumenta el daño por impacto en +15 puntos."
+rune_color = Color(1, 0.45, 0.15, 1)
+allowed_weapon_types = [0, 1]
+bonus_damage = 15.0
+extra_bounces = 0
+extra_pierce = 0
+extra_forks = 0
+elemental_infusion = ""

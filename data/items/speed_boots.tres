@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "speed_boots"
+item_name = "Botas Ligeras (Pies)"
+item_color = Color(0.2, 0.95, 0.55, 1)
+equip_slot = "BOOTS"
+elemental_infusion = ""
+tags = []
+modifiers = [{
+"is_percent": false,
+"stat": "move_speed",
+"value": 60.0
+}]
+grants_extra_jump = 0
+rarity = 0
+gold_value = 30
+description = "Botas ligeras de aleacion con servomotores que aumentan la velocidad de movimiento."

@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://combat/throwables/throwable_base.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://combat/throwables/gas_cloud.tscn" id="2_fx"]
+
+[node name="GasBomb" instance=ExtResource("1_base")]
+throwable_id = "gas_bomb"
+fuse_time = 1.5
+effect_scene = ExtResource("2_fx")
+body_color = Color(0.45, 0.75, 0.3, 1)

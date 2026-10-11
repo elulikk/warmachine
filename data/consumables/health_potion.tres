@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/consumables/consumable_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+consumable_id = "health_potion"
+display_name = "Poción de Vida"
+short_name = "VIDA"
+description = "Restaura 50 puntos de vida al instante."
+price = 15
+effect = 0
+magnitude = 50.0
+duration = 0.0
+color = Color(0.9, 0.25, 0.3, 1)

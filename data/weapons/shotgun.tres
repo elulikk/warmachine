@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Escopeta de Choque"
+weapon_type = 0
+is_automatic = false
+damage = 12.0
+fire_rate = 1.6
+knockback_force = 150.0
+recoil_force = 120.0
+projectile_speed = 500.0
+armor_penetration = 0.0
+magazine_size = 6
+reload_time = 2.0
+pellets_per_shot = 5
+spread_angle_degrees = 30.0
+innate_pierce = 0
+projectile_scene = ExtResource("2_proj")
+innate_status_effects = []
+max_sockets = 2
+socketed_runes = []
+rarity = 2
+gold_value = 90
+description = "Escopeta de choque con dispersion en abanico. Devastador impacto multiple a quemarropa."
+

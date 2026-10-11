@@ -1,0 +1,409 @@
+# PROJECT_CONTEXT.md - Fuente Única de Verdad Técnica
+
+---
+
+## 1. REGLAS DEL PROYECTO
+
+- **Motor y Renderizador:** Godot 4.x (v4.7.x) utilizando `gl_compatibility` (OpenGL ES 3.0 / WebGL 2.0) y Direct3D 12 en Windows. Motor de físicas 3D configurado en Jolt Physics (`3d/physics_engine="Jolt Physics"` en `project.godot`).
+- **Lenguaje y Convención de Código:** GDScript 2.0 con tipado estricto obligatorio en todas las variables, propiedades exportadas, argumentos de métodos y valores de retorno (`var x: int = 0`, `func foo(a: float) -> void:`). Prohibido el uso de variables variantes no tipadas (`var x`) y llamadas reflectivas sin validación.
+- **Manejo de Pruebas y Verificación:** **PROHIBICIÓN ESTRICTA DE TESTING HEADLESS.** Queda terminantemente prohibido generar scripts de prueba (`test_*.gd`), mocks o suites automatizadas ejecutadas mediante consola con `--headless`. Toda verificación de jugabilidad e integración la realiza el usuario en runtime. *(Nota: los archivos `tests/test_phase*.gd` presentes en el repositorio corresponden a pruebas históricas ejecutadas como SceneTree en fases previas de desarrollo).*
+- **Scripts nuevos y `class_name`:** `run.bat` arranca el juego directo y **no regenera el registro de clases globales** (`.godot/global_script_class_cache.cfg`; solo lo actualiza el editor). Por eso, un script nuevo referenciado desde otro archivo debe cargarse por `preload` con su ruta (`const XScript = preload("res://...")`), no por su `class_name`; de lo contrario falla el parseo en cascada (menú, `SaveManager`, `GameManager`). Aplicado en `ConsumableManager`, `ConsumableData` y `ShopWindow`.
+- **Alcance Quirúrgico:** Modificar exclusivamente los archivos asignados a cada tarea. No refactorizar scripts consolidados ni alterar arquitecturas funcionales sin requerimiento explícito.
+- **Pipeline de Combate Obligatorio:**
+  1. Toda agresión o daño debe encapsularse en una instancia de [`HitPayload`](file:///c:/Users/Usuario/Documents/warmachine/combat/hit_payload.gd).
+  2. La resolución de vitalidad, escudos y mitigación por armadura debe procesarse exclusivamente a través de [`HealthComponent`](file:///c:/Users/Usuario/Documents/warmachine/core/health_component.gd).
+  3. Todo proyectil balístico debe ser administrado y reciclado mediante [`ProjectilePool`](file:///c:/Users/Usuario/Documents/warmachine/core/projectile_pool.gd).
+- **Arquitectura Basada en Componentes:** Entidades desacopladas compuestas por nodos modulares (`HealthComponent`, `StatusReceiverComponent`, `StatusDisplayComponent`, `TargetScannerComponent`, `VoiceComponent`, `StatsManager`, `EquipmentManager`, `InventoryManager`).
+
+---
+
+## 2. MAPA DE DIRECTORIOS Y ARCHIVOS
+
+### Raíz (`res://`)
+- [`project.godot`](file:///c:/Users/Usuario/Documents/warmachine/project.godot): Archivo maestro de configuración del motor. Define escena principal `res://scenes/main_menu.tscn`, Autoload `GameManager`, controladores de display y mapa completo de acciones de entrada (`InputMap`).
+- [`PROJECT_CONTEXT.md`](file:///c:/Users/Usuario/Documents/warmachine/PROJECT_CONTEXT.md): Este documento; única fuente de verdad técnica y arquitectónica del repositorio.
+- `icon.svg`: Ícono del proyecto (ventana). `icon.ico`: ícono del `.exe` exportado (16 a 256 px), generado por `art_source/icon/make_icon.py` desde `assets/PSD/out/pieces/head.png`; no es un recurso de Godot (lo lee el exportador).
+- `run.bat` / `run_game.bat`: Scripts por lotes para ejecución rápida del binario del motor.
+- `build_exe.bat` + `export_presets.cfg`: importa recursos, exporta `build/WARMACHINE.exe` (pck embebido, ícono, versión y metadatos con `application/modify_resources = true`) y arma `build/WARMACHINE_<versión>.zip`. La versión sale de `application/config/version` en `project.godot` (0.5.0), que también se muestra en el menú principal.
+
+### `assets/sprites/` (Sprites y Texturas Pixel Art - Pase de Arte 2D; reemplazado en gran parte por `assets/art/`, se conserva por respaldo)
+- `player_sheet.png`: Hoja de 320x32 px (32x32 px por frame) para el autómata mercenario (Idle: 4 frames a 6 FPS, Run: 6 frames a 10 FPS).
+- `coin_sheet.png`: Hoja de 96x16 px (16x16 px por frame) para monedas doradas girando 360° (6 frames a 10 FPS).
+- `exp_orb_sheet.png`: Hoja de 64x16 px (16x16 px por frame) para orbes de EXP con pulsos y destellos cian (4 frames a 8 FPS).
+- `runner_sheet.png`: Hoja de 128x32 px (32x32 px por frame) para hostiles cuadrúpedos/bípedos veloces (4 frames a 8 FPS).
+- `bullets.png`: Hoja de 48x16 px con 3 sub-regiones de 16x16 px: proyectil cinético balístico estándar, proyectil de energía/plasma y perdigón de escopeta.
+- `stash_chest_sheet.png`: Hoja de 64x32 px (32x32 px por frame) para cofre cerrado (frame 0) y cofre abierto con botín (frame 1).
+- `exit_gate_sheet.png`: Hoja de 64x48 px (32x48 px por frame) para compuerta sci-fi bloqueada con luz/láser rojo (frame 0) y compuerta desbloqueada con portal verde (frame 1).
+- `metal_platform_tile.png`: Textura modular tileable de 32x32 px (panel de aleación oscuro con remaches y ranuras industriales antideslizantes).
+
+### `assets/art/` (Arte HD - Rework gráfico steampunk)
+Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot con `.gdignore`; no se importa). Los PNG se recortaron por componentes y se redujeron al tamaño de juego (los de `rig/` y `props/` van al doble: se muestran con `scale 0.5`).
+- `rig/`: piezas del esqueleto modular generadas desde `assets/sprites/sets  mobs/` (ver `art_source/sets_pipeline/README.md`). Por cada cuerpo base (`no_armor`, `zombie`, `skeleton`, `ghost`): `_head`, `_torso`, `_arm_l/_r`, `_leg_l/_r`, `_hand_l/_r` y `_foot`; texturas al triple del tamaño de juego (`CharacterRig.TEX_SCALE = 1/3`), medidas y anclas en `core/art/armor_art.gd` (generado). Mochilas, alas y granadas siguen en `core/art/rig_art.gd` (al doble). **Las armaduras (casco, pecho, guantes, botas) no existen: las 96 piezas de los 24 sets se eliminaron.**
+- `rig/hero_*.png` + `core/art/hero_art.gd` (generado por `art_source/character_rig/export_game.py` desde `assets/PSD/out/`): cuerpo base `hero` de perfil (mira a la derecha) con miembros articulados: brazo en hombro/codo/mano y pierna en cadera/rodilla/pie, cercanos y lejanos (oscurecidos). Es el `skin` por defecto del `CharacterRig`; los brazos usan cinemática inversa de dos huesos hacia el agarre del arma y las piernas flexionan la rodilla al andar. Origen/pivotes fuente en `assets/PSD/out/character_rig.json`. Escala `G = 0.049` px de juego por px del lienzo (~83 px de alto).
+- `core/art/weapon_motion.gd` (a mano): agarre y animación **por arma**, indexado por el id del recurso (`data/weapons/<id>.tres`). Melee: `hold` (cómo se sostiene en reposo), `swings` (combo de tajos con fotogramas de posición/rotación, `hit_delay` para que el golpe llegue con el impacto, y movimiento del torso) y `pose` (p. ej. martillo a dos manos). Armas de fuego: `kick` (retroceso, subida del cañón, empuje del torso). Un arma sin perfil usa la animación genérica. `WeaponManager.last_motion` se lo pasa a `CharacterRig` en cada ataque. **Recarga por arma** (`RELOADS` + `reload_keys()`): estilos `mag`, `mag_rifle`, `cylinder` (bala por bala), `shells` (cartuchos + bombeo), `bolt` y `canister`; fotogramas {t, pos, rot, sound} que `WeaponManager._play_reload_animation()` reproduce en `reload_time`. **Ráfaga sostenida** (`PATTERNS` + `pattern_for()`): en las automáticas cada disparo dentro de `window` sube el cañón `climb_step` (hasta `max_climb`) y alterna un vaivén; vuelve al reposo en `recover` (solo visual).
+- `core/settings.gd` (estático, sin autoload; lo inicia `GameManager._ready()`), `core/settings_host.gd` (contador de FPS, silencio al perder foco y anfitrión del posprocesado) y `ui/settings_window.gd` (ventana de opciones, desde el menú principal y la pausa; pestañas Video, Audio, Juego, Accesibilidad y Controles); se guarda en `user://settings.cfg` (secciones `settings` y `bindings`; la sección `controls` del formato anterior se migra al cargar). Los sistemas leen las opciones con `get_float/get_bool/get_int/particle_scale`, `enemy_damage_mult()` / `enemy_health_mult()` (dificultad), `reduce_flashes()` y `ui_scale()`. **Pantalla:** modo, monitor (`monitor`, -1 = el actual), resolución con confirmación de 15 s que revierte sola, V-Sync, FPS. **Calidad:** preajustes con partículas y posprocesado (`fx_vignette`, `fx_grain`, `fx_bloom`); el MSAA 2D se guarda pero no se aplica ni se muestra en `gl_compatibility` (`msaa_supported()`). **Escala de interfaz:** `Window.content_scale_factor`; `CameraFollow` divide su zoom por el factor para que el mundo se vea igual. **Controles:** cada acción de `REMAPPABLE` tiene un casillero de teclado/ratón y uno de mando (`descriptor_from_event`, `rebind_event`, `find_conflict`: si otra acción usaba el evento, intercambian; `reset_binding`). Solo se reemplaza el evento principal de cada casillero; las flechas y el stick siguen.
+- `items/<item_id>.png`: ícono de cada pieza de set (96x96) y de los ítems sueltos. `mobs/`: ilustraciones de ladrón, bruto, centinela, base y cañón del francotirador, muñeco y ballesta de práctica (`MOBS` en `armor_art.gd`).
+- `weapons/`: 19 armas en mano a 256 px de ancho; agarre, boca del cañón y mano de apoyo en `core/art/weapon_art.gd` (generado).
+- `items/`, `consumables/`, `runes/`: íconos de inventario (`<item_id>.png`, `<consumable_id>.png`, `<rune_id>.png`). `ItemIcons.get_icon_for()` los prefiere; si falta el PNG cae al pixel art 16x16 de siempre.
+- `ui/`: marco de ventana (9-slice), casillero de cuero, placas, tubo de salud, cartel de monedas, etc.
+- `world/`, `bg/`, `props/`: chapas, ladrillo, plataformas, fondos pintados por capítulo, fraguas, carro, compuerta, monedas.
+
+### `core/art/` y `entities/props/` (Cargadores de arte)
+- [`core/art/art.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/art/art.gd): `tex(path)` carga PNG/JPG aunque el editor no los haya importado (lee del disco). Usar siempre esto en vez de `load()` para arte nuevo: `run.bat` no pasa por el editor.
+- [`entities/player/character_rig.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/character_rig.gd): esqueleto modular `Node2D`. Huesos `Back/LegL/LegR/Body/ArmBack/ArmFront`, animación procedural (marcha, respiración, salto, aterrizaje, flote si el cuerpo no tiene piernas) y brazos orientados a la mano del arma (alcance en reposo `ARM_REACH`). Aspecto por `loadout`: `skin` (cuerpo base), `back`, `belt`. Con `gear_driven` lee del `EquipmentManager` solo la espalda y la granada.
+- [`entities/enemies/enemy_art.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/enemy_art.gd): `attach(host, tipo)` pone arte sobre enemigos/aliados. Ilustración única con balanceo procedural: `runner`, `brute`, `sentinel`, `dummy`. Esqueleto modular con cuerpo base: `skeleton` (aliado mercenario), `zombie`, `ghost` (alfa 0.78). `turret` (base + cañón que apunta al jugador), `training_turret` (ballesta que da la cara al jugador) y `drone`. Los `ColorRect` originales quedan con `modulate.a = 0` (los scripts de combate siguen leyendo su `color`) y su color se copia como tinte al arte.
+- [`entities/props/prop_skin.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/props/prop_skin.gd): arte de herrero, mercader, terminales, selector de mapa, baúl y compuerta.
+- [`levels/level_skin.gd`](file:///c:/Users/Usuario/Documents/warmachine/levels/level_skin.gd) + `levels/backdrop.gd`: al iniciar un nivel cubre cada `StaticBody2D` de `Environment` con texturas según su tamaño (suelo, muro, plataforma fina) y agrega el fondo pintado del capítulo con paralaje. No modifica las colisiones ni los `.tscn`.
+- [`ui/components/steam_skin.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/steam_skin.gd): estilos de la interfaz (`window_style`, `slot_style`, `button_style`, ...) y `skin_tree()`, que restiliza paneles/botones/rótulos de una ventana sin tocar su `.tscn`. `DraggableWindow` y `ItemSlot` lo aplican solos.
+
+### `ost/` (Banda Sonora)
+- `*.m4a`: pistas originales (menú, campamento, tienda, exploración, combate estándar, élite, jefe, victoria de jefe y derrota). Godot no las lee.
+- `menu.ogg`, `camp.ogg`, `shop.ogg`, `explore.ogg`, `combat.ogg`, `elite.ogg`, `boss.ogg`, `victory.ogg`, `death.ogg`: conversión a OGG Vorbis (q4, 44.1 kHz) que usa `core/music.gd`. Para sumar una pista: convertirla a `.ogg`, agregarla a `Music.TRACKS` y pedirla por nombre.
+
+### `combat/` (Pipeline Balístico y Sensores de Daño)
+- [`damage_number.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/damage_number.gd) & `damage_number.tscn`: Marker2D efímero para números de daño flotantes con elevación, código de color según elemento/crítico/aturdimiento (amarillo eléctrico `COLOR_STUN`) y auto-destrucción por Tween en 0.6s.
+- [`ground_shockwave.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/ground_shockwave.gd) & `ground_shockwave.tscn`: Area2D de onda de expansión física en el suelo generada por el Martillo Pesado (ancho 240px, 120px a cada lado, 25 DMG, retroceso ascendente y aplicación de estado "STUN" de 1.5s).
+- [`hit_payload.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/hit_payload.gd): RefCounted inmutable que encapsula daño base, fuerza y dirección de retroceso, nodo emisor, efectos de estado, stacks, daño DoT y penetración de armadura (`armor_penetration`).
+- [`melee_hitbox.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/melee_hitbox.gd) & `melee_hitbox.tscn`: Area2D de corte cuerpo a cuerpo con barrido angular interpolado por Tween (`execute_swing`), detección de receptores y ventana de **Parry Balístico** (0.06s iniciales) para deflectar proyectiles hostiles duplicando/amplificando su daño x1.5. Soporta `custom_crit_multiplier` para armas de alto impacto crítico.
+- [`projectile.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/projectile.gd) & `projectile.tscn`: Area2D cinético administrado por `ProjectilePool`. Soporta velocidad constante, tiempo de vida, deflexión balística (`deflect`), rebotes en muros (`bounces_left`), perforación (`pierces_left`), bifurcación a +/-30° (`forks_left`) y reciclaje limpio (`recycle`).
+
+### `combat/tools/` (Herramientas Tácticas de Movilidad)
+- [`grappling_hook.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/tools/grappling_hook.gd) & `grappling_hook.tscn`: Gancho de anclaje de alta velocidad (1200 px/s) conectado con `Line2D`. Al impactar en terreno sólido (Layer 1), tracciona al jugador a 520 px/s; se suelta al presionar salto o a 30px del punto de impacto conservando la inercia con boost de salida.
+- [`teleport_beacon.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/tools/teleport_beacon.gd) & `teleport_beacon.tscn`: Baliza balística con física rígida arrojada en parábola. Al colisionar contra Layer 1 o un enemigo, emite partículas en salida y llegada y reubica inmediatamente al jugador en su posición con cooldown de seguridad de 1.5s.
+
+### `combat/throwables/` (Arrojadizos Tácticos y Reacciones en Área)
+- `throwable_base.gd` & `.tscn`: `RigidBody2D` con parábola, rebote contra terreno (Layer 1), sensor de impacto contra enemigos (Layer 2) y fusible (1.5s). Detona, instancia `effect_scene` y se libera con `queue_free` (no son `Projectile`, por lo que no pasan por `ProjectilePool`).
+- `frag_grenade.tscn` / `ice_grenade.tscn` / `acid_grenade.tscn` / `gas_bomb.tscn`: escenas heredadas de la base con su efecto asignado.
+- `area_burst.gd`: Area2D de detonación radial reutilizable (`frag_blast.tscn` 90px 60 DMG + retroceso; `ice_blast.tscn` 110px ICE 3.0s al 80% de ralentización; `fire_explosion.tscn` 120px crítico + 10 stacks FIRE, fuente de ignición).
+- `acid_pool.gd` & `.tscn`: charco 5.0s con ticks cada 0.5s y `armor_penetration = 1.0`.
+- `gas_cloud.gd` & `.tscn`: nube 6.0s con ticks biológicos cada 0.4s; deflagra en `fire_explosion` al contacto con proyectiles FIRE/plasma/lanzallamas, explosiones ígneas o enemigos ardiendo.
+- `throwable_util.gd`: helpers estáticos (resolución de blancos hostiles excluyendo jugador/aliados, entrega de `HitPayload`).
+
+### `core/` (Lógica Central y Subsistemas Base)
+- [`camera_follow.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/camera_follow.gd): Camera2D con seguimiento suavizado (lerp) hacia el jugador y compensación de altura.
+- [`combat_hud.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/combat_hud.gd) & `combat_hud.tscn`: Interfaz HUD preliminar en pantalla vinculada a `StatsManager` y `WeaponManager`.
+- [`health_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/health_component.gd): Componente modular de vitalidad. Gestiona salud (`max_health`), escudos de energía recargables (`max_shield`, `shield_recharge_delay`, `shield_recharge_rate`), armadura mitigadora (`armor`), críticos e impactos de `HitPayload`. **Dificultad:** si su padre está en el grupo `enemies`, al aparecer (diferido, después del `_ready` del enemigo) multiplica la vida por `enemy_health_mult()` y la copia al `EnemyBase`. El daño que recibe el jugador se escala en `Player.take_damage()` con `enemy_damage_mult()`.
+- [`help_overlay.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/help_overlay.gd) & `help_overlay.tscn`: Panel informativo en pantalla (alternable con H, Tab o Select) con atajos de controles y estado de debug.
+- [`input_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/input_manager.gd): Configurador estático (`InputSetup`, RefCounted) que inyecta programáticamente en el `InputMap` todas las acciones del juego (`throw_tactical` [G], `use_tool` [Click Derecho / F], `hotbar_1` a `hotbar_9` [1]-[9] (barra de acceso rápido); los botones laterales del ratón M4 y M5 usan los consumibles 1 y 2 (`consumable_1/2`)).
+- [`item_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/item_data.gd): Recurso `Resource` base para ítems equipables y pasivos (`item_id`, `equip_slot`, `modifiers`, `elemental_infusion`, `grants_extra_jump`, `throwable_scene`).
+- [`projectile_pool.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/projectile_pool.gd): Gestor de reserva y reciclaje (Object Pool) con 60 proyectiles preinstanciados (`get_projectile()`, `recycle_projectile()`).
+- [`status_receiver_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/status_receiver_component.gd): Componente receptor de estados alterados (Fuego con hasta 10 stacks y DoT periódico, Hielo con 50% de ralentización durante 2.5s y tintado visual, Aturdimiento / Stun con inmovilización horizontal `velocity.x = 0`, cancelación de aggro y tinte eléctrico reactivo).
+- [`test_level.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/test_level.gd) & `test_level.tscn`: Escena de pruebas Sandbox. Incluye pista de 3700px, plataformas elevadas, dummies, torretas, oleadas continuas (4 simultáneas), zona de práctica de game feel, mercenarios, checkpoints, zona de pedestales para arrojadizos y herramientas, y plataforma aislada. Atajos de debug: [N] runner, [B] brute, [M] centinela, [K] limpiar arena (excepto torretas), [L] curar; se lanza directo desde `run.bat`.
+- [`wave_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/wave_manager.gd): Gestor de oleadas con dos modos. **Continuo** (sandbox): mantiene hasta `max_alive` enemigos vivos (1 por defecto; 4 en `test_level.tscn`, nodo `ExpeditionZone/WaveManager`) y rellena tras `respawn_delay`. **Rondas** (`round_sizes`, ej. `[3, 4, 6]`): lanza rondas de tamaño fijo con `rest_between_rounds`, señales `round_started` / `round_cleared` / `all_rounds_cleared`, `auto_start` y `aggro_on_spawn`; `stop_and_clear()` reinicia. `elite_scene` + `elite_per_round` (parejo con `round_sizes`) generan primero N elites por ronda (ej: `ArmoredBrute`); acepta cualquier `BasicRunner` o `EnemyBase` (`alive_enemies` es `Array[Node]`).
+- [`arena_encounter.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/arena_encounter.gd): `ArenaEncounter` (Area2D). Al entrar el jugador cierra las barreras (hijos de `Barriers`) y arranca su `WaveManager` hijo; al despejarse las abre. Se reinicia si el jugador es derrotado. Muestra el estado en `StatusLabel`.
+- [`game_feel.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/game_feel.gd): Helpers estáticos (`GameFeel`) de Fase A: `shake()` (vía `CameraFollow`, grupo `game_camera`), `hit_stop()` (0.03s con `Engine.time_scale`), `death_burst()` (CPUParticles2D + sonido procedural). Se invoca desde `HealthComponent`, `MeleeHitbox` y `WeaponManager`. También es la **fachada de audio**: `sfx(ctx, &"nombre", world_pos?, volume_db?, pitch?)`, `sfx_stream()`, `sfx_weapon_fire()`, `sfx_weapon_swing()` y `sfx_prewarm()`; todo el juego pide sonidos por acá (clase global ya registrada, no hace falta `preload`).
+- [`sfx.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/sfx.gd): Sintetizador y reproductor de efectos de estilo shooter clásico (tipo Doom, Fase S). Sin `class_name`, se carga por `preload` desde `GameFeel`. Genera `AudioStreamWAV` por código: capas de ruido blanco con pasa-bajos de corte variable (cuerpo y cola), thumps senoidales con caída de tono (peso), ondas cuadrada/triangular/sierra/seno y arpegios; luego eco corto de sala, saturación suave y degradación final (retención de muestras ~11 kHz y 7 bits), los cachea y los reproduce con un pool de 20 voces en el bus `SFX` (también crea `Music`). Limita la frecuencia por sonido (`MIN_INTERVAL_MSEC`), atenúa por distancia al jugador si se pasa `world_pos` y pre-genera los sonidos comunes de a uno por cuadro (`prewarm`). Las recetas están en `_build()`; para un sonido nuevo se agrega un caso ahí. Mecanismos de recarga: `reload_out`, `reload_in`, `reload_shell` (bala o cartucho), `reload_rack` (bombeo o cerrojo), `reload_vent` (bidón de energía), `reload_done`. El sonido de un arma sale de sus datos (`weapon_fire_profile`: perdigones, cadencia, estado, daño, velocidad). Para audio real: `fire_stream` / `hit_stream` en el `WeaponData`, o `Sfx.register_override(&"nombre", stream)`. Catálogo: disparos (`shot_pistol/auto/rifle/shotgun/flame/ice/magic/bow/enemy/drone`), melee (`swing`, `swing_light`, `swing_heavy`), impactos (`hit_flesh/blade/armor/crit/shield/world`, `parry`), recarga (`reload_out`, `reload_done`, `weapon_swap`), jugador (`hurt`, `player_death`, `jump`, `land`), recolección (`coin`, `exp`, `heal`, `pickup_gear`, `pickup_ammo`, `levelup`, `potion`, `buy`, `deny`) y mundo (`throw`, `boom_frag/ice/fire`, `checkpoint`, `gate_open`, `barrier_close/open`).
+- [`weapon_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/weapon_data.gd): Recurso de datos de armas (RANGED o MELEE, daño, cadencia, retroceso, penetración de armadura, cargador, tiempo de recarga, perdigones, dispersión angular, 3 sockets de runas, multiplicador crítico, impulso horizontal en tajo, duración de fase, generación de onda de choque, `fire_stream` / `hit_stream` (audio real opcional; si son null se sintetiza el efecto 8-bit), `knockback_force` (empuje al enemigo; 0 = automático: retroceso x1.5 en rango, 160 en melee; ~px/s = valor x0.75) y `melee_hitbox_scale`, multiplicador del alcance del hitbox melee de esa arma, 1.0 por defecto).
+- [`music.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/music.gd): Gestor de la banda sonora (`res://ost/`). Sin `class_name`, se carga por `preload` desde `GameFeel` (`music_set_base`, `music_set_situation`, `music_push`, `music_pop`, `music_start_level`). Un anfitrión en la raíz con dos reproductores hace fundido cruzado entre pistas en el bus `Music`. Prioridad: anulaciones (`push`/`pop`: tienda, derrota, victoria) > situación (combate, élite, jefe) > base de la escena (`menu`, `camp`, `explore`); `set_base` limpia lo anterior al cargar una escena. Godot no lee `.m4a`: las pistas del OST están convertidas a `.ogg` (`menu`, `camp`, `shop`, `explore`, `combat`, `elite`, `boss`, `victory`, `death`); si el editor no las importó se cargan con `AudioStreamOggVorbis.load_from_file`. `death` y `victory` no hacen loop.
+- [`music_director.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/music_director.gd): Nodo (sin `class_name`) que `GameFeel.music_start_level()` agrega a cada nivel (`LevelBase` y `TestLevel`). Cada 0.35 s busca enemigos del grupo `enemies` vivos, con aggro y a menos de 700 px del jugador; pide `boss` (grupo `boss`), `elite` (`ArmoredBrute`, `ShieldedSentinel`) o `combat`, y mantiene la pista 4.5 s tras el último enemigo antes de volver a exploración.
+- [`weapon_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/weapon_manager.gd): Administrador del arsenal del jugador. Gestiona slots 1/2/3, ciclo con rueda/gatillos, disparo, tajos melee con dash/fase e invocación de onda sísmica en suelo para armas pesadas. Dibuja el arma activa como `Sprite2D` ("WeaponSprite", hijo de `WeaponPivot`) con el ícono de `ItemIcons` y la pose de `ItemIcons.WEAPON_POSES`; reubica el `Muzzle` en la punta del arma y la anima: tajo que recorre el mismo arco y duración que el `MeleeHitbox` con estela de copias que se desvanecen (el `SlashVisual` del hitbox se oculta; las armas melee se dibujan grandes para que su punta llegue al alcance del hitbox), golpe de retroceso al disparar y animación de recarga (baja el cañón, mueve el cargador y vuelve) de la duración de `reload_time`. Si no hay ícono o pose, usa el `ColorRect` `WeaponVisual` de siempre. **Dispersión:** `spread_angle_degrees` es el cono total; con varios perdigones se reparte en abanico fijo y con un solo proyectil se desvía al azar dentro del cono. El hitbox melee escala `HITBOX_SCALE * melee_hitbox_scale`.
+
+- [`post_fx.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/post_fx.gd): Posprocesado de pantalla (sin `class_name`, lo crea `SettingsHost`). Capa 1 (entre el mundo y el HUD, que está en la 2): viñeta, grano y resplandor con un shader que lee `hint_screen_texture`; se oculta en el menú principal y cuando no hay efectos. Capa 250: filtro de daltonismo (daltonización LMS con intensidad) sobre todo, incluida la interfaz.
+- [`scene_loader.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/scene_loader.gd): Pantalla de carga (sin `class_name`, hija de `GameManager`, capa 180). `go(path)`: fundido, pausa el árbol, `ResourceLoader.load_threaded_request`, barra de progreso con consejo al azar, `change_scene_to_packed`, despausa y fundido de salida (mínimo 0.35 s visible). Si la carga en segundo plano falla, cae a `change_scene_to_file`.
+- [`error_logger.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/error_logger.gd): `Logger` (API de Godot 4.5+) que `GameManager` instala con `install()` y quita en `_exit_tree` con `uninstall()`. Escribe errores (no advertencias) a `user://logs/errors_<fecha>.log` con encabezado de versión, sistema, GPU y escena; crea el archivo recién con el primer error, guarda los últimos 10 y corta en 400 entradas. Thread-safe con `Mutex`; nunca imprime (volvería a entrar).
+
+### `core/components/` (Sensores y Expresión)
+- [`target_scanner_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/components/target_scanner_component.gd): Sensor periódico con RayCast2D para detectar el blanco vivo más cercano en grupos especificados (`enemies`/`player`) validando línea de visión directa (LoS).
+- [`voice_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/components/voice_component.gd): Emisor de expresiones vocales y textos flotantes estilizados (Barks) sobre entidades.
+
+### `core/contracts/` (Contratos de Zona)
+- [`zone_contract.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/contracts/zone_contract.gd): Recurso `Resource` que define mutadores de riesgo para el jugador (`player_modifiers`) y multiplicadores globales para el mundo (`world_modifiers`).
+
+### `core/consumables/` (Consumibles)
+- [`consumable_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/consumables/consumable_data.gd): Recurso `ConsumableData` (id, nombre, precio, efecto `HEAL` / `NO_RELOAD` / `SPEED_BOOST`, magnitud, duración, color).
+- [`consumable_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/consumables/consumable_manager.gd): `ConsumableManager`, hijo de `Player` (creado por código en `Player._ready`, accesible vía `player.consumable_manager`). Cantidades con tope `MAX_STACK = 5` por tipo, uso desde la barra de acceso rápido (`ui/hotbar.gd`) o con M4 / M5 (`consumable_1/2`), efectos temporizados (la velocidad se aplica como modificador porcentual de `StatsManager`; sin recarga usa `WeaponManager.set_free_ammo()`), serialización en el slot (`"consumables"`) y barra HUD en la esquina inferior izquierda. El catálogo (orden = casillero) está en `CATALOG_PATHS`.
+- `data/consumables/`: `health_potion.tres` (15 monedas, +50 HP), `no_reload_potion.tres` (25 monedas, 15 s sin recarga), `speed_potion.tres` (20 monedas, +20% velocidad por 20 s).
+
+### `core/loot/` (Sistemas de Botín)
+- [`loot_entry.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/loot/loot_entry.gd): Entrada individual de botín (`COIN`, `AMMO`, `HEALTH`, probabilidad y rango de cantidad).
+- [`loot_table.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/loot/loot_table.gd): Tabla evaluadora de probabilidades que genera listas de recompensas (`roll_drops()`). Además lleva `gear_chance` y `gear_pool` (`ItemData`/`WeaponData`) y `roll_gear(level_tier, is_excluded)`: elige una pieza de equipo con peso por rareza según el tier del nivel (`RARITY_WEIGHTS_BY_TIER`), tope de probabilidad 50%.
+- [`gear_loot.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/loot/gear_loot.gd): Helper estático sin `class_name` (se carga por `preload` desde `EnemyBase` y `BasicRunner`). `try_drop(enemy, loot_table)` lee `gear_loot_tier` de la escena actual, descarta lo ya poseído o peor que lo equipado, e instancia un `PickupItem` o `WeaponPickup` con salto de aparición. Con tier 0 no hace nada.
+
+### `core/managers/` (Singletons y Controladores Globales)
+- [`game_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/game_manager.gd): Autoload central (`GameManager`). Administra el flujo de partida (`PLAYING`, `GAME_OVER`, `VICTORY`), overlays de pausa/derrota/victoria, respawn en checkpoints (R), alternancia de placas superiores (F2) y transiciones entre menús y niveles. **Todo cambio de escena** pasa por `GameManager.change_scene(path)` / `reload_scene()` (pantalla de carga de `core/scene_loader.gd`); no usar `change_scene_to_file` directo. Instala el registro de errores (`core/error_logger.gd`).
+- [`metrics_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/metrics_manager.gd): Autoload de telemetría y métricas acumulativas (`MetricsManager`, `process_mode = PROCESS_MODE_ALWAYS`). Registra bajas por arquetipo, monedas juntadas/gastadas, muertes, tiempo de juego activo y contratos superados.
+- [`save_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/save_manager.gd): Singleton de persistencia a disco (`SaveManager`, grupo `save_manager`). Administra 3 slots JSON en `user://saves/slot_{id}.json` (perfil, estadísticas, armas, equipamiento, mochila, baúl, métricas y checkpoints).
+- [`zone_modifier_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/zone_modifier_manager.gd): Gestor de mutadores de zona (`ZoneModifierManager`, grupo `zone_modifier_manager`). Aplica contratos `ZoneContract` al jugador y provee consultas estáticas `get_world_mult()`.
+
+### `core/runes/` (Runas Modulares)
+- [`rune_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/runes/rune_data.gd): Recurso modular de runas engarzables en sockets de armas (`bonus_damage`, `extra_bounces`, `extra_pierce`, `extra_forks`, `elemental_infusion`).
+
+### `core/state_machine/` (Máquina de Estados Finita)
+- [`state.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/state_machine/state.gd): Clase abstracta base (`State`) con ciclo de vida `enter()`, `exit()`, `update()`, `physics_update()`, `handle_input()` y señal `transitioned`.
+- [`state_machine.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/state_machine/state_machine.gd): Controlador de la FSM (`StateMachine`) que indexa estados hijos y ejecuta transiciones.
+
+### `data/` (Recursos Serializados `.tres`)
+- [`player_movement_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/data/player_movement_data.gd): Recurso de parámetros físicos del jugador (velocidad 240, aceleración, fricción, salto 530, corte 0.5, coyote time 0.15s, jump buffer 0.10s, gravedad 980, caída x1.35).
+- `contracts/low_gravity_contract.tres`: Recurso `ZoneContract` (gravedad 0.6x, monedas 2.5x, velocidad de enemigos 1.2x).
+- `items/`: Recursos `ItemData`:
+  - `speed_boots.tres`: Botas de velocidad (+60 px/s, ranura `BOOTS`).
+  - `wall_jump_boots.tres`: Botas de rebote en pared (`can_wall_jump = true`, ranura `BOOTS`).
+  - `jump_feather.tres`: Pluma de viento (+1 salto extra pasivo).
+  - `feather_wings.tres`: Alas de plumas (+5 aleteos aéreos, ranura `BACK`).
+  - `jetpack.tres`: Propulsor continuo con combustible 100u (ranura `BACK`).
+  - `fire_ring.tres`: Anillo ígneo (infusión elemental de fuego, ranura `ACCESSORY`).
+  - `flight_ring.tres`: Anillo de vuelo mágico omnidireccional (ranura `ACCESSORY`).
+  - `throwables/frag_grenade.tres`, `ice_grenade.tres`, `acid_grenade.tres`, `gas_bomb.tres`: Arrojadizos tácticos (ranura `TACTICAL`, campo `throwable_scene`).
+  - `grappling_hook.tres`: Gancho de anclaje táctico (ranura `ACCESSORY` / movilidad con `throwable_scene`).
+  - `teleport_beacon.tres`: Baliza de translocación instantánea (ranura `ACCESSORY` / movilidad con `throwable_scene`).
+- `loot/basic_runner_loot.tres`: Tabla `LootTable` con monedas (2 a 4) y munición (50% de probabilidad). Equipo: 3% de probabilidad, pool de espada de hierro, carabina, pistola 9 mm, Colt .44 y MP5.
+- `loot/armored_brute_loot.tres`: Tabla del Bruto Acorazado: 6 a 10 monedas, munición (80%), vida (50%). Equipo: 20%, pool de las armas (espada, carabina, SMG, katana, pistola 9 mm, Colt .44, MP5, AK-47, M4, Desert Eagle).
+- `loot/shielded_sentinel_loot.tres`: Tabla del Centinela: 4 a 7 monedas, munición (70%), vida (35%). Equipo: 12%, pool de carabina, SMG, pistola 9 mm, Colt .44, MP5 y M4.
+- `runes/`: Recursos `RuneData`:
+  - `bounce_rune.tres`: +1 rebote contra muros.
+  - `fork_rune.tres`: +1 bifurcación en 2 proyectiles a +/-30° con 50% de daño al impactar.
+  - `pierce_rune.tres`: +1 perforación de enemigos.
+  - `sharpen_rune.tres`: +15 daño plano por impacto.
+- `weapons/`: Recursos `WeaponData`:
+  - `combat_knife.tres`: Cuchillo de combate (MELEE, 30 daño, 3.2 tajos/s, arco 80°, tajo de 0.11 s, `melee_hitbox_scale` 0.7, parry balístico).
+  - `iron_sword.tres`: Espada de hierro (MELEE, 38 daño, 2.2 tajos/s, rareza Bueno, parry balístico).
+  - `heavy_hammer.tres`: Martillo pesado (MELEE, 100 daño, 1.1 golpes/s, rareza Legendario, onda sísmica en suelo de 240px con 25 DMG y 1.5s de STUN).
+  - `katana.tres`: Katana de asalto (MELEE, 35 daño, 2.8 tajos/s, crítico x2.0, dash horizontal +380 px/s y 0.15s de fase/intangibilidad).
+  - `pistol.tres`: Pistola Criogénica (RANGED, 25 daño, 4.0 tiros/s, infusión `ICE`, cargador 12).
+  - `rust_revolver.tres`: Revólver Oxidado (RANGED, 18 daño, 2.5 tiros/s, cargador 6, recarga 2.0s, dispersión 3°).
+  - `scrap_carbine.tres`: Carabina de Chatarra (RANGED semiautomática, 20 daño, 3.5 tiros/s, cargador 10, recarga 1.8s, perforación innata 1). Recompensa del Sector 1-3.
+  - `revolver.tres`: Revólver de servicio (RANGED, 18 daño, 6.0 tiros/s).
+  - `smg.tres`: Subfusil SMG (RANGED automático, 10 daño, 14.0 tiros/s, cargador 30).
+  - `shotgun.tres`: Escopeta de choque (RANGED, 12 daño, 1.6 tiros/s, 5 perdigones por disparo, dispersión 18°).
+  - `heavy_sniper.tres`: Rifle de precisión pesado (RANGED, 130 daño, 1.0 tiros/s, cargador 5, rareza Legendario, 85% de penetración de armadura).
+  - `corrosive_blaster.tres`: Pistola corrosiva (RANGED, 22 daño, 5.0 tiros/s).
+  - `plasma_flamethrower.tres`: Lanzallamas de plasma (RANGED automático, 5 daño, 16.0 tiros/s).
+  - **Armas balísticas Fase 1** (solo datos, usan `projectile.tscn`; DPS sostenido anclado a su tier; ícono prestado de un arma existente vía `ItemIcons._weapon_kind`): `pistol_9mm.tres` (T1 Normal, semiautomática, 13 daño, 3.0/s, cargador 12, ~29 DPS; ícono pistola), `colt_44.tres` (T2 Bueno, 48 daño, 1.3/s, cargador 6, recarga 2.4, penetración 0.2, ~41 DPS; ícono revólver), `mp5.tres` (T2, automática, 7 daño, 12/s, cargador 25, ~48 DPS; ícono SMG), `ak47.tres` (T3 Épico, automática, 16 daño, 8/s, cargador 30, dispersión 5°, penetración 0.1, ~81 DPS; ícono rifle), `m4.tres` (T3, automática, 13 daño, 9.5/s, cargador 30, dispersión 0.5°, penetración 0.15, ~82 DPS; ícono carabina), `desert_eagle.tres` (T3, 75 daño, 1.4/s, cargador 7, penetración 0.5, ~75 DPS; ícono pistola). Se venden en `ShopWindow` y están en los `gear_pool` de `basic_runner_loot` (9 mm, Colt, MP5) y `armored_brute_loot` (las 6). Aún sin pedestales de nivel.
+
+### `entities/allies/` (Entidades Aliadas)
+- [`ally_base.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/allies/ally_base.gd) & `ally_base.tscn`: Clase base CharacterBody2D para aliados (`AllyBase`). Incluye `HealthComponent` (250 HP), inmunidad a fuego amigo, `VoiceComponent`, `TargetScannerComponent` y rescate por Leash (reposicionamiento si dist > 650px por más de 1.5s).
+- [`mercenary_skeleton.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/allies/mercenary_skeleton.gd) & `mercenary_skeleton.tscn`: Esqueleto mercenario contratable por 15 monedas (tecla E). Estados NEUTRAL, FOLLOW y COMBAT con tajos melee `MeleeHitbox`.
+- [`support_drone.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/allies/support_drone.gd) & `support_drone.tscn`: Dron orbital de apoyo. Flota sobre el jugador con lerp suave, escanea hostiles y dispara ráfagas de energía usando `ProjectilePool`.
+
+### `entities/enemies/` (Enemigos y Objetivos)
+- [`enemy_base.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/enemy_base.gd): Clase base para enemigos (`EnemyBase`). Los enemigos que persiguen (`BasicRunner`, `ArmoredBrute`, `ShieldedSentinel`) aceleran hacia su velocidad con `CHASE_ACCEL` (900 px/s²) en vez de fijarla cada frame, así el knockback del arma se nota (el Bruto lo reduce al 20%). Gestiona recepción de `HitPayload`, retroceso, estados alterados, placa superior `OverheadHealthBar` y dispersión piñata de botín con `LootTable`.
+- [`basic_runner.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/basic_runner.gd) & `basic_runner.tscn`: Enemigo bípedo veloz. Persigue al jugador horizontalmente, inflige daño por contacto (12 DMG), suelta botín y orbes de EXP.
+- [`armored_brute.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/armored_brute.gd) & `armored_brute.tscn`: Tanque pesado (220 HP, 65 de armadura mitigadora, 24 de daño de contacto, velocidad lenta). Usa `armored_brute_loot.tres`. Estrena en el Sector 1-4 vía `WaveManager.elite_scene`.
+- `zombie.tscn`: escena heredada de `basic_runner.tscn` (`art_kind = "zombie"`): 110 HP, velocidad 48, 16 de daño de contacto. Atajo [Z] en el sandbox.
+- [`ghost.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/ghost.gd) & `ghost.tscn`: Fantasma (hereda `BasicRunner`, sin `class_name`): flota hacia el jugador en 2D con ondulación, atraviesa muros (`collision_mask = 0`), 70 HP, 10 de daño de contacto. Atajo [V] en el sandbox.
+- [`shielded_sentinel.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/shielded_sentinel.gd) & `shielded_sentinel.tscn`: Centinela con escudo (60 HP, 130 de escudo de energía recargable tras 3.0s a 30/s, 70 px/s, 14 de contacto, contorno celeste reactivo a `shield_broken`). Usa `shielded_sentinel_loot.tres`. Estrena en el Sector 1-5 vía `WaveManager.elite_scene`.
+- [`sniper_turret.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/sniper_turret.gd) & `sniper_turret.tscn`: Torreta francotiradora estática (100 HP, 20 de armadura, escaneo a 550px con Line2D guía durante 1.2s antes de disparar un proyectil de 40 DMG a 900 px/s).
+- [`training_dummy.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/training_dummy.gd) & `training_dummy.tscn`: Objetivo de entrenamiento estático (Area2D) para métricas de daño y hit flash.
+- [`training_turret.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/training_turret.gd) & `training_turret.tscn`: Torreta de prueba hostil que dispara proyectiles lentos rojos para entrenamiento de parry balístico. Su arte (`training_turret`) mira siempre al jugador.
+
+### `entities/interactables/` (Objetos de Escenario Interactuables)
+- [`merchant_npc.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/merchant_npc.gd) & `merchant_npc.tscn`: PNJ Mercader (Campamento Base y hub del sandbox). Con [E] abre la `ShopWindow` de consumibles; se cierra sola al alejarse.
+- [`blacksmith_npc.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/blacksmith_npc.gd) & `blacksmith_npc.tscn`: PNJ Herrero en el Campamento Base. Al presionar [E], abre simultáneamente la ventana de forja (`BlacksmithWindow`) y la mochila del jugador (`InventoryWindow`).
+- [`checkpoint_terminal.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/checkpoint_terminal.gd) & `checkpoint_terminal.tscn`: Terminal de checkpoint. Solo guarda: actualiza el punto de respawn y persiste el flag en `SaveManager` al entrar en su área. Ya no ofrece contratos.
+- [`contract_terminal.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/contract_terminal.gd) & `contract_terminal.tscn`: Terminal de contratos de zona, separada del checkpoint ([E] sin contrato / [F] firmar). Hoy solo se usa en el sandbox (`ExpeditionZone`); no está en los niveles de campaña.
+- [`exit_gate.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/exit_gate.gd) & `exit_gate.tscn`: Compuerta de salida de sector. Permanece cerrada con luz roja mientras haya custodios vivos en la arena; se desbloquea con luz verde al eliminarlos y activa `GameManager.complete_level()`. Sin enemigos en el grupo `arena_enemies` se abre de inmediato. `reward_weapon_text` y `reward_world_flag` (vacíos por defecto) controlan el texto de victoria y el flag de mundo.
+- [`map_selector.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/map_selector.gd) & `map_selector.tscn`: Terminal de expediciones del Campamento Base. Abre ventana con sectores desbloqueados en `SaveManager.unlocked_levels`.
+- [`stash_chest.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/stash_chest.gd) & `stash_chest.tscn`: Baúl de suministros del Campamento Base. Al presionar [E], despliega simultáneamente la ventana del baúl (`StashWindow`) y la mochila del jugador (`InventoryWindow`).
+
+### `entities/items/` (Pickups y Botín)
+- [`drone_pickup.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/items/drone_pickup.gd) & `drone_pickup.tscn`: Pickup que instala un `SupportDrone` permanente en el jugador.
+- [`exp_orb.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/items/exp_orb.gd) & `exp_orb.tscn`: Orbe de experiencia atraído magnéticamente (+35 EXP).
+- [`loot_drop.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/items/loot_drop.gd) & `loot_drop.tscn`: Botín físico con dispersión en abanico (piñata), rebote y succión magnética (`COIN`, `AMMO`, `HEALTH`).
+- [`pickup_item.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/items/pickup_item.gd) & `pickup_item.tscn`: Pickup de equipamiento (`ItemData`). Muestra el ícono del ítem y el nombre con el color de su rareza. `allow_duplicates` (true por defecto; false en recompensas fijas, desaparece si el jugador ya lo posee, comparando ruta del `.tres` en equipo, mochila y baúl). Con la mochila llena no se consume: queda en el suelo y reintenta cada 0.5 s.
+- [`rune_pickup.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/items/rune_pickup.gd) & `rune_pickup.tscn`: Pickup de runa (`RuneData`) que se engarza en sockets libres del arma activa.
+- [`weapon_pickup.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/items/weapon_pickup.gd) & `weapon_pickup.tscn`: Pickup que añade un arma (`WeaponData`) al arsenal del jugador. Con `allow_duplicates = false` (por defecto) desaparece si el jugador ya posee el arma (compara la ruta del `.tres` en arsenal y mochila); `true` queda reservado para botín repetible (los drops de enemigos lo usan). Muestra el ícono del arma (`ItemIcons`) y el nombre con el color de su rareza.
+
+### `entities/player/` (Jugador y Componentes de Personaje)
+- [`player.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/player.gd) & `player.tscn`: Controlador maestro del personaje (`Player`, CharacterBody2D, grupo `player`). **Tamaño 2x:** `Visuals.scale = 2` (sprite de 32x32 dibujado a 64x64), cápsula de colisión de radio 18 y alto 64, hurtbox de 36x64, `WeaponPivot` a y -32. El arma en mano se amplía con `WeaponManager.WEAPON_SCALE = 1.5` y el hitbox melee con `HITBOX_SCALE = 1.5` (menos que el cuerpo; `BODY_SCALE = 2.0` solo ubica la mano y el centro). El equipo dibujado sigue el balanceo y el desplazamiento de cada cuadro del sprite (`FRAME_BOB_Y`, `RUN_SHIFT`). Si cambia el tamaño, hay que revisar también `ReloadIndicator.BAR_OFFSET`, las posiciones de `jetpack_particles` en `player.gd` y los `Vector2(0, -32)` que apuntan al centro del jugador (`LootDrop`, `SniperTurret`, `ThrowableManager`, `GrapplingHook`). Integra FSM, Coyote Time, Jump Buffer, salto variable, gestión de daño/respawn, soporte de wall jump, jetpack, alas y vuelo mágico.
+- [`equipment_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/equipment_manager.gd): Administrador de ranuras de equipo fijo (`HEAD`, `CHEST`, `GLOVES`, `BOOTS`, `BACK`, `ACCESSORY_1`, `ACCESSORY_2`, `TACTICAL`). Activa habilidades de movilidad en el jugador, inyecta infusiones elementales y permite soltar ítems al suelo (U accesorio 1, O accesorio 2, J botas, Y táctico).
+- [`equipment_visuals.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/equipment_visuals.gd): Nodo `EquipmentVisuals` (hijo de `Visuals` en `player.tscn`, sin `class_name`). Dibuja sobre el sprite del jugador el equipo puesto, recortando partes de los íconos de `ItemIcons`: casco (`HEAD`), pechera (`ARMOR`), botas (`FEET`), granada al cinturón (`TACTICAL`) y jetpack o alas detrás (`BODY`, capa `EquipmentBack` creada por código bajo `Visuals` y movida al inicio). Consulta el `EquipmentManager` cada frame, sigue `flip_h`, el tinte de daño y el ciclo de carrera, y mezcla 40% del color de rareza para que se note el tier. Los accesorios (anillos, gancho, baliza) no se dibujan. Las posiciones (`LAYOUT`) asumen el sprite de 32x32; si cambia el arte hay que reajustarlas.
+- [`inventory_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/inventory_manager.gd): Gestor de la mochila del jugador con 20 casilleros (`CAPACITY = 20`). Soporta adición, extracción, swaps y serialización a rutas `.tres`.
+- [`stats_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/stats_manager.gd): Gestor de estadísticas base y modificadores planos/porcentuales `(Base + Flat) * (1.0 + Pct)`. Controla nivel, EXP y monedas.
+- [`throwable_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/throwable_manager.gd): Gestor del arrojadizo táctico (`equipped_throwable` sincronizado con la ranura `TACTICAL`, `throw_cooldown = 4.0`). Acción `throw_tactical` ([G] / gatillo izquierdo; el botón lateral M4 pasó a consumibles): calcula la parábola hacia el cursor o stick derecho e instancia el `ThrowableBase`.
+- `entities/interactables/throwable_pedestal.gd`: Pedestal del sandbox con suministro infinito; [E] equipa el arrojadizo en la ranura `TACTICAL`.
+- [`weapon_pivot.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/weapon_pivot.gd): Pivote de apuntado 360° para ratón y stick derecho analógico con corrección de inversión en eje Y.
+- [`states/player_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_state.gd): Clase base para estados del jugador con helpers de movimiento y gravedad.
+- [`states/player_idle_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_idle_state.gd): Reposo en suelo con fricción.
+- [`states/player_move_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_move_state.gd): Movimiento horizontal en suelo con aceleración.
+- [`states/player_jump_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_jump_state.gd): Salto ascendente con corte de salto variable, multi-saltos, rebote en pared y propulsión de jetpack.
+- [`states/player_fall_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_fall_state.gd): Caída libre con gravedad multiplicada (1.35x), deslizamiento en pared, aleteo de alas, propulsión de jetpack, resolución de Coyote Time y Jump Buffer al tocar tierra.
+- [`entities/ui/overhead_health_bar.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/ui/overhead_health_bar.gd) & `overhead_health_bar.tscn`: Placa superior flotante sobre entidades. Muestra nombre, barra de vida, barra de escudo y badge de armadura (alternable con F2).
+
+### `levels/` (Niveles de Campaña)
+- [`level_01.gd`](file:///c:/Users/Usuario/Documents/warmachine/levels/level_01.gd) & `level_01.tscn`: Sector 1 de campaña. Integra descenso inicial, puesto avanzado con mercenario y runa, terminal de checkpoint y arena final de extracción custodiada por enemigos ante la compuerta de salida (`ExitGate`).
+
+- [`level_base.gd`](file:///c:/Users/Usuario/Documents/warmachine/levels/level_base.gd): Controlador común de los 50 niveles de `levels/chapter_N/` (spawn, carga de slot, caída al abismo, enlace con `ExitGate`, y `guaranteed_weapon_paths` para garantizar armas al entrar sin duplicarlas). Es el que usa el registro; `level_01.tscn` es un Sector 1 anterior, hoy sin conectar a `LevelRegistry`.
+- `levels/chapter_1/level_1_01.tscn`: **Sector 1-1** real, tutorial de progresión (~8200 px, ver ROADMAP 2.1). Tramos: calentamiento, bloques y pozos para aprender a saltar, pedestal del **Cuchillo de Combate**, pasillo 1 con 3 runners, checkpoint, pedestal del **Revólver Oxidado**, pasillo 2 con muñeco de práctica y 4 runners (grupo `arena_enemies`) que abren la `ExitGate`. Sin runas, armaduras ni ítems avanzados.
+- `levels/chapter_1/level_1_02.tscn`: **Sector 1-2**, nivel de oleadas (~8000 px, ver ROADMAP 2.2). Arena → pasillo → arena → pasillo → arena, con `ArenaEncounter` de 3, 4 y 6 ladrones, 3 checkpoints, y recompensa **Botas Ligeras** (`speed_boots.tres`) en pedestal. Garantiza cuchillo y revólver oxidado.
+
+- `levels/chapter_1/level_1_03.tscn`: **Sector 1-3**, fosos y arenas con plataformas (~9100 px, ver ROADMAP 2.2b). Dos tramos de fosos con piedras de apoyo, pasillo con 3 ladrones, Arena 1 (5 ladrones) y Arena final de 2 rondas (4 y 6), 4 checkpoints y recompensa **Carabina de Chatarra** (`scrap_carbine.tres`) en pedestal. Garantiza cuchillo y revólver oxidado.
+
+- `levels/chapter_1/level_1_04.tscn`: **Sector 1-4**, el Bruto Acorazado (~8800 px, ver ROADMAP 2.2c). Arena 1 con 1 Bruto, pasillo con 3 ladrones, Arena 2 (rondas `[3, 4]`, Bruto en la 2.ª), escalera opcional a la `sharpen_rune`, Arena final (rondas `[4, 6]`, 1 Bruto por ronda) y sin pedestal de armadura (se eliminaron las armaduras). `gear_loot_tier = 1`. Garantiza cuchillo, revólver oxidado y carabina.
+- `levels/chapter_1/level_1_05.tscn`: **Sector 1-5**, el Centinela con escudo (~9000 px, ver ROADMAP 2.2d). Arena 1 con 1 Centinela, pasillo de techo bajo (ladrón, Centinela, ladrón), Arena 2 (rondas `[3, 5]`, 1 Centinela por ronda), escalera opcional a la `pierce_rune`, Arena final (rondas `[4, 6, 6]`, Centinelas `[1, 1, 2]`) y recompensa **MP5** en pedestal. `gear_loot_tier = 2`. Garantiza cuchillo, revólver oxidado y carabina. Generado por script con el mismo formato que el 1-4 (se puede editar en el editor).
+- `LevelBase.gear_loot_tier`: tier del botín de equipo de los enemigos del nivel (0 = apagado, por defecto). `LevelRegistry.IMPLEMENTED_LEVELS` / `is_implemented()` lista los sectores con contenido; `MapSelector` deshabilita los bloqueados (🔒) y los pendientes.
+
+### `scenes/` (Menús y Escenas Principales)
+- [`main_menu.gd`](file:///c:/Users/Usuario/Documents/warmachine/scenes/main_menu.gd) & `main_menu.tscn`: Escena de inicio principal (`run/main_scene`). Selector de partidas con 3 slots independientes en disco, modales de creación de personaje con `LineEdit` y confirmación de borrado.
+- [`scenes/hub/base_camp.gd`](file:///c:/Users/Usuario/Documents/warmachine/scenes/hub/base_camp.gd) & `base_camp.tscn`: Campamento Base (Hub). Zona segura entre expediciones con jugador, baúl ilimitado (`StashChest`) y terminal de expediciones (`MapSelector`).
+
+### `tests/` (Scripts Históricos de Validación)
+- `test_phase4.gd` a `test_phase8.gd`: Scripts de verificación ejecutados como `SceneTree` en fases anteriores del desarrollo.
+
+### `ui/` (Interfaces de Usuario y Ventanas)
+- [`reload_indicator.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/reload_indicator.gd): Barra de progreso de recarga sobre la cabeza del jugador (Node2D con `_draw`, sin escena). La crea `WeaponManager` en `_ready`, lee `is_reloading` / `reload_timer` y hace un destello verde al completar.
+- [`blacksmith_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/blacksmith_window.gd) & `blacksmith_window.tscn`: Ventana modular de forja y modificación de armamento (hereda de `DraggableWindow`). Dispone de casillero central de yunque (`AnvilSlot`, 48x48 px) y 3 sockets dinámicos (40x40 px) para inserción y extracción de runas vía drag & drop y clic derecho.
+- [`hotbar.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/hotbar.gd): Barra de acceso rápido de 9 casilleros, centrada abajo (la instancia `hud.gd` por código, sin `class_name`). Las armas del arsenal que no están en ningún casillero (garantizadas por el nivel, compradas o recogidas sin equipar) entran solas al primer casillero libre de 1-3 al enlazar y cada vez que crece el arsenal (`_place_loose_weapons`). Nueve casilleros libres que guardan referencias: un arma del arsenal o un consumible del catálogo. Se llenan arrastrando desde la ranura rápida de armas o la paleta de consumibles del inventario (`inventory_window.gd`); arrastrar entre casilleros mueve o intercambia; clic derecho quita. El casillero en mano manda: un arma se equipa (`WeaponManager.hand_locked` = false), un consumible hace que el clic izquierdo lo use y no dispare (`hand_locked` = true). Teclas 1-9 eligen, rueda y L1/R1 recorren los ocupados, Q vuelve al anterior. La disposición se guarda en `Player.hotbar_layout` (`SaveManager`: clave `hotbar`; armas por índice del arsenal, consumibles por id). Hay una disposición por defecto (armas 1-3, consumibles 4-6) cuando la partida no tiene barra guardada.
+- [`hud.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/hud.gd) & `hud.tscn`: Interfaz HUD principal unificada (CanvasLayer en la capa 2: la 1 es el posprocesado del mundo). Muestra vida y escudo, nombre del operador, EXP y nivel, monedas, arma equipada, indicador de recarga/munición y visualización de 3 sockets de runas.
+- [`inventory_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/inventory_window.gd) & `inventory_window.tscn`: Ventana de inventario del jugador (hereda de `DraggableWindow`). Panel izquierdo con **paper doll** (silueta con casco, accesorio, espalda, armadura, táctico y botas) y barra rápida de 3 armas (clic elige, arrastrar mueve); panel derecho con grilla 5x4 de la mochila (20 casilleros). Resuelve los drops mochila, equipo, arma, baúl y yunque. **Clic derecho con el baúl abierto** (grupo `stash_window` visible): en mochila, equipo puesto o barra de armas el ítem va al baúl vía `StashWindow.store_item()` (`_try_store_in_stash`, tiene prioridad sobre equipar/desequipar y sobre el yunque); si no se puede guardar, cae al comportamiento normal. Con el baúl cerrado no cambia.
+- [`shop_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/shop_window.gd) & `shop_window.tscn`: Ventana de compra del mercader (hereda de `DraggableWindow`, con scroll). Sección CONSUMIBLES (catálogo de `ConsumableManager`, tope de 5) y sección EQUIPO (`GEAR_PATHS`: armaduras T1-T4 y armas, ordenadas por tier, incluidas pistola 9 mm, Colt .44, MP5, AK-47, M4 y Desert Eagle; precio = `gold_value`, no permite duplicados, equipa la armadura si la ranura está libre). Guarda tras cada compra.
+- [`stash_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/stash_window.gd) & `stash_window.tscn`: Ventana de baúl de almacenamiento ilimitado con ScrollContainer (hereda de `DraggableWindow`). Recibe ítems de la mochila, armas del arsenal (incluida la última: el personaje puede quedarse sin armas) y equipo puesto; las armas se guardan con sus runas. Autoguarda a disco al cerrarse y tras cada movimiento. `store_item(source_context, source_index, slot_type, res) -> bool` es la entrada pública única para guardar (valida, retira del origen, refresca ambas ventanas, persiste); la usan el arrastre (`_on_stash_item_dropped`) y el clic derecho de `InventoryWindow`. Devuelve `false` sin tocar nada si no se puede guardar. El clic derecho sobre un casillero del baúl sigue pasando el ítem a la mochila.
+- [`stats_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/stats_window.gd) & `stats_window.tscn`: Ventana modular de estadísticas y telemetría (tecla C, hereda de `DraggableWindow`). TabContainer con Ficha de Personaje (Supervivencia, Movilidad, Arma activa con DPS sostenido en vivo) y Registro Histórico (Bajas, Economía, Muertes, Contratos, Tiempo jugado).
+- [`status_display_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/status_display_component.gd) & `status_display_component.tscn`: Componente visual de badges de estados alterados (Fuego con stacks, Hielo).
+- [`ui/components/draggable_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/draggable_window.gd) & `draggable_window.tscn`: Ventana modular arrastrable con cabecera y botón de cierre.
+- [`ui/components/item_slot.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/item_slot.gd) & `item_slot.tscn`: Casillero de 40x40 px con tooltip avanzado (`ItemTooltip`), borde por rareza, texto de ayuda cuando está vacío (`empty_hint`) y clic derecho como acción rápida. Participa del sistema de ítem en mano como **origen** (agarra con clic o arrastre; `carry_on_click`) y como **destino** (grupo `drop_targets`; `can_accept_carried`, `receive_carried`, `set_drop_state`). Las ventanas extienden las reglas con `accept_filter: Callable(res, payload, slot) -> bool` sin tocar este script; el movimiento real lo resuelve cada ventana al escuchar `item_dropped_on_slot`.
+- [`ui/components/item_drag_controller.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/item_drag_controller.gd): Controlador global de **ítem en mano** (CanvasLayer 125, sin `class_name`, se carga por `preload` desde `ItemSlot.get_drag_controller()`). Reemplaza el drag nativo de Godot. Genérico: trabaja por protocolo de duck typing (origen: `set_carried`, `get_item`; destino: ver `ItemSlot`), por lo que cualquier Control nuevo puede ser origen o destino. Dos modos: arrastrar y soltar, o clic para agarrar y clic para soltar. Clic derecho o ESC cancela. Resalta destinos válidos, el ítem se acomoda en el casillero al pasar sobre uno válido, vuelve animado al origen si falla, y respeta qué ventana tapa a cuál (grupo `draggable_windows`). El ítem no sale de su contenedor hasta que el destino acepta, así que cancelar es siempre seguro. Sonidos procedurales.
+- [`ui/components/item_icons.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/item_icons.gd): Íconos de ítems en pixel art 16x16 definidos como texto (`ICON_ROWS` + `PALETTE`), sin assets. `get_icon_for(res)` devuelve un `Texture2D` cacheado (casillero, ítem en mano y tienda). El ícono es neutro: la rareza se ve solo en el borde del casillero (estilo WoW). Las runas se tiñen con su `rune_color`. El tipo de ícono sale del `item_id`, la ranura o el nombre del `.tres` del arma; para uno nuevo, agregar sus 16 filas y devolver su nombre desde `kind_for`. `WEAPON_POSES` / `get_weapon_pose()` define cómo se sostiene cada arma en mano (agarre, punta, giro, escala); un arma nueva con ícono propio también necesita su pose. Las armas de fuego usan `RANGED_POSE_SCALE` (1.4) como `scale` de pose: es la única constante a tocar para agrandar o achicar todas en mano.
+- [`ui/components/doll_silhouette.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/doll_silhouette.gd): Silueta dibujada por código de la hoja de equipamiento (paper doll). Reemplazable por arte sin tocar lógica.
+- [`ui/components/item_tooltip.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/item_tooltip.gd) & `item_tooltip.tscn`: Tooltip flotante de alta densidad en `CanvasLayer` (capa 120). Fondo `#111418EE`, borde reactivo según rareza (`Rarity`), desglose completo de estadísticas (DPS sostenido, cadencia, penetración, cargador, sockets, modificadores pasivos), descripción y valor económico en monedas (`gold_value`). Auto-clamping a los bordes de la pantalla.
+
+---
+
+## 3. SISTEMAS IMPLEMENTADOS (ESTADO REAL)
+
+### 3.1. Sistema de Movimiento y Plataformas del Jugador
+- **Archivos:** [`player.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/player.gd), [`player_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_state.gd), [`player_idle_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_idle_state.gd), [`player_move_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_move_state.gd), [`player_jump_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_jump_state.gd), [`player_fall_state.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/states/player_fall_state.gd), [`player_movement_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/data/player_movement_data.gd).
+- **Mecánicas Operativas:**
+  - **Física Base:** Velocidad 240 px/s, aceleración en suelo 1400 px/s², fricción 1600 px/s², aceleración aérea 900 px/s², resistencia aérea 300 px/s², gravedad 980 px/s².
+  - **Coyote Time (0.15s):** Permite ejecutar salto hasta 0.15s después de abandonar una plataforma sin haber saltado.
+  - **Jump Buffer (0.10s):** Almacena la intención de salto si se presiona el botón hasta 0.10s antes de tocar el suelo, ejecutándolo inmediatamente al aterrizar.
+  - **Salto Variable:** Corta la velocidad vertical a la mitad (`jump_cut_multiplier = 0.5`) si se suelta el botón de salto en pleno ascenso.
+  - **Multi-saltos:** Doble o múltiple salto en el aire configurable mediante `StatsManager.get_max_jumps()`.
+  - **Rebote en Pared (Wall Slide & Wall Jump):** Habilitado por `can_wall_jump` (activado por `wall_jump_boots.tres`). Desliza por paredes a velocidad máxima de 60 px/s y permite impulsarse horizontalmente en base a `player.get_wall_normal()`.
+  - **Jetpack:** Habilitado por `has_jetpack` (activado por `jetpack.tres`). Al mantener presionado el botón de salto en el aire, aplica empuje vertical constante (-260 px/s), consume 45 u/s de combustible (de 100u) y genera destellos visuales. Se recarga al tocar tierra.
+  - **Aleteo Aéreo (Feather Wings):** Habilitado por `has_wings` (activado por `feather_wings.tres`). Otorga hasta 5 impulsos ascendentes independientes en el aire (-320 px/s). Se restablece al tocar tierra.
+  - **Vuelo Mágico Omnidireccional:** Habilitado por `has_magic_flight` (activado por `flight_ring.tres`). Anula la gravedad y permite navegación libre en 8 direcciones con ejes horizontal y vertical.
+
+### 3.2. Pipeline de Combate, Daño y Balística
+- **Archivos:** [`hit_payload.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/hit_payload.gd), [`health_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/health_component.gd), [`projectile_pool.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/projectile_pool.gd), [`projectile.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/projectile.gd), [`melee_hitbox.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/melee_hitbox.gd), [`damage_number.gd`](file:///c:/Users/Usuario/Documents/warmachine/combat/damage_number.gd).
+- **Mecánicas Operativas:**
+  - **HitPayload:** Paquete que transporta daño, retroceso, dirección, nodo emisor, estados alterados, stacks, DoT y penetración de armadura (`armor_penetration`).
+  - **HealthComponent (Mitigación de 3 Capas):**
+    1. *Escudo de Energía (`max_shield`):* Absorbe el daño entrante plano antes de tocar la vida. Si se agota, emite `shield_broken`. Comienza a recargarse tras `shield_recharge_delay` (3.5s) a razón de `shield_recharge_rate`.
+    2. *Armadura Mitigadora (`armor`):* Solo afecta al daño residual que pasa a la salud. Fórmula: `mitigation_mult = 100.0 / (100.0 + armor * (1.0 - armor_penetration))`.
+    3. *Salud Directa (`current_health`):* Si llega a 0, emite `died`. Soporta impactos críticos (x1.5).
+  - **ProjectilePool:** Object Pool que preinstancia 60 balas y las reutiliza activando/desactivando su monitoreo y física, eliminando picos de garbage collection.
+  - **Modificadores Balísticos de Proyectiles:**
+    - *Rebotes (`bounces_left`):* Calcula la normal de impacto contra terreno (Layer 1) mediante raycast y refleja la trayectoria.
+    - *Perforación (`pierces_left`):* Atraviesa enemigos registrándolos en `_pierced_targets` para no dañarlos dos veces.
+    - *Bifurcación (`forks_left`):* Al impactar, genera 2 proyectiles a +/-30° con el 50% del daño base.
+    - *Deflexión / Parry:* Desvía la trayectoria en 180°, reasigna el dueño y amplifica el daño x1.5.
+  - **MeleeHitbox y Parry Balístico:** Tajo cuerpo a cuerpo con barrido angular mediante Tween. Si un proyectil hostil entra en contacto durante la ventana estricta de 0.06s, ejecuta parry balístico, lo deflecta y emite `parry_performed`.
+
+### 3.3. Sistema de Armamento, Cargador y Runas
+- **Archivos:** [`weapon_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/weapon_manager.gd), [`weapon_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/weapon_data.gd), [`rune_data.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/runes/rune_data.gd).
+- **Mecánicas Operativas:**
+  - **Arsenal del Jugador:** Hasta 3 armas equipadas en slots 1, 2 y 3.
+  - **Gestión de Munición y Recarga:** Cada arma rastrea su cargador individual en `weapon_magazines`. Si el cargador llega a 0 o se presiona R, inicia recarga (`reload_started`, temporizador `reload_time`). Al completarse, llena el cargador (`weapon_reloaded`, `ammo_changed`).
+  - **Dispersión y Perdigones:** Armas como la escopeta disparan múltiples proyectiles (`pellets_per_shot = 5`) distribuidos uniformemente en un cono angular (`spread_angle_degrees = 18°`).
+  - **Sockets de Runas:** Hasta 3 runas por arma. Modifican rebotes, perforación, bifurcación, daño plano e infusiones elementales. En el inventario de campo los sockets son de solo lectura. El engarce y desengarce se realiza exclusivamente en la estación de trabajo del Herrero (`BlacksmithNPC` / `BlacksmithWindow`). Se eliminó la acción en caliente [K].
+
+### 3.4. Sistema de Estados Alterados (DoT y Slow)
+- **Archivos:** [`status_receiver_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/status_receiver_component.gd), [`status_display_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/status_display_component.gd).
+- **Mecánicas Operativas:**
+  - **Fuego:** Acumula hasta 10 stacks. Temporizador de 3.0s que se renueva con cada impacto. Cada 0.5s ejecuta un tick de daño proporcional a las cargas (`tick_damage = base_burn_tick_damage * stacks`) e instancia números naranjas.
+  - **Hielo:** Reduce la velocidad al 50% (`slow_multiplier = 0.5`) durante 2.5s.
+  - **Tintado Visual:** Naranja para fuego, celeste para hielo, magenta/violeta si ambos coexisten.
+  - **Display Flotante:** Renderiza insignias con íconos y contador de stacks sobre las entidades.
+
+### 3.5. Sistema de Estadísticas y Progresión
+- **Archivos:** [`stats_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/stats_manager.gd).
+- **Mecánicas Operativas:**
+  - **Fórmula de Estadísticas:** `(Base + Suma_Plana) * (1.0 + Suma_Porcentual)`. Aplica a salud máxima, velocidad de movimiento, saltos máximos y multiplicador global de daño.
+  - **Progresión de Nivel:** Acumulación de experiencia con escalado geométrico (1.35x por nivel), tope en `MAX_LEVEL = 10`. Vida y daño se derivan de `level` (+`HEALTH_PER_LEVEL` = 10 de vida y +`DAMAGE_PER_LEVEL` = 3% de daño por nivel sobre el 1), por lo que persisten al guardar. Al subir de nivel cura al 100% y emite `level_gained` (aviso del HUD).
+  - **Armadura:** stat `armor` (suma plana de ítems). `StatsManager.get_armor()`; `Player.take_damage()` aplica `100 / (100 + armadura)` y sincroniza `health_component.armor` para la ficha de personaje.
+  - **Economía:** Contador centralizado de monedas (`coins`).
+
+### 3.6. Sistema de Inventario, Equipamiento y Baúl Ilimitado
+- **Archivos:** [`equipment_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/equipment_manager.gd), [`inventory_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/player/inventory_manager.gd), [`draggable_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/draggable_window.gd), [`item_slot.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/components/item_slot.gd), [`inventory_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/inventory_window.gd), [`stash_window.gd`](file:///c:/Users/Usuario/Documents/warmachine/ui/stash_window.gd), [`stash_chest.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/stash_chest.gd).
+- **Mecánicas Operativas:**
+  - **Equipamiento Fijo (`EquipmentManager`):** ranuras fijas (`HEAD`, `CHEST`, `GLOVES`, `BOOTS`, `BACK`, `ACCESSORY_1`, `ACCESSORY_2`, `TACTICAL`; `CHEST` es el pecho y es independiente de `BACK`, que queda para jetpack/alas). La categoría `ACCESSORY` de un ítem se equipa en la primera ranura de accesorio libre. Aplica pasivas y habilidades de movilidad. Desequipable con U (accesorio 1), O (accesorio 2), J (botas) e Y (táctico), arrojando el ítem al suelo. Las partidas con el esquema anterior (`FEET`, `ARMOR`, `BODY`, `ACCESSORY`) se migran al cargar (`SaveManager.LEGACY_EQUIP_KEYS`).
+  - **Mochila (`InventoryManager`):** 20 casilleros (`CAPACITY = 20`) que serializan a rutas `.tres`.
+  - **Baúl Ilimitado (`StashWindow` / `StashChest`):** Almacenamiento con ScrollContainer dinámico en el campamento base. Cada entrada de `SaveManager.stash_items` es una ruta o un `{path, runes}` (usar `stash_entry_to_resource` / `stash_resource_to_entry`). Autoguarda a disco al cerrarse.
+  - **Guardado automático:** `InventoryWindow` guarda 0.8 s después de cada cambio hecho con la ventana abierta (no en el sandbox), y `SaveManager` guarda al cerrar la ventana del juego. El slot persiste armas en orden, arma activa (`active_weapon`), equipo, mochila y baúl. Con el arsenal vacío se guarda y se restaura sin armas.
+  - **Armas garantizadas:** `LevelBase` no regala el arma garantizada si ya está en arsenal, mochila o baúl.
+  - **Interacción UI:** Ventanas arrastrables libremente con ratón (`DraggableWindow`), tooltips emergentes, soporte para arrastrar y soltar (Drag & Drop) y clic derecho para equipar o transferir directamente entre mochila y baúl.
+
+### 3.7. Detección de Blancos y Sensores Autónomos
+- **Archivos:** [`target_scanner_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/components/target_scanner_component.gd).
+- **Mecánicas Operativas:**
+  - Barrido periódico (cada 0.2s) buscando la entidad viva más próxima perteneciente a los grupos configurados (`enemies` o `player`).
+  - Validación de línea de visión directa (LoS) proyectando un `RayCast2D` contra la capa de terreno (Layer 1).
+
+### 3.8. Aliados y Drones de Apoyo
+- **Archivos:** [`ally_base.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/allies/ally_base.gd), [`mercenary_skeleton.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/allies/mercenary_skeleton.gd), [`support_drone.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/allies/support_drone.gd), [`voice_component.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/components/voice_component.gd).
+- **Mecánicas Operativas:**
+  - **AllyBase:** 250 HP, inmunidad total a fuego amigo del jugador y aliados, sensor de blancos integrado y rescate por Leash (si la distancia horizontal supera los 650px durante 1.5s, se teletransporta automáticamente junto al líder).
+  - **Mercenario Terrestre:** Inicia en reposo; se contrata por 15 monedas con la tecla E. Pasa a seguir al jugador y ejecuta tajos cuerpo a cuerpo contra enemigos detectados.
+  - **Dron Orbital:** Levita suavemente con oscilación sinusoidal sobre la cabeza del jugador, rastrea enemigos y dispara proyectiles energéticos con `ProjectilePool`.
+  - **VoiceComponent:** Muestra globos de diálogo flotantes animados sobre aliados al ser contratados, entrar en combate o morir.
+
+### 3.9. Contratos de Riesgo y Mutadores de Zona
+- **Archivos:** [`zone_modifier_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/zone_modifier_manager.gd), [`zone_contract.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/contracts/zone_contract.gd), [`contract_terminal.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/contract_terminal.gd).
+- **Mecánicas Operativas:**
+  - Modifica dinámicamente las reglas de la zona al firmar contratos en la `ContractTerminal` (tecla F; [E] los cancela).
+  - Altera gravedad del jugador (`gravity_mult`), multiplicador de monedas arrojadas por enemigos (`coin_drop_mult`) y velocidad de hostiles (`enemy_speed_mult`).
+  - Consulta estática O(1) de multiplicadores globales mediante `ZoneModifierManager.get_world_mult(key, default)`.
+
+### 3.10. Persistencia Real a Disco y Guardado en 3 Slots
+- **Archivos:** [`save_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/save_manager.gd).
+- **Mecánicas Operativas:**
+  - Almacena archivos JSON en `user://saves/slot_{id}.json` (hasta 3 slots).
+  - Guarda nombre del operador, fecha/hora, niveles desbloqueados, flags de mundo, estadísticas del jugador (nivel, exp, monedas), armas equipadas con sus runas serializadas, ítems equipados, mochila de 20 slots y baúl ilimitado.
+  - Soporta creación de nuevos perfiles, borrado de ranuras y previsualización de datos (`get_slot_preview`).
+  - Checkpoint dinámico activo (`last_checkpoint_position`) para reaparición inmediata tras derrota.
+
+### 3.11. Flujo de Partida, Campaña y Menús
+- **Archivos:** [`game_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/game_manager.gd), [`main_menu.gd`](file:///c:/Users/Usuario/Documents/warmachine/scenes/main_menu.gd), [`base_camp.gd`](file:///c:/Users/Usuario/Documents/warmachine/scenes/hub/base_camp.gd), [`level_01.gd`](file:///c:/Users/Usuario/Documents/warmachine/levels/level_01.gd), [`exit_gate.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/exit_gate.gd), [`map_selector.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/map_selector.gd).
+- **Mecánicas Operativas:**
+  - **Menú Principal (`main_menu.tscn`):** Escena de arranque con selector de 3 perfiles en disco, creación con nombre de personaje y confirmación de borrado.
+  - **Campamento Base (`base_camp.tscn`):** Hub seguro para gestionar baúl, inventario y seleccionar expediciones.
+  - **Sector 1 (`level_01.tscn`):** Nivel estructurado con 4 zonas que culmina en una arena con compuerta de extracción (`ExitGate`).
+  - **Gestión de Estados Globales (`GameManager`):** Pausa del árbol de escena, pantalla de derrota con reaparición por checkpoint (tecla R), pantalla de victoria con reporte de recompensas y retorno al campamento base o menú.
+  - **Atajos Globales:** ESC (Pausa / Menú), R (Reaparecer tras Game Over), F2 (Alternar barras superiores de vida), F1 (Munición infinita en debug), F3 (Respawn en Sandbox).
+---
+
+## 4. SINGLETONS Y RECURSOS
+
+### 4.1. Autoloads Registrados (`project.godot`)
+- **`GameManager`:** `*res://core/managers/game_manager.gd` (Instanciado globalmente con `process_mode = PROCESS_MODE_ALWAYS`).
+
+### 4.2. Singletons / Service Locators por Grupo y Código
+- **`SaveManager`:** Nodo registrado en grupo `save_manager` con instancia estática accesible vía `SaveManager.get_instance()` y helpers estáticos (`SaveManager.set_world_flag()`, `SaveManager.get_respawn_point()`).
+- **`ZoneModifierManager`:** Nodo registrado en grupo `zone_modifier_manager` con instancia estática accesible vía `ZoneModifierManager.get_instance()` y `ZoneModifierManager.get_world_mult()`.
+- **`ProjectilePool`:** Nodo registrado en grupo `projectile_pool` accesible vía `get_tree().get_first_node_in_group("projectile_pool")`.
+
+### 4.3. Catálogo de Recursos Serializados (`.tres`) Existentes
+
+#### Contratos de Zona (`res://data/contracts/`)
+- `low_gravity_contract.tres`: `ZoneContract` (gravedad 0.6x, monedas 2.5x, velocidad de enemigos 1.2x).
+
+#### Ítems Equipables y Pasivos (`res://data/items/`)
+- `speed_boots.tres`: `ItemData` (Ranura: `BOOTS`, +60 px/s velocidad plana).
+- `wall_jump_boots.tres`: `ItemData` (Ranura: `BOOTS`, activa `can_wall_jump = true`).
+- `jump_feather.tres`: `ItemData` (Ranura: `NONE`, +1 salto pasivo).
+- `feather_wings.tres`: `ItemData` (Ranura: `BACK`, activa `has_wings = true` con 5 aleteos).
+- `jetpack.tres`: `ItemData` (Ranura: `BACK`, activa `has_jetpack = true` con 100u de combustible).
+- `fire_ring.tres`: `ItemData` (Ranura: `ACCESSORY`, otorga infusión elemental `"FIRE"`).
+- `flight_ring.tres`: `ItemData` (Ranura: `ACCESSORY`, activa `has_magic_flight = true`).
+
+#### Tablas de Botín (`res://data/loot/`)
+- `basic_runner_loot.tres`: `LootTable` con 2 a 4 monedas (100% prob.), munición (50% prob.) y armas básicas (3%).
+- `armored_brute_loot.tres`: `LootTable` del Bruto: 6 a 10 monedas, munición (80%), vida (50%) y armas (20%).
+
+#### Runas Modulares (`res://data/runes/`)
+- `bounce_rune.tres`: `RuneData` (+1 rebote contra muros, armas de fuego).
+- `fork_rune.tres`: `RuneData` (+1 bifurcación en 2 proyectiles a +/-30° con 50% DMG).
+- `pierce_rune.tres`: `RuneData` (+1 perforación de enemigos).
+- `sharpen_rune.tres`: `RuneData` (+15 daño plano por impacto, armas de fuego y melee).
+
+#### Armamento (`res://data/weapons/`)
+- `combat_knife.tres`: `WeaponData` (MELEE, 30 DMG, 2.4 tajos/s, parry balístico).
+- `iron_sword.tres`: `WeaponData` (MELEE, 38 DMG, 2.2 tajos/s, rareza Bueno, parry balístico).
+- `pistol.tres`: `WeaponData` (RANGED semiautomática, 25 DMG, 4.0 tiros/s, infusión `"ICE"`, cargador 12, recarga 1.4s).
+- `rust_revolver.tres`: `WeaponData` "Revólver Oxidado" (RANGED, 18 DMG, 2.5 tiros/s, cargador 6, recarga 2.0s, dispersión 3°, proyectil lento 400 px/s). Primera arma de rango del Sector 1-1.
+- `revolver.tres`: `WeaponData` (RANGED, 18 DMG, 6.0 tiros/s).
+- `smg.tres`: `WeaponData` (RANGED automática, 10 DMG, 14.0 tiros/s, cargador 30, recarga 1.6s).
+- `shotgun.tres`: `WeaponData` (RANGED, 12 DMG, 1.6 tiros/s, 5 perdigones por disparo, dispersión angular 18°).
+- `heavy_sniper.tres`: `WeaponData` (RANGED, 130 DMG, 1.0 tiros/s, cargador 5, rareza Legendario, 85% de penetración de armadura).
+- `corrosive_blaster.tres`: `WeaponData` (RANGED, 22 DMG, 5.0 tiros/s).
+- `plasma_flamethrower.tres`: `WeaponData` (RANGED automática, 5 DMG, 16.0 tiros/s).

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RuneData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/runes/rune_data.gd" id="1_rune"]
+
+[resource]
+script = ExtResource("1_rune")
+rune_id = "fork_rune"
+rune_name = "Runa de Bifurcación"
+rarity = 3
+gold_value = 80
+description = "Divide el proyectil en 2 al impactar a +/-30 grados con 50% de daño."
+rune_color = Color(1, 0.8, 0.2, 1)
+allowed_weapon_types = [0]
+bonus_damage = 0.0
+extra_bounces = 0
+extra_pierce = 0
+extra_forks = 1
+elemental_infusion = ""

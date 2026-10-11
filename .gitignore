@@ -1,0 +1,22 @@
+# Godot 4+
+.godot/
+/android/
+
+# Salidas de exportación (build_exe.bat)
+build/
+
+# Copia exacta de ost/*.m4a (las pistas originales ya están en ost/)
+ost.zip
+
+# Intermedios regenerables de los pipelines de arte (python)
+art_source/character_rig/_state.pkl
+__pycache__/
+*.pyc
+
+# Sistema y editores
+Thumbs.db
+desktop.ini
+.DS_Store
+*.tmp
+.vscode/
+.claude/settings.local.json

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Espada de Hierro"
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 110.0
+swing_duration = 0.16
+damage = 38.0
+fire_rate = 2.2
+knockback_force = 280.0
+recoil_force = 0.0
+projectile_speed = 0.0
+innate_status_effects = []
+rarity = 1
+gold_value = 80
+description = "Espada de aleacion pesada. Arco amplio de corte con capacidad de deflexion."

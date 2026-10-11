@@ -1,0 +1,15 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/consumables/consumable_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+consumable_id = "no_reload_potion"
+display_name = "Poción Sin Recarga"
+short_name = "S/RECARGA"
+description = "Durante 15 s tus armas no gastan munición ni necesitan recarga."
+price = 25
+effect = 1
+magnitude = 0.0
+duration = 15.0
+color = Color(1, 0.8, 0.2, 1)

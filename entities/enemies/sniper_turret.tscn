@@ -1,0 +1,70 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://entities/enemies/sniper_turret.gd" id="1_sniper"]
+[ext_resource type="Script" path="res://core/health_component.gd" id="2_health"]
+[ext_resource type="Script" path="res://core/status_receiver_component.gd" id="3_status"]
+[ext_resource type="PackedScene" path="res://ui/status_display_component.tscn" id="4_disp"]
+[ext_resource type="Script" path="res://core/components/target_scanner_component.gd" id="5_scanner"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_turret"]
+size = Vector2(36, 36)
+
+[node name="SniperTurret" type="CharacterBody2D" groups=["enemies"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_sniper")
+entity_name = "Torreta Francotiradora"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -18)
+shape = SubResource("RectangleShape2D_turret")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="Base" type="ColorRect" parent="Visuals"]
+offset_left = -18.0
+offset_top = -8.0
+offset_right = 18.0
+offset_bottom = 0.0
+color = Color(0.18, 0.2, 0.25, 1)
+
+[node name="ColorRect" type="ColorRect" parent="Visuals"]
+offset_left = -14.0
+offset_top = -34.0
+offset_right = 14.0
+offset_bottom = -8.0
+color = Color(0.28, 0.32, 0.38, 1)
+
+[node name="Lens" type="ColorRect" parent="Visuals"]
+offset_left = -6.0
+offset_top = -26.0
+offset_right = 6.0
+offset_bottom = -16.0
+color = Color(1, 0.2, 0.2, 1)
+
+[node name="Muzzle" type="Marker2D" parent="Visuals"]
+position = Vector2(0, -21)
+
+[node name="AimLine" type="Line2D" parent="."]
+visible = false
+width = 1.5
+default_color = Color(1, 0.1, 0.1, 0.4)
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+max_health = 100.0
+armor = 20.0
+
+[node name="TargetScannerComponent" type="Node2D" parent="."]
+position = Vector2(0, -21)
+script = ExtResource("5_scanner")
+detection_radius = 550.0
+target_groups = ["player"]
+
+[node name="StatusReceiverComponent" type="Node" parent="." node_paths=PackedStringArray("health_component", "visual_node")]
+script = ExtResource("3_status")
+health_component = NodePath("../HealthComponent")
+visual_node = NodePath("../Visuals/ColorRect")
+
+[node name="StatusDisplayComponent" parent="." instance=ExtResource("4_disp")]
+position = Vector2(0, -42)

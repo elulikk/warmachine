@@ -1,0 +1,332 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://ui/hud.gd" id="1_hud"]
+[ext_resource type="PackedScene" path="res://ui/inventory_window.tscn" id="2_inv_win"]
+[ext_resource type="PackedScene" path="res://ui/stats_window.tscn" id="3_stats_win"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel_bg"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.06, 0.08, 0.12, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.3, 0.42, 0.85)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
+bg_color = Color(0.12, 0.14, 0.18, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_fill"]
+bg_color = Color(0.2, 0.8, 0.42, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_exp_bg"]
+bg_color = Color(0.12, 0.14, 0.18, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_exp_fill"]
+bg_color = Color(0.25, 0.65, 1, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_socket"]
+bg_color = Color(0.08, 0.1, 0.14, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.45, 0.6, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wslot_active"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.14, 0.2, 0.3, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.85, 0.25, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wslot_inactive"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.06, 0.08, 0.12, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.35, 0.48, 0.6)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="HUD" type="CanvasLayer"]
+layer = 5
+script = ExtResource("1_hud")
+
+[node name="TopLeftContainer" type="MarginContainer" parent="."]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 276.0
+offset_bottom = 96.0
+
+[node name="Panel" type="PanelContainer" parent="TopLeftContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel_bg")
+
+[node name="VBox" type="VBoxContainer" parent="TopLeftContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Header" type="HBoxContainer" parent="TopLeftContainer/Panel/VBox"]
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="TopLeftContainer/Panel/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 13
+text = "LVL 1"
+
+[node name="Spacer" type="Control" parent="TopLeftContainer/Panel/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CharacterNameLabel" type="Label" parent="TopLeftContainer/Panel/VBox/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "OPERADOR"
+
+[node name="HealthBar" type="ProgressBar" parent="TopLeftContainer/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(236, 18)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_hp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_fill")
+value = 100.0
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="TopLeftContainer/Panel/VBox/HealthBar"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 11
+text = "HP: 100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExpBar" type="ProgressBar" parent="TopLeftContainer/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(236, 5)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_exp_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_exp_fill")
+show_percentage = false
+
+[node name="StatsLabel" type="Label" parent="TopLeftContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.85, 0.95, 1)
+theme_override_font_sizes/font_size = 11
+text = "ARM 0  |  DMG 0"
+
+[node name="TopRightContainer" type="MarginContainer" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -196.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 60.0
+grow_horizontal = 0
+
+[node name="Panel" type="PanelContainer" parent="TopRightContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel_bg")
+
+[node name="CoinsLabel" type="Label" parent="TopRightContainer/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.25, 1)
+theme_override_font_sizes/font_size = 14
+text = "🪙 Monedas: 0"
+horizontal_alignment = 1
+
+[node name="BottomRightContainer" type="MarginContainer" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -280.0
+offset_top = -116.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="Panel" type="PanelContainer" parent="BottomRightContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel_bg")
+
+[node name="VBox" type="VBoxContainer" parent="BottomRightContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="WeaponSlotsBar" type="HBoxContainer" parent="BottomRightContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="WeaponSlot1Btn" type="Button" parent="BottomRightContainer/Panel/VBox/WeaponSlotsBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_wslot_inactive")
+text = "[1] VACÍO"
+
+[node name="WeaponSlot2Btn" type="Button" parent="BottomRightContainer/Panel/VBox/WeaponSlotsBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_wslot_inactive")
+text = "[2] VACÍO"
+
+[node name="WeaponSlot3Btn" type="Button" parent="BottomRightContainer/Panel/VBox/WeaponSlotsBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_wslot_inactive")
+text = "[3] VACÍO"
+
+[node name="WeaponNameLabel" type="Label" parent="BottomRightContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "Sin arma"
+
+[node name="AmmoLabel" type="Label" parent="BottomRightContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 11
+text = ""
+
+[node name="SocketsContainer" type="HBoxContainer" parent="BottomRightContainer/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Socket1" type="PanelContainer" parent="BottomRightContainer/Panel/VBox/SocketsContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_socket")
+
+[node name="Socket1Rect" type="ColorRect" parent="BottomRightContainer/Panel/VBox/SocketsContainer/Socket1"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+color = Color(0.2, 0.85, 1, 1)
+
+[node name="Socket1Label" type="Label" parent="BottomRightContainer/Panel/VBox/SocketsContainer/Socket1"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "•"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Socket2" type="PanelContainer" parent="BottomRightContainer/Panel/VBox/SocketsContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_socket")
+
+[node name="Socket2Rect" type="ColorRect" parent="BottomRightContainer/Panel/VBox/SocketsContainer/Socket2"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+color = Color(0.95, 0.55, 0.2, 1)
+
+[node name="Socket2Label" type="Label" parent="BottomRightContainer/Panel/VBox/SocketsContainer/Socket2"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "•"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Socket3" type="PanelContainer" parent="BottomRightContainer/Panel/VBox/SocketsContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_socket")
+
+[node name="Socket3Rect" type="ColorRect" parent="BottomRightContainer/Panel/VBox/SocketsContainer/Socket3"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+color = Color(0.8, 0.3, 0.9, 1)
+
+[node name="Socket3Label" type="Label" parent="BottomRightContainer/Panel/VBox/SocketsContainer/Socket3"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "•"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HintLabel" type="Label" parent="BottomRightContainer/Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.6, 0.72, 1)
+theme_override_font_sizes/font_size = 9
+text = "[1-3] Arma | [I] Mochila | [C] Estadísticas"
+
+[node name="InventoryWindow" parent="." instance=ExtResource("2_inv_win")]
+visible = false
+
+[node name="StatsWindow" parent="." instance=ExtResource("3_stats_win")]
+visible = false
+

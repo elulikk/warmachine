@@ -1,0 +1,156 @@
+﻿[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_base.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://core/camera_follow.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="4_hud"]
+[ext_resource type="Script" path="res://core/projectile_pool.gd" id="5_pool"]
+[ext_resource type="Script" path="res://core/managers/save_manager.gd" id="6_save"]
+[ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="7_zone"]
+[ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="8_gate"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
+size = Vector2(2600, 48)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(40, 800)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
+size = Vector2(180, 20)
+
+[node name="Level_3_06" type="Node2D"]
+script = ExtResource("1_level")
+level_id = "3_06"
+level_title = "Sector 3-6"
+chapter_number = 3
+next_level_path = "res://levels/chapter_3/level_3_07.tscn"
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -100
+
+[node name="ColorRect" type="ColorRect" parent="Background"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.09, 0.07, 1)
+
+[node name="Environment" type="Node2D" parent="."]
+
+[node name="MainFloor" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1300, 580)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/MainFloor"]
+shape = SubResource("RectangleShape2D_floor")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/MainFloor"]
+offset_left = -1300.0
+offset_top = -24.0
+offset_right = 1300.0
+offset_bottom = 24.0
+color = Color(0.1, 0.18, 0.14, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/MainFloor"]
+offset_left = -1300.0
+offset_top = -24.0
+offset_right = 1300.0
+offset_bottom = -21.0
+color = Color(0.25, 0.85, 0.55, 1)
+
+[node name="LeftWall" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(-20, 240)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/LeftWall"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightWall" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(2580, 240)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="Platform1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(650, 470)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform1"]
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Platform1"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.15, 0.28, 0.22, 1)
+
+[node name="Platform2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1250, 390)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform2"]
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Platform2"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.15, 0.28, 0.22, 1)
+
+[node name="Platform3" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1800, 450)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform3"]
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Platform3"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.15, 0.28, 0.22, 1)
+
+[node name="SectorLabel" type="Label" parent="Environment"]
+offset_left = 60.0
+offset_top = 400.0
+offset_right = 650.0
+offset_bottom = 430.0
+theme_override_colors/font_color = Color(0.3, 1.0, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "CAPÍTULO 3 • LABORATORIOS BIOTEC • SECTOR 3-6"
+
+[node name="SpawnPoint" type="Marker2D" parent="."]
+position = Vector2(160, 545)
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(160, 545)
+
+[node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
+position = Vector2(160, 510)
+zoom = Vector2(1.1, 1.1)
+limit_left = -50
+limit_top = -250
+limit_right = 2650
+limit_bottom = 650
+position_smoothing_enabled = true
+script = ExtResource("3_camera")
+target = NodePath("../Player")
+
+[node name="ExitGate" parent="." instance=ExtResource("8_gate")]
+position = Vector2(2350, 556)
+
+[node name="HUD" parent="." instance=ExtResource("4_hud")]
+
+[node name="ProjectilePool" type="Node" parent="." groups=["projectile_pool"]]
+script = ExtResource("5_pool")
+
+[node name="SaveManager" type="Node" parent="." groups=["save_manager"]]
+script = ExtResource("6_save")
+
+[node name="ZoneModifierManager" type="Node" parent="." groups=["zone_modifier_manager"]]
+script = ExtResource("7_zone")

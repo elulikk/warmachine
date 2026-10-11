@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://combat/throwables/gas_bomb.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "gas_bomb"
+item_name = "Bomba de Gas Inflamable"
+item_color = Color(0.4, 0.75, 0.3, 1)
+equip_slot = "TACTICAL"
+throwable_scene = ExtResource("2_scene")
+tags = Array[String](["THROWABLE"])
+modifiers = Array[Dictionary]([])
+grants_extra_jump = 0
+rarity = 3
+gold_value = 50
+description = "Bomba quimica biologica. Genera una nube densa que deflagra al contacto con fuego."
+

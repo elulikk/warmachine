@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ZoneContract" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/contracts/zone_contract.gd" id="1_contract"]
+
+[resource]
+script = ExtResource("1_contract")
+contract_id = "low_gravity_contract"
+contract_title = "Contrato de Baja Gravedad"
+description = "+150% Monedas al derrotar enemigos, 60% gravedad de caída para el jugador, enemigos 20% más veloces."
+player_modifiers = {
+"gravity_mult": 0.6
+}
+world_modifiers = {
+"coin_drop_mult": 2.5,
+"enemy_speed_mult": 1.2
+}

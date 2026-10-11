@@ -1,0 +1,505 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/stats_window.gd" id="1_stats_win"]
+[ext_resource type="PackedScene" path="res://ui/components/draggable_window.tscn" id="2_drag_base"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_box"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.06, 0.08, 0.12, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.35, 0.5, 0.6)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dps_highlight"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.18, 0.12, 0.04, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.75, 0.2, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="StatsWindow" groups=["stats_window"] instance=ExtResource("2_drag_base")]
+offset_right = 440.0
+offset_bottom = 400.0
+script = ExtResource("1_stats_win")
+
+[node name="StatsTabContainer" type="TabContainer" parent="VBox/ContentContainer" index="0"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="Ficha de Personaje" type="ScrollContainer" parent="VBox/ContentContainer/StatsTabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SurvivalPanel" type="PanelContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "● PANEL DE SUPERVIVENCIA"
+
+[node name="Grid" type="GridContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="HealthTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Salud:"
+
+[node name="HealthValLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "100 / 100 HP"
+
+[node name="ShieldTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Escudo:"
+
+[node name="ShieldValLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0 / 0"
+
+[node name="ArmorTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Armadura:"
+
+[node name="ArmorValLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="MitigationTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Mitigación:"
+
+[node name="MitigationValLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/SurvivalPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.9, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "0.0%"
+
+[node name="MobilityPanel" type="PanelContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.75, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "● PANEL DE MOVILIDAD"
+
+[node name="Grid" type="GridContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="SpeedTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Velocidad:"
+
+[node name="SpeedValLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "240 px/s"
+
+[node name="JumpsTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Saltos Máx:"
+
+[node name="JumpsValLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "1 Salto"
+
+[node name="StatesTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Habilidades:"
+
+[node name="MobilityStatesLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/MobilityPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 10
+text = "Estándar"
+
+[node name="WeaponPanel" type="PanelContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.5, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "● ARMA ACTIVA Y RENDIMIENTO BALÍSTICO"
+
+[node name="Grid" type="GridContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="WNameTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Arma:"
+
+[node name="WeaponNameLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
+theme_override_font_sizes/font_size = 10
+text = "Pistola"
+
+[node name="ImpactTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Daño Impacto:"
+
+[node name="ImpactDmgLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "25.0"
+
+[node name="FRateTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Cadencia:"
+
+[node name="FireRateLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "4.0 tiros/s"
+
+[node name="MagTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Cargador / Recarga:"
+
+[node name="MagReloadLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "12 (1.2s)"
+
+[node name="PenTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Penetración Armadura:"
+
+[node name="ArmorPenLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0%"
+
+[node name="InfTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Infusiones:"
+
+[node name="InfusionsLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "Ninguna"
+
+[node name="BreakdownTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Desglose Daño:"
+
+[node name="DamageBreakdownLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.9, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "Base: 55.0 (+0 Runas) x 1.0"
+
+[node name="CritTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Golpe Crítico:"
+
+[node name="CritValLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/WeaponPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 10
+text = "15% Prob | x1.5 (83!)"
+
+[node name="DpsBox" type="PanelContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_dps_highlight")
+
+[node name="HBox" type="HBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/DpsBox"]
+layout_mode = 2
+alignment = 1
+
+[node name="DpsLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/DpsBox/HBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 12
+text = "DPS SOSTENIDO ESTIMADO:"
+
+[node name="SustainedDpsLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Ficha de Personaje/VBox/DpsBox/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+text = "71.4 DPS"
+
+[node name="Registro Histórico" type="ScrollContainer" parent="VBox/ContentContainer/StatsTabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="GlobalPanel" type="PanelContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "● REGISTRO DE CARRERA Y TIEMPO"
+
+[node name="Grid" type="GridContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="TimeTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Tiempo Jugado:"
+
+[node name="TimePlayedLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "00:00:00"
+
+[node name="DeathsTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Bajas Sufridas (Muertes):"
+
+[node name="PlayerDeathsLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="ContractsTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Contratos Completados:"
+
+[node name="ContractsCompletedLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/GlobalPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="EconomyPanel" type="PanelContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/EconomyPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/EconomyPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "● ECONOMÍA GLOBAL"
+
+[node name="CoinsEconomyLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/EconomyPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "Obtenido: 0  |  Gastado: 0"
+
+[node name="KillsPanel" type="PanelContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HBox" type="HBoxContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox"]
+layout_mode = 2
+
+[node name="Header" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 11
+text = "● BAJAS HOSTILES CONFIRMADAS"
+
+[node name="TotalKillsLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/HBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.4, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 bajas"
+
+[node name="Grid" type="GridContainer" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="RunnerTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Ladrones (BasicRunner):"
+
+[node name="KillsRunnersLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="BruteTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Tanques Pesados (ArmoredBrute):"
+
+[node name="KillsBrutesLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="SentinelTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Centinelas de Escudo (ShieldedSentinel):"
+
+[node name="KillsSentinelsLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="TurretTitle" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Torretas Francotiradoras (SniperTurret):"
+
+[node name="KillsTurretsLabel" type="Label" parent="VBox/ContentContainer/StatsTabContainer/Registro Histórico/VBox/KillsPanel/VBox/Grid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"

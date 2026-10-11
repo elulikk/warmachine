@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://combat/throwables/acid_grenade.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "acid_grenade"
+item_name = "Granada de Acido"
+item_color = Color(0.5, 0.95, 0.15, 1)
+equip_slot = "TACTICAL"
+throwable_scene = ExtResource("2_scene")
+tags = Array[String](["THROWABLE"])
+modifiers = Array[Dictionary]([])
+grants_extra_jump = 0
+rarity = 2
+gold_value = 35
+description = "Carga corrosiva que crea un charco de acido disolvente de armaduras."
+

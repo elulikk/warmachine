@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://combat/throwables/frag_grenade.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "frag_grenade"
+item_name = "Granada de Fragmentacion"
+item_color = Color(0.45, 0.6, 0.3, 1)
+equip_slot = "TACTICAL"
+throwable_scene = ExtResource("2_scene")
+tags = Array[String](["THROWABLE"])
+modifiers = Array[Dictionary]([])
+grants_extra_jump = 0
+rarity = 0
+gold_value = 15
+description = "Granada de fragmentacion estandar con detonacion cinetica de metralla."
+

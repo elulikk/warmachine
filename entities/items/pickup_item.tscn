@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://entities/items/pickup_item.gd" id="1_item"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pickup"]
+size = Vector2(20, 20)
+
+[node name="PickupItem" type="Area2D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_item")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_pickup")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="Visuals"]
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+color = Color(0.2, 0.95, 0.55, 1)
+
+[node name="InnerRect" type="ColorRect" parent="Visuals"]
+offset_left = -3.0
+offset_top = -3.0
+offset_right = 3.0
+offset_bottom = 3.0
+color = Color(1, 1, 1, 0.65)
+
+[node name="NameLabel" type="Label" parent="Visuals"]
+offset_left = -70.0
+offset_top = -24.0
+offset_right = 70.0
+offset_bottom = -9.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1

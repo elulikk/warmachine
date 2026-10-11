@@ -1,0 +1,109 @@
+[gd_scene load_steps=22 format=3]
+
+[ext_resource type="Script" path="res://entities/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://core/state_machine/state_machine.gd" id="2_sm"]
+[ext_resource type="Script" path="res://entities/player/states/player_idle_state.gd" id="3_idle"]
+[ext_resource type="Script" path="res://entities/player/states/player_move_state.gd" id="4_move"]
+[ext_resource type="Script" path="res://entities/player/states/player_jump_state.gd" id="5_jump"]
+[ext_resource type="Script" path="res://entities/player/states/player_fall_state.gd" id="6_fall"]
+[ext_resource type="Script" path="res://entities/player/weapon_pivot.gd" id="7_pivot"]
+[ext_resource type="Script" path="res://core/weapon_manager.gd" id="8_wmanager"]
+[ext_resource type="Resource" path="res://data/weapons/pistol.tres" id="9_pistol"]
+[ext_resource type="Resource" path="res://data/weapons/smg.tres" id="10_smg"]
+[ext_resource type="Script" path="res://entities/player/stats_manager.gd" id="11_stats"]
+[ext_resource type="Script" path="res://entities/player/equipment_manager.gd" id="12_equip"]
+[ext_resource type="Resource" path="res://data/weapons/iron_sword.tres" id="13_sword"]
+[ext_resource type="Script" path="res://core/status_receiver_component.gd" id="14_status"]
+[ext_resource type="PackedScene" path="res://ui/status_display_component.tscn" id="15_disp"]
+[ext_resource type="Script" path="res://core/health_component.gd" id="16_health"]
+[ext_resource type="Script" path="res://entities/player/inventory_manager.gd" id="17_inv"]
+[ext_resource type="Script" path="res://entities/player/throwable_manager.gd" id="19_throw"]
+[ext_resource type="Script" path="res://entities/player/character_rig.gd" id="20_rig"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
+radius = 18.0
+height = 64.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(36, 64)
+
+[node name="Player" type="CharacterBody2D" groups=["player"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -32)
+shape = SubResource("CapsuleShape2D_1")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="CharacterRig" type="Node2D" parent="Visuals"]
+script = ExtResource("20_rig")
+gear_driven = true
+
+[node name="WeaponPivot" type="Node2D" parent="."]
+position = Vector2(0, -54)
+script = ExtResource("7_pivot")
+
+[node name="WeaponVisual" type="ColorRect" parent="WeaponPivot"]
+offset_left = 6.0
+offset_top = -3.0
+offset_right = 24.0
+offset_bottom = 3.0
+color = Color(0.75, 0.78, 0.82, 1)
+
+[node name="Muzzle" type="Marker2D" parent="WeaponPivot"]
+position = Vector2(25, 0)
+
+[node name="WeaponManager" type="Node" parent="." node_paths=PackedStringArray("weapon_pivot", "muzzle")]
+script = ExtResource("8_wmanager")
+weapon_pivot = NodePath("../WeaponPivot")
+muzzle = NodePath("../WeaponPivot/Muzzle")
+
+[node name="StateMachine" type="Node" parent="." node_paths=PackedStringArray("initial_state")]
+script = ExtResource("2_sm")
+initial_state = NodePath("Idle")
+
+[node name="Idle" type="Node" parent="StateMachine"]
+script = ExtResource("3_idle")
+
+[node name="Move" type="Node" parent="StateMachine"]
+script = ExtResource("4_move")
+
+[node name="Jump" type="Node" parent="StateMachine"]
+script = ExtResource("5_jump")
+
+[node name="Fall" type="Node" parent="StateMachine"]
+script = ExtResource("6_fall")
+
+[node name="StatsManager" type="Node" parent="."]
+script = ExtResource("11_stats")
+
+[node name="EquipmentManager" type="Node" parent="."]
+script = ExtResource("12_equip")
+
+[node name="InventoryManager" type="Node" parent="."]
+script = ExtResource("17_inv")
+
+[node name="ThrowableManager" type="Node" parent="."]
+script = ExtResource("19_throw")
+
+[node name="StatusReceiverComponent" type="Node" parent="." node_paths=PackedStringArray("visual_node")]
+script = ExtResource("14_status")
+visual_node = NodePath("../Visuals")
+
+[node name="StatusDisplayComponent" parent="." instance=ExtResource("15_disp")]
+position = Vector2(0, -92)
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("16_health")
+max_health = 100.0
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -32)
+shape = SubResource("RectangleShape2D_hurtbox")

@@ -1,0 +1,164 @@
+[gd_scene format=3 uid="uid://cvcvfld4n2grd"]
+
+[ext_resource type="Script" uid="uid://dgf061v5mc1jr" path="res://scenes/hub/base_camp.gd" id="1_camp"]
+[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://c3db7p4458crf" path="res://core/camera_follow.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="4_hud"]
+[ext_resource type="Script" uid="uid://ch2cnohmm7xlt" path="res://core/projectile_pool.gd" id="5_pool"]
+[ext_resource type="PackedScene" path="res://entities/interactables/stash_chest.tscn" id="6_chest"]
+[ext_resource type="PackedScene" path="res://entities/interactables/map_selector.tscn" id="7_map"]
+[ext_resource type="PackedScene" path="res://ui/stash_window.tscn" id="8_stash_win"]
+[ext_resource type="Script" uid="uid://ce8mo5yb72bfq" path="res://core/managers/save_manager.gd" id="9_save"]
+[ext_resource type="Script" uid="uid://bck4yi5i6lh6m" path="res://core/managers/zone_modifier_manager.gd" id="10_zone"]
+[ext_resource type="PackedScene" path="res://entities/enemies/training_dummy.tscn" id="11_pe66u"]
+[ext_resource type="PackedScene" path="res://entities/interactables/blacksmith_npc.tscn" id="12_smith"]
+[ext_resource type="PackedScene" path="res://ui/blacksmith_window.tscn" id="13_smith_win"]
+[ext_resource type="PackedScene" path="res://entities/interactables/merchant_npc.tscn" id="14_merchant"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_camp_floor"]
+size = Vector2(1600, 48)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_camp_wall"]
+size = Vector2(40, 600)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_banner"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+bg_color = Color(0.08, 0.12, 0.18, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.55, 0.85, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="BaseCamp" type="Node2D" unique_id=458678776]
+script = ExtResource("1_camp")
+
+[node name="Background" type="CanvasLayer" parent="." unique_id=216691106]
+layer = -100
+
+[node name="ColorRect" type="ColorRect" parent="Background" unique_id=1718605664]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.07, 0.1, 1)
+
+[node name="Environment" type="Node2D" parent="." unique_id=956029155]
+
+[node name="MainFloor" type="StaticBody2D" parent="Environment" unique_id=1977128065 groups=["world"]]
+position = Vector2(600, 560)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/MainFloor" unique_id=1271784093]
+shape = SubResource("RectangleShape2D_camp_floor")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/MainFloor" unique_id=1064422794]
+offset_left = -800.0
+offset_top = -24.0
+offset_right = 800.0
+offset_bottom = 24.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/MainFloor" unique_id=857930074]
+offset_left = -800.0
+offset_top = -24.0
+offset_right = 800.0
+offset_bottom = -21.0
+color = Color(0.3, 0.5, 0.75, 1)
+
+[node name="LeftWall" type="StaticBody2D" parent="Environment" unique_id=1736246163 groups=["world"]]
+position = Vector2(-150, 300)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/LeftWall" unique_id=1805489683]
+shape = SubResource("RectangleShape2D_camp_wall")
+
+[node name="RightWall" type="StaticBody2D" parent="Environment" unique_id=1964405845 groups=["world"]]
+position = Vector2(1350, 300)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall" unique_id=839581744]
+shape = SubResource("RectangleShape2D_camp_wall")
+
+[node name="HubBanner" type="PanelContainer" parent="Environment" unique_id=2010650722]
+offset_left = 460.0
+offset_top = 360.0
+offset_right = 740.0
+offset_bottom = 392.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_banner")
+
+[node name="BannerLabel" type="Label" parent="Environment/HubBanner" unique_id=1906225330]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "CAMPAMENTO BASE - SECTOR SEGURO"
+horizontal_alignment = 1
+
+[node name="InstructionTip" type="Label" parent="Environment" unique_id=1653819162]
+offset_left = 250.0
+offset_top = 410.0
+offset_right = 950.0
+offset_bottom = 430.0
+theme_override_colors/font_color = Color(0.65, 0.72, 0.82, 1)
+theme_override_font_sizes/font_size = 11
+text = "[I] Mochila • [E] Herrero • [E] Baúl • [E] Expediciones • [E] Mercader • [1-9] Barra rápida"
+horizontal_alignment = 1
+
+[node name="BlacksmithNPC" parent="." unique_id=1849203912 instance=ExtResource("12_smith")]
+position = Vector2(160, 536)
+
+[node name="StashChest" parent="." unique_id=1301119065 instance=ExtResource("6_chest")]
+position = Vector2(360, 536)
+
+[node name="MerchantNPC" parent="." instance=ExtResource("14_merchant")]
+position = Vector2(1060, 536)
+
+[node name="MapSelector" parent="." unique_id=2032862939 instance=ExtResource("7_map")]
+position = Vector2(840, 536)
+
+[node name="Player" parent="." unique_id=59870136 instance=ExtResource("2_player")]
+position = Vector2(600, 520)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=518321900 node_paths=PackedStringArray("target")]
+position = Vector2(600, 480)
+zoom = Vector2(1.2, 1.2)
+limit_left = -200
+limit_top = 100
+limit_right = 1400
+limit_bottom = 620
+position_smoothing_enabled = true
+script = ExtResource("3_camera")
+target = NodePath("../Player")
+smooth_speed = 5.0
+
+[node name="SaveManager" type="Node" parent="." unique_id=401887462 groups=["save_manager"]]
+script = ExtResource("9_save")
+
+[node name="ZoneModifierManager" type="Node" parent="." unique_id=617264183 groups=["zone_modifier_manager"]]
+script = ExtResource("10_zone")
+
+[node name="ProjectilePool" type="Node" parent="." unique_id=641895098 groups=["projectile_pool"]]
+script = ExtResource("5_pool")
+
+[node name="HUD" parent="." unique_id=799499075 instance=ExtResource("4_hud")]
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=837177728]
+layer = 15
+
+[node name="StashWindow" parent="UI" unique_id=850711801 instance=ExtResource("8_stash_win")]
+visible = false
+
+[node name="BlacksmithWindow" parent="UI" unique_id=981273412 instance=ExtResource("13_smith_win")]
+visible = false
+
+[node name="TrainingDummy" parent="." unique_id=1689684474 instance=ExtResource("11_pe66u")]
+position = Vector2(-40, 534)

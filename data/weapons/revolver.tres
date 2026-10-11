@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://qsjysq12r8dc"]
+
+[ext_resource type="Script" uid="uid://cscpl4ofuoe7b" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+[ext_resource type="Script" uid="uid://x45v4u34qja8" path="res://core/runes/rune_data.gd" id="3_71273"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Revólver de Servicio"
+damage = 18.0
+fire_rate = 6.0
+knockback_force = 200.0
+recoil_force = 45.0
+projectile_speed = 560.0
+reload_time = 1.1
+projectile_scene = ExtResource("2_proj")
+rarity = 1
+gold_value = 50
+description = "Revolver de servicio reglamentario. Buen equilibrio de cadencia e impacto balistico."

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://bflcpdhmxp2gu"]
+
+[ext_resource type="Script" uid="uid://cscpl4ofuoe7b" path="res://core/weapon_data.gd" id="1_650de"]
+[ext_resource type="Script" uid="uid://x45v4u34qja8" path="res://core/runes/rune_data.gd" id="2_4aacp"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="3_proj"]
+
+[resource]
+script = ExtResource("1_650de")
+weapon_name = "Revólver Oxidado"
+is_automatic = false
+damage = 18.0
+fire_rate = 2.5
+knockback_force = 260.0
+recoil_force = 40.0
+projectile_speed = 400.0
+magazine_size = 6
+reload_time = 2.0
+spread_angle_degrees = 3.0
+projectile_scene = ExtResource("3_proj")
+rarity = 0
+gold_value = 20
+description = "Revolver desgastado recuperado de la chatarra. Mecanismo tosco pero funcional."
+metadata/_custom_type_script = "uid://cscpl4ofuoe7b"

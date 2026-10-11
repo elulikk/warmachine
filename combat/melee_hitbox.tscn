@@ -1,0 +1,31 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://combat/melee_hitbox.gd" id="1_melee"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sweep"]
+size = Vector2(48, 28)
+
+[node name="MeleeHitbox" type="Area2D"]
+collision_layer = 0
+collision_mask = 6
+script = ExtResource("1_melee")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(26, 0)
+shape = SubResource("RectangleShape2D_sweep")
+
+[node name="SlashVisual" type="Node2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="SlashVisual"]
+offset_left = 6.0
+offset_top = -12.0
+offset_right = 50.0
+offset_bottom = 12.0
+color = Color(1, 1, 1, 0.75)
+
+[node name="InnerLine" type="ColorRect" parent="SlashVisual"]
+offset_left = 12.0
+offset_top = -4.0
+offset_right = 46.0
+offset_bottom = 4.0
+color = Color(0.8, 0.95, 1, 0.9)

@@ -1,0 +1,191 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://ui/components/item_tooltip.gd" id="1_tooltip"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltip"]
+content_margin_left = 10.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+bg_color = Color(0.067, 0.078, 0.094, 0.933)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.82, 0.84, 0.86, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0, 0, 0, 0.6)
+shadow_size = 6
+
+[node name="ItemTooltip" type="PanelContainer"]
+z_index = 300
+custom_minimum_size = Vector2(230, 0)
+offset_right = 230.0
+offset_bottom = 120.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tooltip")
+script = ExtResource("1_tooltip")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HeaderBox" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="TitleLabel" type="Label" parent="VBox/HeaderBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+text = "Nombre del Objeto"
+
+[node name="SubtitleLabel" type="Label" parent="VBox/HeaderBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.74, 0.82, 1)
+theme_override_font_sizes/font_size = 9
+text = "TIPO • RAREZA"
+
+[node name="HeaderSeparator" type="HSeparator" parent="VBox"]
+unique_name_in_owner = true
+modulate = Color(0.4, 0.5, 0.65, 0.5)
+layout_mode = 2
+
+[node name="CombatStatsBox" type="VBoxContainer" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DPSContainer" type="HBoxContainer" parent="VBox/CombatStatsBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DPSValueLabel" type="Label" parent="VBox/CombatStatsBox/DPSContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.25, 1)
+theme_override_font_sizes/font_size = 16
+text = "0.0 DPS"
+
+[node name="DPSTagLabel" type="Label" parent="VBox/CombatStatsBox/DPSContainer"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_colors/font_color = Color(0.65, 0.7, 0.78, 1)
+theme_override_font_sizes/font_size = 9
+text = "SOSTENIDO"
+
+[node name="StatsGrid" type="GridContainer" parent="VBox/CombatStatsBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="DamageTitle" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Daño:"
+
+[node name="DamageValue" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="FireRateTitle" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Cadencia:"
+
+[node name="FireRateValue" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "0.0/s"
+
+[node name="ArmorPenTitle" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Pen. Armadura:"
+
+[node name="ArmorPenValue" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "0%"
+
+[node name="AmmoTitle" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Cargador:"
+
+[node name="AmmoValue" type="Label" parent="VBox/CombatStatsBox/StatsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "0"
+
+[node name="SocketsIndicatorLabel" type="Label" parent="VBox/CombatStatsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.6, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Sockets: 0 / 3"
+
+[node name="ItemStatsBox" type="VBoxContainer" parent="VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ModifiersLabel" type="Label" parent="VBox/ItemStatsBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Modificadores"
+autowrap_mode = 2
+
+[node name="DescSeparator" type="HSeparator" parent="VBox"]
+unique_name_in_owner = true
+modulate = Color(0.4, 0.5, 0.65, 0.5)
+layout_mode = 2
+
+[node name="DescriptionLabel" type="Label" parent="VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.78, 0.85, 1)
+theme_override_font_sizes/font_size = 10
+text = "Descripción del recurso"
+autowrap_mode = 2
+
+[node name="FooterBox" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+alignment = 2
+
+[node name="GoldIconLabel" type="Label" parent="VBox/FooterBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "🪙"
+
+[node name="GoldValueLabel" type="Label" parent="VBox/FooterBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 10
+text = "0 Monedas"

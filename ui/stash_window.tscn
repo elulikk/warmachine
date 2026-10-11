@@ -1,0 +1,52 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://ui/stash_window.gd" id="1_stash_win"]
+[ext_resource type="PackedScene" path="res://ui/components/draggable_window.tscn" id="2_drag_base"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_scroll_bg"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.05, 0.07, 0.1, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.35, 0.5, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="StashWindow" groups=["stash_window"] instance=ExtResource("2_drag_base")]
+offset_right = 320.0
+offset_bottom = 320.0
+script = ExtResource("1_stash_win")
+
+[node name="VBoxContent" type="VBoxContainer" parent="VBox/ContentContainer" index="0"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="InstructionLabel" type="Label" parent="VBox/ContentContainer/VBoxContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.8, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "Arrastra o Clic Derecho para transferir con la mochila."
+horizontal_alignment = 1
+
+[node name="StashScroll" type="ScrollContainer" parent="VBox/ContentContainer/VBoxContent"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 230)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_scroll_bg")
+horizontal_scroll_mode = 0
+
+[node name="StashGrid" type="GridContainer" parent="VBox/ContentContainer/VBoxContent/StashScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 6

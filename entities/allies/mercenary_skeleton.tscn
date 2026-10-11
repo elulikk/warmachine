@@ -1,0 +1,108 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://entities/allies/mercenary_skeleton.gd" id="1_merc"]
+[ext_resource type="Script" path="res://core/health_component.gd" id="2_health"]
+[ext_resource type="Script" path="res://core/status_receiver_component.gd" id="3_status"]
+[ext_resource type="Script" path="res://core/components/target_scanner_component.gd" id="4_scanner"]
+[ext_resource type="Script" path="res://core/components/voice_component.gd" id="5_voice"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(18, 36)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(20, 36)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_interact"]
+size = Vector2(64, 48)
+
+[node name="MercenarySkeleton" type="CharacterBody2D" groups=["allies"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_merc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -18)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="Visuals"]
+offset_left = -9.0
+offset_top = -36.0
+offset_right = 9.0
+offset_bottom = 0.0
+color = Color(0.92, 0.9, 0.82, 1)
+
+[node name="Headband" type="ColorRect" parent="Visuals"]
+offset_left = -9.0
+offset_top = -33.0
+offset_right = 9.0
+offset_bottom = -29.0
+color = Color(0.85, 0.2, 0.2, 1)
+
+[node name="EyeSockets" type="ColorRect" parent="Visuals"]
+offset_left = 2.0
+offset_top = -28.0
+offset_right = 6.0
+offset_bottom = -25.0
+color = Color(0.12, 0.12, 0.15, 1)
+
+[node name="SwordSheath" type="ColorRect" parent="Visuals"]
+offset_left = -11.0
+offset_top = -22.0
+offset_right = -9.0
+offset_bottom = -8.0
+color = Color(0.4, 0.45, 0.5, 1)
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+max_health = 250.0
+
+[node name="StatusReceiverComponent" type="Node" parent="." node_paths=PackedStringArray("health_component", "visual_node")]
+script = ExtResource("3_status")
+health_component = NodePath("../HealthComponent")
+visual_node = NodePath("../Visuals/ColorRect")
+
+[node name="TargetScannerComponent" type="Node2D" parent="."]
+script = ExtResource("4_scanner")
+detection_radius = 320.0
+target_groups = ["enemies"]
+scan_interval = 0.2
+
+[node name="VoiceComponent" type="Node2D" parent="."]
+script = ExtResource("5_voice")
+offset_y = -52.0
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 4
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -18)
+shape = SubResource("RectangleShape2D_hurtbox")
+
+[node name="InteractionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+position = Vector2(0, -18)
+shape = SubResource("RectangleShape2D_interact")
+
+[node name="HirePrompt" type="Node2D" parent="."]
+position = Vector2(0, -54)
+
+[node name="Label" type="Label" parent="HirePrompt"]
+offset_left = -100.0
+offset_top = -12.0
+offset_right = 100.0
+offset_bottom = 12.0
+theme_override_colors/font_color = Color(1, 0.88, 0.35, 1)
+theme_override_colors/font_outline_color = Color(0.05, 0.05, 0.08, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 11
+text = "Contratar [E] - 15 Monedas"
+horizontal_alignment = 1
+vertical_alignment = 1

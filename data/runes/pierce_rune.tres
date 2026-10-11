@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="RuneData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/runes/rune_data.gd" id="1_rune"]
+
+[resource]
+script = ExtResource("1_rune")
+rune_id = "pierce_rune"
+rune_name = "Runa de Perforación"
+rarity = 2
+gold_value = 55
+description = "Permite atravesar +1 enemigo sin destruirse."
+rune_color = Color(0.9, 0.25, 0.4, 1)
+allowed_weapon_types = [0]
+bonus_damage = 0.0
+extra_bounces = 0
+extra_pierce = 1
+extra_forks = 0
+elemental_infusion = ""

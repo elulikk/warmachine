@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "jetpack"
+item_name = "Jetpack Propulsor (Cuerpo)"
+item_color = Color(1.0, 0.45, 0.1, 1)
+equip_slot = "BACK"
+elemental_infusion = ""
+tags = ["JETPACK"]
+modifiers = []
+grants_extra_jump = 0
+rarity = 3
+gold_value = 135
+description = "Mochila propulsora con combustible presurizado para sustentacion vertical prolongada."
+

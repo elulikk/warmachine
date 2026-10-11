@@ -1,0 +1,367 @@
+{
+ "canvas": [
+  2048,
+  2048
+ ],
+ "units": "px",
+ "facing": "right",
+ "scale_note": "escala original del PSD (2048x2048)",
+ "overlap_px": {
+  "arm": 16,
+  "leg": 30
+ },
+ "far_offsets": {
+  "arm": [
+   -34,
+   -6
+  ],
+  "leg": [
+   46,
+   0
+  ]
+ },
+ "draw_order_back_to_front": [
+  "foot_far",
+  "leg_far_shin",
+  "leg_far_thigh",
+  "arm_far_upper",
+  "arm_far_lower",
+  "hand_far",
+  "foot_near",
+  "leg_near_shin",
+  "leg_near_thigh",
+  "head",
+  "torso",
+  "arm_near_upper",
+  "arm_near_lower",
+  "hand_near"
+ ],
+ "pivots": {
+  "shoulder_near": [
+   1000,
+   690
+  ],
+  "elbow_near": [
+   985,
+   895
+  ],
+  "wrist_near": [
+   1060,
+   1115
+  ],
+  "hip_near": [
+   1040,
+   1240
+  ],
+  "knee_near": [
+   1040,
+   1480
+  ],
+  "ankle_near": [
+   1025,
+   1832
+  ],
+  "shoulder_far": [
+   966,
+   684
+  ],
+  "elbow_far": [
+   951,
+   889
+  ],
+  "wrist_far": [
+   1026,
+   1109
+  ],
+  "hip_far": [
+   1086,
+   1240
+  ],
+  "knee_far": [
+   1086,
+   1480
+  ],
+  "ankle_far": [
+   1071,
+   1832
+  ],
+  "neck": [
+   1020,
+   622
+  ],
+  "grip": [
+   1128,
+   1212
+  ],
+  "ground": [
+   1060,
+   1911
+  ],
+  "origin": [
+   1060,
+   1911
+  ]
+ },
+ "pieces": {
+  "head": {
+   "file": "pieces/head.png",
+   "offset": [
+    936,
+    226
+   ],
+   "size": [
+    309,
+    395
+   ],
+   "pivot_canvas": [
+    1020,
+    622
+   ],
+   "pivot_local": [
+    84,
+    396
+   ]
+  },
+  "torso": {
+   "file": "pieces/torso.png",
+   "offset": [
+    869,
+    553
+   ],
+   "size": [
+    354,
+    733
+   ],
+   "pivot_canvas": null,
+   "pivot_local": null
+  },
+  "arm_near_upper": {
+   "file": "pieces/arm_near_upper.png",
+   "offset": [
+    899,
+    620
+   ],
+   "size": [
+    188,
+    318
+   ],
+   "pivot_canvas": [
+    1000,
+    690
+   ],
+   "pivot_local": [
+    101,
+    70
+   ]
+  },
+  "arm_near_lower": {
+   "file": "pieces/arm_near_lower.png",
+   "offset": [
+    926,
+    853
+   ],
+   "size": [
+    201,
+    288
+   ],
+   "pivot_canvas": [
+    985,
+    895
+   ],
+   "pivot_local": [
+    59,
+    42
+   ]
+  },
+  "hand_near": {
+   "file": "pieces/hand_near.png",
+   "offset": [
+    1021,
+    1081
+   ],
+   "size": [
+    183,
+    206
+   ],
+   "pivot_canvas": [
+    1060,
+    1115
+   ],
+   "pivot_local": [
+    39,
+    34
+   ]
+  },
+  "leg_near_thigh": {
+   "file": "pieces/leg_near_thigh.png",
+   "offset": [
+    947,
+    1187
+   ],
+   "size": [
+    233,
+    324
+   ],
+   "pivot_canvas": [
+    1040,
+    1240
+   ],
+   "pivot_local": [
+    93,
+    53
+   ]
+  },
+  "leg_near_shin": {
+   "file": "pieces/leg_near_shin.png",
+   "offset": [
+    925,
+    1450
+   ],
+   "size": [
+    290,
+    421
+   ],
+   "pivot_canvas": [
+    1040,
+    1480
+   ],
+   "pivot_local": [
+    115,
+    30
+   ]
+  },
+  "foot_near": {
+   "file": "pieces/foot_near.png",
+   "offset": [
+    957,
+    1800
+   ],
+   "size": [
+    268,
+    115
+   ],
+   "pivot_canvas": [
+    1025,
+    1832
+   ],
+   "pivot_local": [
+    68,
+    32
+   ]
+  },
+  "arm_far_upper": {
+   "file": "pieces/arm_far_upper.png",
+   "offset": [
+    865,
+    614
+   ],
+   "size": [
+    188,
+    318
+   ],
+   "pivot_canvas": [
+    966,
+    684
+   ],
+   "pivot_local": [
+    101,
+    70
+   ]
+  },
+  "arm_far_lower": {
+   "file": "pieces/arm_far_lower.png",
+   "offset": [
+    892,
+    847
+   ],
+   "size": [
+    201,
+    288
+   ],
+   "pivot_canvas": [
+    951,
+    889
+   ],
+   "pivot_local": [
+    59,
+    42
+   ]
+  },
+  "hand_far": {
+   "file": "pieces/hand_far.png",
+   "offset": [
+    987,
+    1075
+   ],
+   "size": [
+    183,
+    206
+   ],
+   "pivot_canvas": [
+    1026,
+    1109
+   ],
+   "pivot_local": [
+    39,
+    34
+   ]
+  },
+  "leg_far_thigh": {
+   "file": "pieces/leg_far_thigh.png",
+   "offset": [
+    993,
+    1187
+   ],
+   "size": [
+    233,
+    324
+   ],
+   "pivot_canvas": [
+    1086,
+    1240
+   ],
+   "pivot_local": [
+    93,
+    53
+   ]
+  },
+  "leg_far_shin": {
+   "file": "pieces/leg_far_shin.png",
+   "offset": [
+    971,
+    1450
+   ],
+   "size": [
+    290,
+    421
+   ],
+   "pivot_canvas": [
+    1086,
+    1480
+   ],
+   "pivot_local": [
+    115,
+    30
+   ]
+  },
+  "foot_far": {
+   "file": "pieces/foot_far.png",
+   "offset": [
+    1003,
+    1800
+   ],
+   "size": [
+    268,
+    115
+   ],
+   "pivot_canvas": [
+    1071,
+    1832
+   ],
+   "pivot_local": [
+    68,
+    32
+   ]
+  }
+ }
+}

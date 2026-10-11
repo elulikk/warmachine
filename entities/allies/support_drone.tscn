@@ -1,0 +1,32 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://entities/allies/support_drone.gd" id="1_drone"]
+[ext_resource type="Script" path="res://core/components/target_scanner_component.gd" id="2_scanner"]
+
+[node name="SupportDrone" type="Node2D" groups=["allies"]]
+script = ExtResource("1_drone")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="Visuals"]
+offset_left = -6.0
+offset_top = -6.0
+offset_right = 6.0
+offset_bottom = 6.0
+color = Color(0.25, 0.82, 1, 1)
+
+[node name="CoreRect" type="ColorRect" parent="Visuals"]
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+color = Color(0.9, 0.98, 1, 0.95)
+
+[node name="Muzzle" type="Marker2D" parent="."]
+position = Vector2(8, 0)
+
+[node name="TargetScannerComponent" type="Node2D" parent="."]
+script = ExtResource("2_scanner")
+detection_radius = 320.0
+target_groups = ["enemies"]
+scan_interval = 0.2

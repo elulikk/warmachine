@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://bqs2612baiid"]
+
+[ext_resource type="Script" uid="uid://cscpl4ofuoe7b" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+[ext_resource type="Script" uid="uid://x45v4u34qja8" path="res://core/runes/rune_data.gd" id="3_o0sqk"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Lanzallamas de Plasma"
+is_automatic = true
+damage = 5.0
+fire_rate = 16.0
+knockback_force = 30.0
+recoil_force = 15.0
+projectile_speed = 360.0
+magazine_size = 50
+reload_time = 1.8
+spread_angle_degrees = 12.0
+innate_pierce = 1
+projectile_scene = ExtResource("2_proj")
+innate_status_effects = Array[String](["FIRE"])
+rarity = 4
+gold_value = 220
+description = "Lanzallamas experimental de plasma continuo. Calcina hordas enteras con pulsos igneos ininterrumpidos."

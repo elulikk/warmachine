@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Desert Eagle"
+weapon_type = 0
+is_automatic = false
+damage = 75.0
+fire_rate = 1.4
+knockback_force = 650.0
+recoil_force = 110.0
+projectile_speed = 800.0
+armor_penetration = 0.5
+magazine_size = 7
+reload_time = 2.0
+pellets_per_shot = 1
+spread_angle_degrees = 0.5
+innate_pierce = 0
+projectile_scene = ExtResource("2_proj")
+innate_status_effects = []
+max_sockets = 3
+socketed_runes = []
+rarity = 3
+gold_value = 260
+description = "Pistola de calibre enorme. Dispara despacio, pero cada bala atraviesa buena parte de la armadura: ideal contra el Bruto."

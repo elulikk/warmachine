@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "fire_ring"
+item_name = "Anillo Ígneo (Accesorio)"
+item_color = Color(1.0, 0.42, 0.12, 1)
+equip_slot = "ACCESSORY"
+elemental_infusion = "FIRE"
+tags = ["FIRE_INFUSION"]
+modifiers = []
+grants_extra_jump = 0
+rarity = 2
+gold_value = 80
+description = "Anillo imbuido en calor extremo que transfiere ignicion por fuego a todos los ataques."
+

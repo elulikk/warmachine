@@ -1,0 +1,146 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://ui/blacksmith_window.gd" id="1_blacksmith_win"]
+[ext_resource type="PackedScene" path="res://ui/components/draggable_window.tscn" id="2_drag_base"]
+[ext_resource type="PackedScene" path="res://ui/components/item_slot.tscn" id="3_slot"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_anvil_box"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.06, 0.08, 0.12, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.5, 0.7, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sockets_box"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.06, 0.08, 0.12, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.35, 0.75, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="BlacksmithWindow" groups=["blacksmith_window"] instance=ExtResource("2_drag_base")]
+custom_minimum_size = Vector2(340, 290)
+offset_right = 340.0
+offset_bottom = 290.0
+script = ExtResource("1_blacksmith_win")
+
+[node name="VBoxContent" type="VBoxContainer" parent="VBox/ContentContainer" index="0"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="InstructionLabel" type="Label" parent="VBox/ContentContainer/VBoxContent"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.8, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "Coloca un arma en el yunque para modificar sus runas."
+horizontal_alignment = 1
+
+[node name="AnvilPanel" type="PanelContainer" parent="VBox/ContentContainer/VBoxContent"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_anvil_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/VBoxContent/AnvilPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="AnvilTitle" type="Label" parent="VBox/ContentContainer/VBoxContent/AnvilPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 11
+text = "ESTACIÓN DE YUNQUE"
+horizontal_alignment = 1
+
+[node name="CenterContainer" type="CenterContainer" parent="VBox/ContentContainer/VBoxContent/AnvilPanel/VBox"]
+layout_mode = 2
+
+[node name="AnvilSlot" parent="VBox/ContentContainer/VBoxContent/AnvilPanel/VBox/CenterContainer" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+slot_type = "WEAPON"
+context_tag = "anvil"
+
+[node name="WeaponNameLabel" type="Label" parent="VBox/ContentContainer/VBoxContent/AnvilPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.92, 0.95, 1)
+theme_override_font_sizes/font_size = 12
+text = "YUNQUE VACÍO"
+horizontal_alignment = 1
+
+[node name="WeaponStatsLabel" type="Label" parent="VBox/ContentContainer/VBoxContent/AnvilPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.75, 0.88, 1)
+theme_override_font_sizes/font_size = 10
+text = "Arrastra un arma desde la mochila para comenzar."
+horizontal_alignment = 1
+
+[node name="SocketsPanel" type="PanelContainer" parent="VBox/ContentContainer/VBoxContent"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_sockets_box")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/VBoxContent/SocketsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SocketsTitle" type="Label" parent="VBox/ContentContainer/VBoxContent/SocketsPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.55, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "RANURAS DE RUNAS (SOCKETS)"
+horizontal_alignment = 1
+
+[node name="SocketsHBox" type="HBoxContainer" parent="VBox/ContentContainer/VBoxContent/SocketsPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Socket1Slot" parent="VBox/ContentContainer/VBoxContent/SocketsPanel/VBox/SocketsHBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "RUNE"
+slot_index = 0
+context_tag = "anvil_socket"
+
+[node name="Socket2Slot" parent="VBox/ContentContainer/VBoxContent/SocketsPanel/VBox/SocketsHBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "RUNE"
+slot_index = 1
+context_tag = "anvil_socket"
+
+[node name="Socket3Slot" parent="VBox/ContentContainer/VBoxContent/SocketsPanel/VBox/SocketsHBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "RUNE"
+slot_index = 2
+context_tag = "anvil_socket"
+
+[node name="SocketsHintLabel" type="Label" parent="VBox/ContentContainer/VBoxContent/SocketsPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.85, 1)
+theme_override_font_sizes/font_size = 9
+text = "Arrastra Runas para engarzar • Clic derecho para desengarzadar"
+horizontal_alignment = 1

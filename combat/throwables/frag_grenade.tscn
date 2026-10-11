@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://combat/throwables/throwable_base.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://combat/throwables/frag_blast.tscn" id="2_fx"]
+
+[node name="FragGrenade" instance=ExtResource("1_base")]
+throwable_id = "frag_grenade"
+fuse_time = 1.5
+effect_scene = ExtResource("2_fx")
+body_color = Color(0.4, 0.5, 0.32, 1)

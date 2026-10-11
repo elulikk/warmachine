@@ -1,0 +1,479 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_base.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://core/camera_follow.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="4_hud"]
+[ext_resource type="Script" path="res://core/projectile_pool.gd" id="5_pool"]
+[ext_resource type="Script" path="res://core/managers/save_manager.gd" id="6_save"]
+[ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="7_zone"]
+[ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="8_gate"]
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="9_runner"]
+[ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="10_wpickup"]
+[ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="11_knife"]
+[ext_resource type="Resource" path="res://data/weapons/rust_revolver.tres" id="12_revolver"]
+[ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="13_checkpoint"]
+[ext_resource type="PackedScene" path="res://entities/enemies/training_dummy.tscn" id="14_dummy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bedrock"]
+size = Vector2(8400, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_seg1"]
+size = Vector2(1560, 74)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_seg_island"]
+size = Vector2(180, 74)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_seg_main"]
+size = Vector2(6160, 74)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(40, 800)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_block1"]
+size = Vector2(60, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_block2"]
+size = Vector2(70, 70)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_block3"]
+size = Vector2(80, 96)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pedestal"]
+size = Vector2(64, 18)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling1"]
+size = Vector2(1700, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling2"]
+size = Vector2(1800, 100)
+
+[node name="Level_1_01" type="Node2D"]
+script = ExtResource("1_level")
+level_id = "1_01"
+level_title = "Sector 1-1"
+chapter_number = 1
+next_level_path = "res://levels/chapter_1/level_1_02.tscn"
+
+[node name="Background" type="CanvasLayer" parent="."]
+layer = -100
+
+[node name="ColorRect" type="ColorRect" parent="Background"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.08, 0.12, 1)
+
+[node name="Environment" type="Node2D" parent="."]
+
+[node name="Bedrock" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(4100, 660)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Bedrock"]
+shape = SubResource("RectangleShape2D_bedrock")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Bedrock"]
+offset_left = -4200.0
+offset_top = -30.0
+offset_right = 4200.0
+offset_bottom = 30.0
+color = Color(0.09, 0.1, 0.14, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Bedrock"]
+offset_left = -4200.0
+offset_top = -30.0
+offset_right = 4200.0
+offset_bottom = -27.0
+color = Color(0.5, 0.3, 0.25, 1)
+
+[node name="FloorStart" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(780, 593)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorStart"]
+shape = SubResource("RectangleShape2D_seg1")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorStart"]
+offset_left = -780.0
+offset_top = -37.0
+offset_right = 780.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorStart"]
+offset_left = -780.0
+offset_top = -37.0
+offset_right = 780.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="FloorIsland" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1790, 593)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorIsland"]
+shape = SubResource("RectangleShape2D_seg_island")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorIsland"]
+offset_left = -90.0
+offset_top = -37.0
+offset_right = 90.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorIsland"]
+offset_left = -90.0
+offset_top = -37.0
+offset_right = 90.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="FloorMain" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5140, 593)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorMain"]
+shape = SubResource("RectangleShape2D_seg_main")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -3080.0
+offset_top = -37.0
+offset_right = 3080.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -3080.0
+offset_top = -37.0
+offset_right = 3080.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="LeftWall" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(-20, 240)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/LeftWall"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightWall" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(8240, 240)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="JumpBlock1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(830, 536)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/JumpBlock1"]
+shape = SubResource("RectangleShape2D_block1")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/JumpBlock1"]
+offset_left = -30.0
+offset_top = -20.0
+offset_right = 30.0
+offset_bottom = 20.0
+color = Color(0.2, 0.26, 0.38, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/JumpBlock1"]
+offset_left = -30.0
+offset_top = -20.0
+offset_right = 30.0
+offset_bottom = -17.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="JumpBlock2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1060, 521)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/JumpBlock2"]
+shape = SubResource("RectangleShape2D_block2")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/JumpBlock2"]
+offset_left = -35.0
+offset_top = -35.0
+offset_right = 35.0
+offset_bottom = 35.0
+color = Color(0.2, 0.26, 0.38, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/JumpBlock2"]
+offset_left = -35.0
+offset_top = -35.0
+offset_right = 35.0
+offset_bottom = -32.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="JumpBlock3" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1290, 508)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/JumpBlock3"]
+shape = SubResource("RectangleShape2D_block3")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/JumpBlock3"]
+offset_left = -40.0
+offset_top = -48.0
+offset_right = 40.0
+offset_bottom = 48.0
+color = Color(0.2, 0.26, 0.38, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/JumpBlock3"]
+offset_left = -40.0
+offset_top = -48.0
+offset_right = 40.0
+offset_bottom = -45.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="PedestalKnife" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(2700, 547)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalKnife"]
+shape = SubResource("RectangleShape2D_pedestal")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalKnife"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+color = Color(0.25, 0.3, 0.42, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalKnife"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="PedestalRevolver" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5400, 547)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalRevolver"]
+shape = SubResource("RectangleShape2D_pedestal")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalRevolver"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+color = Color(0.25, 0.3, 0.42, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalRevolver"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="Ceiling1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(3750, 280)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling1"]
+shape = SubResource("RectangleShape2D_ceiling1")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -850.0
+offset_top = -50.0
+offset_right = 850.0
+offset_bottom = 50.0
+color = Color(0.1, 0.12, 0.17, 1)
+
+[node name="BottomBorder" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -850.0
+offset_top = 47.0
+offset_right = 850.0
+offset_bottom = 50.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="Ceiling2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(6600, 280)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling2"]
+shape = SubResource("RectangleShape2D_ceiling2")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling2"]
+offset_left = -900.0
+offset_top = -50.0
+offset_right = 900.0
+offset_bottom = 50.0
+color = Color(0.1, 0.12, 0.17, 1)
+
+[node name="BottomBorder" type="ColorRect" parent="Environment/Ceiling2"]
+offset_left = -900.0
+offset_top = 47.0
+offset_right = 900.0
+offset_bottom = 50.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="SectorLabel" type="Label" parent="Environment"]
+offset_left = 40.0
+offset_top = 380.0
+offset_right = 700.0
+offset_bottom = 410.0
+theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
+theme_override_font_sizes/font_size = 14
+text = "CAPÍTULO 1 • PERIFERIA SUBTERRÁNEA • SECTOR 1-1"
+
+[node name="TipMove" type="Label" parent="Environment"]
+offset_left = 40.0
+offset_top = 470.0
+offset_right = 500.0
+offset_bottom = 494.0
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "[A / D] o flechas: moverse"
+
+[node name="TipJump" type="Label" parent="Environment"]
+offset_left = 640.0
+offset_top = 470.0
+offset_right = 1100.0
+offset_bottom = 494.0
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "[Espacio] Saltar — mantenelo apretado para saltar más alto"
+
+[node name="TipPits" type="Label" parent="Environment"]
+offset_left = 1400.0
+offset_top = 440.0
+offset_right = 2000.0
+offset_bottom = 464.0
+theme_override_colors/font_color = Color(0.9, 0.8, 0.4, 1)
+theme_override_font_sizes/font_size = 13
+text = "Pozos poco profundos: si caés, volvé a saltar para salir"
+
+[node name="TipKnife" type="Label" parent="Environment"]
+offset_left = 2500.0
+offset_top = 440.0
+offset_right = 2950.0
+offset_bottom = 464.0
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "Agarrá el cuchillo del pedestal — [Click izquierdo] para atacar"
+
+[node name="TipCorridor1" type="Label" parent="Environment"]
+offset_left = 2960.0
+offset_top = 470.0
+offset_right = 3400.0
+offset_bottom = 494.0
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 13
+text = "PASILLO 1 — Probá el cuchillo contra los ladrones"
+
+[node name="TipCheckpoint" type="Label" parent="Environment"]
+offset_left = 4640.0
+offset_top = 470.0
+offset_right = 5000.0
+offset_bottom = 494.0
+theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+text = "Terminal de checkpoint — acercate para guardar tu avance"
+
+[node name="TipRevolver" type="Label" parent="Environment"]
+offset_left = 5050.0
+offset_top = 420.0
+offset_right = 5800.0
+offset_bottom = 444.0
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "Revólver oxidado — [Click] disparar | [R] recargar | apuntá con el mouse"
+
+[node name="TipCorridor2" type="Label" parent="Environment"]
+offset_left = 5730.0
+offset_top = 470.0
+offset_right = 6500.0
+offset_bottom = 494.0
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 13
+text = "PASILLO 2 — Practicá la puntería. Eliminá a todos para abrir la compuerta"
+
+[node name="TipGate" type="Label" parent="Environment"]
+offset_left = 7700.0
+offset_top = 470.0
+offset_right = 8200.0
+offset_bottom = 494.0
+theme_override_colors/font_color = Color(0.3, 1.0, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+text = "Compuerta de extracción →"
+
+[node name="SpawnPoint" type="Marker2D" parent="."]
+position = Vector2(160, 545)
+
+[node name="KnifePickup" parent="." instance=ExtResource("10_wpickup")]
+position = Vector2(2700, 512)
+weapon_data = ExtResource("11_knife")
+
+[node name="KnifeRunner1" parent="." instance=ExtResource("9_runner")]
+position = Vector2(3350, 555)
+
+[node name="KnifeRunner2" parent="." instance=ExtResource("9_runner")]
+position = Vector2(3800, 555)
+
+[node name="KnifeRunner3" parent="." instance=ExtResource("9_runner")]
+position = Vector2(4250, 555)
+
+[node name="CheckpointJumps" parent="." instance=ExtResource("13_checkpoint")]
+position = Vector2(2350, 556)
+checkpoint_id = "checkpoint_1_01_a"
+
+[node name="CheckpointCorridor" parent="." instance=ExtResource("13_checkpoint")]
+position = Vector2(4820, 556)
+checkpoint_id = "checkpoint_1_01_b"
+
+[node name="RevolverPickup" parent="." instance=ExtResource("10_wpickup")]
+position = Vector2(5400, 512)
+weapon_data = ExtResource("12_revolver")
+
+[node name="PracticeDummy" parent="." instance=ExtResource("14_dummy")]
+position = Vector2(5900, 556)
+armor = 0.0
+max_shield = 0.0
+entity_name = "Muñeco de práctica"
+dummy_name = "Muñeco de práctica"
+
+[node name="PistolRunner1" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(6300, 555)
+
+[node name="PistolRunner2" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(6700, 555)
+
+[node name="PistolRunner3" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(7100, 555)
+
+[node name="PistolRunner4" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(7400, 555)
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(160, 545)
+
+[node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
+position = Vector2(160, 510)
+zoom = Vector2(1.1, 1.1)
+limit_left = 0
+limit_top = 100
+limit_right = 8220
+limit_bottom = 700
+position_smoothing_enabled = true
+script = ExtResource("3_camera")
+target = NodePath("../Player")
+
+[node name="ExitGate" parent="." instance=ExtResource("8_gate")]
+position = Vector2(7950, 556)
+
+[node name="HUD" parent="." instance=ExtResource("4_hud")]
+
+[node name="ProjectilePool" type="Node" parent="." groups=["projectile_pool"]]
+script = ExtResource("5_pool")
+
+[node name="SaveManager" type="Node" parent="." groups=["save_manager"]]
+script = ExtResource("6_save")
+
+[node name="ZoneModifierManager" type="Node" parent="." groups=["zone_modifier_manager"]]
+script = ExtResource("7_zone")

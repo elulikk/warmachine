@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="1_runner"]
+[ext_resource type="Script" path="res://entities/enemies/ghost.gd" id="2_ghost"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(26, 62)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(30, 64)
+
+[node name="Ghost" instance=ExtResource("1_runner")]
+collision_mask = 0
+script = ExtResource("2_ghost")
+entity_name = "Fantasma"
+move_speed = 62.0
+aggro_range = 420.0
+art_kind = "ghost"
+contact_damage = 10.0
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(0, -34)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="HealthComponent" parent="." index="2"]
+max_health = 70.0
+
+[node name="StatusDisplayComponent" parent="." index="4"]
+position = Vector2(0, -76)
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+position = Vector2(0, -34)
+shape = SubResource("RectangleShape2D_hurtbox")

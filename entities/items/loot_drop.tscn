@@ -1,0 +1,83 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://entities/items/loot_drop.gd" id="1_drop"]
+[ext_resource type="Texture2D" path="res://assets/sprites/coin_sheet.png" id="2_sheet"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coin_0"]
+atlas = ExtResource("2_sheet")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coin_1"]
+atlas = ExtResource("2_sheet")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coin_2"]
+atlas = ExtResource("2_sheet")
+region = Rect2(32, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coin_3"]
+atlas = ExtResource("2_sheet")
+region = Rect2(48, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coin_4"]
+atlas = ExtResource("2_sheet")
+region = Rect2(64, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_coin_5"]
+atlas = ExtResource("2_sheet")
+region = Rect2(80, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_coin"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_coin_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_coin_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_coin_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_coin_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_coin_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_coin_5")
+}],
+"loop": true,
+"name": &"spin",
+"speed": 10.0
+}]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_phys"]
+radius = 4.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_area"]
+radius = 12.0
+
+[node name="LootDrop" type="CharacterBody2D"]
+collision_layer = 0
+collision_mask = 1
+script = ExtResource("1_drop")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_phys")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="Visuals"]
+texture_filter = 1
+sprite_frames = SubResource("SpriteFrames_coin")
+animation = &"spin"
+autoplay = "spin"
+
+[node name="PickupArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PickupArea"]
+shape = SubResource("CircleShape2D_area")

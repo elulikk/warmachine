@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat/throwables/area_burst.gd" id="1_burst"]
+
+[node name="FragBlast" type="Area2D"]
+script = ExtResource("1_burst")
+radius = 90.0
+damage = 60.0
+knockback_force = 420.0
+burst_color = Color(1, 0.65, 0.2, 1)
+visual_duration = 0.35

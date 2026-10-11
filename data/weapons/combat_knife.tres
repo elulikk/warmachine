@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Cuchillo de Combate"
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 70.0
+swing_duration = 0.08
+melee_hitbox_scale = 0.55
+damage = 15.0
+fire_rate = 4.6
+knockback_force = 120.0
+recoil_force = 0.0
+projectile_speed = 0.0
+innate_status_effects = []
+max_sockets = 3
+socketed_runes = []
+rarity = 0
+gold_value = 25
+description = "Cuchillo tactico de acero templado. Tajos agiles con ventana de parry balistico."

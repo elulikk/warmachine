@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://combat/tools/grappling_hook.tscn" id="2_hook"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "grappling_hook"
+item_name = "Gancho de Anclaje"
+item_color = Color(0.25, 0.85, 0.95, 1)
+equip_slot = "ACCESSORY"
+throwable_scene = ExtResource("2_hook")
+tags = Array[String](["TOOL", "MOBILITY", "GRAPPLING_HOOK"])
+modifiers = Array[Dictionary]([])
+grants_extra_jump = 0
+rarity = 2
+gold_value = 70
+description = "Gancho de anclaje para traccion y escalada vertical rapida."
+

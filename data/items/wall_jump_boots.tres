@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "wall_jump_boots"
+item_name = "Botas de Rebote (Pared)"
+item_color = Color(0.2, 0.8, 0.9, 1)
+equip_slot = "BOOTS"
+elemental_infusion = ""
+tags = ["WALL_JUMP"]
+modifiers = []
+grants_extra_jump = 0
+rarity = 2
+gold_value = 75
+description = "Calzado magnetico presurizado que permite deslizarse y rebotar entre muros verticales."
+

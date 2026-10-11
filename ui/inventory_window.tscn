@@ -1,0 +1,261 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://ui/inventory_window.gd" id="1_inv_win"]
+[ext_resource type="PackedScene" path="res://ui/components/draggable_window.tscn" id="2_drag_base"]
+[ext_resource type="PackedScene" path="res://ui/components/item_slot.tscn" id="3_slot"]
+[ext_resource type="Script" path="res://ui/components/doll_silhouette.gd" id="4_doll"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_section"]
+content_margin_left = 6.0
+content_margin_top = 4.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.06, 0.08, 0.12, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.3, 0.45, 0.7)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="InventoryWindow" groups=["inventory_window"] instance=ExtResource("2_drag_base")]
+offset_right = 500.0
+offset_bottom = 420.0
+script = ExtResource("1_inv_win")
+
+[node name="MainHBox" type="HBoxContainer" parent="VBox/ContentContainer" index="0"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LeftPanel" type="VBoxContainer" parent="VBox/ContentContainer/MainHBox"]
+custom_minimum_size = Vector2(210, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquipBox" type="PanelContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_section")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "EQUIPAMIENTO DEL CHASIS"
+
+[node name="DollArea" type="Control" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox"]
+custom_minimum_size = Vector2(232, 272)
+layout_mode = 2
+script = ExtResource("4_doll")
+
+[node name="EquipHeadSlot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 96.0
+offset_top = 2.0
+offset_right = 136.0
+offset_bottom = 42.0
+slot_type = "HEAD"
+slot_index = 5
+context_tag = "equipment"
+empty_hint = "CASCO"
+
+[node name="EquipAccessory1Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 30.0
+offset_top = 26.0
+offset_right = 70.0
+offset_bottom = 66.0
+slot_type = "ACCESSORY_1"
+slot_index = 2
+context_tag = "equipment"
+empty_hint = "ACCES. 1"
+
+[node name="EquipBackSlot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 162.0
+offset_top = 26.0
+offset_right = 202.0
+offset_bottom = 66.0
+slot_type = "BACK"
+slot_index = 1
+context_tag = "equipment"
+empty_hint = "ESPALDA"
+
+[node name="EquipChestSlot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 96.0
+offset_top = 72.0
+offset_right = 136.0
+offset_bottom = 112.0
+slot_type = "CHEST"
+slot_index = 4
+context_tag = "equipment"
+empty_hint = "PECHO"
+
+[node name="EquipAccessory2Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 30.0
+offset_top = 72.0
+offset_right = 70.0
+offset_bottom = 112.0
+slot_type = "ACCESSORY_2"
+slot_index = 6
+context_tag = "equipment"
+empty_hint = "ACCES. 2"
+
+[node name="EquipGlovesSlot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 162.0
+offset_top = 126.0
+offset_right = 202.0
+offset_bottom = 166.0
+slot_type = "GLOVES"
+slot_index = 7
+context_tag = "equipment"
+empty_hint = "GUANTES"
+
+[node name="EquipTacticalSlot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 30.0
+offset_top = 126.0
+offset_right = 70.0
+offset_bottom = 166.0
+slot_type = "TACTICAL"
+slot_index = 3
+context_tag = "equipment"
+empty_hint = "TÁCTICO"
+
+[node name="EquipBootsSlot" parent="VBox/ContentContainer/MainHBox/LeftPanel/EquipBox/VBox/DollArea" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 96.0
+offset_top = 226.0
+offset_right = 136.0
+offset_bottom = 266.0
+slot_type = "BOOTS"
+slot_index = 0
+context_tag = "equipment"
+empty_hint = "BOTAS"
+
+[node name="WeaponsBox" type="PanelContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_section")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel/WeaponsBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="VBox/ContentContainer/MainHBox/LeftPanel/WeaponsBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "BARRA RÁPIDA (ARMAS 1-3)"
+
+[node name="HBox" type="HBoxContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel/WeaponsBox/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Weapon1Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/WeaponsBox/VBox/HBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "WEAPON"
+slot_index = 0
+context_tag = "weapon"
+carry_on_click = false
+empty_hint = "ARMA 1"
+
+[node name="Weapon2Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/WeaponsBox/VBox/HBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "WEAPON"
+slot_index = 1
+context_tag = "weapon"
+carry_on_click = false
+empty_hint = "ARMA 2"
+
+[node name="Weapon3Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/WeaponsBox/VBox/HBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "WEAPON"
+slot_index = 2
+context_tag = "weapon"
+carry_on_click = false
+empty_hint = "ARMA 3"
+
+[node name="SocketsBox" type="PanelContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_section")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel/SocketsBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="VBox/ContentContainer/MainHBox/LeftPanel/SocketsBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.45, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "RUNAS DE ARMA ACTIVA"
+
+[node name="HBox" type="HBoxContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel/SocketsBox/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Socket1Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/SocketsBox/VBox/HBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "RUNE"
+slot_index = 0
+context_tag = "socket"
+is_read_only = true
+
+[node name="Socket2Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/SocketsBox/VBox/HBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "RUNE"
+slot_index = 1
+context_tag = "socket"
+is_read_only = true
+
+[node name="Socket3Slot" parent="VBox/ContentContainer/MainHBox/LeftPanel/SocketsBox/VBox/HBox" instance=ExtResource("3_slot")]
+unique_name_in_owner = true
+layout_mode = 2
+slot_type = "RUNE"
+slot_index = 2
+context_tag = "socket"
+is_read_only = true
+
+[node name="RightPanel" type="PanelContainer" parent="VBox/ContentContainer/MainHBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_section")
+
+[node name="VBox" type="VBoxContainer" parent="VBox/ContentContainer/MainHBox/RightPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Label" type="Label" parent="VBox/ContentContainer/MainHBox/RightPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 11
+text = "MOCHILA (20 CASILLEROS)"
+
+[node name="BackpackGrid" type="GridContainer" parent="VBox/ContentContainer/MainHBox/RightPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 5

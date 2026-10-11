@@ -1,0 +1,23 @@
+# Normalize EOL for all files that Git considers text files.
+* text=auto eol=lf
+
+# Los .bat necesitan CRLF para que cmd.exe los lea bien
+*.bat text eol=crlf
+
+# Binarios (sin conversión de fin de línea ni diffs de texto)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.psd binary
+*.ogg binary
+*.m4a binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.pkl binary
+*.res binary
+*.scn binary
