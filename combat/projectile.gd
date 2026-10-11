@@ -3,6 +3,8 @@ extends Area2D
 ## Proyectil cinético 2D que avanza en base a su rotación transportando un HitPayload.
 ## Diseñado para trabajar con ProjectilePool y el Sistema de Runas (Rebote, Perforación, Bifurcación).
 
+const ShotFx = preload("res://combat/shot_fx.gd")
+
 @export var speed: float = 520.0
 @export var max_lifetime: float = 3.0
 @export var is_hostile: bool = false
@@ -104,9 +106,10 @@ func _handle_collision(target: Node) -> void:
 	# 1. Comprobar si impactó con geometría sólida del mundo (pared/piso/techo)
 	if target is StaticBody2D or target is TileMap or target.is_in_group("world"):
 		GameFeel.sfx(self, &"hit_world", global_position, -10.0)
+		var normal: Vector2 = _get_bounce_normal()
+		ShotFx.wall_impact(self, global_position, normal, ShotFx.COLD if is_parried else ShotFx.WARM)
 		if bounces_left > 0:
 			bounces_left -= 1
-			var normal: Vector2 = _get_bounce_normal()
 			var new_dir: Vector2 = transform.x.bounce(normal).normalized()
 			if new_dir == Vector2.ZERO:
 				new_dir = -transform.x

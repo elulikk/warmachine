@@ -15,6 +15,7 @@ signal reload_completed
 const RELOAD_INDICATOR_SCRIPT: GDScript = preload("res://ui/reload_indicator.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
+const ShotFx = preload("res://combat/shot_fx.gd")
 
 ## Escala del cuerpo del jugador respecto del sprite original de 32x32 (ver `Visuals.scale` en player.tscn).
 ## Mueve donde está la mano y el centro del cuerpo.
@@ -357,6 +358,7 @@ func fire() -> void:
 				container.add_child(fallback_node)
 	
 	_play_weapon_kick()
+	ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
 	GameFeel.sfx_weapon_fire(self, current_weapon)
 
 	# 3. Aplicar fuerza de retroceso sobre el jugador
