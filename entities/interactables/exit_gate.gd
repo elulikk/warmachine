@@ -176,6 +176,9 @@ func _trigger_extraction(player: Player) -> void:
 			var next_p: String = str(get_meta("next_level_path"))
 			if not next_p.is_empty() and not sm.unlocked_levels.has(next_p):
 				sm.unlocked_levels.append(next_p)
+			# La pantalla de victoria ofrece pasar directo al siguiente sector si ya tiene contenido
+			if not next_p.is_empty() and LevelRegistry.is_implemented(next_p):
+				stats["next_level_path"] = next_p
 		sm.save_to_disk()
 		print("[ExitGate] Autoguardado a disco completado antes de retornar al Campamento Base.")
 	

@@ -5,6 +5,9 @@ extends RefCounted
 
 const FX_Z_INDEX: int = 20
 const WARM: Color = Color(1.0, 0.82, 0.35, 1.0)
+## Con calidad gráfica baja (densidad de partículas menor) el humo no se dibuja y las chispas son menos.
+const SMOKE_MIN_PARTICLE_SCALE: float = 0.75
+const SettingsScript = preload("res://core/settings.gd")
 const COLD: Color = Color(0.45, 0.85, 1.0, 1.0)
 
 
@@ -58,6 +61,9 @@ static func muzzle_flash(host: Node, pos: Vector2, dir: Vector2, tint: Color = W
 
 ## Humito que sale de la boca del cañón y se eleva despacio, quedando atrás en el mundo.
 static func muzzle_smoke(host: Node, pos: Vector2, dir: Vector2) -> void:
+	var density: float = SettingsScript.particle_scale()
+	if density < SMOKE_MIN_PARTICLE_SCALE:
+		return
 	var container: Node = _container(host)
 	if container == null:
 		return
@@ -65,7 +71,7 @@ static func muzzle_smoke(host: Node, pos: Vector2, dir: Vector2) -> void:
 	puff.texture = _puff_texture()
 	puff.z_index = FX_Z_INDEX - 1
 	puff.one_shot = true
-	puff.amount = 4
+	puff.amount = maxi(1, roundi(4.0 * density))
 	puff.lifetime = 1.3
 	puff.explosiveness = 1.0
 	# Sale en la dirección del disparo y se curva hacia arriba
@@ -121,7 +127,7 @@ static func wall_impact(host: Node, pos: Vector2, normal: Vector2, tint: Color =
 	var sparks: CPUParticles2D = CPUParticles2D.new()
 	sparks.z_index = FX_Z_INDEX
 	sparks.one_shot = true
-	sparks.amount = 16
+	sparks.amount = maxi(2, roundi(16.0 * SettingsScript.particle_scale()))
 	sparks.lifetime = 0.4
 	sparks.explosiveness = 1.0
 	sparks.direction = direction

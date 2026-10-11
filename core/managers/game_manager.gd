@@ -32,6 +32,9 @@ var _defeat_panel: PanelContainer = null
 var _pause_panel: PanelContainer = null
 var _victory_panel: PanelContainer = null
 var _victory_stats_label: Label = null
+var _btn_next_sector: Button = null
+## Sector al que lleva el botón SIGUIENTE SECTOR de la pantalla de victoria (vacío = no se ofrece).
+var _next_sector_path: String = ""
 var _scene_loader: CanvasLayer = null
 
 
@@ -247,6 +250,24 @@ func repeat_current_level() -> void:
 	print("[GameManager] Repitiendo nivel actual para farmeo.")
 
 
+## Pasa directo al siguiente sector desde la pantalla de victoria (el progreso ya quedó guardado).
+func go_to_next_sector() -> void:
+	if _next_sector_path.is_empty():
+		return
+	var next_path: String = _next_sector_path
+	_hide_all_overlays()
+	get_tree().paused = false
+	current_state = GameState.PLAYING
+	state_changed.emit(current_state)
+
+	var sm: SaveManager = SaveManager.get_instance()
+	if sm != null:
+		sm.save_to_disk()
+
+	change_scene(next_path)
+	print("[GameManager] Avanzando al siguiente sector: %s" % next_path)
+
+
 ## Retorna limpiamente al campamento base despausando el árbol de escena.
 func return_to_base_camp() -> void:
 	_hide_all_overlays()
@@ -366,6 +387,10 @@ func _setup_overlay_ui() -> void:
 	_victory_stats_label = _create_label("Extracción balística exitosa.\nMonedas: 0", 14, Color(0.9, 0.95, 0.9))
 	victory_vbox.add_child(_victory_stats_label)
 	
+	_btn_next_sector = _create_button("SIGUIENTE SECTOR", Color(0.95, 0.75, 0.25))
+	_btn_next_sector.pressed.connect(go_to_next_sector)
+	victory_vbox.add_child(_btn_next_sector)
+
 	var btn_repeat_level: Button = _create_button("REPETIR NIVEL [FARMEAR]", Color(0.2, 0.65, 0.8))
 	btn_repeat_level.pressed.connect(repeat_current_level)
 	victory_vbox.add_child(btn_repeat_level)
@@ -408,6 +433,11 @@ func _show_victory_overlay(stats: Dictionary) -> void:
 	_hide_all_overlays()
 	_overlay_background.visible = true
 	_victory_panel.visible = true
+	_next_sector_path = str(stats.get("next_level_path", ""))
+	if _btn_next_sector != null:
+		_btn_next_sector.visible = not _next_sector_path.is_empty()
+		if _btn_next_sector.visible:
+			_btn_next_sector.grab_focus()
 	if _victory_stats_label != null:
 		var coins: int = int(stats.get("coins", 0))
 		var level: int = int(stats.get("level", 1))
