@@ -7,7 +7,11 @@ signal health_changed(current_health: float, max_health: float)
 signal shield_changed(current: float, max_shield: float)
 signal shield_broken
 signal damage_taken(amount: float, is_critical: bool, damage_type: String)
+## Un impacto ya resuelto: con su payload (dirección del golpe) y el daño efectivo que entró a la vida.
+signal hit_resolved(payload: HitPayload, damage: float, is_critical: bool)
 signal died
+
+const DamageFxScript = preload("res://combat/damage_fx.gd")
 
 ## Puntos de vida máximos de la entidad.
 @export var max_health: float = 100.0
@@ -41,6 +45,20 @@ func _ready() -> void:
 		shield_changed.emit(current_shield, max_shield)
 	# Diferido: los enemigos fijan su vida en su propio _ready, que corre después del de este hijo
 	_apply_difficulty.call_deferred()
+	_attach_damage_fx.call_deferred()
+
+
+## Los enemigos muestran el daño que reciben (sangre, manchas en el piso y heridas): ver combat/damage_fx.gd.
+func _attach_damage_fx() -> void:
+	var host: Node = get_parent()
+	if host == null or not host.is_in_group(&"enemies") or host.is_in_group(&"player"):
+		return
+	if host.has_node("DamageFx"):
+		return
+	var fx: Node = DamageFxScript.new()
+	fx.name = "DamageFx"
+	fx.set("health", self)
+	host.add_child(fx)
 
 
 ## Escala la vida de los enemigos según la dificultad (Opciones > Juego). Una sola vez, al aparecer.
@@ -134,6 +152,8 @@ func take_hit(payload: HitPayload) -> void:
 	else:
 		# Si todo el daño fue absorbido por escudo
 		damage_taken.emit(0.0, is_crit, damage_type)
+
+	hit_resolved.emit(payload, final_damage, is_crit)
 
 	# 5. Game feel: crítico = hit stop, golpe fuerte = screen shake (solo impactos del jugador)
 	if payload.source_node is Player:
