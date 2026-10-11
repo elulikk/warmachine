@@ -13,7 +13,7 @@
 * **Validado en juego:** Fase A (game feel) y los sectores 1-1 a 1-4 (secciones 2.1 a 2.2c). El balance fino de cada nivel sigue anotado como pendiente en su sección.
 * **Armado, pendiente de validar:** Sector 1-5 (sección 2.2d) y la segunda tanda de la Fase O (opciones, posprocesado, recarga por arma, pantalla de carga, registro de errores, ícono y versión del `.exe`).
 * **Hecho y validado en juego (2026-10-11):** comercio de dos columnas con venta y recompra (`TradeSession`, `TraderData`, `TradeWindow`; sección 2.3), arrastrar armas de la mochila a la barra de acceso rápido, fogonazo y humo del arma, chispas contra el entorno, sangre / manchas / heridas / tripas al dañar y matar enemigos con arte propio (`combat/damage_fx.gd`, `assets/art/fx/`), botón SIGUIENTE SECTOR en la victoria y relleno de suelos solo sobre el vacío.
-* **En paralelo (otra conversación, no tocar desde el proyecto principal):** sala de estrés con spawner para medir rendimiento con muchos proyectiles, números, trozos y partículas.
+* **Hecho (2026-10-11, pendiente de validar en juego):** Sala de Estrés con monitor de rendimiento, fusión de botín y orbes, experiencia con gravedad, cola de efectos de muerte (sin congelamiento al matar muchos juntos), engranaje de munición que recarga al instante. Ver sección 6c.
 * **Versión:** `config/version` en `project.godot` (hoy 0.5.0); se ve en el menú principal y en las propiedades del `.exe`.
 * **Sandbox separado:** `test_level.tscn` se abre solo desde el botón "Banco de Pruebas" del menú principal; no forma parte de la campaña. El Sector 1-1 es un nivel real y no es el sandbox.
 * **Stand-by (no se toca por ahora):** jetpack, alas, vuelo, gancho de anclaje, baliza de translocación, runas avanzadas, alt-fire (zoom del sniper), mercenarios y drones, contratos de zona, los 50 niveles.
@@ -245,6 +245,8 @@ Contenido mínimo para validarlo:
   3. Tabla de loot de ejemplo para los 2 enemigos básicos.
 * **Criterio de cierre:** Una oleada de 20 o más enemigos se puede reventar en el sandbox, y el loot cae, se recoge y suma sin errores ni caídas de rendimiento notorias.
 
+**Estado:** Cumplido. Oleadas por rondas con elites (`WaveManager`), botín con `LootTable` y orbes de EXP en uso desde el 1-2. Medido en la Sala de Estrés (sección 6c): 100 enemigos muertos juntos cuestan un cuadro de ~19 ms y otro de ~52 ms, y el botín se funde para no llenar el escenario.
+
 ---
 
 ## 4. Fase C — Progresión (Nivel, Armadura y Armas)
@@ -313,6 +315,8 @@ Contenido mínimo para validarlo:
   3. Al terminar un nivel, vuelve el menú con el siguiente desbloqueado.
 * **Criterio de cierre:** Se puede ir del Campamento a un nivel, completarlo y volver con el progreso guardado.
 
+**Estado:** Cumplido. Sectores 1-1 a 1-5 jugables (`LevelRegistry.IMPLEMENTED_LEVELS`), el resto sale como PENDIENTE; extraer desbloquea el siguiente y la victoria ofrece SIGUIENTE SECTOR.
+
 ---
 
 ## 6b. Fase O — Opciones, Pulido de Personajes y Distribución
@@ -338,6 +342,26 @@ Contenido mínimo para validarlo:
 4. **Idioma y subtítulos:** quedan fuera mientras el juego tenga un solo idioma (español) y no haya voces. El paso previo sería pasar los textos a `tr()` con un archivo de traducción.
 
 **Exportación a `.exe` único:** `export_presets.cfg` ya define el preset "Windows Desktop" con el `.pck` embebido (un solo archivo). Hace falta instalar una vez las plantillas de exportación de Godot 4.7.2 (Editor > Administrar plantillas de exportación) y correr `build_exe.bat`; sale `build/WARMACHINE.exe`.
+
+---
+
+## 6c. Fase P — Rendimiento y Optimización
+*Objetivo:* Que el juego aguante pantallas llenas de enemigos, balas, gore y botín sin trabarse, midiendo en vez de adivinar.
+
+**Hecho (2026-10-11, pendiente de validar en juego):**
+- **Sala de Estrés** (puerta a la derecha del Campamento): generador infinito de enemigos (tipo, lote, ritmo, tope de vivos, cuántos por cuadro), fuego automático, congelar enemigos (separa el costo de dibujo del de IA y física), matar / herir / borrar, limpiar escombros, inmortal sin empujones. No guarda nada de lo que pasa adentro.
+- **Monitor de rendimiento** (`core/debug/perf_monitor.gd`): fijo en la sala y con **F9** en cualquier nivel. Registra en `user://logs/rendimiento/` un `.csv` cada 0.5 s y un `.txt` con eventos, picos, censo de nodos y la tabla de FPS según enemigos vivos.
+- **Botín:** monedas, munición, vida y orbes quietos se funden de a 10 en uno más grande que vale la suma (4 niveles). Quietos no calculan física y se juntan por distancia (antes sus áreas detectaban a los enemigos y llenaban la física de pares de colisión). La experiencia cae con gravedad.
+- **Muertes masivas:** cola de efectos con presupuesto de 2.5 ms por cuadro (`combat/death_fx_queue.gd`): gore y botín se reparten en varios cuadros; el botín nunca se pierde. Se sacaron los `print()` por baja y por moneda (~15 ms cada uno con muchas bajas). 300 muertes juntas pasaron de 5.7 s congelado a ~0.2 s.
+
+**Pendiente (no urgente; hacerlo cerca del cierre, sobre los enemigos definitivos):**
+1. **Costo de los enemigos vivos:** con ~100 persiguiendo el juego baja a ~45-48 FPS; congelados vuelve a 60, así que es CPU (IA + física), no dibujo. Hay ~4 `Area2D` por enemigo y hasta 2000-2700 pares de colisión. Auditar sensores, capas y máscaras; IA y animación más baratas lejos o fuera de cámara; cachear búsquedas por cuadro.
+2. **Instanciado:** cada enemigo cuesta 2-4 ms al aparecer (arte del rig y componentes). Evaluar pool de enemigos.
+3. **Cuadro del golpe en masacres:** ~55 ms con 300 muertes (números de daño, señales) y ~148 ms el siguiente (liberar los enemigos). Pool o tope de números de daño y liberación repartida.
+- **Cuándo adelantarlo:** si se diseñan niveles u hordas de más de 30-40 enemigos simultáneos, si el registro muestra caídas con pocos enemigos, o antes de probar el `.exe` en PCs más modestas.
+- **Regla desde ya:** cada sistema pesado nuevo (explosiones, misiles, efectos de área) se prueba en la Sala de Estrés apenas está armado.
+- **Modelo recomendado:** Sonnet, esfuerzo **high** (toca enemigos, componentes y física).
+- **Criterio de cierre:** 100 enemigos persiguiendo a 60 FPS estables y 200 jugables en la Sala de Estrés, comparando la tabla "FPS según enemigos vivos" antes y después.
 
 ---
 
