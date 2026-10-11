@@ -8,6 +8,7 @@ extends DraggableWindow
 const ConsumableManagerScript = preload("res://core/consumables/consumable_manager.gd")
 const ConsumableDataScript = preload("res://core/consumables/consumable_data.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
+const SteamSkin = preload("res://ui/components/steam_skin.gd")
 
 ## Equipo a la venta, ordenado por tier. Cuchillo, revólver oxidado y carabina los da la campaña.
 const GEAR_PATHS: Array[String] = [
@@ -80,6 +81,9 @@ func refresh() -> void:
 		var gear: Resource = load(path) as Resource
 		if gear != null:
 			items_box.add_child(_build_gear_row(gear, path))
+
+	# Las filas se crean después del skin de apertura: hay que volver a estilizarlas o quedan con el look plano
+	SteamSkin.skin_tree(self)
 
 
 func _build_section_title(text: String) -> Label:
