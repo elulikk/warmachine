@@ -194,6 +194,8 @@ Contenido mínimo para validarlo:
 ## 2.3 Economía — Mercader y Consumibles
 *Estado:* Armado (pendiente de validación en juego). Da un destino a las monedas del loot y herramientas tácticas para las oleadas.
 
+**Comercio (rework):** el Mercader y cualquier NPC comerciante usan una ventana grande de dos columnas (tus pertenencias / stock del comerciante) para **comprar y vender** arrastrando o con clic derecho, con filtros (categoría, rareza, búsqueda, orden), precios sobre cada casillero, lote de consumibles con Mayús, confirmación en operaciones caras o delicadas y una pestaña de **recompra**. Cada comerciante es un recurso `TraderData` (stock, límites, precios de compra y venta, qué categorías compra); la lógica vive en `TradeSession` y el estado (stock limitado, recompra) se guarda en el slot. Ver PROJECT_CONTEXT (`core/trade/`, `TradeWindow`).
+
 **Consumibles (máximo 5 de cada uno, se compran en el Campamento Base):**
 
 | Casillero | Consumible | Precio | Efecto |
@@ -203,13 +205,13 @@ Contenido mínimo para validarlo:
 | [6] | Poción de Velocidad | 20 | +20 % de velocidad de movimiento por 20 s |
 
 **Reglas y decisiones:**
-- **Mercader:** NPC en el Campamento Base ([E]) y también en el hub del sandbox para probar con las 999 monedas.
+- **Mercader:** NPC en el Campamento Base ([E]) y también en el hub del sandbox para probar con las 999 monedas. Vende al valor del objeto y compra al 40 %.
 - **Persistencia:** las cantidades se guardan en el slot (`consumables`). La compra guarda la partida.
 - **Efectos que no se apilan:** volver a usar una poción activa renueva su duración sin duplicar el bono.
 - **Botones laterales del ratón:** M4 y M5 usan los consumibles 1 y 2 (antes M4 lanzaba el arrojadizo táctico; el arrojadizo conserva [G] y el gatillo izquierdo).
 - **Indicador de recarga:** barra sobre el jugador (sección 2, punto 6).
 
-**Pendiente:** balance de precios con el ingreso real de monedas por nivel; evaluar un casillero de consumible para el 1-3.
+**Pendiente:** balance de precios con el ingreso real de monedas por nivel (y del 40 % de compra, para que vender no sea una fuente de oro trivial); evaluar un casillero de consumible para el 1-3; ver si conviene un segundo comerciante (herrero con runas) usando `TraderData`.
 
 ---
 
