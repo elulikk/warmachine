@@ -13,6 +13,7 @@ extends RefCounted
 ##   gore_gut_01..02.png       tripa / intestino
 ##   gore_bone_01..02.png      hueso
 ##   gore_scrap_01..02.png     chatarra (enemigos mecánicos)
+##   gore_spring_01.png        resorte (enemigos mecánicos)
 
 const SettingsScript = preload("res://core/settings.gd")
 const ArtScript = preload("res://core/art/art.gd")
@@ -155,7 +156,7 @@ static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power
 		var texture: Texture2D = null
 		if mechanical:
 			kind = "scrap" if roll < 0.65 else "spring"
-			texture = variant_tex("gore_scrap", 2) if kind == "scrap" else null
+			texture = variant_tex("gore_scrap", 2) if kind == "scrap" else variant_tex("gore_spring", 1)
 		elif roll < 0.5:
 			kind = "chunk"
 			texture = variant_tex("gore_chunk", 4)
