@@ -12,6 +12,8 @@
 * **Ya existe y se reutiliza:** `LevelRegistry`, `MapSelector` (pestañas por capítulo y grilla de niveles), `LevelBase`, orbes de EXP.
 * **Validado en juego:** Fase A (game feel) y los sectores 1-1 a 1-4 (secciones 2.1 a 2.2c). El balance fino de cada nivel sigue anotado como pendiente en su sección.
 * **Armado, pendiente de validar:** Sector 1-5 (sección 2.2d) y la segunda tanda de la Fase O (opciones, posprocesado, recarga por arma, pantalla de carga, registro de errores, ícono y versión del `.exe`).
+* **Hecho y validado en juego (2026-10-11):** comercio de dos columnas con venta y recompra (`TradeSession`, `TraderData`, `TradeWindow`; sección 2.3), arrastrar armas de la mochila a la barra de acceso rápido, fogonazo y humo del arma, chispas contra el entorno, sangre / manchas / heridas / tripas al dañar y matar enemigos con arte propio (`combat/damage_fx.gd`, `assets/art/fx/`), botón SIGUIENTE SECTOR en la victoria y relleno de suelos solo sobre el vacío.
+* **En paralelo (otra conversación, no tocar desde el proyecto principal):** sala de estrés con spawner para medir rendimiento con muchos proyectiles, números, trozos y partículas.
 * **Versión:** `config/version` en `project.godot` (hoy 0.5.0); se ve en el menú principal y en las propiedades del `.exe`.
 * **Sandbox separado:** `test_level.tscn` se abre solo desde el botón "Banco de Pruebas" del menú principal; no forma parte de la campaña. El Sector 1-1 es un nivel real y no es el sandbox.
 * **Stand-by (no se toca por ahora):** jetpack, alas, vuelo, gancho de anclaje, baliza de translocación, runas avanzadas, alt-fire (zoom del sniper), mercenarios y drones, contratos de zona, los 50 niveles.
