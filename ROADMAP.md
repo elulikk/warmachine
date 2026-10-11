@@ -420,6 +420,25 @@ Contenido mínimo para validarlo:
 
 ---
 
+## 8. Tareas Menores (para IA liviana)
+*Objetivo:* Cambios chicos, mayormente de valores en los `.tres` y las curvas, que se pueden hacer sin pensar en la arquitectura.
+* **Modelo recomendado:** Haiku, esfuerzo **medium**.
+* **Reglas para quien las haga:**
+  - Cambiar solo los valores indicados. Si una tarea pide tocar la lógica de combate, la FSM o el sistema de armas, parar y reportar: no es una tarea menor.
+  - No crear escenas ni scripts nuevos.
+  - Verificar cada cambio con F5 en el Sector 1-1 o en el Banco de Pruebas. Anotar en la tarea qué se probó y qué se sintió.
+  - No hacer commit ni push sin que lo pidan.
+
+**Tareas:**
+1. **Cuchillo de Combate:** bajar el daño un poco y subir la cadencia un poco. Archivo: el `.tres` del cuchillo en `data/weapons/`. Criterio: sigue matando a un ladrón de un golpe o dos, y se siente un poco más rápido.
+2. **Revólver Oxidado:** bajar el daño un poco. Archivo: `data/weapons/rust_revolver.tres`. Criterio: el 1-1 sigue siendo posible con el revólver solo, sin que se sienta lento.
+3. **Carabina de Chatarra:** subir el daño un poco y dejar la penetración de armadura en un valor chico. Archivo: `data/weapons/scrap_carbine.tres`. Criterio: el DPS sube sin cambiar la cadencia ni el cargador. No tocar el atravesar: eso es otra tarea (Fase W).
+4. **Enemigos levemente más duros:** subir un poco la vida o la armadura de ladrón, bruto y centinela, sin cambiar cantidades ni rondas. Archivos: los `.tscn` o `.tres` de cada enemigo en `enemies/` (buscar los valores de vida y armadura). Criterio: las oleadas del 1-2 y del 1-3 se sienten con más presión, no más largas.
+5. **Subida de nivel:** bajar un poco la EXP que da cada enemigo (`EXP por enemigo` en el código de experiencia). Criterio: llegar al nivel 5 toma más de la mitad del 1-2, no toda la campaña. No cambiar la curva de nivel (x1.5), solo la base o la ganancia por enemigo.
+6. **Drops de equipo tempranos:** en los niveles 1-3 y 1-4, bajar `gear_chance` de los enemigos del nivel (o el `gear_loot_tier` si conviene). Criterio: un arma de tier 3 no aparece en los primeros cuatro sectores.
+
+---
+
 ## Reglas para Ahorrar Cuota
 - Una sesión nueva por fase.
 - Empezar siempre en Sonnet medium, subir a high solo si el cambio toca varios sistemas.
