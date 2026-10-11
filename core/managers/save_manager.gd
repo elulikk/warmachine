@@ -14,6 +14,9 @@ const MAX_SLOTS: int = 3
 
 static var instance: SaveManager = null
 static var active_slot_id: int = 1
+## Mientras sea true, `save_to_disk()` no escribe nada. Lo activa la Sala de Estrés para que el botín,
+## la experiencia y lo que pase adentro no se guarde (al volver, el campamento recarga el slot del disco).
+static var saving_suspended: bool = false
 const LAST_SLOT_FILE: String = "user://saves/last_active_slot.txt"
 ## Ranura nueva -> clave del esquema anterior, para leer partidas guardadas antes del rediseño de ranuras.
 const LEGACY_EQUIP_KEYS: Dictionary = {
@@ -230,6 +233,8 @@ func get_slot_path(slot_id: int) -> String:
 
 ## Guarda todo el estado de la partida en el slot actual a disco.
 func save_to_disk() -> bool:
+	if saving_suspended:
+		return false
 	_ensure_save_dir()
 	var player: Player = get_tree().get_first_node_in_group(&"player") as Player
 	

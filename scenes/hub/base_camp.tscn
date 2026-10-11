@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://entities/interactables/blacksmith_npc.tscn" id="12_smith"]
 [ext_resource type="PackedScene" path="res://ui/blacksmith_window.tscn" id="13_smith_win"]
 [ext_resource type="PackedScene" path="res://entities/interactables/merchant_npc.tscn" id="14_merchant"]
+[ext_resource type="PackedScene" path="res://entities/interactables/scene_door.tscn" id="15_stress_door"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_camp_floor"]
 size = Vector2(1600, 48)
@@ -110,7 +111,7 @@ offset_right = 950.0
 offset_bottom = 430.0
 theme_override_colors/font_color = Color(0.65, 0.72, 0.82, 1)
 theme_override_font_sizes/font_size = 11
-text = "[I] Mochila • [E] Herrero • [E] Baúl • [E] Expediciones • [E] Mercader • [1-9] Barra rápida"
+text = "[I] Mochila • [E] Herrero • [E] Baúl • [E] Expediciones • [E] Mercader • [E] Sala de Estrés • [1-9] Barra rápida"
 horizontal_alignment = 1
 
 [node name="BlacksmithNPC" parent="." unique_id=1849203912 instance=ExtResource("12_smith")]
@@ -124,6 +125,12 @@ position = Vector2(1060, 536)
 
 [node name="MapSelector" parent="." unique_id=2032862939 instance=ExtResource("7_map")]
 position = Vector2(840, 536)
+
+[node name="StressRoomDoor" parent="." instance=ExtResource("15_stress_door")]
+position = Vector2(1250, 536)
+target_scene = "res://scenes/hub/stress_room.tscn"
+prompt_text = "[E] Sala de Estrés"
+sign_text = "PRUEBAS"
 
 [node name="Player" parent="." unique_id=59870136 instance=ExtResource("2_player")]
 position = Vector2(600, 520)

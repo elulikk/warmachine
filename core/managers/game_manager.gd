@@ -7,6 +7,7 @@ extends Node
 const SettingsScript = preload("res://core/settings.gd")
 const SceneLoaderScript = preload("res://core/scene_loader.gd")
 const ErrorLoggerScript = preload("res://core/error_logger.gd")
+const PerfMonitorScript = preload("res://core/debug/perf_monitor.gd")
 
 enum GameState { PLAYING, GAME_OVER, VICTORY }
 
@@ -89,7 +90,7 @@ func is_sandbox() -> bool:
 	if cur is TestLevel:
 		return true
 	var path: String = cur.scene_file_path
-	return path.ends_with("test_level.tscn")
+	return path.ends_with("test_level.tscn") or path.ends_with("stress_room.tscn")
 
 
 ## Retorna true si la escena activa es el Menú Principal.
@@ -135,6 +136,32 @@ func _unhandled_input(event: InputEvent) -> void:
 		overhead_visibility_toggled.emit(show_overhead_bars)
 		print("[GameManager] Visibilidad de placas superiores: %s" % ("ACTIVADA" if show_overhead_bars else "DESACTIVADA"))
 		return
+
+	# Tecla F9: monitor de rendimiento con registro a disco en cualquier escena (menos el menú)
+	if key == KEY_F9 and not is_main_menu():
+		get_viewport().set_input_as_handled()
+		toggle_perf_monitor()
+		return
+
+
+## Agrega o quita el monitor de rendimiento (core/debug/perf_monitor.gd) de la escena actual.
+## Si la escena trae uno fijo (Sala de Estrés), solo muestra u oculta su panel.
+func toggle_perf_monitor() -> void:
+	var cur: Node = get_tree().current_scene
+	if cur == null:
+		return
+	var existing: Node = cur.get_node_or_null("PerfMonitor")
+	if existing != null:
+		if bool(existing.get("persistent")):
+			existing.call("toggle_overlay")
+		else:
+			existing.queue_free()
+			print("[GameManager] Monitor de rendimiento desactivado (registro cerrado).")
+		return
+	var monitor: Node = PerfMonitorScript.new()
+	monitor.set("tag", cur.scene_file_path.get_file().get_basename())
+	cur.add_child(monitor)
+	print("[GameManager] Monitor de rendimiento activado (F9 para quitarlo).")
 
 
 ## Acumula las últimas letras tipeadas y dispara el truco de monedas al completar el código.
