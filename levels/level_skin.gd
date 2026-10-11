@@ -25,6 +25,10 @@ const WALL_MAX_WIDTH: float = 130.0
 const WALL_MIN_HEIGHT: float = 200.0
 const THIN_MAX_HEIGHT: float = 40.0
 
+## Relleno bajo los suelos: solo dibujo (la colisión sigue igual), para que no parezcan flotar.
+const GROUND_FILL_DEPTH: float = 1200.0
+const GROUND_FILL_TONE: Color = Color(0.42, 0.4, 0.46, 1.0)
+
 
 static func apply(level: Node, chapter: int = 1) -> void:
 	var environment: Node = level.get_node_or_null("Environment")
@@ -95,6 +99,12 @@ static func _tile_rect(parent: Node, texture: Texture2D, rect_size: Vector2, ton
 ## Suelo o bloque macizo: chapa remachada con la tabla de cobre arriba.
 static func _build_ground(visual: Node2D, extent: Vector2, floor_tex: Texture2D) -> void:
 	_tile_rect(visual, floor_tex, extent, Color(0.92, 0.9, 0.95, 1.0))
+	# Macizo bajo la superficie: mampostería oscura que llega hasta el fondo de la vista
+	var fill_tex: Texture2D = ArtScript.tex(WORLD_DIR + "wall_brick.png")
+	if fill_tex == null:
+		fill_tex = floor_tex
+	var fill: TextureRect = _tile_rect(visual, fill_tex, Vector2(extent.x, GROUND_FILL_DEPTH), GROUND_FILL_TONE)
+	fill.position = Vector2(0.0, extent.y)
 	var edge_tex: Texture2D = ArtScript.tex(WORLD_DIR + "edge_top.png")
 	if edge_tex != null:
 		var edge: TextureRect = _tile_rect(visual, edge_tex, Vector2(extent.x, EDGE_HEIGHT))
