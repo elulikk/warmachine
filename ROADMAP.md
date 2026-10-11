@@ -294,6 +294,11 @@ Contenido mínimo para validarlo:
 
 **Qué se ve:** HUD con línea `ARM x (-y%) | DMG z`, nombre del arma con su rareza y color, aviso central al subir de nivel, borde del casillero con el color de rareza y tooltip con rareza y stats con nombre legible.
 
+**Pendiente (agregado 2026-10-11):**
+- **Subida de nivel demasiado rápida:** el personaje llega al nivel alto muy pronto. Bajar la EXP que dan los enemigos o subir la curva (base 150, x1.5 por nivel) y revisar que el nivel 10 se alcance recién avanzada la campaña.
+- **Drops de equipo generosos en los sectores tempranos:** en el 1-4 un mob soltó el arma del pedestal y otro una M4 (T3) antes de llegar al final. Revisar `gear_chance` y el peso de rareza por tier (sección "Botín de equipo") para que un nivel temprano no entregue armas de tier 3.
+- **Enemigos levemente más duros:** con la Runa de Perforación y la de Afilado las oleadas caen con facilidad, y es muy temprano para eso. Subir un poco la vida o la armadura de ladrón, bruto y centinela (o escalarlas por sector) sin tocar la cantidad de enemigos.
+
 ---
 
 ## 5. Fase D — Movilidad Mínima
@@ -303,6 +308,11 @@ Contenido mínimo para validarlo:
   1. Elegir una: doble salto, salto más alto o velocidad. **Elegida: velocidad**, como `Botas Ligeras` en la recompensa del Sector 1-2 (sección 2.2). Criterio de cierre validado en juego.
   2. Dejarla como mejora obtenible (pickup o desbloqueo por nivel).
 * **Criterio de cierre:** Con la mejora equipada, el salto o la velocidad cambian; sin ella, el comportamiento actual no cambia.
+
+**Ampliación (agregada 2026-10-11, pendiente):**
+- **Agacharse:** disponible siempre, sin ítem. Achica la hitbox y baja el cuerpo; el arma sigue funcionando agachado.
+- **Roll y dash:** no están desbloqueados. Se habilitan con ítems (una ranura de movilidad nueva o un ítem consumible de un solo uso según el caso), así que la FSM tiene que leer el flag del ítem y no hardcodearlo. Desbloqueables a futuro, sin fecha.
+- **Modelo recomendado:** Sonnet, esfuerzo **high** (toca la FSM del jugador).
 
 ---
 
@@ -362,6 +372,44 @@ Contenido mínimo para validarlo:
 - **Regla desde ya:** cada sistema pesado nuevo (explosiones, misiles, efectos de área) se prueba en la Sala de Estrés apenas está armado.
 - **Modelo recomendado:** Sonnet, esfuerzo **high** (toca enemigos, componentes y física).
 - **Criterio de cierre:** 100 enemigos persiguiendo a 60 FPS estables y 200 jugables en la Sala de Estrés, comparando la tabla "FPS según enemigos vivos" antes y después.
+
+---
+
+## 6d. Fase W — Armas: Manos, Tipos y Animación
+*Objetivo:* Que cada arma se sienta distinta en la mano, y que el personaje pueda llevar dos cosas a la vez. Es la base de varios puntos de abajo, así que el sistema de tipos va primero.
+* **Modelo recomendado:** Sonnet, esfuerzo **high** (toca armas, animación y FSM de combate).
+
+**Pendiente:**
+1. **Sistema de tipos de arma (primero):** cada `WeaponData` declara su familia (pistola, revólver, carabina, subfusil, escopeta, rifle, melee corto, espada, etc.) y su empuñadura: **una mano**, **dos manos** o **escudo**. La familia define el comportamiento base (eyección, animación, sonido); el tipo define si puede ir en la mano secundaria. Esto evita un `match` por nombre en cada sistema.
+2. **Dos manos (mano principal y secundaria):** el personaje tiene un arma en cada mano si ambas son de una mano. Click izquierdo usa la principal, click derecho la secundaria. Combinaciones previstas: cuchillo + pistola, escudo + arma, dos pistolas. Un arma a dos manos ocupa las dos y deja la secundaria vacía. Revisar cómo se reparte la munición y la recarga cuando las dos armas son de fuego.
+3. **Casquillos y cargador al recargar:** al recargar, cae el cargador viejo y salen los casquillos al piso, según la familia (revólver: casquillos del tambor; pistola y fusiles: cargador y casquillos; escopeta: cartuchos). Son efectos visuales, sin física de recogida.
+4. **Carabina de Chatarra:** sube de daño, **no atraviesa enemigos** y gana un poco de penetración de armadura. Aplicar lo mismo a todas las carabinas, según su tipo.
+5. **Cuchillo de Combate:** menos daño y un poco más de cadencia.
+6. **Revólver Oxidado:** un poco menos de daño (el de inicio del 1-1 ya no debe ser tan fuerte).
+7. **Swing de espada:** los ataques de espada y armas grandes hacen un arco amplio frente al personaje. El brazo acompaña el movimiento, y el cuerpo gira con él (no solo el arma). Aplica a las armas melee de dos manos. Ver `core/art/weapon_motion.gd`.
+
+---
+
+## 6e. Fase V — Recompensas Visibles
+*Objetivo:* Que el loot y la subida de nivel se vean a distancia, sin texto encima.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium** (efectos visuales, sin cambiar la lógica).
+
+**Pendiente:**
+1. **Objetos del piso (items y runas):** en vez de la caja actual, cada objeto flota con un leve movimiento de vaivén y un aura brillante que pulsa. El color del aura sale de la rareza.
+2. **Aura de subida de nivel:** al subir de nivel, un aura alrededor del personaje, estilo MU Online o WoW (columna o destello de luz, unos segundos, sin bloquear el juego).
+
+---
+
+## 6f. Fase T — Herramientas de Diseño desde el Editor
+*Objetivo:* Que armar niveles y probar cosas sea rápido desde Godot, sin tocar código ni escribir a mano coordenadas o rutas.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium** (mayormente escenas, exports y un editor simple).
+
+**Pendiente:**
+1. **Colocar en el nivel sin código:** que un nivel se arme arrastrando escenas en el editor (plataformas, checkpoints, arenas, pedestales, puertas de salida), con los parámetros visibles en el Inspector.
+2. **Spawnear enemigos desde el editor:** un marcador de spawn por enemigo o por oleada, con tipo, cantidad y ronda como exports. Sin editar `WaveManager` a mano.
+3. **Tirar armas e ítems al piso:** un marcador que deja cualquier `WeaponData` o `ItemData` (o una runa) en el suelo, eligiendo el recurso desde el Inspector.
+4. **Probar desde el editor:** poder lanzar un nivel desde su escena y arrancar con un equipo de prueba (armas, consumibles, monedas) sin pasar por el Campamento.
+5. **Regla desde ya:** cada sistema nuevo (armas, enemigos, ítems, runas) tiene que poder usarse desde el editor. Si para colocarlo hay que escribir código, no está terminado.
 
 ---
 
