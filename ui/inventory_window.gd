@@ -6,9 +6,6 @@ extends DraggableWindow
 ## Panel derecho: Grilla de 5x4 con los 20 casilleros de la mochila.
 ## Arrastrar o clic derecho transfiere recursos limpiamente entre la mochila y las ranuras equipadas.
 
-const ConsumableManagerScript = preload("res://core/consumables/consumable_manager.gd")
-const ConsumableDataScript = preload("res://core/consumables/consumable_data.gd")
-const SteamSkinScript = preload("res://ui/components/steam_skin.gd")
 
 @onready var weapon_1_slot: ItemSlot = %Weapon1Slot
 @onready var weapon_2_slot: ItemSlot = %Weapon2Slot
@@ -42,7 +39,6 @@ func _ready() -> void:
 	window_title = "INVENTARIO Y ARSENAL"
 	visible = false
 	_init_backpack_grid()
-	_build_consumable_palette()
 	_connect_equipment_slots()
 	
 	# Centrar la ventana inicialmente
@@ -113,40 +109,6 @@ func _backpack_accepts(_res: Resource, payload: Dictionary, slot: ItemSlot) -> b
 ## La barra rápida recibe armas de la mochila o del yunque; reordenar entre ranuras no está soportado.
 func _weapon_slot_accepts(_res: Resource, payload: Dictionary, _slot: ItemSlot) -> bool:
 	return not ["weapon", "hotbar"].has(str(payload.get("context_tag", "")))
-
-
-## Paleta de consumibles bajo la mochila: son fuente de arrastre hacia la barra rápida, no reciben ítems.
-## Arrastrar un consumible no gasta ninguna unidad: la barra guarda la referencia al tipo.
-func _build_consumable_palette() -> void:
-	var right_vbox: VBoxContainer = get_node_or_null("VBox/ContentContainer/MainHBox/RightPanel/VBox") as VBoxContainer
-	if right_vbox == null:
-		return
-
-	var title: Label = Label.new()
-	title.text = "CONSUMIBLES  (arrastralos a la barra rápida)"
-	title.add_theme_font_size_override("font_size", 11)
-	right_vbox.add_child(title)
-
-	var row: HBoxContainer = HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
-	right_vbox.add_child(row)
-
-	var item_slot_scene: PackedScene = preload("res://ui/components/item_slot.tscn")
-	var catalog: Array[ConsumableDataScript] = ConsumableManagerScript.get_catalog()
-	for i in range(catalog.size()):
-		var palette_slot: ItemSlot = item_slot_scene.instantiate() as ItemSlot
-		palette_slot.slot_type = "ANY"
-		palette_slot.slot_index = i
-		palette_slot.context_tag = "consumable"
-		palette_slot.carry_on_click = false
-		palette_slot.accept_filter = _palette_rejects
-		row.add_child(palette_slot)
-		palette_slot.set_item(catalog[i])
-	SteamSkinScript.skin_tree(right_vbox)
-
-
-func _palette_rejects(_res: Resource, _payload: Dictionary, _slot: ItemSlot) -> bool:
-	return false
 
 
 func _connect_equipment_slots() -> void:

@@ -151,6 +151,7 @@ context_tag = "equipment"
 empty_hint = "BOTAS"
 
 [node name="WeaponsBox" type="PanelContainer" parent="VBox/ContentContainer/MainHBox/LeftPanel"]
+visible = false
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_section")
 
