@@ -56,6 +56,61 @@ static func muzzle_flash(host: Node, pos: Vector2, dir: Vector2, tint: Color = W
 	tween.chain().tween_callback(fx.queue_free)
 
 
+## Humito que sale de la boca del cañón y se eleva despacio, quedando atrás en el mundo.
+static func muzzle_smoke(host: Node, pos: Vector2, dir: Vector2) -> void:
+	var container: Node = _container(host)
+	if container == null:
+		return
+	var puff: CPUParticles2D = CPUParticles2D.new()
+	puff.texture = _puff_texture()
+	puff.z_index = FX_Z_INDEX - 1
+	puff.one_shot = true
+	puff.amount = 4
+	puff.lifetime = 1.3
+	puff.explosiveness = 1.0
+	# Sale en la dirección del disparo y se curva hacia arriba
+	puff.direction = (dir.normalized() + Vector2(0.0, -0.9)).normalized()
+	puff.spread = 28.0
+	puff.initial_velocity_min = 10.0
+	puff.initial_velocity_max = 34.0
+	puff.gravity = Vector2(0.0, -16.0)
+	puff.damping_min = 12.0
+	puff.damping_max = 22.0
+	puff.scale_amount_min = 0.6
+	puff.scale_amount_max = 0.9
+	var growth: Curve = Curve.new()
+	growth.add_point(Vector2(0.0, 0.5))
+	growth.add_point(Vector2(1.0, 2.4))
+	puff.scale_amount_curve = growth
+	var ramp: Gradient = Gradient.new()
+	ramp.set_color(0, Color(0.86, 0.84, 0.8, 0.85))
+	ramp.set_color(1, Color(0.6, 0.58, 0.55, 0.0))
+	puff.color_ramp = ramp
+	container.add_child(puff)
+	puff.global_position = pos
+	puff.emitting = true
+	puff.get_tree().create_timer(1.8).timeout.connect(puff.queue_free)
+
+
+static var _puff_tex: Texture2D = null
+
+
+## Disco suave y borroso (se genera una vez) para las nubes de humo.
+static func _puff_texture() -> Texture2D:
+	if _puff_tex != null:
+		return _puff_tex
+	var size: int = 24
+	var image: Image = Image.create(size, size, false, Image.FORMAT_RGBA8)
+	var center: float = (size - 1) * 0.5
+	for y in range(size):
+		for x in range(size):
+			var d: float = Vector2(x - center, y - center).length() / center
+			var a: float = clampf(1.0 - d, 0.0, 1.0)
+			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, a * a))
+	_puff_tex = ImageTexture.create_from_image(image)
+	return _puff_tex
+
+
 ## Chispas al chocar contra el entorno. `normal` apunta hacia afuera de la superficie.
 static func wall_impact(host: Node, pos: Vector2, normal: Vector2, tint: Color = WARM) -> void:
 	var container: Node = _container(host)

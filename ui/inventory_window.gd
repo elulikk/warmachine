@@ -29,6 +29,9 @@ extends DraggableWindow
 ## Segundos de espera tras el último cambio antes de guardar la partida en disco.
 const AUTOSAVE_DELAY: float = 0.8
 
+## Armas que caben en el arsenal: una por casillero de la barra de acceso rápido.
+const ARSENAL_LIMIT: int = 9
+
 var player: Player = null
 var _backpack_slots: Array[ItemSlot] = []
 var _autosave_pending: bool = false
@@ -89,7 +92,7 @@ func _init_backpack_grid() -> void:
 
 ## Reglas extra de la mochila como destino: qué orígenes pueden soltar sobre un casillero concreto.
 ## Un arma de la barra rápida puede salir aunque sea la última: el personaje puede quedarse sin armas.
-func _backpack_accepts(_res: Resource, payload: Dictionary, slot: ItemSlot) -> bool:
+func _backpack_accepts(res: Resource, payload: Dictionary, slot: ItemSlot) -> bool:
 	# Ítem desplazado por un swap: el casillero de origen se libera, siempre entra
 	if bool(payload.get("is_displaced", false)):
 		return true
@@ -97,6 +100,9 @@ func _backpack_accepts(_res: Resource, payload: Dictionary, slot: ItemSlot) -> b
 	match src_context:
 		"stash":
 			return slot.get_item() == null
+		"hotbar":
+			# De la barra rápida solo salen armas (consumibles no viven en la mochila) y a un casillero libre
+			return res is WeaponData and slot.get_item() == null
 		"weapon":
 			# Sacar un arma del arsenal: debe quedar al menos una, o intercambiar con otra arma de la mochila
 			return slot.get_item() == null or slot.get_item() is WeaponData
@@ -244,12 +250,12 @@ func _on_backpack_slot_right_clicked(slot: ItemSlot) -> void:
 	# Si es WeaponData -> intentar equipar en el arsenal de armas (máx 3)
 	if item is WeaponData:
 		var wpn: WeaponData = item as WeaponData
-		if player.weapon_manager != null and player.weapon_manager.weapons.size() < 3:
+		if player.weapon_manager != null and player.weapon_manager.weapons.size() < ARSENAL_LIMIT:
 			player.inventory_manager.remove_item_at(slot.slot_index)
 			player.weapon_manager.add_weapon(wpn, true)
 			refresh_all()
 			return
-		elif player.weapon_manager != null and player.weapon_manager.weapons.size() >= 3:
+		elif player.weapon_manager != null and player.weapon_manager.weapons.size() >= ARSENAL_LIMIT:
 			# Reemplazar arma activa
 			var active_idx: int = player.weapon_manager.current_weapon_index
 			var old_wpn: WeaponData = player.weapon_manager.weapons[active_idx]
@@ -336,6 +342,25 @@ func _on_item_dropped_on_slot(source_data: Dictionary, target_slot: ItemSlot) ->
 	if src_slot == target_slot or src_res == null:
 		return
 	
+	# 0. Barra rápida -> Mochila: el arma sale del arsenal y vuelve a la mochila
+	if src_context == "hotbar" and target_slot.context_tag == "backpack":
+		var weapons_manager: WeaponManager = player.weapon_manager
+		if src_res is WeaponData and target_slot.get_item() == null and weapons_manager != null:
+			var arsenal_index: int = weapons_manager.weapons.find(src_res as WeaponData)
+			if arsenal_index >= 0:
+				var holding: WeaponData = weapons_manager.current_weapon
+				weapons_manager.weapons.remove_at(arsenal_index)
+				weapons_manager.weapon_magazines.erase(src_res as WeaponData)
+				if weapons_manager.weapons.is_empty():
+					weapons_manager.select_weapon(0)
+				elif holding != null and holding != src_res and weapons_manager.weapons.has(holding):
+					weapons_manager.select_weapon(weapons_manager.weapons.find(holding))
+				else:
+					weapons_manager.select_weapon(0)
+				player.inventory_manager.set_item_at(target_slot.slot_index, src_res)
+				refresh_all()
+		return
+
 	# 1. Mochila -> Mochila (Reordenar)
 	if src_context == "backpack" and target_slot.context_tag == "backpack":
 		player.inventory_manager.swap_slots(src_index, target_slot.slot_index)

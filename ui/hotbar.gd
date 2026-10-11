@@ -139,6 +139,7 @@ func _try_bind() -> void:
 	_bound = true
 	player.weapon_manager.weapon_changed.connect(_on_weapon_changed)
 	player.consumable_manager.message_posted.connect(_show_message)
+	player.consumable_manager.counts_changed.connect(_place_loose_consumables)
 	_last_weapon = player.weapon_manager.current_weapon
 
 	if player.hotbar_layout.is_empty():
@@ -149,6 +150,7 @@ func _try_bind() -> void:
 
 	if not _layout_pending:
 		_place_loose_weapons()
+		_place_loose_consumables()
 	_selected = _initial_selection()
 	_previous = _selected
 
@@ -259,6 +261,27 @@ func _place_loose_weapons() -> void:
 		_slots[target].set_item(weapon)
 
 
+## Consumibles que se tienen pero no están en ningún casillero (comprados, recogidos): entran en el primer
+## casillero libre a partir del 4. Ya no hay paleta en el inventario desde la que asignarlos a mano.
+func _place_loose_consumables() -> void:
+	if not _bound or _layout_pending:
+		return
+	var manager: ConsumableManagerScript = _player.consumable_manager
+	for data: ConsumableDataScript in ConsumableManagerScript.get_catalog():
+		if manager.get_count(data.consumable_id) <= 0 or _slot_holding(data) >= 0:
+			continue
+		var target: int = -1
+		for i in range(3, SLOT_COUNT):
+			if _entry(i) == null:
+				target = i
+				break
+		if target < 0:
+			target = _first_empty()
+		if target < 0:
+			return
+		_slots[target].set_item(data)
+
+
 ## Quita del casillero (y de la mano) lo que ya no está en el arsenal.
 func _clean_stale() -> void:
 	var wm: WeaponManager = _player.weapon_manager
@@ -297,14 +320,18 @@ func _holding_consumable() -> bool:
 # Arrastre hacia la barra
 # ==============================================================================
 
-## Armas: solo las del arsenal (la referencia tiene que seguir válida). Consumibles: cualquiera del catálogo.
-func _accepts(res: Resource, _payload: Dictionary, _slot: Control) -> bool:
+## Armas: las del arsenal, o una de la mochila si el arsenal tiene lugar (al soltarla pasa al arsenal).
+## Consumibles: cualquiera del catálogo.
+func _accepts(res: Resource, payload: Dictionary, _slot: Control) -> bool:
 	if not _bound:
 		return false
 	if res is ConsumableDataScript:
 		return true
 	if res is WeaponData:
-		return _player.weapon_manager.weapons.has(res)
+		var weapons: Array[WeaponData] = _player.weapon_manager.weapons
+		if weapons.has(res):
+			return true
+		return str(payload.get("context_tag", "")) == "backpack" and weapons.size() < SLOT_COUNT
 	return false
 
 
@@ -312,11 +339,36 @@ func _on_slot_dropped(payload: Dictionary, target) -> void:
 	var res: Resource = payload.get("resource") as Resource
 	var from_barra: bool = str(payload.get("context_tag", "")) == "hotbar"
 	var from_index: int = int(payload.get("slot_index", -1))
+	var came_from_backpack: bool = false
+	if str(payload.get("context_tag", "")) == "backpack" and res is WeaponData:
+		came_from_backpack = _take_weapon_from_backpack(res as WeaponData, from_index)
+		if not came_from_backpack:
+			return
 	if from_barra and from_index >= 0 and from_index < SLOT_COUNT and _slots[from_index] != target:
 		# Entre casilleros de la barra: intercambia (el destino pasa a ser el origen)
 		_slots[from_index].set_item(target.get_item())
 	target.set_item(res)
+	if came_from_backpack:
+		# Si el casillero tenía otra arma, sigue en el arsenal: se le busca otro casillero
+		_place_loose_weapons()
 	_refresh()
+
+
+## Pasa un arma de la mochila al arsenal (sin duplicarla: la barra guarda la misma instancia).
+## Devuelve false, sin tocar nada, si ya no está en esa posición o el arsenal está lleno.
+func _take_weapon_from_backpack(weapon: WeaponData, backpack_index: int) -> bool:
+	var inventory: InventoryManager = _player.inventory_manager
+	var wm: WeaponManager = _player.weapon_manager
+	if inventory == null or inventory.get_item_at(backpack_index) != weapon or wm.weapons.size() >= SLOT_COUNT:
+		return false
+	inventory.remove_item_at(backpack_index)
+	wm.weapons.append(weapon)
+	if wm.current_weapon == null:
+		wm.select_weapon(wm.weapons.size() - 1)
+	var inventory_window: InventoryWindow = get_tree().get_first_node_in_group(&"inventory_window") as InventoryWindow
+	if inventory_window != null and inventory_window.visible:
+		inventory_window.refresh_all()
+	return true
 
 
 func _on_slot_right_clicked(slot) -> void:

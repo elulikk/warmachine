@@ -359,6 +359,7 @@ func fire() -> void:
 	
 	_play_weapon_kick()
 	ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
+	ShotFx.muzzle_smoke(self, spawn_pos, aim_dir)
 	GameFeel.sfx_weapon_fire(self, current_weapon)
 
 	# 3. Aplicar fuerza de retroceso sobre el jugador

@@ -37,7 +37,8 @@ const CAT_RUNE: String = "RUNE"
 const CAT_CONSUMABLE: String = "CONSUMABLE"
 const CAT_OTHER: String = "OTHER"
 
-const MAX_ARSENAL: int = 3
+## Una por casillero de la barra de acceso rápido (ver ui/hotbar.gd).
+const MAX_ARSENAL: int = 9
 const TAG_UNSELLABLE: Array[String] = ["QUEST", "KEY_ITEM"]
 
 
