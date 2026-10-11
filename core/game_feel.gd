@@ -18,6 +18,7 @@ const SfxScript = preload("res://core/sfx.gd")
 const MusicScript = preload("res://core/music.gd")
 const MusicDirectorScript = preload("res://core/music_director.gd")
 const SettingsScript = preload("res://core/settings.gd")
+const BloodFxScript = preload("res://combat/blood_fx.gd")
 
 static var _hit_stop_active: bool = false
 static var _last_hit_stop_msec: int = 0
@@ -162,8 +163,11 @@ static func _spawn_emitter(
 	emitter.spread = 180.0
 	emitter.initial_velocity_min = speed_min
 	emitter.initial_velocity_max = speed_max
-	emitter.scale_amount_min = scale_min
-	emitter.scale_amount_max = scale_max
+	# Partículas redondas (nunca cuadrados): la textura de gota de BloodFx, con la escala ajustada a su ancho
+	var drop: Texture2D = BloodFxScript.drop_texture()
+	emitter.texture = drop
+	emitter.scale_amount_min = scale_min / float(drop.get_width())
+	emitter.scale_amount_max = scale_max / float(drop.get_width())
 	emitter.gravity = gravity
 	emitter.color_ramp = ramp
 	emitter.z_index = 20

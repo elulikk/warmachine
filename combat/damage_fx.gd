@@ -25,7 +25,6 @@ var _body_rect: Rect2 = Rect2(-10.0, -34.0, 20.0, 34.0)
 var _marks: int = 0
 var _last_ratio: float = 1.0
 var _drip_timer: float = 1.0
-var _color: Color = Color(0.35, 0.36, 0.4, 1.0)
 
 
 func _ready() -> void:
@@ -87,6 +86,8 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 	var strength: float = damage * (1.6 if is_critical else 1.0)
 
 	BloodFx.spray(_host, spot, dir, strength, _mechanical)
+	if not _mechanical:
+		BloodFx.spray_sprite(_host, spot, dir)
 	BloodFx.stains(_host, spot, dir, 1 + int(strength / 14.0), clampf(0.8 + strength / 60.0, 0.8, 1.6), _mechanical)
 
 	# Heridas visibles en el cuerpo: una por cada octavo de vida perdido
@@ -99,7 +100,7 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 
 	for threshold: float in THRESHOLDS:
 		if _last_ratio > threshold and ratio <= threshold:
-			BloodFx.chunks(_host, spot, 6, _color, _mechanical)
+			BloodFx.gibs(_host, spot, 3, _mechanical, 0.8)
 	_last_ratio = ratio
 
 
@@ -107,9 +108,13 @@ func _on_died() -> void:
 	if _host == null or not _host.is_inside_tree():
 		return
 	var spot: Vector2 = _body_center()
-	BloodFx.chunks(_host, spot, 10, _color, _mechanical)
-	BloodFx.spray(_host, spot, Vector2.UP, 40.0, _mechanical)
-	BloodFx.stains(_host, spot, Vector2.ZERO, 4, 1.7, _mechanical)
+	# Explosión final: lluvia de trozos y tripas, doble salpicadura y varios charcos
+	BloodFx.gibs(_host, spot, 12, _mechanical, 1.0)
+	BloodFx.spray(_host, spot, Vector2.UP, 60.0, _mechanical)
+	BloodFx.spray(_host, spot + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, _mechanical)
+	BloodFx.spray(_host, spot + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, _mechanical)
+	BloodFx.spray_sprite(_host, spot, Vector2.UP)
+	BloodFx.stains(_host, spot, Vector2.ZERO, 6, 1.9, _mechanical)
 
 
 ## Agrega una herida al cuerpo: salpicadura irregular o tajo.
@@ -124,6 +129,16 @@ func _add_mark() -> void:
 	mark.position = at
 	mark.z_index = 2
 	mark.rotation = randf() * TAU
+	var mark_art: Texture2D = null if _mechanical else BloodFx.variant_tex("blood_mark", 4)
+	if mark_art != null:
+		var painted: Sprite2D = Sprite2D.new()
+		painted.texture = mark_art
+		painted.scale = Vector2(0.5, 0.5)
+		mark.add_child(painted)
+		_host.add_child(mark)
+		mark.scale = Vector2(0.2, 0.2)
+		mark.create_tween().tween_property(mark, "scale", Vector2.ONE, 0.1)
+		return
 	var dark: Color = Color(0.09, 0.09, 0.1, 0.9) if _mechanical else Color(0.42, 0.02, 0.04, 0.92)
 	var bright: Color = Color(0.9, 0.88, 0.8, 0.9) if _mechanical else Color(0.72, 0.06, 0.08, 0.95)
 	if randf() < 0.55:
