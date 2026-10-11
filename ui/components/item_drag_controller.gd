@@ -15,6 +15,7 @@ extends CanvasLayer
 ##   - set_drop_state(state: int)             0 ninguno, 1 candidato, 2 sobre válido, 3 sobre inválido
 ##   - get_item() -> Resource
 ##   - play_drop_pop()                        (opcional) rebote al recibir
+##   - on_drop_rejected(payload: Dictionary)  (opcional) se llama al soltar sobre él un ítem que no acepta
 ##   - wants_cursor_ghost()                   (opcional) si existe, el ítem en mano sigue al cursor
 ##                                            en vez de acomodarse en el centro (zonas grandes)
 ##
@@ -318,6 +319,9 @@ func _try_drop() -> void:
 		return
 
 	if not _can_place(target):
+		# El destino puede explicar por qué no acepta (ej.: "No te alcanzan las monedas")
+		if target.has_method(&"on_drop_rejected"):
+			target.call(&"on_drop_rejected", _payload)
 		_on_rejected()
 		return
 

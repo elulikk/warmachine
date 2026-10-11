@@ -13,6 +13,8 @@ const ItemDragControllerScript = preload("res://ui/components/item_drag_controll
 
 var accept_check: Callable = Callable()
 var drop_handler: Callable = Callable()
+## func(payload: Dictionary) -> void: se llama al soltar acá algo que la zona no acepta (para explicar el motivo).
+var reject_handler: Callable = Callable()
 
 var _drop_state: int = 0
 var _pulse_time: float = 0.0
@@ -42,6 +44,11 @@ func receive_carried(payload: Dictionary) -> void:
 	if bool(drop_handler.call(payload)):
 		_acknowledged = payload.get("resource") as Resource
 		_clear_acknowledgement.call_deferred()
+
+
+func on_drop_rejected(payload: Dictionary) -> void:
+	if reject_handler.is_valid():
+		reject_handler.call(payload)
 
 
 func _clear_acknowledgement() -> void:

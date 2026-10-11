@@ -189,7 +189,7 @@ func _on_window_closed() -> void:
 		GameFeel.music_pop(self, &"shop")
 		_music_pushed = false
 	var sm: SaveManager = SaveManager.get_instance()
-	if sm != null:
+	if sm != null and sm.is_inside_tree():
 		sm.save_to_disk()
 
 
@@ -258,6 +258,8 @@ func _build_ui() -> void:
 	_player_col.zone.set("drop_handler", Callable(self, "_player_zone_drop"))
 	_trader_col.zone.set("accept_check", Callable(self, "_trader_zone_accepts"))
 	_trader_col.zone.set("drop_handler", Callable(self, "_trader_zone_drop"))
+	_player_col.zone.set("reject_handler", Callable(self, "_player_zone_rejected"))
+	_trader_col.zone.set("reject_handler", Callable(self, "_trader_zone_rejected"))
 
 	_confirm_bar = PanelContainer.new()
 	_confirm_bar.add_theme_stylebox_override("panel", SteamSkin.inset_style())
@@ -710,6 +712,32 @@ func _player_zone_drop(payload: Dictionary) -> bool:
 			return false
 		return _do_rebuy(int(_buyback_view[index]["index"]), bulk)
 	return false
+
+
+## Soltaron una compra que no se puede hacer: se explica el motivo en vez de devolver el ítem sin decir nada.
+func _player_zone_rejected(payload: Dictionary) -> void:
+	if _session == null:
+		return
+	var context: String = str(payload.get("context_tag", ""))
+	var index: int = int(payload.get("slot_index", -1))
+	if context == CTX_STOCK and index >= 0 and index < _stock_view.size():
+		_handle_result(_session.call(&"can_buy", _stock_view[index]["offer"], 1), Callable())
+	elif context == CTX_BUYBACK and index >= 0 and index < _buyback_view.size():
+		_handle_result(_session.call(&"can_rebuy", int(_buyback_view[index]["index"]), 1), Callable())
+	elif context == CTX_PLAYER:
+		_say("Eso ya es tuyo: arrastralo a la columna del comerciante para venderlo.", COLOR_WARN)
+
+
+## Soltaron una venta que no se puede hacer.
+func _trader_zone_rejected(payload: Dictionary) -> void:
+	if _session == null:
+		return
+	var context: String = str(payload.get("context_tag", ""))
+	var index: int = int(payload.get("slot_index", -1))
+	if context == CTX_PLAYER and index >= 0 and index < _player_view.size():
+		_handle_result(_session.call(&"can_sell", _player_view[index], 1), Callable())
+	elif context == CTX_STOCK or context == CTX_BUYBACK:
+		_say("Para comprar, arrastralo a tu columna (la de la izquierda).", COLOR_WARN)
 
 
 ## Columna del comerciante: recibe ventas del jugador.
