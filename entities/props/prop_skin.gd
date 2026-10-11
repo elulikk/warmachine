@@ -10,6 +10,9 @@ const ArtScript = preload("res://core/art/art.gd")
 const RigScript = preload("res://entities/player/character_rig.gd")
 const SteamSkin = preload("res://ui/components/steam_skin.gd")
 
+## Capa de los rótulos y avisos de los props (sobre el arte y las personas).
+const TAG_Z_INDEX: int = 50
+
 const PROPS_DIR: String = "res://assets/art/props/"
 
 ## Los PNG de props están al doble del tamaño de juego.
@@ -149,6 +152,10 @@ static func apply(host: Node2D, kind: String) -> void:
 			spin(wheel, 22.0)
 		_:
 			visuals.add_child(art)
+	# Rótulos y avisos por encima del arte: el arte se agrega después y los dejaba detrás de los sprites
+	for child: Node in visuals.get_children():
+		if child is Control and child.name != &"PropArt":
+			(child as Control).z_index = TAG_Z_INDEX
 	_style_tags(host)
 
 
