@@ -164,7 +164,7 @@ static func _spawn_emitter(
 	emitter.initial_velocity_min = speed_min
 	emitter.initial_velocity_max = speed_max
 	# Partículas redondas (nunca cuadrados): la textura de gota de BloodFx, con la escala ajustada a su ancho
-	var drop: Texture2D = BloodFxScript.drop_texture()
+	var drop: Texture2D = BloodFxScript.disc_texture()
 	emitter.texture = drop
 	emitter.scale_amount_min = scale_min / float(drop.get_width())
 	emitter.scale_amount_max = scale_max / float(drop.get_width())

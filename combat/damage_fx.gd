@@ -87,7 +87,7 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 
 	BloodFx.spray(_host, spot, dir, strength, _mechanical)
 	if not _mechanical:
-		BloodFx.spray_sprite(_host, spot, dir)
+		BloodFx.spray_sprite(_host, spot, dir, strength)
 	BloodFx.stains(_host, spot, dir, 1 + int(strength / 14.0), clampf(0.8 + strength / 60.0, 0.8, 1.6), _mechanical)
 
 	# Heridas visibles en el cuerpo: una por cada octavo de vida perdido
@@ -113,7 +113,9 @@ func _on_died() -> void:
 	BloodFx.spray(_host, spot, Vector2.UP, 60.0, _mechanical)
 	BloodFx.spray(_host, spot + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, _mechanical)
 	BloodFx.spray(_host, spot + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, _mechanical)
-	BloodFx.spray_sprite(_host, spot, Vector2.UP)
+	BloodFx.spray_sprite(_host, spot, Vector2.UP, 90.0)
+	BloodFx.spray_sprite(_host, spot, Vector2.from_angle(deg_to_rad(-30.0)), 70.0)
+	BloodFx.spray_sprite(_host, spot, Vector2.from_angle(deg_to_rad(-150.0)), 70.0)
 	BloodFx.stains(_host, spot, Vector2.ZERO, 6, 1.9, _mechanical)
 
 

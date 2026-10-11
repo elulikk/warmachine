@@ -50,6 +50,7 @@ static func _container(host: Node) -> Node:
 
 
 static var _drop_tex: Texture2D = null
+static var _disc_tex: Texture2D = null
 
 
 ## Textura `base_NN.png` al azar entre 1 y `variants`, o null si no hay arte.
@@ -63,14 +64,19 @@ static func variant_tex(base: String, variants: int) -> Texture2D:
 	return null
 
 
-## Gota redonda: el arte `blood_drop.png` o un disco generado (nunca un cuadrado).
+## Gota de sangre: el arte `blood_drop.png` o, si no hay, el disco generado.
 static func drop_texture() -> Texture2D:
 	if _drop_tex != null:
 		return _drop_tex
 	var art: Texture2D = ArtScript.tex(FX_DIR + "blood_drop.png")
-	if art != null:
-		_drop_tex = art
-		return _drop_tex
+	_drop_tex = art if art != null else disc_texture()
+	return _drop_tex
+
+
+## Disco suave generado: partículas redondas de cualquier cosa que no sea sangre (nunca un cuadrado).
+static func disc_texture() -> Texture2D:
+	if _disc_tex != null:
+		return _disc_tex
 	var size: int = 12
 	var image: Image = Image.create(size, size, false, Image.FORMAT_RGBA8)
 	var center: float = (size - 1) * 0.5
@@ -78,8 +84,8 @@ static func drop_texture() -> Texture2D:
 		for x in range(size):
 			var d: float = Vector2(x - center, y - center).length() / center
 			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, clampf((1.0 - d) * 3.0, 0.0, 1.0)))
-	_drop_tex = ImageTexture.create_from_image(image)
-	return _drop_tex
+	_disc_tex = ImageTexture.create_from_image(image)
+	return _disc_tex
 
 
 ## Salpicadura de gotas que sale en la dirección del golpe y cae por gravedad.
@@ -108,11 +114,19 @@ static func spray(host: Node, pos: Vector2, dir: Vector2, damage: float, mechani
 	emitter.scale_amount_max = 5.4 / drop_w
 	var ramp: Gradient = Gradient.new()
 	if mechanical:
+		# Chispas: disco generado (el arte de la gota es de sangre)
+		emitter.texture = disc_texture()
+		drop_w = float(emitter.texture.get_width())
+		emitter.scale_amount_min = 2.6 / drop_w
+		emitter.scale_amount_max = 5.4 / drop_w
 		ramp.set_color(0, Color(SPARK.r, SPARK.g, SPARK.b, 1.0))
 		ramp.set_color(1, Color(0.35, 0.12, 0.05, 0.0))
 	else:
-		ramp.set_color(0, Color(0.75, 0.05, 0.07, 1.0))
-		ramp.set_color(1, Color(BLOOD_DARK.r, BLOOD_DARK.g, BLOOD_DARK.b, 0.0))
+		# El arte de la gota ya es rojo: se deja casi sin teñir; el disco generado sí necesita el rojo
+		var painted: bool = ArtScript.tex(FX_DIR + "blood_drop.png") != null
+		var start: Color = Color(1.0, 0.95, 0.95, 1.0) if painted else Color(0.75, 0.05, 0.07, 1.0)
+		ramp.set_color(0, start)
+		ramp.set_color(1, Color(start.r * 0.6, start.g * 0.6, start.b * 0.6, 0.0))
 	emitter.color_ramp = ramp
 	container.add_child(emitter)
 	emitter.global_position = pos
@@ -165,8 +179,9 @@ static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power
 		gib.rotation = randf() * TAU
 
 
-## Abanico de salpicadura dibujado (si hay arte) en el punto de impacto, apuntando hacia `dir`.
-static func spray_sprite(host: Node, pos: Vector2, dir: Vector2) -> void:
+## Abanico de salpicadura dibujado (si hay arte) que nace en el punto de impacto y se abre hacia `dir`.
+## `strength` es el daño del golpe: más daño, abanico más grande.
+static func spray_sprite(host: Node, pos: Vector2, dir: Vector2, strength: float = 20.0) -> void:
 	var tex: Texture2D = variant_tex("blood_spray", 3)
 	var container: Node = _container(host)
 	if tex == null or container == null:
@@ -174,13 +189,19 @@ static func spray_sprite(host: Node, pos: Vector2, dir: Vector2) -> void:
 	var sprite: Sprite2D = Sprite2D.new()
 	sprite.texture = tex
 	sprite.z_index = FX_Z_INDEX
-	sprite.scale = Vector2(0.5, 0.5)
+	# El arte nace en su punta (borde izquierdo) y apunta a la derecha: la punta queda en el impacto
+	sprite.centered = false
+	sprite.offset = Vector2(0.0, -tex.get_height() * 0.5)
+	var base_scale: float = clampf(0.3 + strength / 140.0, 0.3, 0.62)
+	sprite.scale = Vector2(base_scale, base_scale)
+	if randf() < 0.5:
+		sprite.flip_v = true
 	container.add_child(sprite)
 	sprite.global_position = pos
 	sprite.rotation = dir.angle() if dir.length() > 0.01 else randf() * TAU
 	var fade: Tween = sprite.create_tween()
 	fade.set_parallel(true)
-	fade.tween_property(sprite, "scale", Vector2(0.7, 0.7), 0.2)
+	fade.tween_property(sprite, "scale", Vector2(base_scale * 1.25, base_scale * 1.25), 0.2)
 	fade.tween_property(sprite, "modulate:a", 0.0, 0.2).set_delay(0.05)
 	fade.chain().tween_callback(sprite.queue_free)
 
