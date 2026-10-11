@@ -216,7 +216,6 @@ func add_coins(amount: int) -> void:
 	if metrics_mgr != null:
 		metrics_mgr.record_coin_collected(amount)
 	coins_changed.emit(coins)
-	print("[StatsManager] +%d moneda(s) obtenida(s). Total: %d" % [amount, coins])
 
 
 ## Descuenta monedas de la reserva del jugador y registra la telemetría de gasto.

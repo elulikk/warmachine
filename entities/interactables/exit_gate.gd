@@ -86,7 +86,6 @@ func _handle_enemy_elimination(enemy: Node) -> void:
 	
 	_tracked_nodes.erase(enemy)
 	_enemies_alive = maxi(0, _enemies_alive - 1)
-	print("[ExitGate] Custodio eliminado. Restan: %d" % _enemies_alive)
 	
 	if _enemies_alive == 0 and not is_open:
 		open_gate()

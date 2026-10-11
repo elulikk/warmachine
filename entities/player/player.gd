@@ -65,6 +65,8 @@ var has_magic_flight: bool = false
 var jetpack_particles: CPUParticles2D = null
 
 var hurt_cooldown: float = 0.0
+## Sin empujones: ni el retroceso de las propias armas ni el de los golpes recibidos (Sala de Estrés en modo inmortal).
+var knockback_immune: bool = false
 var _hit_flash_tween: Tween = null
 var phase_timer: float = 0.0
 
@@ -350,7 +352,7 @@ func take_hit(payload: HitPayload) -> void:
 	if payload == null:
 		return
 	take_damage(payload.base_damage)
-	if payload.knockback_force > 0.0:
+	if payload.knockback_force > 0.0 and not knockback_immune:
 		velocity += payload.get_knockback_velocity() * 0.6
 
 

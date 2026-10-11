@@ -18,6 +18,7 @@ signal died
 @export var exp_reward: float = 20.0
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
+const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
 
 @export_group("Botín (Loot)")
 @export var loot_table: LootTable
@@ -151,21 +152,9 @@ func _spawn_exp() -> void:
 	var tree: SceneTree = get_tree()
 	if tree == null:
 		return
-	var container: Node = tree.current_scene
-	if container == null:
-		container = owner if owner != null else get_parent()
-	if container == null:
-		container = tree.root
 	
 	if exp_orb_scene != null:
-		var exp_node: Node = exp_orb_scene.instantiate()
-		if exp_node is ExpOrb:
-			var orb: ExpOrb = exp_node as ExpOrb
-			orb.global_position = global_position + Vector2(0, -16.0)
-			orb.exp_amount = exp_reward
-			container.add_child(orb)
-		else:
-			container.add_child(exp_node)
+		DeathFxQueueScript.exp_orb(self, exp_orb_scene, exp_reward, global_position)
 	else:
 		var player_node: Player = tree.get_first_node_in_group(&"player") as Player
 		if player_node != null and player_node.stats_manager != null:
@@ -180,15 +169,6 @@ func _spawn_loot() -> void:
 	if drops.is_empty():
 		return
 	
-	var tree: SceneTree = get_tree()
-	if tree == null:
-		return
-	var container: Node = tree.current_scene
-	if container == null:
-		container = owner if owner != null else get_parent()
-	if container == null:
-		container = tree.root
-	
 	var coin_mult: float = ZoneModifierManager.get_world_mult("coin_drop_mult", 1.0)
 	
 	for drop in drops:
@@ -200,11 +180,7 @@ func _spawn_loot() -> void:
 			count = maxi(1, int(roundf(float(count) * coin_mult)))
 		
 		# Dispersión en abanico (efecto piñata) de cada elemento individual
+		# Se crean de a poco en los cuadros siguientes (combat/death_fx_queue.gd): muchas muertes juntas no congelan
 		for i in range(count):
-			var loot_node: Node = loot_drop_scene.instantiate()
-			if loot_node is LootDrop:
-				var loot_drop: LootDrop = loot_node as LootDrop
-				loot_drop.global_position = global_position + Vector2(0, -16.0)
-				container.add_child(loot_drop)
-				loot_drop.setup(type_str, 1)
+			DeathFxQueueScript.loot(self, loot_drop_scene, type_str, 1, global_position)
 

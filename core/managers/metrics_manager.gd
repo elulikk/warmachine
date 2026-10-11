@@ -66,8 +66,8 @@ func record_kill(enemy_type: String) -> void:
 	total_enemies_killed += 1
 	var current_count: int = kills_by_type.get(enemy_type, 0)
 	kills_by_type[enemy_type] = current_count + 1
+	# Sin print: con muchas bajas juntas cada línea al log costaba milisegundos (Sala de Estrés)
 	metrics_updated.emit()
-	print("[MetricsManager] Baja registrada: %s (Total: %d, Tipo: %d)" % [enemy_type, total_enemies_killed, kills_by_type[enemy_type]])
 
 
 func record_coin_collected(amount: int) -> void:

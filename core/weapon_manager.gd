@@ -363,7 +363,7 @@ func fire() -> void:
 	GameFeel.sfx_weapon_fire(self, current_weapon)
 
 	# 3. Aplicar fuerza de retroceso sobre el jugador
-	if player != null and current_weapon.recoil_force > 0.0:
+	if player != null and current_weapon.recoil_force > 0.0 and not player.knockback_immune:
 		player.velocity -= aim_dir * current_weapon.recoil_force
 	GameFeel.on_weapon_fired(self, current_weapon.recoil_force)
 	
@@ -498,7 +498,7 @@ func _melee_strike(visual_done: bool) -> void:
 		GameFeel.shake(self, 6.0, 0.25)
 
 	# Si tiene recoil force, empujar al jugador
-	if player != null and current_weapon.recoil_force > 0.0:
+	if player != null and current_weapon.recoil_force > 0.0 and not player.knockback_immune:
 		player.velocity -= aim_dir * current_weapon.recoil_force
 	
 
@@ -564,8 +564,15 @@ func _get_projectile_pool() -> ProjectilePool:
 
 
 ## Añade munición al arsenal del jugador (pickup AMMO).
-func add_ammo(amount: int = 1) -> void:
-	print("[WeaponManager] +%d paquete(s) de munición recogido(s)." % amount)
+## Caja de munición (engranaje del botín): recarga al instante el arma en mano, aunque esté a mitad de recarga.
+## Con el cargador lleno no hace nada (el juego no tiene munición de reserva).
+func add_ammo(_amount: int = 1) -> void:
+	if current_weapon == null or current_weapon.weapon_type == WeaponData.WeaponType.MELEE or current_weapon.magazine_size <= 0:
+		return
+	if not is_reloading and get_weapon_ammo(current_weapon) >= current_weapon.magazine_size:
+		return
+	cancel_reload()
+	finish_reload()
 
 
 

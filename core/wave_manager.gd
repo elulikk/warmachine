@@ -153,7 +153,6 @@ func _spawn_one(use_elite: bool = false) -> bool:
 	if container == null:
 		container = get_tree().root
 	container.add_child(enemy)
-	print("[WaveManager] Enemigo generado en %s (vivos: %d)" % [spawn_pos, alive_enemies.size()])
 	return true
 
 
@@ -220,7 +219,6 @@ func _on_enemy_died(enemy: Node) -> void:
 		_check_round_cleared()
 		return
 
-	print("[WaveManager] ¡Enemigo eliminado! Total derrotados: %d. Reapareciendo en %.1fs..." % [defeated_counter, respawn_delay])
 	if respawn_timer.is_stopped():
 		respawn_timer.start(respawn_delay)
 

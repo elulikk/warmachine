@@ -9,6 +9,7 @@ extends Node
 ## - Con menos de la mitad de vida gotea sangre al caminar (solo en calidad gráfica media o alta).
 
 const BloodFx = preload("res://combat/blood_fx.gd")
+const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
 const SettingsScript = preload("res://core/settings.gd")
 
 const MAX_MARKS: int = 8
@@ -107,16 +108,9 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 func _on_died() -> void:
 	if _host == null or not _host.is_inside_tree():
 		return
-	var spot: Vector2 = _body_center()
-	# Explosión final: lluvia de trozos y tripas, doble salpicadura y varios charcos
-	BloodFx.gibs(_host, spot, 12, _mechanical, 1.0)
-	BloodFx.spray(_host, spot, Vector2.UP, 60.0, _mechanical)
-	BloodFx.spray(_host, spot + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, _mechanical)
-	BloodFx.spray(_host, spot + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, _mechanical)
-	BloodFx.spray_sprite(_host, spot, Vector2.UP, 90.0)
-	BloodFx.spray_sprite(_host, spot, Vector2.from_angle(deg_to_rad(-30.0)), 70.0)
-	BloodFx.spray_sprite(_host, spot, Vector2.from_angle(deg_to_rad(-150.0)), 70.0)
-	BloodFx.stains(_host, spot, Vector2.ZERO, 6, 1.9, _mechanical)
+	# Explosión final (lluvia de trozos y tripas, salpicaduras y charcos): la arma la cola de muertes,
+	# repartida en los cuadros siguientes si mueren muchos juntos (combat/death_fx_queue.gd)
+	DeathFxQueueScript.gore(_host, _body_center(), _mechanical)
 
 
 ## Agrega una herida al cuerpo: salpicadura irregular o tajo.

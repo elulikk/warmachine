@@ -5,7 +5,7 @@ extends Node2D
 ## - Panel de control (F4): tipo de enemigo (o mezcla), lotes de 1 a 200, generador continuo con ritmo y tope
 ##   de vivos, cuántos se instancian por cuadro, fuego automático contra los enemigos (carga de proyectiles,
 ##   impactos, sangre y muertes sin tener que disparar), congelar enemigos (separa el costo de dibujo del de
-##   IA y física), botín sí/no, inmortalidad y munición infinita, matar / herir / borrar, limpiar escombros.
+##   IA y física), botín sí/no, inmortalidad (sin retroceso de armas ni empujones) y munición infinita, matar / herir / borrar, limpiar escombros.
 ## - `PerfMonitor` (core/debug/perf_monitor.gd) siempre activo: panel arriba a la derecha y registro en
 ##   `user://logs/rendimiento/sala_<fecha>.csv/.txt`. Acá se anotan los pedidos, los cambios de opciones y
 ##   cuánto tarda instanciar cada tanda; el monitor agrega picos, censo de nodos y resumen al salir.
@@ -112,6 +112,7 @@ func _ready() -> void:
 			hud.setup_with_player(player)
 		if player.weapon_manager != null:
 			player.weapon_manager.set_infinite_ammo(infinite_ammo)
+		player.knockback_immune = god_mode
 	SaveManager.set_respawn_point(PLAYER_START)
 
 	var door: Node2D = SceneDoorScene.instantiate() as Node2D
@@ -456,6 +457,9 @@ func _context_text() -> String:
 	parts.append("x cuadro %s" % ("todos" if per_frame <= 0 else str(per_frame)))
 	parts.append("último lote %d en %.1f ms" % [_last_spawn_count, _last_spawn_ms])
 	parts.append("fuego auto %.0f/s" % auto_fire_rate)
+	var death_queue: Node = get_node_or_null("DeathFxQueue")
+	if death_queue != null:
+		parts.append("cola muertes %d (gore descartado %d)" % [int(death_queue.call("pending")), int(death_queue.get("dropped_gore"))])
 	if frozen:
 		parts.append("CONGELADOS")
 	if not loot_enabled:
@@ -546,7 +550,10 @@ func _build_panel() -> void:
 	box.add_child(_toggle("Botín y orbes", loot_enabled, func(on: bool) -> void:
 		loot_enabled = on
 		_log("Botín %s (para los que aparezcan desde ahora)" % ("activado" if on else "desactivado"))))
-	box.add_child(_toggle("Inmortal", god_mode, func(on: bool) -> void: god_mode = on))
+	box.add_child(_toggle("Inmortal (sin empujones)", god_mode, func(on: bool) -> void:
+		god_mode = on
+		if player != null:
+			player.knockback_immune = on))
 	box.add_child(_toggle("Munición infinita", infinite_ammo, func(on: bool) -> void:
 		infinite_ammo = on
 		if player != null and player.weapon_manager != null:

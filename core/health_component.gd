@@ -12,6 +12,7 @@ signal hit_resolved(payload: HitPayload, damage: float, is_critical: bool)
 signal died
 
 const DamageFxScript = preload("res://combat/damage_fx.gd")
+const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
 
 ## Puntos de vida máximos de la entidad.
 @export var max_health: float = 100.0
@@ -231,7 +232,8 @@ func _play_death_feedback() -> void:
 	var entity: Node2D = get_parent() as Node2D
 	if entity == null or entity.is_in_group(&"player") or entity.is_in_group(&"allies"):
 		return
-	GameFeel.death_burst(self, entity.global_position + Vector2(0.0, -16.0))
+	# Encolado: si mueren muchos juntos se reparte en los cuadros siguientes (combat/death_fx_queue.gd)
+	DeathFxQueueScript.burst(self, entity.global_position + Vector2(0.0, -16.0))
 	GameFeel.shake(self, 2.5, 0.12)
 
 
