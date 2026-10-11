@@ -11,11 +11,35 @@ signal weapon_reloaded(weapon: WeaponData)
 signal ammo_changed(current: int, max_mag: int)
 signal reload_started(duration: float)
 signal reload_completed
+## La mano secundaria cambió de arma (o quedó libre). Lo emite el administrador de la mano principal.
+signal offhand_changed(weapon: WeaponData)
 
 const RELOAD_INDICATOR_SCRIPT: GDScript = preload("res://ui/reload_indicator.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
 const ShotFx = preload("res://combat/shot_fx.gd")
+const ReloadDebris = preload("res://combat/reload_debris.gd")
+const SettingsScript = preload("res://core/settings.gd")
+
+## Mano que maneja este nodo. El `WeaponManager` del jugador es la mano principal (clic izquierdo) y crea por código
+## un segundo `WeaponManager` hijo, `offhand`, para la mano secundaria (clic derecho, acción `attack_secondary`).
+## Comparten el diccionario de cargadores: un arma conserva su munición al cambiar de mano.
+enum Hand { MAIN, OFF }
+
+## Estado de la mano secundaria (ver `get_offhand_state()`).
+enum OffhandState { EMPTY, READY, BLOCKED_TWO_HANDS, BLOCKED_SAME_WEAPON }
+
+## Posición del arma secundaria respecto de la principal (espacio del pivote: +x al apuntado, +y hacia abajo).
+## Arte provisional: queda más atrás y un poco más abajo, sostenida por el brazo de atrás.
+const OFFHAND_SPRITE_OFFSET: Vector2 = Vector2(-2.0, 4.0)
+
+## Cuándo (fracción de `reload_time`) cae lo que suelta el arma al recargar, según qué suelta.
+const RELOAD_DROP_TIMING: Dictionary = {
+	WeaponData.ReloadDrop.CYLINDER: 0.16,
+	WeaponData.ReloadDrop.MAGAZINE: 0.2,
+	WeaponData.ReloadDrop.SHELLS: 0.14,
+	WeaponData.ReloadDrop.CANISTER: 0.28,
+}
 
 ## Escala del cuerpo del jugador respecto del sprite original de 32x32 (ver `Visuals.scale` en player.tscn).
 ## Mueve donde está la mano y el centro del cuerpo.
@@ -69,8 +93,26 @@ var _last_shot_msec: int = -100000
 var _swing_index: int = 0
 var _current_swing: Dictionary = {}
 
+## Qué mano maneja este nodo. Lo fija quien lo crea antes de agregarlo al árbol.
+var hand: Hand = Hand.MAIN
+## Mano principal: el administrador de la mano secundaria (hijo creado en `_ready`).
+var offhand: WeaponManager = null
+## Mano principal: arma elegida para la mano secundaria (siempre una del arsenal). Puede estar bloqueada
+## por un arma a dos manos en la principal; en ese caso `offhand.current_weapon` es null.
+var offhand_weapon: WeaponData = null
+## Mano secundaria: el administrador de la mano principal.
+var main_manager: WeaponManager = null
+
+var _off_pressed: bool = false
+var _off_held: bool = false
+var _debris_tween: Tween = null
+var _offhand_sprite_name: String = "WeaponSprite"
+
 
 func _ready() -> void:
+	if hand == Hand.OFF:
+		_ready_offhand()
+		return
 	player = owner as Player
 	GameFeel.sfx_prewarm(self)
 	_create_reload_indicator()
@@ -81,19 +123,140 @@ func _ready() -> void:
 		current_weapon = null
 		_update_weapon_visual()
 		weapon_changed.emit(null, -1)
+	_create_offhand_manager()
 
 
 ## Crea la barra de recarga flotante sobre el jugador (hija del Player, diferida porque
-## el padre aún está montando sus hijos durante _ready).
-func _create_reload_indicator() -> void:
+## el padre aún está montando sus hijos durante _ready). `y_offset` la sube para que las dos manos no se pisen.
+func _create_reload_indicator(y_offset: float = 0.0) -> void:
 	if player == null:
 		return
 	var indicator: Node2D = RELOAD_INDICATOR_SCRIPT.new() as Node2D
 	if indicator == null:
 		return
-	indicator.name = "ReloadIndicator"
+	indicator.name = "ReloadIndicator" if hand == Hand.MAIN else "OffhandReloadIndicator"
 	indicator.call("setup", self)
+	indicator.set("offset_y", y_offset)
 	player.add_child.call_deferred(indicator)
+
+
+# ==============================================================================
+# Mano secundaria
+# ==============================================================================
+
+## Mano principal: crea el administrador de la mano secundaria (otro WeaponManager que comparte pivote y cargadores).
+func _create_offhand_manager() -> void:
+	if offhand != null or weapon_pivot == null:
+		return
+	var off: WeaponManager = WeaponManager.new()
+	off.hand = Hand.OFF
+	off.name = "OffhandManager"
+	off.main_manager = self
+	off.player = player
+	off.weapon_pivot = weapon_pivot
+	off.weapon_magazines = weapon_magazines
+	off.infinite_ammo = infinite_ammo
+	off.free_ammo_active = free_ammo_active
+	offhand = off
+	add_child(off)
+
+
+## Mano secundaria: prepara muzzle propio, barra de recarga y sprite (oculto hasta que haya arma).
+func _ready_offhand() -> void:
+	_offhand_sprite_name = "OffhandSprite"
+	if weapon_pivot != null:
+		var marker: Marker2D = Marker2D.new()
+		marker.name = "OffhandMuzzle"
+		weapon_pivot.add_child(marker)
+		muzzle = marker
+	_create_reload_indicator(-9.0)
+	current_weapon = null
+	_update_weapon_visual()
+
+
+## Estado de la mano secundaria (para la barra de acceso rápido).
+func get_offhand_state() -> OffhandState:
+	if hand == Hand.OFF:
+		return main_manager.get_offhand_state() if main_manager != null else OffhandState.EMPTY
+	if offhand_weapon == null:
+		return OffhandState.EMPTY
+	if current_weapon != null and current_weapon.is_two_handed():
+		return OffhandState.BLOCKED_TWO_HANDS
+	if current_weapon == offhand_weapon:
+		return OffhandState.BLOCKED_SAME_WEAPON
+	return OffhandState.READY
+
+
+## true si el arma puede ir en la mano secundaria: está en el arsenal, es de una mano o escudo
+## y no es la que sostiene la mano principal.
+func can_equip_offhand(weapon: WeaponData) -> bool:
+	return weapon != null and weapons.has(weapon) and weapon.can_be_offhand()
+
+
+## Mano principal: elige el arma de la mano secundaria (null la deja libre). Devuelve false si no es válida.
+func set_offhand_weapon(weapon: WeaponData) -> bool:
+	if hand == Hand.OFF:
+		return main_manager.set_offhand_weapon(weapon) if main_manager != null else false
+	if weapon != null and not can_equip_offhand(weapon):
+		return false
+	if weapon == offhand_weapon:
+		return true
+	offhand_weapon = weapon
+	_refresh_offhand()
+	offhand_changed.emit(offhand_weapon)
+	return true
+
+
+## Mano principal: acomoda la mano secundaria según el arma de la principal. Un arma a dos manos (o la misma
+## arma) deja la secundaria vacía sin olvidar la elección: vuelve sola al cambiar a un arma de una mano.
+func _refresh_offhand() -> void:
+	if hand == Hand.OFF or offhand == null:
+		return
+	var active: WeaponData = null
+	if offhand_weapon != null and get_offhand_state() == OffhandState.READY:
+		active = offhand_weapon
+	offhand._equip_offhand(active)
+
+
+## Mano secundaria: pone o saca el arma. Cancela la recarga y vuelve a dibujar.
+func _equip_offhand(weapon: WeaponData) -> void:
+	if current_weapon == weapon:
+		return
+	cancel_reload()
+	current_weapon = weapon
+	fire_cooldown_timer = 0.0
+	_off_pressed = false
+	if weapon != null:
+		# La munición ya está en el diccionario compartido; solo se avisa para refrescar el HUD si hace falta
+		ammo_changed.emit(get_weapon_ammo(weapon), weapon.magazine_size)
+	_update_weapon_visual()
+
+
+## Mano principal: si el arma elegida para la secundaria salió del arsenal (vendida, guardada), se suelta.
+func _validate_offhand() -> void:
+	if offhand_weapon != null and not weapons.has(offhand_weapon):
+		set_offhand_weapon(null)
+
+
+## Mano secundaria: clic derecho (o su equivalente). Se lee de `_unhandled_input` y no por sondeo, así un clic
+## sobre la interfaz (quitar un casillero, cerrar una ventana) no dispara.
+func _unhandled_input(event: InputEvent) -> void:
+	if hand != Hand.OFF:
+		return
+	if event.is_action_pressed("attack_secondary"):
+		_off_pressed = true
+		_off_held = true
+
+
+## Lectura del gatillo de esta mano: semiautomática por pulsación, automática mientras se mantiene.
+func _read_trigger() -> bool:
+	if hand == Hand.OFF:
+		var edge: bool = _off_pressed
+		_off_pressed = false
+		return _off_held if current_weapon.is_automatic else edge
+	if current_weapon.is_automatic:
+		return Input.is_action_pressed("attack")
+	return Input.is_action_just_pressed("attack")
 
 
 func _ensure_weapons() -> void:
@@ -159,7 +322,14 @@ func _process(delta: float) -> void:
 		if reload_timer <= 0.0:
 			finish_reload()
 	
-	_handle_debug_input()
+	if hand == Hand.MAIN:
+		_handle_debug_input()
+		_validate_offhand()
+	else:
+		# Si el botón se soltó (o la liberó la interfaz) deja de ser un gatillo mantenido
+		_off_held = _off_held and Input.is_action_pressed("attack_secondary")
+		if current_weapon == null:
+			_off_pressed = false
 	_handle_firing_input()
 
 
@@ -199,6 +369,7 @@ func start_reload() -> void:
 	reload_started.emit(current_weapon.reload_time)
 	GameFeel.sfx(self, &"reload_out", Vector2.INF, -4.0)
 	_play_reload_animation(current_weapon.reload_time)
+	_schedule_reload_debris(current_weapon, current_weapon.magazine_size - cur_ammo)
 	weapon_changed.emit(current_weapon, current_weapon_index)
 
 
@@ -208,11 +379,14 @@ func cancel_reload() -> void:
 		is_reloading = false
 		reload_timer = 0.0
 		_cancel_hand_tween()
+	_kill_debris_tween()
 
 
 ## Activa o desactiva el modo sin recarga. Al activarlo cancela la recarga en curso y llena el cargador.
 func set_free_ammo(enabled: bool) -> void:
 	free_ammo_active = enabled
+	if hand == Hand.MAIN and offhand != null:
+		offhand.set_free_ammo(enabled)
 	if enabled:
 		cancel_reload()
 		if current_weapon != null and current_weapon.magazine_size > 0:
@@ -241,7 +415,10 @@ func _handle_debug_input() -> void:
 
 ## Procesa la intención de disparo según el tipo de arma (semiautomática vs automática).
 func _handle_firing_input() -> void:
-	if current_weapon == null or hand_locked:
+	if current_weapon == null or (hand == Hand.MAIN and hand_locked):
+		return
+	# El escudo se sostiene, no ataca
+	if current_weapon.grip == WeaponData.Grip.SHIELD:
 		return
 
 	# Recarga manual con tecla R o acción 'reload'
@@ -254,11 +431,7 @@ func _handle_firing_input() -> void:
 	if is_reloading:
 		return
 	
-	var wants_to_fire: bool = false
-	if current_weapon.is_automatic:
-		wants_to_fire = Input.is_action_pressed("attack")
-	else:
-		wants_to_fire = Input.is_action_just_pressed("attack")
+	var wants_to_fire: bool = _read_trigger()
 	
 	if wants_to_fire:
 		if current_weapon.weapon_type != WeaponData.WeaponType.MELEE and current_weapon.magazine_size > 0:
@@ -306,7 +479,7 @@ func fire() -> void:
 	
 	var final_damage: float = current_weapon.get_effective_damage() * dmg_mult
 	var knockback: float = current_weapon.knockback_force if current_weapon.knockback_force > 0.0 else current_weapon.recoil_force * 1.5
-	var armor_pen: float = current_weapon.armor_penetration
+	var armor_pen: float = current_weapon.get_armor_penetration()
 	
 	# Consultar modificadores de runas acumulados
 	var bounces: int = current_weapon.get_total_bounces()
@@ -582,6 +755,7 @@ func select_weapon(index: int) -> void:
 		cancel_reload()
 		current_weapon = null
 		_update_weapon_visual()
+		_refresh_offhand()
 		weapon_changed.emit(null, -1)
 		ammo_changed.emit(0, 0)
 		return
@@ -596,6 +770,7 @@ func select_weapon(index: int) -> void:
 	current_weapon = weapons[current_weapon_index]
 	fire_cooldown_timer = 0.0
 	_update_weapon_visual()
+	_refresh_offhand()
 	
 	var cur_ammo: int = get_weapon_ammo(current_weapon)
 	ammo_changed.emit(cur_ammo, current_weapon.magazine_size)
@@ -609,6 +784,7 @@ func unequip_hand() -> void:
 	cancel_reload()
 	current_weapon = null
 	_update_weapon_visual()
+	_refresh_offhand()
 	weapon_changed.emit(null, -1)
 
 
@@ -617,7 +793,7 @@ func unequip_hand() -> void:
 func _update_weapon_visual() -> void:
 	if weapon_pivot == null:
 		return
-	var visual: ColorRect = weapon_pivot.get_node_or_null("WeaponVisual") as ColorRect
+	var visual: ColorRect = weapon_pivot.get_node_or_null("WeaponVisual") as ColorRect if hand == Hand.MAIN else null
 	_cancel_hand_tween()
 	if current_weapon == null:
 		if visual != null:
@@ -654,9 +830,12 @@ func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 
 	if _weapon_sprite == null or not is_instance_valid(_weapon_sprite):
 		_weapon_sprite = Sprite2D.new()
-		_weapon_sprite.name = "WeaponSprite"
+		_weapon_sprite.name = _offhand_sprite_name
 		_weapon_sprite.centered = false
 		weapon_pivot.add_child(_weapon_sprite)
+		if hand == Hand.OFF and main_manager != null and main_manager._has_weapon_sprite_node():
+			# La secundaria se dibuja detrás de la principal
+			weapon_pivot.move_child(_weapon_sprite, main_manager._weapon_sprite.get_index())
 
 	var grip: Vector2 = pose.get("grip", Vector2(8.0, 8.0)) as Vector2
 	var scale_factor: float = float(pose.get("scale", 1.5)) * WEAPON_SCALE
@@ -680,6 +859,8 @@ func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 		else:
 			# Armas de fuego: solo se adelanta, para que el cañón y los disparos sigan sobre la línea de puntería
 			_sprite_rest_position.x += hold_pos.x
+	if hand == Hand.OFF:
+		_sprite_rest_position += OFFHAND_SPRITE_OFFSET
 	_weapon_sprite.rotation = _sprite_rest_rotation
 	_weapon_sprite.position = _sprite_rest_position
 	_weapon_sprite.visible = true
@@ -689,7 +870,8 @@ func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 
 	# La boca del cañón queda en la punta del arma dibujada
 	if current_weapon.weapon_type == WeaponData.WeaponType.RANGED and muzzle != null:
-		muzzle.position = Vector2(_sprite_rest_position.x + (tip_x - grip.x) * scale_factor, 0.0)
+		var muzzle_y: float = OFFHAND_SPRITE_OFFSET.y if hand == Hand.OFF else 0.0
+		muzzle.position = Vector2(_sprite_rest_position.x + (tip_x - grip.x) * scale_factor, muzzle_y)
 	return true
 
 
@@ -704,6 +886,10 @@ func _cancel_hand_tween() -> void:
 
 func _has_weapon_sprite() -> bool:
 	return _weapon_sprite != null and is_instance_valid(_weapon_sprite) and _weapon_sprite.visible
+
+
+func _has_weapon_sprite_node() -> bool:
+	return _weapon_sprite != null and is_instance_valid(_weapon_sprite)
 
 
 ## Golpe de retroceso del arma de fuego al disparar: se echa hacia atrás y el cañón sube (ver `kick` en weapon_motion.gd).
@@ -870,6 +1056,35 @@ func _play_reload_animation(duration: float) -> void:
 			_hand_tween.tween_callback(_play_reload_sound.bind(key["sound"] as StringName))
 
 
+## Programa lo que suelta el arma al recargar (casquillos, cargador, cartuchos, bidón), según su familia.
+## Cae cuando la animación de recarga llega a ese punto; si se cancela la recarga antes, no cae.
+func _schedule_reload_debris(weapon: WeaponData, spent: int) -> void:
+	_kill_debris_tween()
+	var drop: int = weapon.get_reload_drop()
+	if drop == WeaponData.ReloadDrop.NONE or SettingsScript.particle_scale() < ReloadDebris.MIN_DENSITY:
+		return
+	var delay: float = maxf(weapon.reload_time, 0.2) * float(RELOAD_DROP_TIMING.get(drop, 0.2))
+	_debris_tween = create_tween()
+	_debris_tween.tween_interval(delay)
+	_debris_tween.tween_callback(_spawn_reload_debris.bind(weapon, drop, spent))
+
+
+func _kill_debris_tween() -> void:
+	if _debris_tween != null and _debris_tween.is_valid():
+		_debris_tween.kill()
+	_debris_tween = null
+
+
+func _spawn_reload_debris(weapon: WeaponData, drop: int, spent: int) -> void:
+	_debris_tween = null
+	if not is_reloading or current_weapon != weapon or weapon_pivot == null:
+		return
+	var origin: Vector2 = _weapon_sprite.global_position if _has_weapon_sprite() else weapon_pivot.global_position
+	var aim: Vector2 = weapon_pivot.get_aim_direction()
+	var tint: Color = Color(1.0, 0.55, 0.2, 1.0) if weapon.family == WeaponData.WeaponFamily.FLAMETHROWER else Color(0.45, 0.95, 0.85, 1.0)
+	ReloadDebris.spawn(self, drop, origin + Vector2(0.0, 4.0), aim, spent, tint)
+
+
 func _play_reload_sound(sound: StringName) -> void:
 	GameFeel.sfx(self, sound, Vector2.INF, -5.0, randf_range(0.95, 1.05))
 
@@ -891,6 +1106,8 @@ func toggle_weapon() -> void:
 ## Activa o desactiva el modo de depuración de munición infinita / sin cooldowns.
 func set_infinite_ammo(enabled: bool) -> void:
 	infinite_ammo = enabled
+	if hand == Hand.MAIN and offhand != null:
+		offhand.infinite_ammo = enabled
 	infinite_ammo_toggled.emit(infinite_ammo)
 	var state_text: String = "ACTIVADA" if infinite_ammo else "DESACTIVADA"
 	print("[Debug] Munición infinita y sin enfriamiento: %s" % state_text)
@@ -928,4 +1145,4 @@ func get_current_fire_rate() -> float:
 func get_current_armor_penetration_percentage() -> float:
 	if current_weapon == null:
 		return 0.0
-	return current_weapon.armor_penetration * 100.0
+	return current_weapon.get_armor_penetration() * 100.0

@@ -165,7 +165,7 @@ func _populate_data(res: Resource) -> void:
 		title_label.modulate = rarity_color
 		
 		var w_type_str: String = "CUERPO A CUERPO" if wp.weapon_type == WeaponData.WeaponType.MELEE else "BALÍSTICA"
-		subtitle_label.text = "ARMA %s • %s" % [w_type_str, rarity_name]
+		subtitle_label.text = "%s • %s • %s • %s" % [wp.get_family_label().to_upper(), wp.get_grip_label().to_upper(), w_type_str, rarity_name]
 		
 		combat_stats_box.visible = true
 		item_stats_box.visible = false
@@ -173,7 +173,7 @@ func _populate_data(res: Resource) -> void:
 		dps_value_label.text = "%.1f DPS" % wp.get_sustained_dps()
 		damage_value.text = wp.get_damage_per_shot_text()
 		fire_rate_value.text = "%.1f/s" % wp.fire_rate
-		armor_pen_value.text = "%.0f%%" % (wp.armor_penetration * 100.0)
+		armor_pen_value.text = "%.0f%%" % (wp.get_armor_penetration() * 100.0)
 		
 		if wp.weapon_type == WeaponData.WeaponType.RANGED and wp.magazine_size > 0:
 			ammo_value.text = "%d (%0.1fs)" % [wp.magazine_size, wp.reload_time]

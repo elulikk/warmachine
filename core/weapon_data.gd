@@ -5,6 +5,42 @@ extends Resource
 enum WeaponType { RANGED, MELEE }
 enum Rarity { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
 
+## Familia del arma: define el comportamiento base (qué suelta al recargar, reglas de balance, nombre en el tooltip).
+## Los sistemas leen la familia de los datos (`family`), nunca el nombre ni el id del recurso.
+enum WeaponFamily {
+	GENERIC, PISTOL, REVOLVER, CARBINE, SMG, SHOTGUN, RIFLE, SNIPER, ENERGY, FLAMETHROWER,
+	SHORT_MELEE, SWORD, HEAVY_MELEE
+}
+
+## Empuñadura: cuántas manos ocupa. SHIELD solo va en la mano secundaria (no se usa como arma principal).
+enum Grip { ONE_HAND, TWO_HANDS, SHIELD }
+
+## Qué suelta el arma al recargar (efecto visual, ver `WeaponManager._spawn_reload_debris`):
+## NONE nada; CYLINDER las vainas gastadas del tambor; MAGAZINE el cargador y los casquillos;
+## SHELLS los cartuchos gastados; CANISTER el bidón o la celda de energía.
+enum ReloadDrop { NONE, CYLINDER, MAGAZINE, SHELLS, CANISTER }
+
+## Reglas por familia. `armor_pen_min` y `pierce_cap` son pisos/techos que se aplican a todas las armas de la familia
+## (aunque el `.tres` no los traiga): la carabina no atraviesa enemigos y perfora un poco de armadura.
+## `pierce_cap` -1 = sin tope. `reload_drop` es un `ReloadDrop`.
+const FAMILY_RULES: Dictionary = {
+	WeaponFamily.GENERIC: {"label": "Arma", "reload_drop": ReloadDrop.NONE, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.PISTOL: {"label": "Pistola", "reload_drop": ReloadDrop.MAGAZINE, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.REVOLVER: {"label": "Revólver", "reload_drop": ReloadDrop.CYLINDER, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.CARBINE: {"label": "Carabina", "reload_drop": ReloadDrop.MAGAZINE, "pierce_cap": 0, "armor_pen_min": 0.15},
+	WeaponFamily.SMG: {"label": "Subfusil", "reload_drop": ReloadDrop.MAGAZINE, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.SHOTGUN: {"label": "Escopeta", "reload_drop": ReloadDrop.SHELLS, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.RIFLE: {"label": "Fusil", "reload_drop": ReloadDrop.MAGAZINE, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.SNIPER: {"label": "Rifle de precisión", "reload_drop": ReloadDrop.MAGAZINE, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.ENERGY: {"label": "Arma de energía", "reload_drop": ReloadDrop.CANISTER, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.FLAMETHROWER: {"label": "Lanzallamas", "reload_drop": ReloadDrop.CANISTER, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.SHORT_MELEE: {"label": "Melee corto", "reload_drop": ReloadDrop.NONE, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.SWORD: {"label": "Espada", "reload_drop": ReloadDrop.NONE, "pierce_cap": -1, "armor_pen_min": 0.0},
+	WeaponFamily.HEAVY_MELEE: {"label": "Arma pesada", "reload_drop": ReloadDrop.NONE, "pierce_cap": -1, "armor_pen_min": 0.0},
+}
+
+const GRIP_LABELS: Array[String] = ["Una mano", "Dos manos", "Escudo"]
+
 signal runes_changed
 
 @export_group("Economía y Rareza")
@@ -21,6 +57,12 @@ signal runes_changed
 
 ## Tipo de arma (RANGED: balística con proyectiles / MELEE: cuerpo a cuerpo con tajo).
 @export var weapon_type: WeaponType = WeaponType.RANGED
+
+## Familia del arma (pistola, revólver, carabina, espada...). Ver `FAMILY_RULES`.
+@export var family: WeaponFamily = WeaponFamily.GENERIC
+
+## Empuñadura: una mano (puede ir en la mano secundaria), dos manos (ocupa las dos) o escudo (solo mano secundaria).
+@export var grip: Grip = Grip.ONE_HAND
 
 ## Indica si el arma dispara en ráfaga continua manteniendo presionado el gatillo (automática)
 ## o si requiere una pulsación por disparo (semiautomática).
@@ -167,12 +209,59 @@ func get_total_bounces() -> int:
 
 
 ## Retorna el total de enemigos perforables acumulados (innatos + runas).
+## La familia puede poner un techo a lo innato (la carabina no atraviesa enemigos); las runas suman igual.
 func get_total_pierce() -> int:
-	var total: int = innate_pierce
+	var innate: int = innate_pierce
+	var cap: int = int(get_family_rule().get("pierce_cap", -1))
+	if cap >= 0:
+		innate = mini(innate, cap)
+	var total: int = innate
 	for rune in socketed_runes:
 		if rune != null:
 			total += rune.extra_pierce
 	return total
+
+
+## Penetración de armadura efectiva: la del arma, con el piso de su familia (la carabina siempre perfora un poco).
+func get_armor_penetration() -> float:
+	return clampf(maxf(armor_penetration, float(get_family_rule().get("armor_pen_min", 0.0))), 0.0, 1.0)
+
+
+## Reglas de la familia del arma (ver `FAMILY_RULES`).
+func get_family_rule() -> Dictionary:
+	return FAMILY_RULES.get(family, FAMILY_RULES[WeaponFamily.GENERIC]) as Dictionary
+
+
+## Nombre legible de la familia ("Revólver", "Espada"...).
+func get_family_label() -> String:
+	return str(get_family_rule().get("label", "Arma"))
+
+
+## Nombre legible de la empuñadura ("Una mano", "Dos manos", "Escudo").
+func get_grip_label() -> String:
+	return GRIP_LABELS[clampi(int(grip), 0, GRIP_LABELS.size() - 1)]
+
+
+## Qué suelta al recargar (un `ReloadDrop`). Las armas melee y sin cargador no sueltan nada.
+func get_reload_drop() -> int:
+	if weapon_type == WeaponType.MELEE or magazine_size <= 0:
+		return ReloadDrop.NONE
+	return int(get_family_rule().get("reload_drop", ReloadDrop.NONE))
+
+
+## true si ocupa las dos manos: con un arma así en la mano principal la secundaria queda vacía.
+func is_two_handed() -> bool:
+	return grip == Grip.TWO_HANDS
+
+
+## true si puede ir en la mano secundaria (una mano o escudo).
+func can_be_offhand() -> bool:
+	return grip == Grip.ONE_HAND or grip == Grip.SHIELD
+
+
+## true si puede ser el arma principal (todo menos el escudo).
+func can_be_main_hand() -> bool:
+	return grip != Grip.SHIELD
 
 
 ## Retorna el total de bifurcaciones en impacto acumuladas de todas las runas.

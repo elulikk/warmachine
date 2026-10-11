@@ -5,13 +5,15 @@
 [resource]
 script = ExtResource("1_script")
 weapon_name = "Cuchillo de Combate"
+family = 10
+grip = 0
 weapon_type = 1
 is_automatic = false
 swing_arc_degrees = 70.0
 swing_duration = 0.08
 melee_hitbox_scale = 0.55
-damage = 15.0
-fire_rate = 4.6
+damage = 12.0
+fire_rate = 5.2
 knockback_force = 120.0
 recoil_force = 0.0
 projectile_speed = 0.0

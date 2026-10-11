@@ -6,6 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 weapon_name = "Revólver Colt .44"
+family = 2
+grip = 0
 weapon_type = 0
 is_automatic = false
 damage = 48.0

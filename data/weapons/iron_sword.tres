@@ -5,6 +5,8 @@
 [resource]
 script = ExtResource("1_script")
 weapon_name = "Espada de Hierro"
+family = 11
+grip = 0
 weapon_type = 1
 is_automatic = false
 swing_arc_degrees = 110.0

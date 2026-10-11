@@ -6,6 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 weapon_name = "Escopeta de Choque"
+family = 5
+grip = 1
 weapon_type = 0
 is_automatic = false
 damage = 12.0

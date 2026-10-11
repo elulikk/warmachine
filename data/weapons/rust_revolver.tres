@@ -7,8 +7,10 @@
 [resource]
 script = ExtResource("1_650de")
 weapon_name = "Revólver Oxidado"
+family = 2
+grip = 0
 is_automatic = false
-damage = 18.0
+damage = 15.0
 fire_rate = 2.5
 knockback_force = 260.0
 recoil_force = 40.0

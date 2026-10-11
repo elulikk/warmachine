@@ -6,6 +6,8 @@
 script = ExtResource("1_script")
 source_resource_path = "res://data/weapons/katana.tres"
 weapon_name = "Katana de Asalto"
+family = 11
+grip = 0
 weapon_type = 1
 is_automatic = false
 swing_arc_degrees = 130.0

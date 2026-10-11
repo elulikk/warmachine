@@ -6,6 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 weapon_name = "Pistola Corrosiva"
+family = 8
+grip = 0
 weapon_type = 0
 is_automatic = false
 damage = 22.0

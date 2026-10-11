@@ -11,6 +11,9 @@ const COLOR_START: Color = Color(1.0, 0.35, 0.25, 1.0)
 const COLOR_END: Color = Color(1.0, 0.85, 0.3, 1.0)
 const COLOR_DONE: Color = Color(0.35, 1.0, 0.5, 1.0)
 
+## Desplazamiento vertical extra (la mano secundaria usa uno negativo para quedar sobre la barra principal).
+var offset_y: float = 0.0
+
 var _weapon_manager: WeaponManager = null
 var _was_reloading: bool = false
 var _flash_left: float = 0.0
@@ -58,5 +61,6 @@ func _draw() -> void:
 		fill_color = COLOR_DONE
 		fill_color.a = _flash_left / FLASH_DURATION
 
-	draw_rect(Rect2(BAR_OFFSET - Vector2.ONE, BAR_SIZE + Vector2(2.0, 2.0)), Color(0.0, 0.0, 0.0, 0.75))
-	draw_rect(Rect2(BAR_OFFSET, Vector2(BAR_SIZE.x * _progress, BAR_SIZE.y)), fill_color)
+	var origin: Vector2 = BAR_OFFSET + Vector2(0.0, offset_y)
+	draw_rect(Rect2(origin - Vector2.ONE, BAR_SIZE + Vector2(2.0, 2.0)), Color(0.0, 0.0, 0.0, 0.75))
+	draw_rect(Rect2(origin, Vector2(BAR_SIZE.x * _progress, BAR_SIZE.y)), fill_color)

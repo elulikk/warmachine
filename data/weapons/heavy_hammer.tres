@@ -7,6 +7,8 @@
 script = ExtResource("1_script")
 source_resource_path = "res://data/weapons/heavy_hammer.tres"
 weapon_name = "Martillo Pesado"
+family = 12
+grip = 1
 weapon_type = 1
 is_automatic = false
 swing_arc_degrees = 120.0

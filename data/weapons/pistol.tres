@@ -6,6 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 weapon_name = "Pistola Criogénica"
+family = 1
+grip = 0
 weapon_type = 0
 is_automatic = false
 damage = 25.0
