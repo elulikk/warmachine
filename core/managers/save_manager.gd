@@ -34,6 +34,9 @@ var character_name: String = "OPERADOR"
 ## Contenido del baúl. Cada entrada es una ruta `.tres` (String) o, para armas con runas, un
 ## Dictionary {"path": String, "runes": Array[String]}. Usar los helpers stash_* para leerlas.
 var stash_items: Array = []
+## Estado persistido de cada comerciante (stock limitado y recompra), por `trader_id`.
+## Lo escribe `TradeSession` (core/trade/trade_session.gd); una clave ausente significa estado inicial.
+var trade_state: Dictionary = {}
 var unlocked_levels: Array[String] = ["res://levels/chapter_1/level_1_01.tscn"]
 
 var world_flags: Dictionary = {}
@@ -323,6 +326,7 @@ func save_to_disk() -> bool:
 		"consumables": consumables_data,
 		"hotbar": hotbar_data,
 		"stash_items": stash_items,
+		"trade_state": trade_state,
 		"metrics": metrics_dict
 	}
 	
@@ -388,6 +392,12 @@ func load_from_disk(slot_id: int) -> bool:
 			stash_items.append(si)
 		else:
 			stash_items.append(str(si))
+	
+	# Estado de comerciantes (guardados anteriores no lo traen: arranca vacío)
+	trade_state = {}
+	var raw_trade: Variant = data.get("trade_state", {})
+	if typeof(raw_trade) == TYPE_DICTIONARY:
+		trade_state = raw_trade as Dictionary
 	
 	# Restaurar métricas acumuladas en MetricsManager
 	var metrics_mgr: MetricsManager = MetricsManager.get_instance()
@@ -565,6 +575,7 @@ func delete_slot(slot_id: int) -> bool:
 func _init_new_profile() -> void:
 	unlocked_levels = ["res://levels/chapter_1/level_1_01.tscn"]
 	stash_items.clear()
+	trade_state.clear()
 	world_flags.clear()
 	has_checkpoint = false
 	last_checkpoint_position = Vector2.ZERO
