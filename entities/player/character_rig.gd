@@ -80,6 +80,8 @@ var _glove_front: Sprite2D
 var _time: float = 0.0
 var _phase: float = 0.0
 var _was_on_floor: bool = true
+## Cuánto están abiertos los brazos por estar en el aire (0 = pose normal, 1 = abiertos hacia afuera y arriba).
+var _jump_open: float = 0.0
 var _land_squash: float = 0.0
 var _has_legs: bool = true
 var _hover: bool = false
@@ -706,6 +708,18 @@ func _animate_arms() -> void:
 				off_angle = _body.global_transform.affine_inverse().basis_xform(off_sprite.global_transform.x).angle()
 				if not _articulated:
 					_arm_back.z_index = 1
+
+	# En el aire los brazos que están libres se abren hacia afuera y arriba; al aterrizar vuelven a la pose normal
+	var airborne: bool = not preview_mode and _host != null and not _was_on_floor
+	_jump_open = move_toward(_jump_open, 1.0 if airborne else 0.0, get_process_delta_time() * (8.0 if airborne else 6.0))
+	if _jump_open > 0.0:
+		var ease_open: float = smoothstep(0.0, 1.0, _jump_open)
+		if not holding:
+			var open_front: Vector2 = _shoulder_front + Vector2(ARM_REACH * 0.7, -ARM_REACH * 0.45)
+			hand_front = hand_front.lerp(open_front, ease_open)
+		if not two_handed and not off_holding:
+			var open_back: Vector2 = _shoulder_back + Vector2(-ARM_REACH * 0.7, -ARM_REACH * 0.45)
+			hand_back = hand_back.lerp(open_back, ease_open)
 
 	if _articulated:
 		var blend: float = minf(1.0, get_process_delta_time() * 14.0)

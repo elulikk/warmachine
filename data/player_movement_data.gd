@@ -21,7 +21,7 @@ extends Resource
 
 @export_group("Mecánicas de Salto")
 ## Impulso vertical aplicado hacia arriba al saltar (velocidad en píxeles/segundo).
-@export var jump_force: float = 480.0
+@export var jump_force: float = 520.0
 
 ## Multiplicador de corte de velocidad vertical al soltar la tecla de salto en pleno ascenso (0.5 = 50%).
 @export var jump_cut_multiplier: float = 0.5

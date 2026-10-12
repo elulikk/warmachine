@@ -2,6 +2,9 @@
 
 [ext_resource type="Script" uid="uid://bxs4s2lacu8s2" path="res://core/loot/loot_table.gd" id="1_table"]
 [ext_resource type="Script" uid="uid://b8h3jx4b3lbev" path="res://core/loot/loot_entry.gd" id="2_entry"]
+[ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="e1_w"]
+[ext_resource type="Resource" path="res://data/weapons/rust_revolver.tres" id="e2_w"]
+[ext_resource type="Resource" path="res://data/weapons/pistol_9mm.tres" id="e3_w"]
 [ext_resource type="Resource" path="res://data/weapons/iron_sword.tres" id="31_w"]
 [ext_resource type="Resource" path="res://data/weapons/scrap_carbine.tres" id="32_w"]
 [ext_resource type="Resource" path="res://data/weapons/pistol_9mm.tres" id="33_w"]
@@ -23,3 +26,4 @@ script = ExtResource("1_table")
 entries = Array[ExtResource("2_entry")]([SubResource("Resource_coin"), SubResource("Resource_ammo")])
 gear_chance = 0.03
 gear_pool = Array[Resource]([ExtResource("31_w"), ExtResource("32_w"), ExtResource("33_w"), ExtResource("34_w"), ExtResource("35_w")])
+early_gear_pool = Array[Resource]([ExtResource("e1_w"), ExtResource("e2_w"), ExtResource("e3_w")])

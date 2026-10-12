@@ -10,6 +10,7 @@ greeting = "Pociones y fierros del Campamento. También compro lo que te sobre."
 consumable_paths = Array[String](["res://data/consumables/health_potion.tres", "res://data/consumables/no_reload_potion.tres", "res://data/consumables/speed_potion.tres"])
 gear_paths = Array[String](["res://data/weapons/pistol_9mm.tres", "res://data/weapons/iron_sword.tres", "res://data/weapons/colt_44.tres", "res://data/weapons/mp5.tres", "res://data/weapons/smg.tres", "res://data/weapons/ak47.tres", "res://data/weapons/m4.tres", "res://data/weapons/katana.tres", "res://data/weapons/desert_eagle.tres", "res://data/weapons/heavy_sniper.tres", "res://data/weapons/heavy_hammer.tres"])
 stock_limits = {}
+sell_everything = true
 restock_seconds = 0.0
 sale_price_multiplier = 1.0
 purchase_price_multiplier = 0.4

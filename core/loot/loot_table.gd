@@ -16,6 +16,10 @@ const RARITY_WEIGHTS_BY_TIER: Array = [
 ## Probabilidad máxima de soltar equipo, sin importar el tier.
 const MAX_GEAR_CHANCE: float = 0.5
 
+## Hasta este tier de nivel (inclusive) y con `early_gear_pool` cargado, el equipo que cae sale de esa
+## lista básica; `gear_pool` (lo grueso) solo cae con `jackpot_chance`.
+const EARLY_MAX_TIER: int = 1
+
 @export var entries: Array[LootEntry] = []
 
 @export_group("Equipo")
@@ -25,6 +29,12 @@ const MAX_GEAR_CHANCE: float = 0.5
 
 ## Piezas candidatas: recursos `ItemData` o `WeaponData`. La rareza de cada una decide su peso.
 @export var gear_pool: Array[Resource] = []
+
+## Equipo básico de los primeros sectores (tier de nivel <= EARLY_MAX_TIER). Vacío = siempre se usa `gear_pool`.
+@export var early_gear_pool: Array[Resource] = []
+
+## Con `early_gear_pool`: probabilidad (por muerte) de que en vez del básico caiga una pieza de `gear_pool`.
+@export_range(0.0, 1.0) var jackpot_chance: float = 0.0005
 
 
 ## Evalúa el porcentaje de cada entrada y devuelve una lista de diccionarios con el tipo y la cantidad resultante.
@@ -50,15 +60,22 @@ func roll_gear(level_tier: int, is_excluded: Callable = Callable()) -> Resource:
 	if level_tier <= 0 or gear_chance <= 0.0 or gear_pool.is_empty():
 		return null
 
+	var pool: Array[Resource] = gear_pool
+	if level_tier <= EARLY_MAX_TIER and not early_gear_pool.is_empty():
+		if randf() >= jackpot_chance:
+			pool = early_gear_pool
+
 	var chance: float = minf(gear_chance * (1.0 + 0.5 * float(level_tier - 1)), MAX_GEAR_CHANCE)
-	if randf() > chance:
+	# El golpe de suerte (pieza gruesa en los primeros sectores) no necesita pasar la tirada normal
+	var is_jackpot: bool = pool == gear_pool and not early_gear_pool.is_empty() and level_tier <= EARLY_MAX_TIER
+	if not is_jackpot and randf() > chance:
 		return null
 
 	var weights_row: Array = RARITY_WEIGHTS_BY_TIER[mini(level_tier, RARITY_WEIGHTS_BY_TIER.size()) - 1] as Array
 	var candidates: Array[Resource] = []
 	var weights: Array[float] = []
 	var total: float = 0.0
-	for res in gear_pool:
+	for res in pool:
 		if res == null:
 			continue
 		if is_excluded.is_valid() and bool(is_excluded.call(res)):

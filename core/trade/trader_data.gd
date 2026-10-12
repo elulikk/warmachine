@@ -17,6 +17,9 @@ extends Resource
 @export var stock_limits: Dictionary = {}
 ## Segundos (reloj real) tras los que el stock limitado se repone. 0 = nunca se repone.
 @export var restock_seconds: float = 0.0
+## MODO PRUEBA: vende todo lo que existe en `data/` (armas, equipo, runas, consumibles) sin límite de cantidad,
+## ignorando `gear_paths`, `consumable_paths` y `stock_limits`. Apagarlo para volver al stock normal.
+@export var sell_everything: bool = false
 
 @export_group("Precios")
 ## Multiplicador sobre el valor del objeto al que el comerciante VENDE (lo que paga el jugador).

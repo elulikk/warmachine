@@ -39,15 +39,6 @@ offset_right = 6.0
 offset_bottom = -20.0
 color = Color(0.4, 0.9, 1, 1)
 
-[node name="ShieldOutline" type="ReferenceRect" parent="Visuals"]
-offset_left = -18.0
-offset_top = -52.0
-offset_right = 18.0
-offset_bottom = 4.0
-border_color = Color(0.3, 0.85, 1, 0.9)
-border_width = 2.0
-editor_only = false
-
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("2_health")
 max_health = 60.0

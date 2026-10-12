@@ -2,10 +2,11 @@ class_name ShieldedSentinel
 extends EnemyBase
 ## Enemigo de tipo Centinela con Escudo.
 ## 60 HP, 0 armadura, 130 de escudo de energía recargable.
-## Visual con contorno / aura celeste que parpadea o desaparece al emitirse shield_broken.
+## Escudo de energía: elipse celeste que reacciona al daño absorbido (ver entities/shield/energy_shield.gd).
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
 const CHASE_ACCEL: float = 900.0
 
 @export var contact_damage: float = 14.0
@@ -15,7 +16,6 @@ const CHASE_ACCEL: float = 900.0
 
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var visual_rect: ColorRect = $Visuals/ColorRect
-@onready var shield_outline: ReferenceRect = $Visuals/ShieldOutline
 @onready var visuals: Node2D = $Visuals
 
 var target_player: Player = null
@@ -46,18 +46,17 @@ func _ready() -> void:
 		
 		if not health_component.damage_taken.is_connected(_on_damage_taken):
 			health_component.damage_taken.connect(_on_damage_taken)
-		if not health_component.shield_broken.is_connected(_on_shield_broken):
-			health_component.shield_broken.connect(_on_shield_broken)
-		if not health_component.shield_changed.is_connected(_on_shield_changed):
-			health_component.shield_changed.connect(_on_shield_changed)
 		if not health_component.died.is_connected(die):
 			health_component.died.connect(die)
 		if overhead_bar != null and overhead_bar.has_method("setup"):
 			overhead_bar.call("setup", health_component, entity_name)
 	
-	if shield_outline != null:
-		shield_outline.visible = true
-	
+	if visuals != null and health_component != null:
+		var energy_shield: Node2D = EnergyShieldScript.new()
+		energy_shield.name = "EnergyShield"
+		visuals.add_child(energy_shield)
+		energy_shield.setup(health_component, Vector2(0, -24), Vector2(24, 32))
+
 	target_player = get_tree().get_first_node_in_group(&"player") as Player
 
 
@@ -106,23 +105,6 @@ func _physics_process(delta: float) -> void:
 				player_ref.take_damage(contact_damage)
 				contact_cooldown = 0.8
 				break
-
-
-func _on_shield_broken() -> void:
-	if shield_outline != null:
-		# Parpadeo rápido y desaparición del contorno celeste
-		var tw: Tween = create_tween()
-		tw.tween_property(shield_outline, "modulate:a", 0.0, 0.2)
-		tw.tween_callback(func() -> void: shield_outline.visible = false)
-
-
-func _on_shield_changed(cur: float, _max_s: float) -> void:
-	if shield_outline != null:
-		if cur > 0.0:
-			shield_outline.visible = true
-			shield_outline.modulate.a = clampf(cur / 130.0, 0.35, 1.0)
-		else:
-			shield_outline.visible = false
 
 
 func _on_damage_taken(amount: float, is_critical: bool, damage_type: String) -> void:
