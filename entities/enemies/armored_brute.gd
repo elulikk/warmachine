@@ -27,7 +27,7 @@ var is_aggroed: bool = false
 func _ready() -> void:
 	EnemyArtScript.attach(self, "brute")
 	entity_name = "Bruto Acorazado"
-	max_health = 220.0
+	max_health = 250.0
 	move_speed = 38.0
 	super._ready()
 	if overhead_bar != null:
@@ -37,7 +37,7 @@ func _ready() -> void:
 		original_color = visual_rect.color
 	
 	if health_component != null:
-		health_component.max_health = 220.0
+		health_component.max_health = 250.0
 		health_component.current_health = 220.0
 		health_component.armor = 65.0
 		if not health_component.damage_taken.is_connected(_on_damage_taken):

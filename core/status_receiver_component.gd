@@ -9,6 +9,8 @@ signal burn_expired
 signal frozen_state_changed(is_frozen: bool)
 signal stunned_state_changed(is_stunned: bool)
 
+const FireVfxScript = preload("res://combat/fire_vfx.gd")
+
 @export_group("Fuego (Burn / DoT)")
 @export var max_burn_stacks: int = 10
 @export var burn_duration: float = 3.0
@@ -28,6 +30,8 @@ signal stunned_state_changed(is_stunned: bool)
 var burn_stacks: int = 0
 var burn_timer: float = 0.0
 var burn_tick_timer: float = 0.0
+# Llama visible sobre la entidad mientras arde (se crea al prenderse y se libera al apagarse)
+var _burn_vfx: Node2D = null
 
 # Estado de Hielo
 var is_frozen: bool = false
@@ -81,6 +85,7 @@ func _process_fire_status(delta: float) -> void:
 		burn_stacks = 0
 		burn_timer = 0.0
 		burn_tick_timer = 0.0
+		_remove_burn_vfx()
 		burn_expired.emit()
 		burn_stacks_changed.emit(0, max_burn_stacks)
 		_update_visual_tint()
@@ -175,12 +180,34 @@ func apply_stun(duration: float) -> void:
 func apply_fire(stacks: int = 1) -> void:
 	burn_stacks = mini(max_burn_stacks, burn_stacks + stacks)
 	burn_timer = burn_duration # Reinicia a 3.0s
-	
+
 	if burn_tick_timer <= 0.0:
 		burn_tick_timer = burn_tick_interval
-	
+
+	_ensure_burn_vfx()
 	burn_stacks_changed.emit(burn_stacks, max_burn_stacks)
 	_update_visual_tint()
+
+
+## Muestra la llama de estado sobre la entidad (una sola por componente).
+func _ensure_burn_vfx() -> void:
+	if _burn_vfx != null and is_instance_valid(_burn_vfx):
+		return
+	var host: Node2D = owner as Node2D
+	if host == null:
+		host = get_parent() as Node2D
+	if host == null:
+		return
+	_burn_vfx = FireVfxScript.make("burn", 22.0, true)
+	_burn_vfx.position = Vector2(0.0, -16.0)
+	_burn_vfx.z_index = 6
+	host.add_child(_burn_vfx)
+
+
+func _remove_burn_vfx() -> void:
+	if _burn_vfx != null and is_instance_valid(_burn_vfx):
+		_burn_vfx.queue_free()
+	_burn_vfx = null
 
 
 ## Aplica o renueva la ralentización por congelamiento.
@@ -297,6 +324,7 @@ func clear_all() -> void:
 	burn_stacks = 0
 	burn_timer = 0.0
 	burn_tick_timer = 0.0
+	_remove_burn_vfx()
 	is_frozen = false
 	slow_timer = 0.0
 	is_stunned = false

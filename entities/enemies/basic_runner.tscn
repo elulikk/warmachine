@@ -72,7 +72,7 @@ autoplay = "run"
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("2_health")
-max_health = 60.0
+max_health = 70.0
 
 [node name="StatusReceiverComponent" type="Node" parent="." node_paths=PackedStringArray("health_component", "visual_node")]
 script = ExtResource("3_status")

@@ -4,6 +4,7 @@ extends Area2D
 ## Al entrar en contacto con el Jugador, agrega el arma a su WeaponManager y la equipa.
 
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
+const PickupAuraScript = preload("res://entities/items/pickup_aura.gd")
 
 ## Armas que entran al arsenal (las que llenan la barra rápida); el resto va a la mochila.
 const ARSENAL_LIMIT: int = 9
@@ -34,6 +35,12 @@ func _apply_visuals() -> void:
 		return
 	
 	var rarity_color: Color = ItemTooltip.RARITY_COLORS.get(int(weapon_data.rarity), Color.WHITE) as Color
+	# Aura que pulsa detrás del arma, del color de su rareza
+	if visuals != null:
+		var aura: Node2D = PickupAuraScript.new()
+		aura.color = rarity_color
+		visuals.add_child(aura)
+		visuals.move_child(aura, 0)
 	if name_label != null:
 		name_label.text = weapon_data.weapon_name
 		name_label.add_theme_color_override("font_color", rarity_color)

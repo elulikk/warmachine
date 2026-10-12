@@ -21,6 +21,13 @@ const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 ## Rutas de armas que el jugador debe tener al entrar. Solo se agregan las que falten (sin duplicar).
 @export var guaranteed_weapon_paths: Array[String] = []
 
+## Equipo de prueba: para probar el nivel desde su escena (F6) sin pasar por el Campamento.
+## Agrega las armas y monedas en memoria, sin marcar flags de entrega. Si después se guarda la partida, el equipo queda guardado.
+@export_group("Equipo de prueba")
+@export var test_loadout_enabled: bool = false
+@export var test_weapon_paths: Array[String] = []
+@export var test_coins: int = 0
+
 @onready var player: Player = get_node_or_null("Player") as Player
 @onready var spawn_point: Marker2D = get_node_or_null("SpawnPoint") as Marker2D
 @onready var exit_gate: ExitGate = get_node_or_null("ExitGate") as ExitGate
@@ -53,6 +60,8 @@ func _ready() -> void:
 				hud.setup_with_player(player)
 	
 	_grant_guaranteed_weapons()
+	if test_loadout_enabled:
+		_apply_test_loadout()
 	SaveManager.set_respawn_point(initial_spawn_position)
 
 	# Conectar ExitGate con el siguiente nivel si existe
@@ -90,6 +99,25 @@ func _grant_guaranteed_weapons() -> void:
 
 	if wm.current_weapon == null and not wm.weapons.is_empty():
 		wm.select_weapon(0)
+
+
+## Equipo de prueba: agrega `test_weapon_paths` al arsenal y `test_coins` al jugador. No marca flags de entrega.
+func _apply_test_loadout() -> void:
+	if player == null:
+		return
+	if player.weapon_manager != null:
+		for path in test_weapon_paths:
+			if not ResourceLoader.exists(path):
+				continue
+			var weapon: WeaponData = load(path) as WeaponData
+			if weapon != null:
+				player.weapon_manager.add_weapon(weapon, false)
+		if player.weapon_manager.current_weapon == null and not player.weapon_manager.weapons.is_empty():
+			player.weapon_manager.select_weapon(0)
+	if player.stats_manager != null and test_coins > 0:
+		player.stats_manager.coins += test_coins
+		player.stats_manager.coins_changed.emit(player.stats_manager.coins)
+	print("[%s] Equipo de prueba: %d armas, %d monedas." % [level_id, test_weapon_paths.size(), test_coins])
 
 
 ## true si el jugador posee el arma en el arsenal, la mochila o el baúl del campamento.

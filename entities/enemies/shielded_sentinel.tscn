@@ -41,7 +41,7 @@ color = Color(0.4, 0.9, 1, 1)
 
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("2_health")
-max_health = 60.0
+max_health = 70.0
 armor = 0.0
 max_shield = 130.0
 shield_recharge_delay = 3.0

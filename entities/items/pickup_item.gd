@@ -4,6 +4,7 @@ extends Area2D
 ## Posee movimiento oscilatorio vertical (bobbing) y muestra el ícono pixel art del ítem.
 
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
+const PickupAuraScript = preload("res://entities/items/pickup_aura.gd")
 
 @export var item_data: ItemData
 
@@ -33,6 +34,13 @@ func _ready() -> void:
 func _apply_visuals() -> void:
 	if item_data == null:
 		return
+
+	# Aura que pulsa detrás del objeto, del color de su rareza
+	if visuals != null:
+		var aura: Node2D = PickupAuraScript.new()
+		aura.color = ItemTooltip.RARITY_COLORS.get(int(item_data.rarity), Color.WHITE) as Color
+		visuals.add_child(aura)
+		visuals.move_child(aura, 0)
 
 	if visual_rect != null:
 		visual_rect.color = item_data.item_color

@@ -4,6 +4,8 @@ extends Area2D
 ## Al entrar en contacto con el Jugador, intenta engarzarse en el primer socket disponible
 ## del arma actualmente equipada en WeaponManager.
 
+const PickupAuraScript = preload("res://entities/items/pickup_aura.gd")
+
 @export var rune_data: RuneData
 
 @onready var visuals: Node2D = $Visuals
@@ -24,6 +26,12 @@ func _ready() -> void:
 func _apply_visuals() -> void:
 	if rune_data == null:
 		return
+	# Aura que pulsa detrás de la runa, del color de su rareza
+	if visuals != null:
+		var aura: Node2D = PickupAuraScript.new()
+		aura.color = ItemTooltip.RARITY_COLORS.get(int(rune_data.rarity), Color.WHITE) as Color
+		visuals.add_child(aura)
+		visuals.move_child(aura, 0)
 	if color_rect != null:
 		color_rect.color = rune_data.rune_color
 	if name_label != null:

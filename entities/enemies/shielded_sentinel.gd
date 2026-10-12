@@ -28,7 +28,7 @@ var is_aggroed: bool = false
 func _ready() -> void:
 	EnemyArtScript.attach(self, "sentinel")
 	entity_name = "Centinela de Escudo"
-	max_health = 60.0
+	max_health = 70.0
 	move_speed = 70.0
 	super._ready()
 	
@@ -36,7 +36,7 @@ func _ready() -> void:
 		original_color = visual_rect.color
 	
 	if health_component != null:
-		health_component.max_health = 60.0
+		health_component.max_health = 70.0
 		health_component.current_health = 60.0
 		health_component.armor = 0.0
 		health_component.max_shield = 130.0
