@@ -439,6 +439,7 @@ Contenido mínimo para validarlo:
 ## 6g. Fase Q — Feedback de Pruebas (2026-10-11)
 *Objetivo:* Dejar en limpio lo que apareció jugando (bugs, sensación de juego y balance) antes de sumar contenido nuevo. Cada punto dice qué pasa hoy y qué se pide. Pendiente de validar en F5 después de cada cambio.
 * **Criterio de cierre:** cada punto se reproduce en el Sector 1-1 o en el Banco de Pruebas, y el cambio se ve y se siente como se pidió.
+* **Cierre (2026-10-12):** el usuario reporta que todo funciona bien en pruebas a mano (bugs 2, 3 y 4, y puntos 6, 7, 10, 13 y 14). Sin detalle caso por caso. **Pendiente:** punto 12 (sin imagen de referencia en el repo).
 
 **Bugs:**
 1. **Barra rápida después de la 3.ª arma (Sonnet, medium):** tras recoger la tercera arma, las nuevas dejan de acomodarse solo en los casilleros vacíos de la barra. Antes de tocar el código, confirmar qué se espera (¿sobrescribir un casillero, o ir a la mochila?). Archivo: `ui/hotbar.gd`. **HECHO (2026-10-11, opción a):** la causa estaba en `entities/items/weapon_pickup.gd` (tope de 3 armas en el arsenal; las siguientes iban a la mochila). El tope pasó a 9 (`ARSENAL_LIMIT`, igual que el inventario y el mercader); también el retorno de armas del yunque en `ui/blacksmith_window.gd`. Probado con script en el 1-1: se recogen 6 armas y el arsenal pasa de 2 a 8, todas en casilleros libres de la barra. **Sin verificar:** a mano en juego, y qué pasa al llegar a 9 (las siguientes van a la mochila).
@@ -524,6 +525,8 @@ Contenido mínimo para validarlo:
 **Archivos:** `data/weapons/frostmourne.tres` (nuevo), `core/weapon_data.gd` (`ice_duration`, `ice_speed_multiplier`), `core/weapon_manager.gd` (`_melee_strike` pasa el hielo al payload), `entities/player/player.gd` (crea el invocador), `entities/allies/frostmourne_summoner.gd` (invocación, tope y penalidad), `entities/allies/frostmourne_skeleton.gd/.tscn` (aliado), `entities/allies/ally_base.gd` (base), `core/art/weapon_art.gd`, `core/art/weapon_motion.gd`, `ui/components/item_icons.gd`, `core/managers/save_manager.gd` (arte y registro del arma).
 
 **Criterio de cierre:** en el Banco de Pruebas, con F5: cada golpe de la espada ralentiza al enemigo; matar con la espada invoca un esqueleto que pelea; nunca hay más de 5 vivos a la vez; la vida máxima baja 5 % de la base por cada esqueleto vivo y vuelve al morir; sin errores de script en el log.
+
+**Cierre (2026-10-12):** el usuario reporta que todo funciona bien en pruebas a mano (espada, invocación, tope, penalidad, zoom, iconos). Sin detalle caso por caso; si aparece algo puntual, se reabre.
 
 ---
 
