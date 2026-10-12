@@ -8,8 +8,6 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="e6"]
 [ext_resource type="PackedScene" path="res://entities/enemies/ghost.tscn" id="e7"]
 [ext_resource type="PackedScene" path="res://entities/enemies/zombie.tscn" id="e8"]
-[ext_resource type="PackedScene" path="res://entities/items/rune_pickup.tscn" id="e9"]
-[ext_resource type="Resource" path="res://data/runes/sharpen_rune.tres" id="e10"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="e11"]
 [ext_resource type="Resource" path="res://data/weapons/heavy_sniper.tres" id="e12"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="e13"]
@@ -621,10 +619,6 @@ offset_top = -10
 offset_right = 90
 offset_bottom = -7
 color = Color(0.4, 0.7, 0.95, 1)
-
-[node name="RunePickup" parent="." instance=ExtResource("e9")]
-position = Vector2(6380, 320)
-rune_data = ExtResource("e10")
 
 [node name="PedestalReward" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(8450, 547)

@@ -23,8 +23,13 @@ extends Marker2D
 ## Intervalo en segundos entre spawns consecutivos (modo directo).
 @export_range(0.0, 5.0, 0.1) var spawn_interval: float = 0.5
 
+## Segundos de destello antes de que nazca cada enemigo en modo directo (0 = al instante).
+@export_range(0.0, 3.0, 0.1) var spawn_warning: float = 1.0
+
 ## Si es true, los enemigos nacen ya en estado agresivo.
 @export var aggro_on_spawn: bool = false
+
+const SpawnTelegraph := preload("res://combat/spawn_telegraph.gd")
 
 var _parent_wm: WaveManager = null
 var _spawn_queue: int = 0
@@ -49,7 +54,14 @@ func _ready() -> void:
 func _spawn_next() -> void:
 	if _spawn_queue <= 0 or enemy_scene == null:
 		return
+	if spawn_warning > 0.0:
+		SpawnTelegraph.play(_get_container(), global_position, spawn_warning)
+		get_tree().create_timer(spawn_warning).timeout.connect(_spawn_now)
+		return
+	_spawn_now()
 
+
+func _spawn_now() -> void:
 	var instance: Node = enemy_scene.instantiate()
 	if not (instance is BasicRunner or instance is EnemyBase):
 		push_warning("[EnemySpawnMarker] La escena '%s' no es BasicRunner ni EnemyBase; ignorado." % enemy_scene.resource_path)
@@ -61,11 +73,15 @@ func _spawn_next() -> void:
 	if "is_aggroed" in enemy:
 		enemy.set("is_aggroed", aggro_on_spawn)
 
-	var container: Node = get_tree().current_scene
-	if container == null:
-		container = owner if owner != null else get_parent()
-	container.add_child(enemy)
+	_get_container().add_child(enemy)
 
 	_spawn_queue -= 1
 	if _spawn_queue > 0:
 		get_tree().create_timer(spawn_interval).timeout.connect(_spawn_next)
+
+
+func _get_container() -> Node:
+	var container: Node = get_tree().current_scene
+	if container == null:
+		container = owner if owner != null else get_parent()
+	return container

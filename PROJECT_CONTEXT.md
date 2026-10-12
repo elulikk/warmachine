@@ -169,7 +169,7 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
   - `sharpen_rune.tres`: +15 daño plano por impacto.
 - `weapons/`: Recursos `WeaponData`:
   - `combat_knife.tres`: Cuchillo de combate (MELEE, 30 daño, 3.2 tajos/s, arco 80°, tajo de 0.11 s, `melee_hitbox_scale` 0.7, parry balístico).
-  - `iron_sword.tres`: Espada de hierro (MELEE, 38 daño, 2.2 tajos/s, rareza Bueno, parry balístico).
+  - `iron_sword.tres`: Espada de hierro (MELEE, 19 daño, 2.2 tajos/s, rareza Normal, parry balístico).
   - `heavy_hammer.tres`: Martillo pesado (MELEE, 100 daño, 1.1 golpes/s, rareza Legendario, onda sísmica en suelo de 240px con 25 DMG y 1.5s de STUN).
   - `katana.tres`: Katana de asalto (MELEE, 35 daño, 2.8 tajos/s, crítico x2.0, dash horizontal +380 px/s y 0.15s de fase/intangibilidad).
   - `pistol.tres`: Pistola Criogénica (RANGED, 25 daño, 4.0 tiros/s, infusión `ICE`, cargador 12).
@@ -244,8 +244,8 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
 
 - `levels/chapter_1/level_1_03.tscn`: **Sector 1-3**, fosos y arenas con plataformas (~9100 px, ver ROADMAP 2.2b). Dos tramos de fosos con piedras de apoyo, pasillo con 3 ladrones, Arena 1 (5 ladrones) y Arena final de 2 rondas (4 y 6), 4 checkpoints y recompensa **Rifle Viejo** (`old_rifle.tres`) en pedestal. Garantiza cuchillo y revólver oxidado.
 
-- `levels/chapter_1/level_1_04.tscn`: **Sector 1-4**, el Bruto Acorazado (~8800 px, ver ROADMAP 2.2c). Arena 1 con 1 Bruto, pasillo con 3 ladrones, Arena 2 (rondas `[3, 4]`, Bruto en la 2.ª), escalera opcional a la `sharpen_rune`, Arena final (rondas `[4, 6]`, 1 Bruto por ronda) y sin pedestal de armadura (se eliminaron las armaduras). `gear_loot_tier = 1`. Garantiza cuchillo, revólver oxidado y carabina.
-- `levels/chapter_1/level_1_05.tscn`: **Sector 1-5**, el Centinela con escudo (~9000 px, ver ROADMAP 2.2d). Arena 1 con 1 Centinela, pasillo de techo bajo (ladrón, Centinela, ladrón), Arena 2 (rondas `[3, 5]`, 1 Centinela por ronda), escalera opcional a la `pierce_rune`, Arena final (rondas `[4, 6, 6]`, Centinelas `[1, 1, 2]`) y recompensa **MP5** en pedestal. `gear_loot_tier = 2`. Garantiza cuchillo, revólver oxidado y carabina. Generado por script con el mismo formato que el 1-4 (se puede editar en el editor).
+- `levels/chapter_1/level_1_04.tscn`: **Sector 1-4**, el Bruto Acorazado (~8800 px, ver ROADMAP 2.2c). Arena 1 con 1 Bruto, pasillo con 3 ladrones, Arena 2 (rondas `[3, 4]`, Bruto en la 2.ª), Arena final (rondas `[4, 6]`, 1 Bruto por ronda) y sin pedestal de armadura (se eliminaron las armaduras). `gear_loot_tier = 1`. Garantiza cuchillo, revólver oxidado y carabina.
+- `levels/chapter_1/level_1_05.tscn`: **Sector 1-5**, el Centinela con escudo (~9000 px, ver ROADMAP 2.2d). Arena 1 con 1 Centinela, pasillo de techo bajo (ladrón, Centinela, ladrón), Arena 2 (rondas `[3, 5]`, 1 Centinela por ronda), Arena final (rondas `[4, 6, 6]`, Centinelas `[1, 1, 2]`) y recompensa **MP5** en pedestal. `gear_loot_tier = 2`. Garantiza cuchillo, revólver oxidado y carabina. Generado por script con el mismo formato que el 1-4 (se puede editar en el editor).
 - `LevelBase.gear_loot_tier`: tier del botín de equipo de los enemigos del nivel (0 = apagado, por defecto). `LevelRegistry.IMPLEMENTED_LEVELS` / `is_implemented()` lista los sectores con contenido; `MapSelector` deshabilita los bloqueados (🔒) y los pendientes.
 
 ### `scenes/` (Menús y Escenas Principales)
@@ -417,7 +417,7 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
 
 #### Armamento (`res://data/weapons/`)
 - `combat_knife.tres`: `WeaponData` (MELEE, 30 DMG, 2.4 tajos/s, parry balístico).
-- `iron_sword.tres`: `WeaponData` (MELEE, 38 DMG, 2.2 tajos/s, rareza Bueno, parry balístico).
+- `iron_sword.tres`: `WeaponData` (MELEE, 19 DMG, 2.2 tajos/s, rareza Normal, parry balístico).
 - `pistol.tres`: `WeaponData` (RANGED semiautomática, 25 DMG, 4.0 tiros/s, infusión `"ICE"`, cargador 12, recarga 1.4s).
 - `rust_revolver.tres`: `WeaponData` "Revólver Oxidado" (RANGED, 18 DMG, 2.5 tiros/s, cargador 6, recarga 2.0s, dispersión 3°, proyectil lento 400 px/s). Primera arma de rango del Sector 1-1.
 - `revolver.tres`: `WeaponData` (RANGED, 18 DMG, 6.0 tiros/s).

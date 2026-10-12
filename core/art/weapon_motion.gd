@@ -216,7 +216,8 @@ const RELOADS: Dictionary = {
 
 ## Secuencia de disparo sostenido de las automáticas (combo de retroceso): cada disparo dentro de `window` s
 ## del anterior sube el cañón `climb_step` grados más (hasta `max_climb`) y alterna un vaivén de `sway` grados.
-## Al dejar de disparar vuelve al reposo en `recover` s. Es solo visual: no cambia la dispersión.
+## Al dejar de disparar vuelve al reposo en `recover` s. El sprite es solo visual; el desvío real de la bala
+## (para M4, SMG y MP5) sale de `SUSTAINED_CLIMB` en weapon_manager.gd.
 const PATTERNS: Dictionary = {
 	"smg": {"window": 0.16, "climb_step": 0.9, "max_climb": 7.0, "sway": 1.4, "recover": 0.22},
 	"mp5": {"window": 0.17, "climb_step": 0.8, "max_climb": 6.0, "sway": 1.2, "recover": 0.22},

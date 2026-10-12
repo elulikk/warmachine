@@ -156,7 +156,7 @@ Contenido mínimo para validarlo:
 **Reglas y decisiones:**
 - **Cómo se resuelve el Bruto:** mitigación 100/165 = 0.61, así que revólver (10.9 por bala) y carabina (12.1) necesitan ~20 y ~18 balas. Se enseña con kiteo (jugador 240 px/s contra 38) y plataformas (no salta; su único ataque es de contacto, 24 por segundo). Sin enemigos a distancia y sin presión de munición (`add_ammo()` es un no-op, solo cuentan cargador y recarga).
 - **Penetración real:** revólver, carabina y cuchillo 0; katana 0.1; martillo 0.25; pistola corrosiva 0.5; rifle de precisión **0.85** (el `.tres` manda; antes se documentaba 100%); granada ácida 1.0. La runa de piercing atraviesa enemigos, no armadura; la de afilado (+15 plano) sí ayuda porque suma antes de la mitigación.
-- **Runa opcional:** las runas solo se engarzan en el Herrero, así que rinde desde el 1-5.
+- **Sin runas en el primer mundo:** se quitaron los pickups de runa de los sectores 1-4 a 1-10 (la de perforación del 1-5 incluida). Las runas empiezan en el segundo mundo. Las armas del primer mundo conservan sus sockets (sin verificar si conviene quitárselos).
 - **Carabina garantizada:** `guaranteed_weapon_paths` = cuchillo, revólver y carabina, para que entrar al 1-4 sin la carabina no sea una trampa.
 - **`WaveManager`** ahora admite `elite_scene` y `elite_per_round`: de los N enemigos de una ronda, los primeros son el elite (cuenta dentro del tamaño). Con los valores por defecto se comporta igual que antes. Acepta cualquier `BasicRunner` o `EnemyBase`.
 - **`gear_loot_tier = 1`** en este nivel: los enemigos pueden soltar equipo (ver sección 4, Botín de equipo).
@@ -216,6 +216,20 @@ Contenido mínimo para validarlo:
 - **Victoria del 1-10:** lleva al Capítulo 2, que todavía no está armado.
 
 **Pendiente de balance:** cantidades por ronda, si las arenas de 16 a 18 enemigos son justas, y cuánto cambia la dificultad con el escudo de madera (Fase G).
+
+**Rework de oleadas 1-2 a 1-6 (2026-10-12, sin verificar a mano).** Esta tabla reemplaza las cantidades de las secciones 2.2 a 2.2e para esos sectores. Regla: primero crecen las oleadas de un mismo enemigo; cuando ya son grandes entra un enemigo nuevo, de a uno por sector (en ronda o en pasillo), y sus oleadas vuelven a crecer. El ciclo se repite.
+
+| Sector | Arena 1 / 2 / 3 (rondas) | Enemigo nuevo |
+|---|---|---|
+| 1-2 | [4] / [5, 6] / [7, 8] ladrones | — |
+| 1-3 | [6, 7] / [8, 10] ladrones | — |
+| 1-4 | [1] bruto solo / [6, 8] con 0 y 1 bruto / [8, 10] con 1 y 2 brutos | Bruto |
+| 1-5 | [4] con 2 brutos / [5, 6] con 2 y 3 brutos / [6, 6, 8] con 2, 2 y 3 brutos | — (sale el Centinela) |
+| 1-6 | [6] ladrones / [7, 8] con 0 y 2 brutos / [8, 8, 10] con 1, 2 y 2 brutos | Centinela (1 en el pasillo) |
+
+- **Pasillos:** 1-5 pasa a ladrón, ladrón, ladrón (sin centinela). 1-6 pasa a ladrón, centinela, ladrón (sin zombi). El zombi entra en 1-7 como élite de la arena 1.
+- **1-1 sin cambios** (ya validado en juego). **1-7 en adelante** sin tocar: sus cantidades siguen la tabla de la sección 2.2e, pendientes de revisión.
+- **Pendiente:** validar en juego si el bruto solo en 1-4 y la subida a 10 ladrones en 1-3 son justos.
 
 ---
 
@@ -293,8 +307,8 @@ Contenido mínimo para validarlo:
 
 | Tier | Rareza | Arma de rango | Arma melee |
 |---|---|---|---|
-| T1 | Normal | Revólver Oxidado, Pistola 9 mm | Cuchillo de Combate |
-| T2 | Bueno | Carabina de Chatarra, Colt .44, MP5 | Espada de Hierro |
+| T1 | Normal | Revólver Oxidado, Pistola 9 mm | Cuchillo de Combate, Espada de Hierro |
+| T2 | Bueno | Carabina de Chatarra, Colt .44, MP5 | — |
 | T3 | Épico | Subfusil SMG, AK-47, M4, Desert Eagle | Katana de Asalto |
 | T4 | Legendario | Rifle de Precisión (130 de daño, 5 balas) | Martillo Pesado (100 de daño, 1.1/s) |
 

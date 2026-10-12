@@ -5,9 +5,6 @@
 [ext_resource type="Script" path="res://core/wave_manager.gd" id="e3"]
 [ext_resource type="PackedScene" path="res://entities/enemies/armored_brute.tscn" id="e4"]
 [ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="e5"]
-[ext_resource type="PackedScene" path="res://entities/enemies/zombie.tscn" id="e6"]
-[ext_resource type="PackedScene" path="res://entities/items/rune_pickup.tscn" id="e7"]
-[ext_resource type="Resource" path="res://data/runes/fork_rune.tres" id="e8"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="e9"]
 [ext_resource type="Resource" path="res://data/weapons/colt_44.tres" id="e10"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="e11"]
@@ -18,6 +15,7 @@
 [ext_resource type="Script" path="res://core/managers/save_manager.gd" id="e16"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="e17"]
 [ext_resource type="Script" path="res://levels/level_base.gd" id="e18"]
+[ext_resource type="PackedScene" path="res://entities/enemies/shielded_sentinel.tscn" id="e19"]
 
 [sub_resource type="RectangleShape2D" id="s1"]
 size = Vector2(9000, 74)
@@ -220,7 +218,7 @@ color = Color(1, 0.35, 0.25, 0.55)
 [node name="WaveManager" type="Node" parent="Arena1"]
 script = ExtResource("e3")
 refill_interval = 0.6
-round_sizes = Array[int]([5])
+round_sizes = Array[int]([6])
 rest_between_rounds = 5
 auto_start = false
 aggro_on_spawn = true
@@ -362,9 +360,9 @@ color = Color(1, 0.35, 0.25, 0.55)
 [node name="WaveManager" type="Node" parent="Arena2"]
 script = ExtResource("e3")
 elite_scene = ExtResource("e4")
-elite_per_round = Array[int]([0, 1])
+elite_per_round = Array[int]([0, 2])
 refill_interval = 0.6
-round_sizes = Array[int]([6, 7])
+round_sizes = Array[int]([7, 8])
 rest_between_rounds = 5
 auto_start = false
 aggro_on_spawn = true
@@ -506,9 +504,9 @@ color = Color(1, 0.35, 0.25, 0.55)
 [node name="WaveManager" type="Node" parent="Arena3"]
 script = ExtResource("e3")
 elite_scene = ExtResource("e4")
-elite_per_round = Array[int]([1, 1, 2])
+elite_per_round = Array[int]([1, 2, 2])
 refill_interval = 0.6
-round_sizes = Array[int]([7, 9, 9])
+round_sizes = Array[int]([8, 8, 10])
 rest_between_rounds = 5
 auto_start = false
 aggro_on_spawn = true
@@ -546,10 +544,10 @@ text = ""
 [node name="Corridor1" parent="." instance=ExtResource("e5")]
 position = Vector2(3000, 555)
 
-[node name="Corridor2" parent="." instance=ExtResource("e5")]
+[node name="Corridor2" parent="." instance=ExtResource("e19")]
 position = Vector2(3300, 555)
 
-[node name="Corridor3" parent="." instance=ExtResource("e6")]
+[node name="Corridor3" parent="." instance=ExtResource("e5")]
 position = Vector2(3800, 555)
 
 [node name="RuneStepA" type="StaticBody2D" parent="Environment" groups=["world"]]
@@ -614,10 +612,6 @@ offset_top = -10
 offset_right = 90
 offset_bottom = -7
 color = Color(0.4, 0.7, 0.95, 1)
-
-[node name="RunePickup" parent="." instance=ExtResource("e7")]
-position = Vector2(6380, 320)
-rune_data = ExtResource("e8")
 
 [node name="PedestalReward" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(8450, 547)

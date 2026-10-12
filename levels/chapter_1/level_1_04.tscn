@@ -14,8 +14,6 @@
 [ext_resource type="Script" path="res://core/wave_manager.gd" id="14_wave"]
 [ext_resource type="PackedScene" path="res://entities/enemies/armored_brute.tscn" id="15_brute"]
 [ext_resource type="PackedScene" path="res://entities/items/pickup_item.tscn" id="16_pickup_item"]
-[ext_resource type="PackedScene" path="res://entities/items/rune_pickup.tscn" id="17_rune_pickup"]
-[ext_resource type="Resource" path="res://data/runes/sharpen_rune.tres" id="18_sharpen"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_8800x74"]
 size = Vector2(8800, 74)
@@ -440,15 +438,6 @@ theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
 theme_override_font_sizes/font_size = 13
 text = "ARENA — Ladrones primero; en la segunda oleada llega otro Bruto"
 
-[node name="TipRune" type="Label" parent="Environment"]
-offset_left = 5900
-offset_top = 420
-offset_right = 6660
-offset_bottom = 444
-theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
-theme_override_font_sizes/font_size = 13
-text = "Arriba: Runa de Afilado (+15 de daño plano). Engarzala con el Herrero: rinde mucho contra la armadura"
-
 [node name="TipArena3" type="Label" parent="Environment"]
 offset_left = 6940
 offset_top = 440
@@ -609,7 +598,7 @@ script = ExtResource("14_wave")
 elite_scene = ExtResource("15_brute")
 elite_per_round = Array[int]([0, 1])
 refill_interval = 0.6
-round_sizes = Array[int]([3, 4])
+round_sizes = Array[int]([6, 8])
 rest_between_rounds = 5
 auto_start = false
 aggro_on_spawn = true
@@ -640,10 +629,6 @@ horizontal_alignment = 1
 [node name="CheckpointRune" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(5900, 556)
 checkpoint_id = "checkpoint_1_04_e"
-
-[node name="RunePickup" parent="." instance=ExtResource("17_rune_pickup")]
-position = Vector2(6520, 285)
-rune_data = ExtResource("18_sharpen")
 
 [node name="CheckpointFinal" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(6800, 556)
@@ -693,9 +678,9 @@ color = Color(1, 0.25, 0.2, 0.55)
 [node name="WaveManager" type="Node" parent="Arena3"]
 script = ExtResource("14_wave")
 elite_scene = ExtResource("15_brute")
-elite_per_round = Array[int]([1, 1])
+elite_per_round = Array[int]([1, 2])
 refill_interval = 0.6
-round_sizes = Array[int]([4, 6])
+round_sizes = Array[int]([8, 10])
 rest_between_rounds = 5
 auto_start = false
 aggro_on_spawn = true

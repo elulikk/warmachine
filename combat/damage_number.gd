@@ -10,6 +10,7 @@ const COLOR_CRITICAL: Color = Color(1.0, 0.85, 0.15, 1.0)  # Amarillo dorado bri
 const COLOR_FIRE: Color     = Color(1.0, 0.35, 0.15, 1.0)  # Naranja rojizo
 const COLOR_ICE: Color      = Color(0.35, 0.85, 1.0, 1.0)  # Cian / celeste claro
 const COLOR_STUN: Color     = Color(1.0, 0.95, 0.25, 1.0)  # Amarillo eléctrico / aturdimiento
+const COLOR_SHIELD: Color   = Color(0.6, 0.95, 1.0, 1.0)  # Celeste pálido: escudo de energía absorbido
 const COLOR_PLAYER_HIT: Color = Color(1.0, 0.05, 0.05, 1.0) # Rojo intenso: daño que recibe el jugador
 const PLAYER_HIT_FONT_SIZE: int = 26
 const PLAYER_HIT_SHAKE: float = 3.0
@@ -54,6 +55,8 @@ func setup(amount: float, is_critical: bool = false, damage_type: String = "PHYS
 				chosen_color = COLOR_ICE
 			"STUN":
 				chosen_color = COLOR_STUN
+			"SHIELD":
+				chosen_color = COLOR_SHIELD
 			"CRITICAL":
 				chosen_color = COLOR_CRITICAL
 			_:

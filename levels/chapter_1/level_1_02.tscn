@@ -296,7 +296,7 @@ color = Color(1, 0.25, 0.2, 0.55)
 [node name="WaveManager" type="Node" parent="Arena1"]
 script = ExtResource("14_wave")
 refill_interval = 0.7
-round_sizes = Array[int]([3])
+round_sizes = Array[int]([4])
 rest_between_rounds = 4.0
 auto_start = false
 aggro_on_spawn = true
@@ -375,7 +375,7 @@ color = Color(1, 0.25, 0.2, 0.55)
 [node name="WaveManager" type="Node" parent="Arena2"]
 script = ExtResource("14_wave")
 refill_interval = 0.7
-round_sizes = Array[int]([4])
+round_sizes = Array[int]([5, 6])
 rest_between_rounds = 4.0
 auto_start = false
 aggro_on_spawn = true
@@ -460,7 +460,7 @@ color = Color(1, 0.25, 0.2, 0.55)
 [node name="WaveManager" type="Node" parent="Arena3"]
 script = ExtResource("14_wave")
 refill_interval = 0.6
-round_sizes = Array[int]([6])
+round_sizes = Array[int]([7, 8])
 rest_between_rounds = 4.0
 auto_start = false
 aggro_on_spawn = true

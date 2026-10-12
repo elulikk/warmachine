@@ -48,6 +48,8 @@ func _ready() -> void:
 		
 		if not health_component.damage_taken.is_connected(_on_damage_taken):
 			health_component.damage_taken.connect(_on_damage_taken)
+		if not health_component.shield_absorbed.is_connected(_on_shield_absorbed):
+			health_component.shield_absorbed.connect(_on_shield_absorbed)
 		if not health_component.died.is_connected(die):
 			health_component.died.connect(die)
 		if overhead_bar != null and overhead_bar.has_method("setup"):
@@ -113,6 +115,11 @@ func _on_damage_taken(amount: float, is_critical: bool, damage_type: String) -> 
 	_play_hit_flash()
 	if damage_type != "FIRE_DOT" and amount > 0.0:
 		_spawn_damage_number(amount, is_critical, damage_type)
+
+
+## Cuánto escudo se le sacó: número celeste (no usa el "!" de crítico para no pisar el color).
+func _on_shield_absorbed(amount: float, _is_critical: bool, _damage_type: String) -> void:
+	_spawn_damage_number(amount, false, "SHIELD")
 
 
 func _play_hit_flash() -> void:

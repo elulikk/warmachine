@@ -7,8 +7,6 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/shielded_sentinel.tscn" id="e5"]
 [ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="e6"]
 [ext_resource type="PackedScene" path="res://entities/enemies/ghost.tscn" id="e7"]
-[ext_resource type="PackedScene" path="res://entities/items/rune_pickup.tscn" id="e8"]
-[ext_resource type="Resource" path="res://data/runes/bounce_rune.tres" id="e9"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="e10"]
 [ext_resource type="Resource" path="res://data/weapons/ak47.tres" id="e11"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="e12"]
@@ -618,10 +616,6 @@ offset_top = -10
 offset_right = 90
 offset_bottom = -7
 color = Color(0.4, 0.7, 0.95, 1)
-
-[node name="RunePickup" parent="." instance=ExtResource("e8")]
-position = Vector2(6380, 320)
-rune_data = ExtResource("e9")
 
 [node name="PedestalReward" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(8450, 547)

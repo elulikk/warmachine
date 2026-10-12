@@ -41,7 +41,7 @@ var _hand_off_bar: bool = false
 ## Layout guardado que todavía no se pudo resolver (el arsenal aún no cargó)
 var _layout_pending: bool = false
 ## Armas en el arsenal la última vez que se miró: si crece, las nuevas entran a la barra (ver `_place_loose_weapons`).
-var _known_weapon_count: int = -1
+var _known_weapons: Array[WeaponData] = []
 var _message_left: float = 0.0
 var _message_label: Label = null
 var _name_label: Label = null
@@ -114,7 +114,7 @@ func _process(delta: float) -> void:
 		_apply_layout(_player.hotbar_layout)
 		_layout_pending = false
 		_place_loose_weapons()
-	elif _player.weapon_manager.weapons.size() != _known_weapon_count:
+	elif _player.weapon_manager.weapons.size() != _known_weapons.size():
 		_place_loose_weapons()
 
 	if _message_left > 0.0:
@@ -282,12 +282,18 @@ func _on_weapon_changed(weapon: WeaponData, _index: int) -> void:
 	_selected = target
 
 
-## Armas del arsenal que no están en ningún casillero (garantizadas por el nivel, compradas o recogidas sin
-## equipar): entran en los casilleros de armas libres (1-3) y, si no hay, en el primero libre de la barra.
+## Armas nuevas en el arsenal (garantizadas por el nivel, compradas, recogidas o equipadas desde la mochila)
+## que no están en ningún casillero: entran en los casilleros de armas libres (1-3) y, si no hay, en el primero
+## libre de la barra. Solo se miran las armas que no estaban en el arsenal la última vez: una que el jugador
+## quitó a propósito de la barra no vuelve cuando entra otra arma.
 func _place_loose_weapons() -> void:
 	var wm: WeaponManager = _player.weapon_manager
-	_known_weapon_count = wm.weapons.size()
+	var fresh: Array[WeaponData] = []
 	for weapon: WeaponData in wm.weapons:
+		if not _known_weapons.has(weapon):
+			fresh.append(weapon)
+	_known_weapons = wm.weapons.duplicate()
+	for weapon: WeaponData in fresh:
 		# El arma de la mano secundaria ya tiene su casillero
 		if _slot_holding(weapon) >= 0 or weapon == wm.offhand_weapon:
 			continue

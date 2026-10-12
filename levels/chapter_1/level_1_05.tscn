@@ -14,9 +14,7 @@
 [ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="12_checkpoint"]
 [ext_resource type="Script" path="res://core/arena_encounter.gd" id="13_arena"]
 [ext_resource type="Script" path="res://core/wave_manager.gd" id="14_wave"]
-[ext_resource type="PackedScene" path="res://entities/enemies/shielded_sentinel.tscn" id="15_sentinel"]
-[ext_resource type="PackedScene" path="res://entities/items/rune_pickup.tscn" id="17_rune_pickup"]
-[ext_resource type="Resource" path="res://data/runes/pierce_rune.tres" id="18_pierce"]
+[ext_resource type="PackedScene" path="res://entities/enemies/armored_brute.tscn" id="15_brute"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_9000x74"]
 size = Vector2(9000, 74)
@@ -431,15 +429,6 @@ theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
 theme_override_font_sizes/font_size = 13
 text = "ARENA — Los ladrones distraen; mantené el fuego sobre el Centinela"
 
-[node name="TipRune" type="Label" parent="Environment"]
-offset_left = 5820
-offset_top = 230
-offset_right = 6580
-offset_bottom = 254
-theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
-theme_override_font_sizes/font_size = 13
-text = "Arriba: Runa de Perforación (+1 enemigo atravesado). Engarzala con el Herrero"
-
 [node name="TipArena3" type="Label" parent="Environment"]
 offset_left = 6840
 offset_top = 380
@@ -508,10 +497,10 @@ color = Color(1, 0.35, 0.25, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena1"]
 script = ExtResource("14_wave")
-elite_scene = ExtResource("15_sentinel")
-elite_per_round = Array[int]([1])
+elite_scene = ExtResource("15_brute")
+elite_per_round = Array[int]([2])
 refill_interval = 0.6
-round_sizes = Array[int]([1])
+round_sizes = Array[int]([4])
 rest_between_rounds = 4
 auto_start = false
 aggro_on_spawn = true
@@ -540,7 +529,7 @@ checkpoint_id = "checkpoint_1_05_b"
 [node name="Corridor1" parent="." instance=ExtResource("9_runner")]
 position = Vector2(3000, 555)
 
-[node name="Corridor2" parent="." instance=ExtResource("15_sentinel")]
+[node name="Corridor2" parent="." instance=ExtResource("9_runner")]
 position = Vector2(3450, 555)
 
 [node name="Corridor3" parent="." instance=ExtResource("9_runner")]
@@ -593,10 +582,10 @@ color = Color(1, 0.35, 0.25, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena2"]
 script = ExtResource("14_wave")
-elite_scene = ExtResource("15_sentinel")
-elite_per_round = Array[int]([1, 1])
+elite_scene = ExtResource("15_brute")
+elite_per_round = Array[int]([2, 3])
 refill_interval = 0.6
-round_sizes = Array[int]([3, 5])
+round_sizes = Array[int]([5, 6])
 rest_between_rounds = 5
 auto_start = false
 aggro_on_spawn = true
@@ -627,10 +616,6 @@ horizontal_alignment = 1
 [node name="CheckpointRune" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(5750, 556)
 checkpoint_id = "checkpoint_1_05_d"
-
-[node name="RunePickup" parent="." instance=ExtResource("17_rune_pickup")]
-position = Vector2(6370, 285)
-rune_data = ExtResource("18_pierce")
 
 [node name="CheckpointFinal" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(6650, 556)
@@ -679,10 +664,10 @@ color = Color(1, 0.35, 0.25, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena3"]
 script = ExtResource("14_wave")
-elite_scene = ExtResource("15_sentinel")
-elite_per_round = Array[int]([1, 1, 2])
+elite_scene = ExtResource("15_brute")
+elite_per_round = Array[int]([2, 2, 3])
 refill_interval = 0.6
-round_sizes = Array[int]([4, 6, 6])
+round_sizes = Array[int]([6, 6, 8])
 rest_between_rounds = 5
 auto_start = false
 aggro_on_spawn = true

@@ -98,6 +98,13 @@ var last_motion: Dictionary = {}
 ## Disparos seguidos de la ráfaga actual (combo de retroceso de las automáticas, ver `PATTERNS` en weapon_motion.gd).
 var _burst_count: int = 0
 var _last_shot_msec: int = -100000
+## Desvío real de la bala hacia arriba al mantener el disparo (id del arma -> grados por disparo seguido y tope).
+## Se reinicia al pausar más que la ventana de `PATTERNS`, así que obliga a disparar en ráfagas.
+const SUSTAINED_CLIMB: Dictionary = {
+	"m4": {"step": 1.4, "max": 10.0},
+	"smg": {"step": 1.0, "max": 10.0},
+	"mp5": {"step": 1.0, "max": 9.0},
+}
 var _swing_index: int = 0
 var _current_swing: Dictionary = {}
 
@@ -524,7 +531,9 @@ func fire() -> void:
 	var pellets: int = maxi(1, current_weapon.pellets_per_shot)
 	var spread_deg: float = current_weapon.spread_angle_degrees
 	var base_angle: float = aim_dir.angle()
-	
+	_register_burst_shot()
+	var climb_rot: float = _sustained_climb_radians(aim_dir)
+
 	for i in range(pellets):
 		var pellet_dir: Vector2 = aim_dir
 		if pellets > 1 and spread_deg > 0.0:
@@ -534,6 +543,8 @@ func fire() -> void:
 		elif pellets == 1 and spread_deg > 0.0:
 			# Disparo único: desvío aleatorio dentro del cono (spread_deg es el ángulo total)
 			pellet_dir = aim_dir.rotated(deg_to_rad(randf_range(-0.5, 0.5) * spread_deg))
+
+		pellet_dir = pellet_dir.rotated(climb_rot)
 
 		var payload: HitPayload = HitPayload.new(
 			final_damage,
@@ -945,6 +956,30 @@ func _has_weapon_sprite_node() -> bool:
 	return _weapon_sprite != null and is_instance_valid(_weapon_sprite)
 
 
+## Cuenta el disparo en la ráfaga actual: si pasó más de `window` s desde el anterior, la ráfaga empieza de cero.
+func _register_burst_shot() -> void:
+	var pattern: Dictionary = WeaponMotion.pattern_for(current_weapon)
+	if pattern.is_empty():
+		return
+	var now: int = Time.get_ticks_msec()
+	if now - _last_shot_msec <= int(float(pattern.get("window", 0.2)) * 1000.0):
+		_burst_count += 1
+	else:
+		_burst_count = 0
+	_last_shot_msec = now
+
+
+## Ángulo (rad) con que se desvía la bala por la ráfaga sostenida: hacia arriba de la pantalla, sea cual sea el lado al que apunta.
+func _sustained_climb_radians(aim_dir: Vector2) -> float:
+	var climb: Dictionary = SUSTAINED_CLIMB.get(WeaponMotion.id_of(current_weapon), {}) as Dictionary
+	if climb.is_empty():
+		return 0.0
+	var deg: float = minf(float(_burst_count) * float(climb.get("step", 1.0)), float(climb.get("max", 8.0)))
+	# Apuntando a la derecha, "arriba" es girar en sentido negativo; a la izquierda, en positivo
+	var side: float = -1.0 if aim_dir.x >= 0.0 else 1.0
+	return deg_to_rad(deg) * side
+
+
 ## Golpe de retroceso del arma de fuego al disparar: se echa hacia atrás y el cañón sube (ver `kick` en weapon_motion.gd).
 func _play_weapon_kick() -> void:
 	var kick: Dictionary = WeaponMotion.profile_for(current_weapon).get("kick", {}) as Dictionary
@@ -959,12 +994,6 @@ func _play_weapon_kick() -> void:
 	var burst_offset: float = 0.0
 	var recover: float = 0.0
 	if not pattern.is_empty():
-		var now: int = Time.get_ticks_msec()
-		if now - _last_shot_msec <= int(float(pattern.get("window", 0.2)) * 1000.0):
-			_burst_count += 1
-		else:
-			_burst_count = 0
-		_last_shot_msec = now
 		var lift: float = minf(float(_burst_count) * float(pattern.get("climb_step", 1.0)), float(pattern.get("max_climb", 6.0)))
 		var sway: float = float(pattern.get("sway", 0.0)) * (1.0 if _burst_count % 2 == 0 else -1.0) * minf(float(_burst_count), 3.0) / 3.0
 		burst_offset = deg_to_rad(-lift + sway)
