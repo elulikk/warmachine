@@ -18,9 +18,11 @@
 [ext_resource type="Script" path="res://core/managers/save_manager.gd" id="e18"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="e19"]
 [ext_resource type="Script" path="res://levels/level_base.gd" id="e20"]
+[ext_resource type="PackedScene" path="res://entities/world/arena.tscn" id="e30"]
+[ext_resource type="PackedScene" path="res://entities/enemies/brute_boss.tscn" id="e31"]
 
 [sub_resource type="RectangleShape2D" id="s1"]
-size = Vector2(9000, 74)
+size = Vector2(10600, 74)
 [sub_resource type="RectangleShape2D" id="s2"]
 size = Vector2(40, 800)
 [sub_resource type="RectangleShape2D" id="s3"]
@@ -57,23 +59,23 @@ color = Color(0.06, 0.08, 0.12, 1)
 [node name="Environment" type="Node2D" parent="."]
 
 [node name="FloorMain" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(4500, 593)
+position = Vector2(5300, 593)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorMain"]
 shape = SubResource("s1")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/FloorMain"]
-offset_left = -4500
+offset_left = -5300
 offset_top = -37
-offset_right = 4500
+offset_right = 5300
 offset_bottom = 37
 color = Color(0.12, 0.16, 0.22, 1)
 
 [node name="TopBorder" type="ColorRect" parent="Environment/FloorMain"]
-offset_left = -4500
+offset_left = -5300
 offset_top = -37
-offset_right = 4500
+offset_right = 5300
 offset_bottom = -34
 color = Color(0.25, 0.55, 0.85, 1)
 
@@ -92,7 +94,7 @@ offset_bottom = 400
 color = Color(0.12, 0.16, 0.22, 1)
 
 [node name="RightWall" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(8980, 240)
+position = Vector2(10580, 240)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall"]
@@ -621,7 +623,7 @@ offset_bottom = -7
 color = Color(0.4, 0.7, 0.95, 1)
 
 [node name="PedestalReward" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(8450, 547)
+position = Vector2(10000, 547)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalReward"]
@@ -642,8 +644,29 @@ offset_bottom = -6
 color = Color(0.95, 0.8, 0.3, 1)
 
 [node name="RewardPickup" parent="." instance=ExtResource("e11")]
-position = Vector2(8450, 512)
+position = Vector2(10000, 512)
 weapon_data = ExtResource("e12")
+
+[node name="CheckpointBoss" parent="." instance=ExtResource("e1")]
+position = Vector2(8350, 556)
+
+[node name="BossArena" parent="." instance=ExtResource("e30")]
+position = Vector2(9100, 556)
+
+[node name="WaveManager" parent="BossArena" index="2"]
+elite_scene = ExtResource("e31")
+elite_per_round = Array[int]([1])
+round_sizes = Array[int]([1])
+
+[node name="BossLabel" type="Label" parent="Environment"]
+offset_left = 8600
+offset_top = 400
+offset_right = 9600
+offset_bottom = 430
+theme_override_colors/font_color = Color(1, 0.4, 0.3, 1)
+theme_override_font_sizes/font_size = 18
+text = "COLOSO DEL NÚCLEO — la onda de choque se esquiva saltando"
+horizontal_alignment = 1
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
@@ -656,14 +679,14 @@ position = Vector2(160, 510)
 zoom = Vector2(1.1, 1.1)
 limit_left = 0
 limit_top = 100
-limit_right = 8960
+limit_right = 10560
 limit_bottom = 700
 position_smoothing_enabled = true
 script = ExtResource("e14")
 target = NodePath("../Player")
 
 [node name="ExitGate" parent="." instance=ExtResource("e15")]
-position = Vector2(8800, 556)
+position = Vector2(10300, 556)
 
 [node name="HUD" parent="." instance=ExtResource("e16")]
 
@@ -683,4 +706,4 @@ offset_right = 1260
 offset_bottom = 464
 theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 13
-text = "Sector 1-10: NÚCLEO. Última expedición del capítulo: las tres arenas son las oleadas más grandes del primer mundo."
+text = "Sector 1-10: NÚCLEO. Última expedición del capítulo: las tres arenas son las oleadas más grandes del primer mundo y al final espera el jefe."

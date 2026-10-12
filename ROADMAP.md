@@ -14,6 +14,7 @@
 * **Armado, pendiente de validar:** Sector 1-5 (sección 2.2d), sectores 1-6 a 1-10 (sección 2.2e), el escudo de madera (Fase G) y la segunda tanda de la Fase O (opciones, posprocesado, recarga por arma, pantalla de carga, registro de errores, ícono y versión del `.exe`).
 * **Hecho y validado en juego (2026-10-11):** comercio de dos columnas con venta y recompra (`TradeSession`, `TraderData`, `TradeWindow`; sección 2.3), arrastrar armas de la mochila a la barra de acceso rápido, fogonazo y humo del arma, chispas contra el entorno, sangre / manchas / heridas / tripas al dañar y matar enemigos con arte propio (`combat/damage_fx.gd`, `assets/art/fx/`), botón SIGUIENTE SECTOR en la victoria y relleno de suelos solo sobre el vacío.
 * **Hecho (2026-10-11, pendiente de validar en juego):** Sala de Estrés con monitor de rendimiento, fusión de botín y orbes, experiencia con gravedad, cola de efectos de muerte (sin congelamiento al matar muchos juntos), engranaje de munición que recarga al instante. Ver sección 6c.
+* **Hecho (2026-10-12, pendiente de validar en juego):** Fase J (invocaciones separadas que se mueven solas), Fase R (red arraigadora), Fase Z (escudo espejo) y el jefe del Sector 1-10 (Coloso del Núcleo, sección 2.2e). Ver secciones 6l, 6k y 6j.
 * **Versión:** `config/version` en `project.godot` (hoy 0.5.0); se ve en el menú principal y en las propiedades del `.exe`.
 * **Sandbox separado:** `test_level.tscn` se abre solo desde el botón "Banco de Pruebas" del menú principal; no forma parte de la campaña. El Sector 1-1 es un nivel real y no es el sandbox.
 * **Stand-by (no se toca por ahora):** jetpack, alas, vuelo, gancho de anclaje, baliza de translocación, runas avanzadas, alt-fire (zoom del sniper), mercenarios y drones, contratos de zona, los 50 niveles.
@@ -212,10 +213,14 @@ Contenido mínimo para validarlo:
 **Reglas y decisiones:**
 - **Sin mecánicas nuevas:** solo se usan los enemigos que ya existen (ladrón, zombi, fantasma, bruto, centinela). Las rondas son de `WaveManager` con descanso de 5 s y aparición cada 0.6 s.
 - **Élites sin límite:** la presión sale de las cantidades; no hay tope de élites vivos como en el 1-5. Si una arena resulta injusta, se corrige con `elite_per_round` o `round_sizes` en el Inspector.
-- **Sector 1-10 [JEFE]:** el nombre dice jefe, pero el juego todavía no tiene mecánica de jefe. Se usa como la oleada final más grande del primer mundo. **Pendiente:** decidir si lleva un jefe.
+- **Sector 1-10 [JEFE]: Coloso del Núcleo (2026-10-12, sin verificar a mano).** Decisión tomada con defaults razonables: sí lleva jefe. Después de la arena 3 hay un checkpoint (x 8350) y una cuarta arena de 1060 px (`entities/world/arena.tscn`, centro x 9100, una sola ronda con el jefe); el nivel mide 10 600 px (el premio, el Rifle de Precisión, pasó a x 10 000 y la salida a x 10 300).
+  - **Jefe:** `entities/enemies/brute_boss.gd/.tscn` (hereda del Bruto Acorazado): 1200 de vida, 40 de armadura (menos que el bruto, porque casi todas las armas del mundo 1 no penetran), 52 px/s, 28 de contacto, 150 de EXP, arte 1.35x sobre el 1.5x de los mobs (la colisión no cambia). Grupo `boss`: suena la pista de jefe.
+  - **Onda de choque:** si el jugador está a menos de 320 px, avisa 0.8 s con una franja roja en el suelo (±240 px) y golpea 30 de daño con empujón a quien siga pisando el piso: **se esquiva saltando**. Cada 4.5 s.
+  - **Furia al 50 % de vida:** 80 px/s, 36 de contacto, onda cada 3.0 s, tinte rojo y 4 ladrones de refuerzo. Al morir el jefe los refuerzos caen con él.
+  - **Probado con escena descartable:** el jefe aparece en la arena, la onda arranca y respeta el piso, la furia sube la velocidad a 80 y suma 4 enemigos, y al morir desaparece del grupo `boss`. **Sin verificar:** a mano si 1200 de vida es mucho o poco con el equipo del 1-10, la lectura de la franja de aviso, y que no haya arte propio (usa el del bruto agrandado).
 - **Victoria del 1-10:** lleva al Capítulo 2, que todavía no está armado.
 
-**Pendiente de balance:** cantidades por ronda, si las arenas de 16 a 18 enemigos son justas, y cuánto cambia la dificultad con el escudo de madera (Fase G).
+**Pendiente de balance:** cantidades por ronda, si las arenas de 16 a 18 enemigos son justas, la vida del jefe y cuánto cambia la dificultad con el escudo de madera (Fase G) y el espejo (Fase Z).
 
 **Rework de oleadas 1-2 a 1-6 (2026-10-12, sin verificar a mano).** Esta tabla reemplaza las cantidades de las secciones 2.2 a 2.2e para esos sectores. Regla: primero crecen las oleadas de un mismo enemigo; cuando ya son grandes entra un enemigo nuevo, de a uno por sector (en ronda o en pasillo), y sus oleadas vuelven a crecer. El ciclo se repite.
 
@@ -270,7 +275,7 @@ Contenido mínimo para validarlo:
   6. **Recarga:** clic de cargador sacado y puesto, y aviso de recarga lista.
   7. **Jugador y mundo:** daño recibido, salto, aterrizaje, moneda, orbe de EXP, pickup de arma, subir de nivel y compra en la tienda.
   8. **Gancho de reemplazo:** `WeaponData` gana campos opcionales de sonido (`fire_stream`, `hit_stream`); si están asignados se usan en lugar del procedural. Así el audio real se cambia arma por arma, desde los `.tres`.
-  9. **Música (hecha):** `core/music.gd` + `core/music_director.gd` con la banda sonora de `ost/`: menú, campamento, tienda (al abrir el Mercader), exploración de nivel, combate estándar y élite según los enemigos cercanos, derrota y victoria. La pista de jefe queda lista para el grupo `boss` (todavía no hay jefes).
+  9. **Música (hecha):** `core/music.gd` + `core/music_director.gd` con la banda sonora de `ost/`: menú, campamento, tienda (al abrir el Mercader), exploración de nivel, combate estándar y élite según los enemigos cercanos, derrota y victoria. La pista de jefe suena con el grupo `boss` (hoy lo usa el Coloso del Núcleo del 1-10).
 * **Fuera de alcance por ahora:** ambientes, sonido posicional real, pasos y voces.
 * **Criterio de cierre:** En `test_level.tscn` y en el 1-1, con F5, cada disparo, impacto, recarga, tajo y daño recibido suena; el SMG y el lanzallamas no saturan ni cortan el audio; y se puede reemplazar el sonido de un arma asignando un `AudioStream` en su `.tres`.
 
@@ -447,7 +452,7 @@ Contenido mínimo para validarlo:
 **Sin verificar en runtime humano / pendiente:**
 - Verificación visual directa en F5 del arco de swing de espada y la postura de dos manos del `CharacterRig`.
 - Verificación en F5 de la sensación de juego del doble empuñe (ej. cuchillo + revólver) y la disposición del casillero M2 en pantalla.
-- Escudos (la estructura de `Grip.SHIELD` está lista y funcional en código, pero todavía no hay un recurso ni arte de escudo en el juego).
+- Escudos: ya hay dos recursos con `Grip.SHIELD` (Escudo de Madera, sección 6m, y Escudo Espejo, sección 6j). Siguen sin arte propio.
 
 ---
 
@@ -473,7 +478,7 @@ Contenido mínimo para validarlo:
 * **Modelo recomendado:** Sonnet, esfuerzo **medium** (mayormente escenas, exports y un editor simple).
 
 **Pendiente:**
-1. **Colocar en el nivel sin código:** que un nivel se arme arrastrando escenas en el editor (plataformas, checkpoints, arenas, pedestales, puertas de salida), con los parámetros visibles en el Inspector. **HECHO (2026-10-12, sin verificar a mano):** checkpoints (`checkpoint_terminal.tscn`), pedestales (`throwable_pedestal.tscn`) y puertas de salida (`exit_gate.tscn`) ya eran escenas con `@export`. Nuevas: `entities/world/platform.tscn` (script `@tool`: `size`, `color` y `border_color` en el Inspector acomodan colisión, `ColorRect` y `TopBorder`; va bajo `Environment` y `level_skin.gd` la viste igual que las hechas a mano) y `entities/world/arena.tscn` (`ArenaEncounter` armado: disparador de 1020×300, dos barreras, `WaveManager` con 3 marcadores y cartel; las rondas, el enemigo y el élite se editan en el `WaveManager`; para mover barreras o marcadores, "Hijos editables"). Probado con escena descartable: la plataforma toma el tamaño pedido y la arena registra sus 3 marcadores. **Sin verificar:** usarlas en el editor.
+1. **Colocar en el nivel sin código:** que un nivel se arme arrastrando escenas en el editor (plataformas, checkpoints, arenas, pedestales, puertas de salida), con los parámetros visibles en el Inspector. **HECHO (2026-10-12, sin verificar a mano):** checkpoints (`checkpoint_terminal.tscn`), pedestales (`throwable_pedestal.tscn`) y puertas de salida (`exit_gate.tscn`) ya eran escenas con `@export`. Nuevas: `entities/world/platform.tscn` (script `@tool`: `size`, `color` y `border_color` en el Inspector acomodan colisión, `ColorRect` y `TopBorder`; va bajo `Environment` y `level_skin.gd` la viste igual que las hechas a mano) y `entities/world/arena.tscn` (`ArenaEncounter` armado: disparador de 1020×300, dos barreras, `WaveManager` con 3 marcadores y cartel; las rondas, el enemigo y el élite se editan en el `WaveManager`; para mover barreras o marcadores, "Hijos editables"). Probado con escena descartable: la plataforma toma el tamaño pedido y la arena registra sus 3 marcadores. **Sin verificar:** usarlas en el editor. **Corrección (2026-10-12):** el `WaveManager` es un `Node` y cortaba la cadena de transformaciones: una arena movida no arrastraba sus marcadores de aparición. Ahora `_marker_world_position()` aplica la transformación del padre; probado instanciando `arena.tscn` en x 9100 en el 1-10.
 2. ✅ **Spawnear enemigos desde el editor:** `entities/markers/enemy_spawn_marker.gd` — Marker2D con `@export` para `enemy_scene`, `count`, `round_index`, `aggro_on_spawn`. Como hijo de WaveManager se registra como punto de spawn; de forma independiente hace spawn directo con `auto_spawn`.
 3. ✅ **Tirar armas e ítems al piso:** `entities/markers/item_floor_marker.gd` — Node2D con un único `@export var pickup_data: Resource`. Detecta automáticamente si es `WeaponData` → `WeaponPickup`, `RuneData` → `RunePickup`, `ItemData` → `PickupItem`. Escena de prueba: `levels/test_markers.tscn`.
 4. **Probar desde el editor:** poder lanzar un nivel desde su escena y arrancar con un equipo de prueba (armas, consumibles, monedas) sin pasar por el Campamento. **HECHO parcial (2026-10-12, sin verificar a mano):** `levels/level_base.gd` tiene el grupo "Equipo de prueba" (`test_loadout_enabled`, `test_weapon_paths`, `test_coins`), apagado por defecto. Agrega armas y monedas en memoria sin marcar flags de entrega. **HECHO (2026-10-12):** consumibles con `test_consumables` (id → cantidad, p. ej. `health_potion: 2`); probado: llegan 2 pociones de vida y 1 de velocidad. **Sin verificar:** correr un nivel con F6 y el grupo activado. Prueba con escena descartable: el nivel 1-1 suma 2 armas y 50 monedas. Nota: si después se guarda la partida, el equipo de prueba queda guardado.
@@ -602,6 +607,15 @@ Contenido mínimo para validarlo:
 4. **Superficies reflejantes:** paredes y plataformas marcadas como reflejantes en los mapas. El proyectil rebota en ellas con la regla de reflejo (ángulo de incidencia) y aplica la mitad de daño.
 5. **Visual y sonido:** destello al reflejar (reusar el anillo de `entities/shield/energy_shield.gd`), rastro del proyectil y un sonido de rebote. Opcional, se puede hacer después.
 
+**HECHO (2026-10-12, sin verificar a mano):** pasos 1 a 5 con estos supuestos resueltos:
+- **Quién lo tiene:** es un arma de mano secundaria con `grip = SHIELD` y el nuevo campo `WeaponData.reflects_projectiles` (`data/weapons/mirror_shield.tres`, "Escudo Espejo", rareza épica, 150 de oro). Se vende en el Mercader (`sell_everything`) y hay un pedestal en la zona de tiro del Banco de Pruebas, junto a la torreta francotiradora. Se activa como el escudo de madera: clic derecho mantenido; levantado también recorta el 25 % del daño que no refleja.
+- **Reflejo (pasos 1 a 3):** `entities/shield/mirror_reflector.gd` (hijo del jugador, `Area2D` en la capa de proyectiles): un círculo de 30 px de radio, 26 px por delante del pecho hacia donde apunta el cursor o el stick. El proyectil ajeno que entra sale en la dirección de la puntería (`Projectile.reflect`), con **50 % del daño**, y pasa a ser del jugador: no lo lastima y sí daña enemigos. Lo que disparó el jugador o sus aliados pasa de largo. Solo cubre el lado hacia el que apunta; un proyectil por la espalda lo golpea normalmente.
+- **Tope:** cada rebote deja la mitad (`REFLECT_DAMAGE_MULT`); si el daño baja de 1 (`REFLECT_MIN_DAMAGE`) el proyectil se descarta. Un tiro de 40 rebota 5 veces.
+- **Superficies reflejantes (paso 4):** `platform.tscn` tiene el campo `reflective` en el Inspector (pasa al grupo `reflective` y dibuja una franja clara arriba). El proyectil rebota con la normal real y pierde la mitad, sin gastar rebotes de runa y conservando dueño y bando (el proyectil enemigo rebotado puede volver a herir al jugador con el daño ya reducido).
+- **Sonido (paso 5):** reusa `parry`, más agudo. Sin rastro ni destello nuevos.
+- **Alcance de "arrojadizos":** solo `Projectile` (balas, plasma, francotirador). Las granadas de `combat/throwables/` no se reflejan: los enemigos no las lanzan.
+- **Probado con escena descartable (Banco de Pruebas):** sin escudo, un proyectil de 20 baja la vida 100 → 80; con el espejo levantado la vida queda en 80, el proyectil sale con 10 de daño, dueño el jugador y dirección de la puntería. Contra una plataforma reflectante, un tiro de 40 vuelve con 20 y rotación π. **Sin verificar:** a mano la sensación, el tamaño de la zona y cómo se ve (sin arte propio).
+
 **Archivos:** `entities/shield/` (nuevo escudo espejo), `combat/projectile.gd` (rebote, dirección y dueño del proyectil), superficies reflejantes en `entities/` o `levels/` (nuevo script de pared/plataforma), `core/sfx.gd` (rebote, opcional).
 
 **Criterio de cierre:** en el Banco de Pruebas, con F5: un proyectil enemigo que llega al escudo espejo sale hacia donde apunta el jugador con la mitad de daño; el jugador no recibe daño por ese proyectil; un proyectil que rebota en una pared reflejante pierde la mitad de daño de nuevo; el proyectil puede derrotar a un enemigo que el jugador no alcanza; sin errores de script en el log.
@@ -630,6 +644,12 @@ Contenido mínimo para validarlo:
 3. **Red y arraigo:** la red detecta a los enemigos dentro del área y les aplica el estado de arraigo por el tiempo definido. El arraigo impide el movimiento (no la acción por defecto). Usar `StatusReceiverComponent` como con el hielo y el fuego.
 4. **Visual y sonido:** dibujo procedural de la red (líneas en el piso) y un sonido corto al desplegar. Opcional.
 
+**HECHO (2026-10-12, sin verificar a mano):** pasos 1 a 4 con estos supuestos resueltos:
+- **Ítem:** `data/items/throwables/root_net.tres` ("Red Arraigadora", ranura TACTICAL, rareza 1, 25 de oro). Se vende en el Mercader (`sell_everything`) y hay un pedestal en el laboratorio elemental del Banco de Pruebas. Escena `combat/throwables/root_net_grenade.tscn` (hereda de `ThrowableBase`: detona al tocar el piso o a un enemigo, fusible de 3 s).
+- **Red:** `combat/throwables/root_net.gd/.tscn` (círculo de 120 px de radio, dura 4 s, dibujo procedural: elipse con anillos e hilos radiales sobre el piso, sonido nuevo `net_deploy`). Cada enemigo se arraiga **una sola vez por red** durante 2.0 s, esté dentro al desplegarse o entre después; así no queda trabado mientras siga adentro. Sin daño.
+- **Arraigo:** estado `ROOT` en `StatusReceiverComponent` (`apply_root()`, `is_rooted`, señal `rooted_state_changed`; por payload llega con `"ROOT"` y la duración en `ice_duration`). Fuerza `velocity.x = 0` y el multiplicador de velocidad vale 0; no toca el agro, así que puede atacar a distancia y recibir daño (queda tinte verde). Lo leen todos los enemigos que ya respetan el hielo.
+- **Probado con escena descartable (Banco de Pruebas):** tres ladrones persiguiendo quedan quietos 2.0 s y se liberan solos y siguen. **Sin verificar:** a mano, la red a la vista, el sonido, que se compre y se lance desde el casillero táctico, y que un enemigo que entra con la red activa quede arraigado.
+
 **Archivos:** `data/items/throwables/` (nuevo `.tres`), `combat/throwables/` (nueva escena de red), `core/status_receiver_component.gd` (estado de arraigo), `core/sfx.gd` (sonido, opcional).
 
 **Criterio de cierre:** en el Banco de Pruebas, con F5: la red cae al piso donde se lanza; los enemigos que quedan dentro no se mueven durante unos 2 s y luego se liberan; un enemigo que entra con la red activa también queda arraigado; el ítem se compra en el mercader y se lanza como las demás granadas; sin errores de script en el log.
@@ -656,6 +676,13 @@ Contenido mínimo para validarlo:
 2. **Zona de descanso:** asignar a cada invocación un punto alrededor del jugador y que vuelva a él cuando no hay enemigo cerca.
 3. **Movimiento de ambiente:** que cada invocación camine a un punto cercano de su zona, se detenga un rato (tiempo al azar) y siga. Usar valores en constantes.
 4. **Prueba con seis invocaciones:** en la Sala de Estrés, invocar seis esqueletos y verificar que se ven separados y se mueven distinto.
+
+**HECHO (2026-10-12, sin verificar a mano):** pasos 1 a 4 en `AllyBase`, y el esqueleto de Frostmourne ya lo usa.
+- **Cómo se activa en una invocación futura:** `is_summon = true` antes de `super._ready()` (entra al grupo `summons`), pedirle a `rest_goal_x(delta)` la posición X de descanso en el estado de seguimiento y llamar a `apply_separation(delta)` antes de `move_and_slide()`. Mercenarios y drones no cambian.
+- **Separación:** cada invocación se aleja de las que tiene a menos de 56 px (`SEPARATION_RADIUS`); si dos nacen en el mismo punto exacto, se van a lados opuestos según su id.
+- **Zona de descanso:** casilleros alternados izquierda / derecha del jugador, a 70 px el primero y 48 px más cada par (`SLOT_FIRST`, `SLOT_SPACING`; el orden sale del id de instancia, así que un esqueleto no cambia de lugar mientras no muere otro).
+- **Movimiento de ambiente:** el desvío dentro del casillero (±26 px) cambia cada 1.2 a 3.5 s: camina hasta él al 40 % de velocidad y se queda quieto. Al alejarse del jugador (más de 160 px del casillero) acelera a 1.5x para no quedar atrás. En combate sigue igual (ataca al más cercano y al terminar vuelve a su zona).
+- **Probado con escena descartable (Banco de Pruebas):** seis esqueletos nacidos en el mismo punto se reparten entre -186 y +185 px del jugador, con 24 a 41 px entre vecinos; al mover al jugador 400 px lo alcanzan y se reacomodan. **Sin verificar:** a mano, cómo se ven en la Sala de Estrés y si 70 px es una buena distancia.
 
 **Archivos:** `entities/allies/ally_base.gd` (separación y zona de descanso, para todas las invocaciones), `entities/allies/frostmourne_skeleton.gd` (ajustes propios si hacen falta), `entities/allies/frostmourne_summoner.gd` (si hace falta pasar el punto de referencia).
 

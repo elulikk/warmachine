@@ -36,6 +36,7 @@ const AllyDismisserScript = preload("res://entities/allies/ally_dismisser.gd")
 ## Aura visual de subida de nivel (estilo MU Online / WoW)
 const LevelUpAuraScript = preload("res://entities/player/level_up_aura.gd")
 const LowHealthFeedbackScript = preload("res://entities/player/low_health_feedback.gd")
+const MirrorReflectorScript = preload("res://entities/shield/mirror_reflector.gd")
 const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
 const DamageNumberScene = preload("res://combat/damage_number.tscn")
 var _level_up_aura: Node2D = null
@@ -163,6 +164,10 @@ func _ready() -> void:
 	var low_health: Node = LowHealthFeedbackScript.new()
 	low_health.name = "LowHealthFeedback"
 	add_child(low_health)
+
+	var mirror_reflector: Node = MirrorReflectorScript.new()
+	mirror_reflector.name = "MirrorReflector"
+	add_child(mirror_reflector)
 
 	# Escudo de energía: hoy el jugador no tiene escudo, así que no se ve hasta que tenga
 	var energy_shield: Node2D = EnergyShieldScript.new()

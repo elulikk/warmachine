@@ -84,6 +84,7 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
 - `acid_pool.gd` & `.tscn`: charco 5.0s con ticks cada 0.5s y `armor_penetration = 1.0`.
 - `gas_cloud.gd` & `.tscn`: nube 6.0s con ticks biológicos cada 0.4s; deflagra en `fire_explosion` al contacto con proyectiles FIRE/plasma/lanzallamas, explosiones ígneas o enemigos ardiendo.
 - `throwable_util.gd`: helpers estáticos (resolución de blancos hostiles excluyendo jugador/aliados, entrega de `HitPayload`).
+- `root_net.gd` & `.tscn` / `root_net_grenade.tscn`: red arraigadora (Fase R). Círculo de 120px, 4.0s; arraiga 2.0s (una vez por red y por enemigo) a quien está o entra, sin daño. Dibujo procedural, sonido `net_deploy`. Ítem `data/items/throwables/root_net.tres`.
 
 ### `core/` (Lógica Central y Subsistemas Base)
 - [`camera_follow.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/camera_follow.gd): Camera2D con seguimiento suavizado (lerp) hacia el jugador y compensación de altura.
@@ -193,6 +194,7 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
 - [`enemy_base.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/enemy_base.gd): Clase base para enemigos (`EnemyBase`). Los enemigos que persiguen (`BasicRunner`, `ArmoredBrute`, `ShieldedSentinel`) aceleran hacia su velocidad con `CHASE_ACCEL` (900 px/s²) en vez de fijarla cada frame, así el knockback del arma se nota (el Bruto lo reduce al 20%). Gestiona recepción de `HitPayload`, retroceso, estados alterados, placa superior `OverheadHealthBar` y dispersión piñata de botín con `LootTable`.
 - [`basic_runner.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/basic_runner.gd) & `basic_runner.tscn`: Enemigo bípedo veloz. Persigue al jugador horizontalmente, inflige daño por contacto (12 DMG), suelta botín y orbes de EXP.
 - [`armored_brute.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/armored_brute.gd) & `armored_brute.tscn`: Tanque pesado (220 HP, 65 de armadura mitigadora, 24 de daño de contacto, velocidad lenta). Usa `armored_brute_loot.tres`. Estrena en el Sector 1-4 vía `WaveManager.elite_scene`.
+- `brute_boss.gd` & `brute_boss.tscn` / `boss_shockwave_fx.gd`: jefe del Sector 1-10, "Coloso del Núcleo" (Fase 2.2e). Hereda del Bruto Acorazado: 1200 HP, 40 de armadura, onda de choque con aviso de 0.8s que se esquiva saltando, furia al 50% (más velocidad, onda más seguida y 4 refuerzos). Grupo `boss` (música de jefe). Los refuerzos mueren con él.
 - `zombie.tscn`: escena heredada de `basic_runner.tscn` (`art_kind = "zombie"`): 110 HP, velocidad 48, 16 de daño de contacto. Atajo [Z] en el sandbox.
 - [`ghost.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/ghost.gd) & `ghost.tscn`: Fantasma (hereda `BasicRunner`, sin `class_name`): flota hacia el jugador en 2D con ondulación, atraviesa muros (`collision_mask = 0`), 70 HP, 10 de daño de contacto. Atajo [V] en el sandbox.
 - [`shielded_sentinel.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/enemies/shielded_sentinel.gd) & `shielded_sentinel.tscn`: Centinela con escudo (60 HP, 130 de escudo de energía recargable tras 3.0s a 30/s, 70 px/s, 14 de contacto, contorno celeste reactivo a `shield_broken`). Usa `shielded_sentinel_loot.tres`. Estrena en el Sector 1-5 vía `WaveManager.elite_scene`.
@@ -320,7 +322,8 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
 - **Mecánicas Operativas:**
   - **Fuego:** Acumula hasta 10 stacks. Temporizador de 3.0s que se renueva con cada impacto. Cada 0.5s ejecuta un tick de daño proporcional a las cargas (`tick_damage = base_burn_tick_damage * stacks`) e instancia números naranjas.
   - **Hielo:** Reduce la velocidad al 50% (`slow_multiplier = 0.5`) durante 2.5s.
-  - **Tintado Visual:** Naranja para fuego, celeste para hielo, magenta/violeta si ambos coexisten.
+  - **Arraigo (Root, Fase R):** `apply_root(duración)` / `is_rooted`; la entidad no se desplaza (`velocity.x = 0`, multiplicador de velocidad 0) pero conserva agro y ataques. Por payload: efecto `"ROOT"` con la duración en `ice_duration` (0 = `default_root_duration`, 2.0s).
+  - **Tintado Visual:** Naranja para fuego, celeste para hielo, magenta/violeta si ambos coexisten, verde terroso si está arraigado.
   - **Display Flotante:** Renderiza insignias con íconos y contador de stacks sobre las entidades.
 
 ### 3.5. Sistema de Estadísticas y Progresión
@@ -355,6 +358,7 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
   - **Mercenario Terrestre:** Inicia en reposo; se contrata por 15 monedas con la tecla E. Pasa a seguir al jugador y ejecuta tajos cuerpo a cuerpo contra enemigos detectados.
   - **Dron Orbital:** Levita suavemente con oscilación sinusoidal sobre la cabeza del jugador, rastrea enemigos y dispara proyectiles energéticos con `ProjectilePool`.
   - **VoiceComponent:** Muestra globos de diálogo flotantes animados sobre aliados al ser contratados, entrar en combate o morir.
+  - **Invocaciones (Fase J):** `AllyBase.is_summon = true` las mete en el grupo `summons`. `get_separation_push()` / `apply_separation(delta)` las separan entre sí (56px), `rest_goal_x(delta)` da su casillero alrededor del jugador (alternado izquierda/derecha, 70px + 48px por par) con un desvío que cambia cada 1.2-3.5s. Las usa `frostmourne_skeleton.gd`.
 
 ### 3.9. Contratos de Riesgo y Mutadores de Zona
 - **Archivos:** [`zone_modifier_manager.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/managers/zone_modifier_manager.gd), [`zone_contract.gd`](file:///c:/Users/Usuario/Documents/warmachine/core/contracts/zone_contract.gd), [`contract_terminal.gd`](file:///c:/Users/Usuario/Documents/warmachine/entities/interactables/contract_terminal.gd).
@@ -416,6 +420,7 @@ Extraído de las hojas generadas (fuentes en `art_source/`, ignorada por Godot c
 - `sharpen_rune.tres`: `RuneData` (+15 daño plano por impacto, armas de fuego y melee).
 
 #### Armamento (`res://data/weapons/`)
+- `wooden_shield.tres` / `mirror_shield.tres`: `WeaponData` con `grip = SHIELD` (mano secundaria, clic derecho mantenido). El de madera recorta 25% del daño; el espejo (`reflects_projectiles = true`, Fase Z) además rebota los `Projectile` ajenos con 50% del daño hacia la puntería (`entities/shield/mirror_reflector.gd`, colgado del jugador). Las plataformas con `reflective = true` (grupo `reflective`) rebotan cualquier proyectil con `Projectile.reflect()`.
 - `combat_knife.tres`: `WeaponData` (MELEE, 30 DMG, 2.4 tajos/s, parry balístico).
 - `iron_sword.tres`: `WeaponData` (MELEE, 19 DMG, 2.2 tajos/s, rareza Normal, parry balístico).
 - `pistol.tres`: `WeaponData` (RANGED semiautomática, 25 DMG, 4.0 tiros/s, infusión `"ICE"`, cargador 12, recarga 1.4s).

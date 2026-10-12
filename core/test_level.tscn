@@ -40,6 +40,8 @@
 [ext_resource type="PackedScene" path="res://entities/interactables/throwable_pedestal.tscn" id="40_pedestal"]
 [ext_resource type="Resource" path="res://data/items/throwables/frag_grenade.tres" id="41_frag"]
 [ext_resource type="Resource" path="res://data/items/throwables/ice_grenade.tres" id="42_ice"]
+[ext_resource type="Resource" path="res://data/items/throwables/root_net.tres" id="60_net"]
+[ext_resource type="Resource" path="res://data/weapons/mirror_shield.tres" id="61_mirror"]
 [ext_resource type="Resource" path="res://data/items/throwables/acid_grenade.tres" id="43_acid"]
 [ext_resource type="Resource" path="res://data/items/throwables/gas_bomb.tres" id="44_gas"]
 [ext_resource type="Resource" path="res://data/weapons/heavy_hammer.tres" id="45_hammer"]
@@ -526,6 +528,10 @@ weapon_data = ExtResource("28_blaster")
 position = Vector2(2330, -20)
 weapon_data = ExtResource("22_xchuc")
 
+[node name="MirrorShieldPickup" parent="ShootingZone" instance=ExtResource("24_wpickup")]
+position = Vector2(2450, -20)
+weapon_data = ExtResource("61_mirror")
+
 [node name="ShieldedSentinel" parent="ShootingZone" instance=ExtResource("30_sentinel")]
 position = Vector2(2580, -20)
 
@@ -559,6 +565,10 @@ item_data = ExtResource("43_acid")
 [node name="GasPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
 position = Vector2(3200, 575)
 item_data = ExtResource("44_gas")
+
+[node name="NetPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(3330, 575)
+item_data = ExtResource("60_net")
 
 [node name="GasDummy1" parent="DemolitionZone" instance=ExtResource("4_dummy")]
 position = Vector2(3420, 575)

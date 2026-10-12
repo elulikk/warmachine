@@ -8,6 +8,7 @@ signal burn_stacks_changed(stacks: int, max_stacks: int)
 signal burn_expired
 signal frozen_state_changed(is_frozen: bool)
 signal stunned_state_changed(is_stunned: bool)
+signal rooted_state_changed(is_rooted: bool)
 
 const FireVfxScript = preload("res://combat/fire_vfx.gd")
 
@@ -20,6 +21,9 @@ const FireVfxScript = preload("res://combat/fire_vfx.gd")
 @export_group("Hielo (Freeze / Slow)")
 @export var slow_duration: float = 2.5
 @export var slow_multiplier: float = 0.5
+
+@export_group("Arraigo (Root)")
+@export var default_root_duration: float = 2.0
 
 @export_group("Referencias")
 @export var health_component: HealthComponent
@@ -41,6 +45,10 @@ var _active_slow_multiplier: float = 0.5
 # Estado de Aturdimiento (Stun)
 var stun_timer: float = 0.0
 var is_stunned: bool = false
+
+# Estado de Arraigo (Root): no se mueve, pero puede atacar y recibir daño
+var root_timer: float = 0.0
+var is_rooted: bool = false
 
 # Caché de color original para restauraciones
 var original_color: Color = Color.WHITE
@@ -67,6 +75,7 @@ func _physics_process(delta: float) -> void:
 	_process_fire_status(delta)
 	_process_ice_status(delta)
 	_process_stun_status(delta)
+	_process_root_status(delta)
 
 
 ## Procesa la cuenta regresiva del fuego y los ciclos periódicos de daño (DoT).
@@ -132,6 +141,21 @@ func _process_stun_status(delta: float) -> void:
 		_update_visual_tint()
 
 
+## Procesa la duración del arraigo y mantiene quieta a la entidad (sin tocar su agro ni sus ataques).
+func _process_root_status(delta: float) -> void:
+	if not is_rooted:
+		return
+	root_timer -= delta
+	var host: Node = owner if owner != null else get_parent()
+	if host != null and is_instance_valid(host) and "velocity" in host:
+		host.velocity.x = 0.0
+	if root_timer <= 0.0:
+		is_rooted = false
+		root_timer = 0.0
+		rooted_state_changed.emit(false)
+		_update_visual_tint()
+
+
 ## Procesa un HitPayload entrante aplicando fuego, hielo o aturdimiento según sus status_effects.
 func apply_payload(payload: HitPayload) -> void:
 	if payload == null:
@@ -147,6 +171,9 @@ func apply_payload(payload: HitPayload) -> void:
 				apply_fire(stacks)
 			"ICE", "FREEZE", "SLOW":
 				apply_ice(payload.ice_duration, payload.ice_speed_multiplier)
+			"ROOT":
+				# La duración viaja en ice_duration (0 = valor por defecto del receptor)
+				apply_root(payload.ice_duration)
 			"STUN":
 				# Usar base_tick_damage o 1.5s por defecto como duración de stun
 				var dur: float = payload.base_tick_damage if payload.base_tick_damage > 0.0 else 1.5
@@ -173,6 +200,17 @@ func apply_stun(duration: float) -> void:
 	
 	if not was_stunned:
 		stunned_state_changed.emit(true)
+	_update_visual_tint()
+
+
+## Aplica o renueva el arraigo: la entidad no puede desplazarse mientras dura.
+func apply_root(duration: float = 0.0) -> void:
+	var dur: float = duration if duration > 0.0 else default_root_duration
+	root_timer = maxf(root_timer, dur)
+	var was_rooted: bool = is_rooted
+	is_rooted = true
+	if not was_rooted:
+		rooted_state_changed.emit(true)
 	_update_visual_tint()
 
 
@@ -264,7 +302,7 @@ func _spawn_damage_number(amount: float, damage_type: String) -> void:
 
 ## Retorna el multiplicador de velocidad actual (0.0 si está aturdido, 0.5/override si está congelado, 1.0 si es normal).
 func get_speed_multiplier() -> float:
-	if is_stunned:
+	if is_stunned or is_rooted:
 		return 0.0
 	return _active_slow_multiplier if is_frozen else 1.0
 
@@ -297,6 +335,10 @@ func _update_visual_tint() -> void:
 		# Hielo activo: Tono cian / celeste helado
 		var ice_tint: Color = Color(0.25, 0.75, 1.0, 1.0)
 		_set_current_visual_color(original_color.lerp(ice_tint, 0.60))
+	elif is_rooted:
+		# Arraigado: Tono verde terroso
+		var root_tint: Color = Color(0.45, 0.8, 0.3, 1.0)
+		_set_current_visual_color(original_color.lerp(root_tint, 0.55))
 	else:
 		# Sin estados alterados: Restaurar color base original
 		_set_current_visual_color(original_color)
@@ -329,4 +371,6 @@ func clear_all() -> void:
 	slow_timer = 0.0
 	is_stunned = false
 	stun_timer = 0.0
+	is_rooted = false
+	root_timer = 0.0
 	_update_visual_tint()

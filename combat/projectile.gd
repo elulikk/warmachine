@@ -21,6 +21,12 @@ var pierces_left: int = 0
 var forks_left: int = 0
 var _pierced_targets: Array[Node] = []
 
+## Cada rebote espejo (escudo o superficie reflejante) deja este porcentaje del daño. Si baja de
+## REFLECT_MIN_DAMAGE el proyectil desaparece, así que no rebota para siempre.
+const REFLECT_DAMAGE_MULT: float = 0.5
+const REFLECT_MIN_DAMAGE: float = 1.0
+var reflections: int = 0
+
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -35,6 +41,7 @@ func reset_state() -> void:
 	is_parried = false
 	is_hostile = false
 	_pierced_targets.clear()
+	reflections = 0
 	visible = true
 	modulate = Color.WHITE
 	collision_layer = 4
@@ -58,6 +65,34 @@ func deflect(new_source: Node2D, damage_multiplier: float = 1.5) -> void:
 	collision_layer = 4
 	collision_mask = 3
 	_update_appearance()
+
+
+## Rebote espejo: sale en `direction` con la mitad del daño. Con `new_source` pasa a ser del jugador y daña a los
+## enemigos (rebote del escudo); sin él conserva dueño y bando (rebote en superficie reflejante).
+## Devuelve false si el daño quedó por debajo del mínimo y el proyectil se descartó.
+func reflect(direction: Vector2, new_source: Node2D = null) -> bool:
+	if payload == null or direction == Vector2.ZERO:
+		return false
+	payload.base_damage *= REFLECT_DAMAGE_MULT
+	if payload.base_damage < REFLECT_MIN_DAMAGE:
+		_has_impacted = true
+		set_physics_process(false)
+		call_deferred("recycle")
+		return false
+	reflections += 1
+	rotation = direction.angle()
+	payload.knockback_direction = direction
+	if new_source != null:
+		payload.source_node = new_source
+		is_hostile = false
+		is_parried = true
+		collision_layer = 4
+		collision_mask = 3
+	current_lifetime = 0.0
+	_has_impacted = false
+	_pierced_targets.clear()
+	_update_appearance()
+	return true
 
 
 func _physics_process(delta: float) -> void:
@@ -107,6 +142,15 @@ func _handle_collision(target: Node) -> void:
 	if target is StaticBody2D or target is TileMap or target.is_in_group("world"):
 		GameFeel.sfx(self, &"hit_world", global_position, -10.0)
 		var normal: Vector2 = _get_bounce_normal()
+		if target.is_in_group(&"reflective"):
+			# Superficie reflejante: rebota siempre, con la mitad del daño (no gasta rebotes de runa)
+			var mirror_dir: Vector2 = transform.x.bounce(normal).normalized()
+			ShotFx.wall_impact(self, global_position, normal, ShotFx.COLD)
+			GameFeel.sfx(self, &"parry", global_position, -8.0, 1.3)
+			if reflect(mirror_dir):
+				global_position += transform.x * 6.0
+				_spawn_impact_fx(global_position)
+			return
 		ShotFx.wall_impact(self, global_position, normal, ShotFx.COLD if is_parried else ShotFx.WARM)
 		if bounces_left > 0:
 			bounces_left -= 1

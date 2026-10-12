@@ -142,7 +142,7 @@ func _spawn_one(use_elite: bool = false) -> bool:
 		return false
 
 	var chosen_marker: Marker2D = spawn_points.pick_random()
-	var spawn_pos: Vector2 = chosen_marker.global_position
+	var spawn_pos: Vector2 = _marker_world_position(chosen_marker)
 	spawn_pos.x += randf_range(-spawn_jitter, spawn_jitter)
 
 	if spawn_warning <= 0.0:
@@ -152,6 +152,15 @@ func _spawn_one(use_elite: bool = false) -> bool:
 	_in_flight += 1
 	get_tree().create_timer(spawn_warning).timeout.connect(_on_telegraph_finished.bind(scene, spawn_pos, _generation))
 	return true
+
+
+## Posición en el mundo de un marcador. El WaveManager es un `Node` (no `Node2D`), así que la cadena de
+## transformaciones se corta en él: se aplica la del padre para que una arena movida arrastre sus marcadores.
+func _marker_world_position(marker: Marker2D) -> Vector2:
+	var base: Node2D = get_parent() as Node2D
+	if base != null and marker.get_parent() == self:
+		return base.to_global(marker.position)
+	return marker.global_position
 
 
 func _on_telegraph_finished(scene: PackedScene, spawn_pos: Vector2, generation: int) -> void:

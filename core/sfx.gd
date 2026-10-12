@@ -751,6 +751,13 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_n(0.0, 0.25, 0.4, 1.4, 500.0, 1600.0, 0.4),
 				_s(0.0, 0.2, 70.0, 50.0, 0.3, 1.5),
 			], 8, 1, 1.2, 38.0, 0.15)
+		&"net_deploy":
+			# Red que se abre: soplido de tela con un chasquido corto y grave al caer.
+			return _render(0.45, [
+				_n(0.0, 0.3, 0.45, 1.5, 3500.0, 700.0, 0.3),
+				_l(0.0, 0.2, 520.0, 220.0, tri, 0.25, 1.5),
+				_s(0.0, 0.12, 110.0, 60.0, 0.5, 1.8),
+			], 7, 1, 1.2, 45.0, 0.2)
 		&"boom_fire":
 			return _render(0.7, [
 				_s(0.0, 0.55, 85.0, 22.0, 1.0, 1.4),

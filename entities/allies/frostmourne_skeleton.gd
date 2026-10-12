@@ -16,7 +16,11 @@ const SLASH_DAMAGE: float = 30.0
 const SLASH_RATE: float = 1.2 ## Golpes por segundo.
 const SLASH_REACH: float = 48.0 ## Distancia de golpe (píxeles).
 const SLASH_KNOCKBACK: float = 120.0
-const FOLLOW_STOP_DISTANCE: float = 60.0
+const FOLLOW_ARRIVE_DISTANCE: float = 6.0 ## Cerca del casillero de descanso se detiene.
+const FOLLOW_AMBIENT_SPEED: float = 0.4 ## Fracción de la velocidad al vagabundear cerca del casillero.
+const FOLLOW_AMBIENT_RANGE: float = 90.0 ## Más lejos que esto del casillero camina normal.
+const FOLLOW_CATCHUP_RANGE: float = 160.0 ## Más lejos que esto acelera para alcanzar al jugador.
+const FOLLOW_CATCHUP_SPEED: float = 1.5
 const JUMP_VELOCITY: float = -380.0
 
 ## Hoja de 4 cuadros: 0 a 2 caminando, 3 golpeando.
@@ -37,6 +41,7 @@ var _walk_texture: Texture2D = null
 func _ready() -> void:
 	# Antes de super._ready: AllyBase activa la hurtbox según is_hired.
 	is_hired = true
+	is_summon = true
 	super._ready()
 	_start_spawn()
 
@@ -60,6 +65,7 @@ func _physics_process(delta: float) -> void:
 		SkeletonState.COMBAT:
 			_process_combat_state(delta)
 
+	apply_separation(delta)
 	move_and_slide()
 	_animate(delta)
 	# Rescate por Leash heredado de AllyBase.
@@ -128,13 +134,20 @@ func _process_follow_state(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, 500.0 * delta)
 		return
 
-	var dx: float = player.global_position.x - global_position.x
-	if absf(dx) > FOLLOW_STOP_DISTANCE:
+	# Zona de descanso: casillero propio alrededor del jugador, con desvío y pausas (AllyBase.rest_goal_x).
+	var dx: float = rest_goal_x(delta) - global_position.x
+	if absf(dx) > FOLLOW_ARRIVE_DISTANCE:
 		var dir: float = signf(dx)
-		velocity.x = dir * move_speed
+		var speed: float = move_speed
+		if absf(dx) <= FOLLOW_AMBIENT_RANGE:
+			speed *= FOLLOW_AMBIENT_SPEED
+		elif absf(dx) > FOLLOW_CATCHUP_RANGE:
+			speed *= FOLLOW_CATCHUP_SPEED
+		velocity.x = dir * speed
 		_face(dir)
 		if is_on_floor():
-			var player_higher: bool = (player.global_position.y < global_position.y - 28.0) and (absf(dx) < 130.0)
+			var pdx: float = player.global_position.x - global_position.x
+			var player_higher: bool = (player.global_position.y < global_position.y - 28.0) and (absf(pdx) < 130.0)
 			if is_on_wall() or player_higher:
 				velocity.y = JUMP_VELOCITY
 	else:

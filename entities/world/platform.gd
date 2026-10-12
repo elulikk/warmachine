@@ -19,7 +19,16 @@ extends StaticBody2D
 		_refresh()
 
 
+## Superficie reflejante (Fase Z): los proyectiles que la tocan rebotan con la mitad del daño.
+@export var reflective: bool = false:
+	set(value):
+		reflective = value
+		_refresh()
+
+
 func _ready() -> void:
+	if reflective and not Engine.is_editor_hint():
+		add_to_group(&"reflective")
 	_refresh()
 
 
@@ -51,3 +60,17 @@ func _refresh() -> void:
 		border.offset_right = half.x
 		border.offset_bottom = -half.y + 3.0
 		border.color = border_color
+	# Franja clara sobre el borde: marca la superficie reflejante (el skin no la oculta)
+	var strip: ColorRect = get_node_or_null("ReflectStrip") as ColorRect
+	if reflective and strip == null:
+		strip = ColorRect.new()
+		strip.name = "ReflectStrip"
+		strip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(strip)
+	if strip != null:
+		strip.visible = reflective
+		strip.offset_left = -half.x
+		strip.offset_top = -half.y
+		strip.offset_right = half.x
+		strip.offset_bottom = -half.y + 4.0
+		strip.color = Color(0.75, 0.95, 1.0, 0.95)

@@ -64,6 +64,10 @@ signal runes_changed
 ## Empuñadura: una mano (puede ir en la mano secundaria), dos manos (ocupa las dos) o escudo (solo mano secundaria).
 @export var grip: Grip = Grip.ONE_HAND
 
+## Escudo espejo (Fase Z): con el escudo levantado, los proyectiles enemigos que lo tocan rebotan hacia donde
+## apunta el jugador con la mitad del daño. Solo tiene efecto con `grip = SHIELD`.
+@export var reflects_projectiles: bool = false
+
 ## Indica si el arma dispara en ráfaga continua manteniendo presionado el gatillo (automática)
 ## o si requiere una pulsación por disparo (semiautomática).
 @export var is_automatic: bool = false
