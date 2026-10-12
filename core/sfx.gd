@@ -35,6 +35,7 @@ const MIN_INTERVAL_MSEC: Dictionary = {
 	&"jump": 120,
 	&"land": 120,
 	&"hurt": 150,
+	&"heartbeat": 200,
 	&"enemy_death": 60,
 	&"reload_out": 100,
 	&"reload_done": 100,
@@ -48,7 +49,7 @@ const PREWARM_SOUNDS: Array[StringName] = [
 	&"swing", &"swing_light", &"swing_heavy",
 	&"hit_flesh", &"hit_blade", &"hit_armor", &"hit_crit", &"hit_shield", &"hit_world",
 	&"enemy_death", &"reload_out", &"reload_in", &"reload_done", &"reload_shell", &"reload_rack", &"weapon_swap",
-	&"hurt", &"jump", &"land", &"coin", &"exp", &"pickup_gear", &"levelup",
+	&"hurt", &"heartbeat", &"jump", &"land", &"coin", &"exp", &"pickup_gear", &"levelup",
 ]
 
 const WAVE_SQUARE: int = 0
@@ -636,6 +637,14 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_n(0.0, 0.12, 0.4, 2.5, 1800.0, 500.0),
 				_s(0.0, 0.10, 120.0, 60.0, 0.5, 2.0),
 			], 7, 2, 1.4)
+		&"heartbeat":
+			# Dos golpes sordos seguidos (lub-dub), graves y sin brillo
+			return _render(0.42, [
+				_s(0.0, 0.14, 70.0, 38.0, 1.0, 1.6),
+				_n(0.0, 0.06, 0.25, 2.5, 500.0, 150.0),
+				_s(0.17, 0.16, 58.0, 32.0, 0.8, 1.6),
+				_n(0.17, 0.06, 0.2, 2.5, 450.0, 130.0),
+			], 8, 1, 1.2)
 		&"player_death":
 			return _render(0.9, [
 				_l(0.0, 0.7, 200.0, 40.0, saw, 0.7, 1.2, 0.5, 0.1, 0.0, 1100.0, 250.0),

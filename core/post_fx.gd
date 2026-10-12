@@ -21,6 +21,7 @@ uniform float vignette = 0.0;
 uniform float grain = 0.0;
 uniform float bloom = 0.0;
 uniform float seed = 0.0;
+uniform float danger = 0.0;
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
@@ -39,6 +40,11 @@ void fragment() {
 	if (vignette > 0.0) {
 		vec2 d = (uv - 0.5) * vec2(1.0, 0.82);
 		col *= 1.0 - vignette * smoothstep(0.28, 0.78, length(d) * 1.35);
+	}
+	if (danger > 0.0) {
+		vec2 dd = (uv - 0.5) * vec2(1.0, 0.82);
+		float edge = smoothstep(0.18, 0.75, length(dd) * 1.35);
+		col = mix(col, vec3(0.8, 0.03, 0.03), clamp(danger * edge * 0.85, 0.0, 0.85));
 	}
 	if (grain > 0.0) {
 		float n = fract(sin(dot(uv * vec2(1280.0, 720.0) + seed, vec2(12.9898, 78.233))) * 43758.5453);
@@ -85,6 +91,8 @@ var _world_rect: ColorRect = null
 var _world_mat: ShaderMaterial = null
 var _cb_layer: CanvasLayer = null
 var _cb_mat: ShaderMaterial = null
+## Borde rojo de vida baja (0..1), lo fija `low_health_feedback.gd`. Independiente de las opciones de viñeta.
+var _danger: float = 0.0
 
 
 func _ready() -> void:
@@ -129,11 +137,24 @@ func refresh() -> void:
 	_world_mat.set_shader_parameter("vignette", vignette)
 	_world_mat.set_shader_parameter("grain", grain)
 	_world_mat.set_shader_parameter("bloom", bloom)
-	_world_layer.visible = vignette > 0.0 or grain > 0.0 or bloom > 0.0
+	_world_mat.set_shader_parameter("danger", _danger)
+	_world_layer.visible = vignette > 0.0 or grain > 0.0 or bloom > 0.0 or _danger > 0.0
 	var mode: int = int(_settings.call("get_int", "colorblind"))
 	_cb_mat.set_shader_parameter("mode", mode)
 	_cb_mat.set_shader_parameter("strength", clampf(float(_settings.call("get_float", "colorblind_strength")), 0.0, 1.0))
 	_cb_layer.visible = mode > 0
+
+
+## Intensidad del borde rojo de vida baja. Prende la capa del mundo aunque las demás opciones estén apagadas.
+func set_danger(amount: float) -> void:
+	var clamped: float = clampf(amount, 0.0, 1.0)
+	if is_equal_approx(clamped, _danger) or _world_mat == null:
+		return
+	var was_on: bool = _danger > 0.0
+	_danger = clamped
+	_world_mat.set_shader_parameter("danger", _danger)
+	if was_on != (_danger > 0.0):
+		refresh()
 
 
 func _process(_delta: float) -> void:

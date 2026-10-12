@@ -31,6 +31,8 @@ const ConsumableManagerScript = preload("res://core/consumables/consumable_manag
 var consumable_manager: ConsumableManagerScript = null
 ## Aura visual de subida de nivel (estilo MU Online / WoW)
 const LevelUpAuraScript = preload("res://entities/player/level_up_aura.gd")
+const LowHealthFeedbackScript = preload("res://entities/player/low_health_feedback.gd")
+const DamageNumberScene = preload("res://combat/damage_number.tscn")
 var _level_up_aura: Node2D = null
 ## Disposición de la barra de acceso rápido ({"w": índice en el arsenal} | {"c": consumable_id} | null por casillero).
 ## La mantiene ui/hotbar.gd y la guarda SaveManager.
@@ -114,6 +116,10 @@ func _ready() -> void:
 	consumable_manager = ConsumableManagerScript.new()
 	consumable_manager.name = "ConsumableManager"
 	add_child(consumable_manager)
+
+	var low_health: Node = LowHealthFeedbackScript.new()
+	low_health.name = "LowHealthFeedback"
+	add_child(low_health)
 
 	reset_jumps()
 
@@ -301,6 +307,7 @@ func take_damage(amount: float) -> void:
 		health_component.damage_taken.emit(final_amount, false, "PHYSICAL")
 		health_component.health_changed.emit(health_component.current_health, health_component.max_health)
 	_play_hit_flash()
+	_spawn_taken_damage_number(final_amount)
 
 	var is_dead: bool = false
 	if stats_manager != null and stats_manager.current_health <= 0.0:
@@ -310,6 +317,21 @@ func take_damage(amount: float) -> void:
 
 	if is_dead:
 		_handle_player_death()
+
+
+## Daño recibido como texto rojo grande y tembloroso sobre el jugador (ver DamageNumber, tipo "PLAYER_HIT").
+func _spawn_taken_damage_number(amount: float) -> void:
+	if roundi(amount) <= 0 or not is_inside_tree():
+		return
+	var host: Node = get_tree().current_scene
+	if host == null:
+		host = get_parent()
+	if host == null:
+		return
+	var number: DamageNumber = DamageNumberScene.instantiate() as DamageNumber
+	number.global_position = global_position + Vector2(randf_range(-10.0, 10.0), -78.0)
+	host.add_child(number)
+	number.setup(amount, false, "PLAYER_HIT")
 
 
 func _handle_player_death() -> void:
