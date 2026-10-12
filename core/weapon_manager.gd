@@ -617,7 +617,8 @@ func _melee_strike(visual_done: bool) -> void:
 		player,
 		payload_effects,
 		1,
-		3.0
+		3.0,
+		current_weapon.get_armor_penetration()
 	)
 	
 	var melee_scene: PackedScene = preload("res://combat/melee_hitbox.tscn")
@@ -870,8 +871,7 @@ func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 
 	# La boca del cañón queda en la punta del arma dibujada
 	if current_weapon.weapon_type == WeaponData.WeaponType.RANGED and muzzle != null:
-		var muzzle_y: float = OFFHAND_SPRITE_OFFSET.y if hand == Hand.OFF else 0.0
-		muzzle.position = Vector2(_sprite_rest_position.x + (tip_x - grip.x) * scale_factor, muzzle_y)
+		muzzle.position = Vector2(_sprite_rest_position.x + (tip_x - grip.x) * scale_factor, _sprite_rest_position.y)
 	return true
 
 

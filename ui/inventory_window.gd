@@ -342,10 +342,12 @@ func _on_item_dropped_on_slot(source_data: Dictionary, target_slot: ItemSlot) ->
 	if src_slot == target_slot or src_res == null:
 		return
 	
-	# 0. Barra rápida -> Mochila: el arma sale del arsenal y vuelve a la mochila
-	if src_context == "hotbar" and target_slot.context_tag == "backpack":
+	# 0. Barra rápida / Mano 2 -> Mochila: el arma sale del arsenal y vuelve a la mochila
+	if (src_context == "hotbar" or src_context == "offhand") and target_slot.context_tag == "backpack":
 		var weapons_manager: WeaponManager = player.weapon_manager
 		if src_res is WeaponData and target_slot.get_item() == null and weapons_manager != null:
+			if weapons_manager.offhand_weapon == src_res:
+				weapons_manager.set_offhand_weapon(null)
 			var arsenal_index: int = weapons_manager.weapons.find(src_res as WeaponData)
 			if arsenal_index >= 0:
 				var holding: WeaponData = weapons_manager.current_weapon

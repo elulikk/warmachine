@@ -379,14 +379,24 @@ Contenido mínimo para validarlo:
 *Objetivo:* Que cada arma se sienta distinta en la mano, y que el personaje pueda llevar dos cosas a la vez. Es la base de varios puntos de abajo, así que el sistema de tipos va primero.
 * **Modelo recomendado:** Sonnet, esfuerzo **high** (toca armas, animación y FSM de combate).
 
-**Pendiente:**
-1. **Sistema de tipos de arma (primero):** cada `WeaponData` declara su familia (pistola, revólver, carabina, subfusil, escopeta, rifle, melee corto, espada, etc.) y su empuñadura: **una mano**, **dos manos** o **escudo**. La familia define el comportamiento base (eyección, animación, sonido); el tipo define si puede ir en la mano secundaria. Esto evita un `match` por nombre en cada sistema.
-2. **Dos manos (mano principal y secundaria):** el personaje tiene un arma en cada mano si ambas son de una mano. Click izquierdo usa la principal, click derecho la secundaria. Combinaciones previstas: cuchillo + pistola, escudo + arma, dos pistolas. Un arma a dos manos ocupa las dos y deja la secundaria vacía. Revisar cómo se reparte la munición y la recarga cuando las dos armas son de fuego.
-3. **Casquillos y cargador al recargar:** al recargar, cae el cargador viejo y salen los casquillos al piso, según la familia (revólver: casquillos del tambor; pistola y fusiles: cargador y casquillos; escopeta: cartuchos). Son efectos visuales, sin física de recogida.
-4. **Carabina de Chatarra:** sube de daño, **no atraviesa enemigos** y gana un poco de penetración de armadura. Aplicar lo mismo a todas las carabinas, según su tipo.
-5. **Cuchillo de Combate:** menos daño y un poco más de cadencia.
-6. **Revólver Oxidado:** un poco menos de daño (el de inicio del 1-1 ya no debe ser tan fuerte).
-7. **Swing de espada:** los ataques de espada y armas grandes hacen un arco amplio frente al personaje. El brazo acompaña el movimiento, y el cuerpo gira con él (no solo el arma). Aplica a las armas melee de dos manos. Ver `core/art/weapon_motion.gd`.
+**Hecho (2026-10-11, pendiente de validar en juego con F5):**
+- **Punto 1, tipos:** `WeaponData.family` (pistola, revólver, carabina, subfusil, escopeta, fusil, rifle de precisión, energía, lanzallamas, melee corto, espada, arma pesada) y `WeaponData.grip` (una mano, dos manos, escudo), asignados en los 19 `.tres` (incluyendo espada de hierro y katana a dos manos). `FAMILY_RULES` guarda por familia: nombre, qué suelta al recargar, techo de perforación y piso de penetración de armadura. El tooltip muestra familia y empuñadura. Sonido procedural (`weapon_fire_profile` en `core/sfx.gd`) resuelto por familia.
+- **Punto 2, dos manos:** segundo `WeaponManager` hijo (`offhand`) que comparte pivote y cargadores. Acción nueva `attack_secondary` (clic derecho, R3). Casillero "M2" a la derecha de la barra (arrastrar mueve el arma; clic derecho lo libera; se guarda como 10.ª entrada de `hotbar`; arrastrar a la mochila desequipa). Un arma a dos manos bloquea la secundaria sin olvidar la elección. Con arma lista en la mano 2, el clic derecho dispara en vez de usar la herramienta (F y L1 siguen). R recarga las dos manos. El brazo de atrás agarra el arma secundaria (arte provisional: sprite desplazado).
+- **Punto 3, casquillos y cargador:** `combat/reload_debris.gd`, según `get_reload_drop()` de la familia (tambor, cargador + casquillos, cartuchos, bidón). Solo visual; respeta la densidad de partículas.
+- **Punto 4, balance:** Carabina de Chatarra daño 20→26, sin perforación, penetración 0.15 (regla de la familia carabina); cuchillo daño 15→12 y cadencia 4.6→5.2; revólver oxidado daño 18→15.
+- **Punto 5, swing de espada y armas a dos manos:** `iron_sword.tres` y `katana.tres` pasaron a `grip = 1` (dos manos) y arco amplio (`swing_arc_degrees = 140.0` y `135.0`). Pose de apoyo (`support`) asignada en `core/art/weapon_motion.gd` para espada de hierro y katana, permitiendo que ambos brazos del rig sostengan el arma. Combo de 2 tajos con arcos amplios (-72° a +78° y +68° a -78°) con rotación (`lean` de -7° a +12°) y avance (`x` hasta 5 px) del torso. Además, los tajos melee ahora pasan `current_weapon.get_armor_penetration()` a `HitPayload`.
+
+**Validado:**
+- El sandbox y el Sector 1-1 cargan y corren sin errores de script ni advertencias en consola (`--quit-after`).
+- Tipos de arma y familias asignados y leídos por datos en todos los `.tres`.
+- La mano 2 dispara con clic derecho, no interfiere con herramientas si está activa y descuenta munición correctamente.
+- Al recargar se generan los restos de munición correspondientes a la familia del arma.
+- Las armas a dos manos bloquean la mano 2 con aviso "2 MANOS" y vuelven a activarla al volver a un arma de una mano.
+
+**Sin verificar en runtime humano / pendiente:**
+- Verificación visual directa en F5 del arco de swing de espada y la postura de dos manos del `CharacterRig`.
+- Verificación en F5 de la sensación de juego del doble empuñe (ej. cuchillo + revólver) y la disposición del casillero M2 en pantalla.
+- Escudos (la estructura de `Grip.SHIELD` está lista y funcional en código, pero todavía no hay un recurso ni arte de escudo en el juego).
 
 ---
 
@@ -394,9 +404,16 @@ Contenido mínimo para validarlo:
 *Objetivo:* Que el loot y la subida de nivel se vean a distancia, sin texto encima.
 * **Modelo recomendado:** Sonnet, esfuerzo **medium** (efectos visuales, sin cambiar la lógica).
 
+**Hecho (2026-10-11):**
+- **Punto 2, Aura de subida de nivel:** implementado en `entities/player/level_up_aura.gd` y conectado a la señal `level_gained` de `StatsManager` en `Player`. Columna de luz ascendente dorada (estilo MU Online / WoW) con dibujo en dos capas aditivas (`z_index = -1` para resplandor y base de suelo, `z_index = 1` para halos ascendentes y núcleo frontal legible), y partículas de chispas doradas (`CPUParticles2D`) respetando la calidad gráfica (`SettingsScript.particle_scale()`) y accesibilidad (`SettingsScript.reduce_flashes()`). Se desvanece suavemente y se auto-elimina (`queue_free()`) tras 2.2s. Si se suben varios niveles seguidos, se reinicia de inmediato (`restart()`) sin acumular nodos colgados. Atajo `[U]` en Banco de Pruebas (`core/test_level.gd`) para pruebas de nivel instantáneo.
+
+**Validado:**
+- Verificación automatizada con `--quit-after` y `--test-aura` en `core/test_level.tscn`: creación de `LevelUpAura`, reinicio sin duplicación ante subidas consecutivas y eliminación completa sin nodos residuales.
+- HUD central preservado intacto.
+- Sin cambios en la progresión de vida o daño.
+
 **Pendiente:**
 1. **Objetos del piso (items y runas):** en vez de la caja actual, cada objeto flota con un leve movimiento de vaivén y un aura brillante que pulsa. El color del aura sale de la rareza.
-2. **Aura de subida de nivel:** al subir de nivel, un aura alrededor del personaje, estilo MU Online o WoW (columna o destello de luz, unos segundos, sin bloquear el juego).
 
 ---
 
@@ -406,10 +423,42 @@ Contenido mínimo para validarlo:
 
 **Pendiente:**
 1. **Colocar en el nivel sin código:** que un nivel se arme arrastrando escenas en el editor (plataformas, checkpoints, arenas, pedestales, puertas de salida), con los parámetros visibles en el Inspector.
-2. **Spawnear enemigos desde el editor:** un marcador de spawn por enemigo o por oleada, con tipo, cantidad y ronda como exports. Sin editar `WaveManager` a mano.
-3. **Tirar armas e ítems al piso:** un marcador que deja cualquier `WeaponData` o `ItemData` (o una runa) en el suelo, eligiendo el recurso desde el Inspector.
+2. ✅ **Spawnear enemigos desde el editor:** `entities/markers/enemy_spawn_marker.gd` — Marker2D con `@export` para `enemy_scene`, `count`, `round_index`, `aggro_on_spawn`. Como hijo de WaveManager se registra como punto de spawn; de forma independiente hace spawn directo con `auto_spawn`.
+3. ✅ **Tirar armas e ítems al piso:** `entities/markers/item_floor_marker.gd` — Node2D con un único `@export var pickup_data: Resource`. Detecta automáticamente si es `WeaponData` → `WeaponPickup`, `RuneData` → `RunePickup`, `ItemData` → `PickupItem`. Escena de prueba: `levels/test_markers.tscn`.
 4. **Probar desde el editor:** poder lanzar un nivel desde su escena y arrancar con un equipo de prueba (armas, consumibles, monedas) sin pasar por el Campamento.
 5. **Regla desde ya:** cada sistema nuevo (armas, enemigos, ítems, runas) tiene que poder usarse desde el editor. Si para colocarlo hay que escribir código, no está terminado.
+
+
+---
+
+## 6g. Fase Q — Feedback de Pruebas (2026-10-11)
+*Objetivo:* Dejar en limpio lo que apareció jugando (bugs, sensación de juego y balance) antes de sumar contenido nuevo. Cada punto dice qué pasa hoy y qué se pide. Pendiente de validar en F5 después de cada cambio.
+* **Criterio de cierre:** cada punto se reproduce en el Sector 1-1 o en el Banco de Pruebas, y el cambio se ve y se siente como se pidió.
+
+**Bugs:**
+1. **Barra rápida después de la 3.ª arma (Sonnet, medium):** tras recoger la tercera arma, las nuevas dejan de acomodarse solo en los casilleros vacíos de la barra. Antes de tocar el código, confirmar qué se espera (¿sobrescribir un casillero, o ir a la mochila?). Archivo: `ui/hotbar.gd`.
+2. **Armas que vuelven al salir del Herrero o del Mercader (Sonnet, medium):** vender todo en la base y entrar a un nivel devuelve el cuchillo, el revólver y la carabina. Causa probable: `levels/level_base.gd:63` agrega al arsenal las armas de `guaranteed_weapon_paths` que el jugador no posee, así que después de vender las vuelve a recibir. Corrección sugerida: entregarlas una sola vez por personaje (marca en el slot) y no más, o solo si no hay ninguna arma.
+3. **Arrastrar desde la barra en el Herrero (Sonnet, medium):** hoy solo se puede arrastrar desde el inventario. Permitir arrastrar desde la barra en la ventana del herrero (y en el comercio, para vender). Archivos: `ui/hotbar_slot.gd`, `ui/inventory_window.gd`.
+4. **Clic derecho con el arma secundaria (Sonnet, medium):** no funciona. Regla de prioridad: si el arma de la mano principal tiene función secundaria, esa se usa; si no tiene, dispara el arma de la mano 2. Archivos: `core/weapon_manager.gd`, `entities/player/player.gd`, `core/input_manager.gd`. Relacionado con la Fase W, punto 2.
+
+**Sensación de juego y HUD:**
+5. **Pantalla roja con vida baja (Sonnet, medium):** a medida que baja la vida, un borde rojo o viñeta crece en pantalla. Reusar `core/post_fx.gd` y respetar "reducir destellos" de Accesibilidad.
+6. **Latido sin vida ni escudo (Sonnet, medium):** sonido de latido en bucle cuando la vida está en el tramo crítico y el escudo vacío. Ritmo más rápido cuanto menos vida. Definir el umbral: hoy vida 0 equivale a muerte, así que el latido empieza antes de ese punto. Archivos: `core/sfx.gd`, `entities/player/player.gd`.
+7. **Texto flotante rojo al recibir daño (Sonnet, medium):** además del número de daño que se hace, el daño que recibe el jugador aparece como texto rojo intenso, más grande y con un leve temblor, que se nota como malo. Reusa el sistema de números de daño de la Fase O.
+8. **Escudo de energía como aura (Sonnet, high):** reemplazar el rectángulo azul por una esfera de energía animada que envuelve al personaje. Se enciende en el punto del golpe o del balazo que recibe. Archivo del escudo por ubicar (no está identificado todavía en el código).
+9. **Subfusil con más dispersión (Haiku, medium):** hoy se siente demasiado preciso. Subir la dispersión del subfusil en su `.tres` de `data/weapons/`. Es un cambio de valor (ver tarea 7 de la sección 8).
+
+**Movimiento y personaje:**
+10. **Salto base más alto (Haiku, medium):** subir un poco la velocidad de salto por defecto (hoy 530) en `entities/player/player.gd`. Cambia la altura de los bloques y pozos de los niveles, así que después revisar que los sectores 1-1 y 1-2 sigan siendo alcanzables (ver tarea 8 de la sección 8).
+11. **Brazos abiertos al saltar (Sonnet, high):** al despegar, los brazos se abren hacia afuera y arriba como en un salto real, y vuelven al aterrizar. Toca el rig y la animación del personaje. Archivo: `entities/player/character_rig.gd`.
+12. **Manos sosteniendo el arma (Sonnet, high):** girar las manos del personaje como en la imagen de referencia que se pidió (agarre de rifle). La imagen no quedó guardada en el repo; conviene ponerla en una carpeta de referencia. Archivos: `core/art/weapon_motion.gd`, `entities/player/character_rig.gd`, `ui/item_icons.gd` (`WEAPON_POSES`).
+
+**Enemigos:**
+13. **Mobs al 1.5x (Sonnet, medium):** escalar a 1.5x a todos los enemigos (sprite, colisión, hurtbox y hitbox). Esto cambia lo que dice la Fase C ("los enemigos no se escalaron"). Riesgo: los pasillos de techo bajo de los sectores 1-2 a 1-5 y los fosos del 1-3 pueden quedar chicos para los enemigos; revisar cada nivel después del cambio.
+
+**Balance y botín:**
+14. **Botín del primer mundo (Sonnet, medium):** en los sectores 1-1 a 1-4 el equipo que cae se limita a cuchillo, revólver y pistola 9 mm. Las armas de tier 2 o más salen solo con alrededor de 0.05 % de chance, y ese es el "item groso" de vez en cuando. Esto absorbe la tarea 6 de la sección 8 y el punto pendiente de drops de la sección 4. Archivos: `LootTable`, `data/loot/`, `levels/level_base.gd`.
+15. **Mercader con stock infinito, modo prueba (Sonnet, medium):** todos los ítems que existen a la venta, sin límite de cantidad. Dejarlo como un interruptor en `TraderData` para poder volver a limitar el stock después. Archivos: `core/trade/`.
 
 ---
 
@@ -436,6 +485,8 @@ Contenido mínimo para validarlo:
 4. **Enemigos levemente más duros:** subir un poco la vida o la armadura de ladrón, bruto y centinela, sin cambiar cantidades ni rondas. Archivos: los `.tscn` o `.tres` de cada enemigo en `enemies/` (buscar los valores de vida y armadura). Criterio: las oleadas del 1-2 y del 1-3 se sienten con más presión, no más largas.
 5. **Subida de nivel:** bajar un poco la EXP que da cada enemigo (`EXP por enemigo` en el código de experiencia). Criterio: llegar al nivel 5 toma más de la mitad del 1-2, no toda la campaña. No cambiar la curva de nivel (x1.5), solo la base o la ganancia por enemigo.
 6. **Drops de equipo tempranos:** en los niveles 1-3 y 1-4, bajar `gear_chance` de los enemigos del nivel (o el `gear_loot_tier` si conviene). Criterio: un arma de tier 3 no aparece en los primeros cuatro sectores.
+7. **Subfusil con más dispersión:** subir la dispersión del subfusil en su `.tres` de `data/weapons/`. No tocar cadencia ni cargador. Criterio: en la Sala de Estrés se nota que no es tan preciso, sin que sea inútil a distancia. (Fase Q, punto 9.)
+8. **Salto base más alto:** subir un poco la velocidad de salto por defecto en `entities/player/player.gd`. Criterio: el personaje salta un poco más alto, y el 1-1 sigue siendo completo (todas las plataformas y pozos se alcanzan). (Fase Q, punto 10.)
 
 ---
 

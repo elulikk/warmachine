@@ -19,6 +19,8 @@ var index: int = 0
 var slot_index: int = 0
 var slot_type: String = "ANY"
 var context_tag: String = "hotbar"
+## Texto de la esquina del casillero; vacío = el número de casillero (index + 1).
+var key_text: String = ""
 ## Recurso guardado: WeaponData (del arsenal) o ConsumableData (del catálogo)
 var item: Resource = null
 ## Filtro que decide si un ítem entra al casillero: func(res, payload, slot) -> bool
@@ -45,7 +47,7 @@ func _ready() -> void:
 	add_child(box)
 
 	var key_label: Label = _make_text_label(9, Color(0.7, 0.78, 0.9, 1.0))
-	key_label.text = str(index + 1)
+	key_label.text = key_text if not key_text.is_empty() else str(index + 1)
 	box.add_child(key_label)
 
 	_icon = TextureRect.new()

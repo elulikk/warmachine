@@ -109,7 +109,9 @@ var _motion_body: Array = []
 var _motion_len: float = 0.0
 var _motion_t: float = 999.0
 var _fire_connected: bool = false
+var _off_fire_connected: bool = false
 var _aim_angle: float = 0.0
+var _aim_angle_off: float = 0.0
 var _reach_back: float = 0.0
 var _arm_len_up: Array[float] = [0.0, 0.0]
 var _arm_len_low: Array[float] = [0.0, 0.0]
@@ -589,17 +591,25 @@ func play_attack() -> void:
 	_swipe_t = 0.0
 
 
-## Engancha el disparo del arma para que el cuerpo reaccione al retroceso (solo el jugador).
+## Engancha el disparo del arma (de las dos manos) para que el cuerpo reaccione al retroceso (solo el jugador).
 func _connect_fire_signal() -> void:
-	if _fire_connected or preview_mode or _player == null or _player.weapon_manager == null:
+	if preview_mode or _player == null or _player.weapon_manager == null:
 		return
-	_fire_connected = true
-	_player.weapon_manager.weapon_fired.connect(_on_weapon_fired)
+	var main: WeaponManager = _player.weapon_manager
+	if not _fire_connected:
+		_fire_connected = true
+		main.weapon_fired.connect(_on_weapon_fired.bind(main))
+	if not _off_fire_connected and main.offhand != null:
+		_off_fire_connected = true
+		main.offhand.weapon_fired.connect(_on_weapon_fired.bind(main.offhand))
 
 
-func _on_weapon_fired(_weapon: WeaponData) -> void:
+## `source` es el administrador de la mano que atacó: de ahí sale la animación del cuerpo (`last_motion`).
+func _on_weapon_fired(_weapon: WeaponData, source: WeaponManager = null) -> void:
 	var motion: Dictionary = {}
-	if _player != null and _player.weapon_manager != null:
+	if source != null:
+		motion = source.last_motion
+	elif _player != null and _player.weapon_manager != null:
 		motion = _player.weapon_manager.last_motion
 	_motion_body = motion.get("body", []) as Array
 	_motion_len = float(motion.get("length", 0.0))
@@ -680,13 +690,34 @@ func _animate_arms() -> void:
 		else:
 			_arm_back.z_index = 0 if preview_mode else (1 if two_handed else -2)
 
+	# Mano secundaria: el brazo de atrás agarra el arma secundaria (con un arma a dos manos no hay secundaria)
+	var off_holding: bool = false
+	var off_angle: float = 0.0
+	if not preview_mode and not two_handed and _player != null and _player.weapon_pivot != null and _player.weapon_manager != null:
+		var off: WeaponManager = _player.weapon_manager.offhand
+		var off_sprite: Sprite2D = _player.weapon_pivot.get_node_or_null("OffhandSprite") as Sprite2D
+		if off != null and off.current_weapon != null and off_sprite != null and off_sprite.visible and off_sprite.texture != null:
+			var off_pose: Dictionary = ItemIconsScript.get_weapon_pose(off.current_weapon)
+			if off_pose.has("hand"):
+				off_holding = true
+				var off_grip: Vector2 = off_pose.get("grip", Vector2.ZERO) as Vector2
+				var off_hand_tex: Vector2 = off_pose.get("hand", off_grip) as Vector2
+				hand_back = _body.to_local(off_sprite.to_global(off_hand_tex - off_grip))
+				off_angle = _body.global_transform.affine_inverse().basis_xform(off_sprite.global_transform.x).angle()
+				if not _articulated:
+					_arm_back.z_index = 1
+
 	if _articulated:
 		var blend: float = minf(1.0, get_process_delta_time() * 14.0)
 		_aim_angle = lerp_angle(_aim_angle, aim_angle, blend)
+		_aim_angle_off = lerp_angle(_aim_angle_off, off_angle, blend)
 		var hand_angle: float = _aim_angle if holding else 0.0
 		_aim_chain(1, _arm_front, _shoulder_front, hand_front, hand_angle, holding)
-		_aim_chain(0, _arm_back, _shoulder_back, hand_back, hand_angle, two_handed)
-		_hand_sprite[0].z_index = 3 if (holding and two_handed and not preview_mode) else 0
+		if off_holding:
+			_aim_chain(0, _arm_back, _shoulder_back, hand_back, _aim_angle_off, true)
+		else:
+			_aim_chain(0, _arm_back, _shoulder_back, hand_back, hand_angle, two_handed)
+		_hand_sprite[0].z_index = 3 if ((holding and two_handed) or off_holding) and not preview_mode else 0
 		# La cabeza acompaña la puntería, sin llegar a girar entera
 		var look: float = clampf(_aim_angle, deg_to_rad(-70.0), deg_to_rad(70.0)) * 0.35 if holding else 0.0
 		_neck_bone.rotation = lerp_angle(_neck_bone.rotation, look, blend)

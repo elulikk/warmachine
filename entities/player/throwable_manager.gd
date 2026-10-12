@@ -51,8 +51,21 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("throw_tactical") or event.is_action_pressed("use_tool"):
+	if event.is_action_pressed("throw_tactical"):
 		try_throw()
+	elif event.is_action_pressed("use_tool"):
+		# El clic derecho es de la mano secundaria mientras tenga un arma lista (la herramienta sigue en F y L1)
+		if event.is_action("attack_secondary") and _offhand_ready():
+			return
+		try_throw()
+
+
+## true si el jugador tiene un arma lista en la mano secundaria (no bloqueada por un arma a dos manos).
+func _offhand_ready() -> bool:
+	if player == null or player.weapon_manager == null:
+		return false
+	var off: WeaponManager = player.weapon_manager.offhand
+	return off != null and off.current_weapon != null
 
 
 func _on_item_equipped(slot: String, item: ItemData) -> void:

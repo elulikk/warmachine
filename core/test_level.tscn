@@ -742,7 +742,7 @@ text = "• Armas: Teclas [1]-[9] para elegir casillero  |  Barra de acceso ráp
 layout_mode = 2
 theme_override_font_sizes/font_size = 13
 text = "• Debug: [F1] Munición Infinita  |  [F2] Alternar Placas  |  [F3] Respawn en Hub
-• Sandbox: [N] Runner  |  [B] Brute  |  [M] Centinela  |  [K] Limpiar arena  |  [L] Curar"
+• Sandbox: [N] Runner  |  [B] Brute  |  [M] Centinela  |  [K] Limpiar arena  |  [L] Curar  |  [U] Subir nivel"
 
 [node name="HSeparator2" type="HSeparator" parent="HelpOverlay/CenterContainer/PanelContainer/VBox" unique_id=1964636666]
 layout_mode = 2

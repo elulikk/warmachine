@@ -59,6 +59,7 @@ const REMAPPABLE: Dictionary = {
 	"move_down": "Abajo",
 	"jump": "Saltar",
 	"attack": "Atacar / disparar",
+	"attack_secondary": "Mano secundaria",
 	"reload": "Recargar",
 	"use_tool": "Herramienta",
 	"throw_tactical": "Arrojadizo táctico",

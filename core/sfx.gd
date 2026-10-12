@@ -149,8 +149,25 @@ static func play_weapon_swing(ctx: Node, weapon: WeaponData) -> void:
 	play(ctx, profile, Vector2.INF, -4.0, randf_range(0.94, 1.06))
 
 
-## Elige la receta de disparo a partir de los datos del arma (no depende del nombre).
+## Elige la receta de disparo a partir de la familia y datos del arma (no depende del nombre).
 static func weapon_fire_profile(weapon: WeaponData) -> StringName:
+	match weapon.family:
+		WeaponData.WeaponFamily.SHOTGUN:
+			return &"shot_shotgun"
+		WeaponData.WeaponFamily.FLAMETHROWER:
+			return &"shot_flame"
+		WeaponData.WeaponFamily.SNIPER, WeaponData.WeaponFamily.RIFLE:
+			return &"shot_rifle"
+		WeaponData.WeaponFamily.CARBINE:
+			return &"shot_rifle" if weapon.damage >= 24.0 else &"shot_auto"
+		WeaponData.WeaponFamily.SMG:
+			return &"shot_auto"
+		WeaponData.WeaponFamily.ENERGY:
+			if weapon.innate_status_effects.has("ICE"):
+				return &"shot_ice"
+			return &"shot_magic"
+		WeaponData.WeaponFamily.REVOLVER, WeaponData.WeaponFamily.PISTOL:
+			return &"shot_pistol"
 	if weapon.pellets_per_shot >= 3:
 		return &"shot_shotgun"
 	if weapon.is_automatic and weapon.fire_rate >= 14.0:

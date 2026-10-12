@@ -49,6 +49,13 @@ static func setup_inputs() -> void:
 		_create_joy_motion_event(JOY_AXIS_TRIGGER_RIGHT, 1.0) # R2 / RT
 	])
 
+	# Mano secundaria: clic derecho (o R3 en el mando). Con un arma en la mano secundaria el clic derecho dispara
+	# esa arma en vez de usar la herramienta (ver ThrowableManager). La herramienta sigue en F y L1.
+	_configure_action("attack_secondary", 0.2, [
+		_create_mouse_button_event(MOUSE_BUTTON_RIGHT),
+		_create_joy_button_event(JOY_BUTTON_RIGHT_STICK) # R3
+	])
+
 	_configure_action("reload", 0.2, [
 		_create_key_event(KEY_R),
 		_create_joy_button_event(JOY_BUTTON_X) # X (Xbox) / Cuadrado (PS)

@@ -5,6 +5,9 @@ extends Control
 ## - Arrastrar entre casilleros mueve o intercambia; clic derecho quita el ítem.
 ## - Teclas 1-9 eligen casillero; rueda y L1/R1 recorren los ocupados; Q vuelve al anterior.
 ## - El casillero en mano manda: un arma lo deja disparar; un consumible hace que el clic izquierdo lo use.
+## - A la derecha hay un casillero extra, "Mano 2": el arma que va en la mano secundaria (clic derecho).
+##   Acepta armas de una mano o escudos del arsenal; arrastrar mueve el arma (no queda también en la barra).
+##   Con un arma a dos manos en la mano principal queda bloqueado y la elección se conserva.
 ## La disposición vive en Player.hotbar_layout y la guarda SaveManager.
 ## Sin class_name a propósito: lo instancia ui/hud.gd por preload.
 
@@ -16,6 +19,8 @@ const HotbarSlotScript = preload("res://ui/hotbar_slot.gd")
 const SLOT_COUNT: int = 9
 const SLOT_SIZE: Vector2 = Vector2(56.0, 60.0)
 const SEPARATION: int = 6
+## Hueco entre los 9 casilleros y el de la mano secundaria.
+const OFFHAND_GAP: float = 14.0
 const MESSAGE_SECONDS: float = 1.6
 
 const COLOR_BORDER: Color = Color(0.3, 0.4, 0.55, 0.8)
@@ -25,6 +30,8 @@ const COLOR_SELECTED: Color = Color(1.0, 0.82, 0.3, 1.0)
 var _player: Player = null
 var _bound: bool = false
 var _slots: Array = []
+## Casillero de la mano secundaria (no forma parte de `_slots`: no se elige con 1-9 ni con la rueda).
+var _offhand_slot: PanelContainer = null
 var _selected: int = 0
 var _previous: int = 0
 ## Último arma que emitió WeaponManager: distingue un cambio real de un refresco (recarga, poción sin recarga)
@@ -44,7 +51,7 @@ func _ready() -> void:
 	anchor_right = 0.5
 	anchor_top = 1.0
 	anchor_bottom = 1.0
-	var total_width: float = SLOT_COUNT * SLOT_SIZE.x + (SLOT_COUNT - 1) * SEPARATION
+	var total_width: float = (SLOT_COUNT + 1) * SLOT_SIZE.x + (SLOT_COUNT - 1) * SEPARATION + OFFHAND_GAP + SEPARATION
 	offset_left = -total_width * 0.5
 	offset_right = total_width * 0.5
 	offset_top = -(SLOT_SIZE.y + 64.0)
@@ -75,6 +82,21 @@ func _ready() -> void:
 		slot.right_clicked.connect(_on_slot_right_clicked)
 		row.add_child(slot)
 		_slots.append(slot)
+
+	var gap: Control = Control.new()
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	gap.custom_minimum_size = Vector2(OFFHAND_GAP - SEPARATION, 0.0)
+	row.add_child(gap)
+	var off_slot: PanelContainer = HotbarSlotScript.new() as PanelContainer
+	off_slot.set("index", SLOT_COUNT)
+	off_slot.set("key_text", "M2")
+	off_slot.set("context_tag", "offhand")
+	off_slot.custom_minimum_size = SLOT_SIZE
+	off_slot.set("accept_filter", _accepts_offhand)
+	off_slot.connect("dropped", _on_offhand_dropped)
+	off_slot.connect("right_clicked", _on_offhand_right_clicked)
+	row.add_child(off_slot)
+	_offhand_slot = off_slot
 
 	_refresh()
 
@@ -138,6 +160,7 @@ func _try_bind() -> void:
 	_player = player
 	_bound = true
 	player.weapon_manager.weapon_changed.connect(_on_weapon_changed)
+	player.weapon_manager.offhand_changed.connect(func(_w: WeaponData) -> void: _refresh())
 	player.consumable_manager.message_posted.connect(_show_message)
 	player.consumable_manager.counts_changed.connect(_place_loose_consumables)
 	_last_weapon = player.weapon_manager.current_weapon
@@ -177,6 +200,15 @@ func _apply_layout(raw: Array) -> void:
 				res = _catalog_item(str(d["c"]))
 		_slots[i].set_item(res)
 
+	# Entrada SLOT_COUNT: arma de la mano secundaria (los guardados anteriores no la traen: queda libre)
+	var off_weapon: WeaponData = null
+	var off_entry: Variant = raw[SLOT_COUNT] if raw.size() > SLOT_COUNT else null
+	if typeof(off_entry) == TYPE_DICTIONARY and (off_entry as Dictionary).has("w"):
+		var off_index: int = int((off_entry as Dictionary)["w"])
+		if off_index >= 0 and off_index < wm.weapons.size():
+			off_weapon = wm.weapons[off_index]
+	wm.set_offhand_weapon(off_weapon)
+
 
 func _serialize_layout() -> Array:
 	var wm: WeaponManager = _player.weapon_manager
@@ -190,6 +222,9 @@ func _serialize_layout() -> Array:
 			out.append({"c": (res as ConsumableDataScript).consumable_id})
 		else:
 			out.append(null)
+	# Última entrada: arma de la mano secundaria
+	var off_index: int = wm.weapons.find(wm.offhand_weapon) if wm.offhand_weapon != null else -1
+	out.append({"w": off_index} if off_index >= 0 else null)
 	return out
 
 
@@ -247,7 +282,8 @@ func _place_loose_weapons() -> void:
 	var wm: WeaponManager = _player.weapon_manager
 	_known_weapon_count = wm.weapons.size()
 	for weapon: WeaponData in wm.weapons:
-		if _slot_holding(weapon) >= 0:
+		# El arma de la mano secundaria ya tiene su casillero
+		if _slot_holding(weapon) >= 0 or weapon == wm.offhand_weapon:
 			continue
 		var target: int = -1
 		for i in range(mini(3, SLOT_COUNT)):
@@ -340,6 +376,16 @@ func _on_slot_dropped(payload: Dictionary, target) -> void:
 	var from_barra: bool = str(payload.get("context_tag", "")) == "hotbar"
 	var from_index: int = int(payload.get("slot_index", -1))
 	var came_from_backpack: bool = false
+	if str(payload.get("context_tag", "")) == "offhand":
+		# Desde la mano secundaria: el arma pasa al casillero y lo que había ahí (si es un arma de una mano) va a la mano 2
+		var displaced: Resource = target.get_item()
+		target.set_item(res)
+		var wm_off: WeaponManager = _player.weapon_manager
+		wm_off.set_offhand_weapon(null)
+		if displaced is WeaponData and wm_off.can_equip_offhand(displaced as WeaponData):
+			wm_off.set_offhand_weapon(displaced as WeaponData)
+		_refresh()
+		return
 	if str(payload.get("context_tag", "")) == "backpack" and res is WeaponData:
 		came_from_backpack = _take_weapon_from_backpack(res as WeaponData, from_index)
 		if not came_from_backpack:
@@ -373,6 +419,40 @@ func _take_weapon_from_backpack(weapon: WeaponData, backpack_index: int) -> bool
 
 func _on_slot_right_clicked(slot) -> void:
 	slot.set_item(null)
+	_refresh()
+
+
+## Mano secundaria: acepta armas del arsenal de una mano o escudos (no la que sostiene la mano principal).
+func _accepts_offhand(res: Resource, _payload: Dictionary, _slot: Control) -> bool:
+	if not _bound:
+		return false
+	var weapon: WeaponData = res as WeaponData
+	return weapon != null and _player.weapon_manager.can_equip_offhand(weapon)
+
+
+## Arrastrar al casillero de la mano 2: el arma se mueve ahí. Si ya había otra, vuelve al casillero de origen.
+func _on_offhand_dropped(payload: Dictionary, _target) -> void:
+	var weapon: WeaponData = payload.get("resource") as WeaponData
+	if weapon == null or str(payload.get("context_tag", "")) == "offhand":
+		return
+	var wm: WeaponManager = _player.weapon_manager
+	var previous: WeaponData = wm.offhand_weapon
+	if not wm.set_offhand_weapon(weapon):
+		return
+	var from_index: int = int(payload.get("slot_index", -1))
+	if str(payload.get("context_tag", "")) == "hotbar" and from_index >= 0 and from_index < SLOT_COUNT:
+		_slots[from_index].set_item(previous)
+	elif previous != null:
+		_place_loose_weapons()
+	_refresh()
+
+
+## Clic derecho en la mano 2: la deja libre (el arma vuelve a un casillero libre de la barra).
+func _on_offhand_right_clicked(_slot) -> void:
+	if not _bound:
+		return
+	_player.weapon_manager.set_offhand_weapon(null)
+	_place_loose_weapons()
 	_refresh()
 
 
@@ -421,7 +501,41 @@ func _refresh() -> void:
 			width = 2
 		slot.show_entry(name_text, count_text, accent, icon_tex, border, width)
 
+	_refresh_offhand_slot()
 	_name_label.text = _selected_description()
+
+
+## Pinta el casillero de la mano secundaria: arma elegida y, si no se puede usar ahora, por qué.
+func _refresh_offhand_slot() -> void:
+	if _offhand_slot == null:
+		return
+	var weapon: WeaponData = null
+	var state: WeaponManager.OffhandState = WeaponManager.OffhandState.EMPTY
+	if _bound:
+		weapon = _player.weapon_manager.offhand_weapon
+		state = _player.weapon_manager.get_offhand_state()
+	_offhand_slot.call("set_item", weapon)
+	var name_text: String = "Mano 2"
+	var count_text: String = ""
+	var icon_tex: Texture2D = null
+	var accent: Color = Color(0.5, 0.55, 0.65, 0.7)
+	var border: Color = COLOR_BORDER_EMPTY
+	if weapon != null:
+		name_text = _clip(weapon.weapon_name, 8)
+		count_text = _ammo_text(weapon)
+		icon_tex = ItemIconsScript.get_icon_for(weapon)
+		accent = Color.WHITE
+		border = COLOR_BORDER
+		match state:
+			WeaponManager.OffhandState.BLOCKED_TWO_HANDS:
+				count_text = "2 MANOS"
+				accent = Color(0.75, 0.6, 0.55, 1.0)
+				border = Color(0.75, 0.3, 0.25, 0.9)
+			WeaponManager.OffhandState.BLOCKED_SAME_WEAPON:
+				count_text = "EN USO"
+				accent = Color(0.75, 0.6, 0.55, 1.0)
+				border = Color(0.75, 0.3, 0.25, 0.9)
+	_offhand_slot.call("show_entry", name_text, count_text, accent, icon_tex, border, 1)
 
 
 ## El casillero en mano manda sobre el arma: con un arma se equipa esa arma;

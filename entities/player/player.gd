@@ -29,6 +29,9 @@ signal died
 ## Se carga por preload y no por class_name: run.bat no refresca el registro de clases globales.
 const ConsumableManagerScript = preload("res://core/consumables/consumable_manager.gd")
 var consumable_manager: ConsumableManagerScript = null
+## Aura visual de subida de nivel (estilo MU Online / WoW)
+const LevelUpAuraScript = preload("res://entities/player/level_up_aura.gd")
+var _level_up_aura: Node2D = null
 ## Disposición de la barra de acceso rápido ({"w": índice en el arsenal} | {"c": consumable_id} | null por casillero).
 ## La mantiene ui/hotbar.gd y la guarda SaveManager.
 var hotbar_layout: Array = []
@@ -102,6 +105,8 @@ func _ready() -> void:
 	if stats_manager != null:
 		if not stats_manager.stats_recalculated.is_connected(_sync_armor_to_health_component):
 			stats_manager.stats_recalculated.connect(_sync_armor_to_health_component)
+		if not stats_manager.level_gained.is_connected(_on_level_gained):
+			stats_manager.level_gained.connect(_on_level_gained)
 		_sync_armor_to_health_component()
 
 	_setup_jetpack_particles()
@@ -345,6 +350,29 @@ func _on_stats_health_changed(cur: float, max_hp: float) -> void:
 	if health_component != null:
 		health_component.max_health = max_hp
 		health_component.current_health = cur
+
+
+func _on_level_gained(_new_level: int) -> void:
+	play_level_up_aura()
+
+
+## Muestra un aura radiante alrededor del personaje (estilo MU Online / WoW) al subir de nivel.
+## Si ya hay un aura activa (subidas seguidas de nivel), la reinicia sin dejar nodos colgados.
+func play_level_up_aura() -> void:
+	if _level_up_aura != null and is_instance_valid(_level_up_aura) and not _level_up_aura.is_queued_for_deletion():
+		if _level_up_aura.has_method("restart"):
+			_level_up_aura.restart()
+			return
+		_level_up_aura.queue_free()
+
+	var aura: Node2D = LevelUpAuraScript.new() as Node2D
+	aura.name = "LevelUpAura"
+	_level_up_aura = aura
+	add_child(aura)
+	aura.tree_exited.connect(func() -> void:
+		if _level_up_aura == aura:
+			_level_up_aura = null
+	)
 
 
 ## Recibe un impacto transportado por un HitPayload.

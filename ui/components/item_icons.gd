@@ -36,6 +36,7 @@ const PALETTE: Dictionary = {
 }
 
 static var _cache: Dictionary = {}
+static var _pose_cache: Dictionary = {}
 
 const ICON_ROWS: Dictionary = {
 	"helmet": [
@@ -471,11 +472,16 @@ static func get_weapon_pose(weapon: WeaponData) -> Dictionary:
 	var art_id: String = _weapon_file_id(weapon)
 	var art_data: Dictionary = WeaponArt.WEAPONS.get(art_id, {}) as Dictionary
 	if not art_data.is_empty():
-		# El perfil de movimiento puede cambiar el agarre (p. ej. martillo a dos manos)
+		# Cuántas manos ocupa sale de los datos del arma (`grip`), no del arte; la pose se cachea por arma y empuñadura
+		var cache_key: String = "%s|%d" % [art_id, int(weapon.grip)]
+		if _pose_cache.has(cache_key):
+			return _pose_cache[cache_key] as Dictionary
+		# El perfil de movimiento puede cambiar el agarre (p. ej. la mano de apoyo del martillo)
 		var override: Dictionary = (WeaponMotion.PROFILES.get(art_id, {}) as Dictionary).get("pose", {}) as Dictionary
-		if not override.is_empty():
-			art_data = art_data.merged(override, true)
-		return art_data
+		var pose: Dictionary = art_data.merged(override, true) if not override.is_empty() else art_data.duplicate()
+		pose["two_hand"] = weapon.is_two_handed()
+		_pose_cache[cache_key] = pose
+		return pose
 	var kind: String = _weapon_kind(weapon)
 	return WEAPON_POSES.get(kind, {}) as Dictionary
 

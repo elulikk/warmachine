@@ -6,10 +6,10 @@
 script = ExtResource("1_script")
 weapon_name = "Espada de Hierro"
 family = 11
-grip = 0
+grip = 1
 weapon_type = 1
 is_automatic = false
-swing_arc_degrees = 110.0
+swing_arc_degrees = 140.0
 swing_duration = 0.16
 damage = 38.0
 fire_rate = 2.2
