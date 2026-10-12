@@ -10,6 +10,7 @@ extends CanvasLayer
 const SteamSkin = preload("res://ui/components/steam_skin.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const HotbarScript = preload("res://ui/hotbar.gd")
+const SectorMinimapScript = preload("res://ui/sector_minimap.gd")
 
 @onready var health_bar: ProgressBar = %HealthBar
 @onready var health_label: Label = %HealthLabel
@@ -40,6 +41,8 @@ var _current_bound_weapon: WeaponData = null
 var _is_reloading: bool = false
 var _level_banner: Label = null
 var _level_banner_tween: Tween = null
+var _sector_title: Label = null
+var _minimap: Control = null
 
 
 func _ready() -> void:
@@ -54,6 +57,7 @@ func _ready() -> void:
 	if bottom_right != null:
 		bottom_right.visible = false
 	add_child(HotbarScript.new())
+	_build_sector_title()
 	# Enlazar diferido con el jugador de la escena activa
 	_find_and_bind_player.call_deferred()
 	_update_character_name()
@@ -123,6 +127,46 @@ func _apply_steam_skin() -> void:
 		panel.add_child(icon)
 
 	SteamSkin.skin_tree(self)
+
+
+## Título del sector arriba al centro y minimapa bajo las monedas. `level` aporta la geometría (ver sector_minimap.gd).
+func set_sector(title: String, level: Node) -> void:
+	if _sector_title != null:
+		_sector_title.text = title
+		_sector_title.visible = not title.is_empty()
+	if _minimap == null:
+		_minimap = Control.new()
+		_minimap.set_script(SectorMinimapScript)
+		_minimap.name = "SectorMinimap"
+		_minimap.custom_minimum_size = Vector2(180, 110)
+		_minimap.anchor_left = 1.0
+		_minimap.anchor_right = 1.0
+		_minimap.offset_left = -196.0
+		_minimap.offset_right = -16.0
+		_minimap.offset_top = 70.0
+		_minimap.offset_bottom = 180.0
+		add_child(_minimap)
+	_minimap.call("setup", level)
+
+
+func _build_sector_title() -> void:
+	_sector_title = Label.new()
+	_sector_title.name = "SectorTitle"
+	_sector_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sector_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_sector_title.anchor_left = 0.5
+	_sector_title.anchor_right = 0.5
+	_sector_title.offset_left = -200.0
+	_sector_title.offset_right = 200.0
+	_sector_title.offset_top = 14.0
+	_sector_title.offset_bottom = 42.0
+	_sector_title.add_theme_font_override("font", SteamSkin.title_font())
+	_sector_title.add_theme_font_size_override("font_size", 18)
+	_sector_title.add_theme_color_override("font_color", SteamSkin.COLOR_TITLE)
+	_sector_title.add_theme_color_override("font_outline_color", SteamSkin.COLOR_OUTLINE)
+	_sector_title.add_theme_constant_override("outline_size", 4)
+	_sector_title.visible = false
+	add_child(_sector_title)
 
 
 func _on_slot_button_pressed(index: int) -> void:

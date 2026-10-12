@@ -7,7 +7,8 @@ extends Node2D
 
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
 @export_group("Seguimiento")
-@export var follow_offset: Vector2 = Vector2(-25.0, -35.0)
+## Por encima de la cabeza del Jugador (su cápsula llega a unos -64 px): así sus disparos salen hacia los enemigos.
+@export var follow_offset: Vector2 = Vector2(-20.0, -76.0)
 @export var lerp_weight: float = 7.0
 @export var hover_amplitude: float = 2.5
 @export var hover_frequency: float = 4.0

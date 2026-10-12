@@ -5,6 +5,7 @@ extends CharacterBody2D
 ## y genera números de daño flotantes (DamageNumber) al recibir impactos.
 
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
 signal died
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
@@ -43,8 +44,9 @@ var is_aggroed: bool = false
 
 
 func _ready() -> void:
-	EnemyArtScript.attach(self, art_kind)
+	var art: Node2D = EnemyArtScript.attach(self, art_kind)
 	_ensure_components()
+	MobScaleScript.apply(self, art)
 	if visual_rect != null:
 		original_color = visual_rect.color
 	
@@ -185,7 +187,7 @@ func _spawn_damage_number(amount: float, is_critical: bool, damage_type: String)
 	var dmg_instance: Node = damage_number_scene.instantiate()
 	if dmg_instance is DamageNumber:
 		var dmg_num: DamageNumber = dmg_instance as DamageNumber
-		dmg_num.global_position = global_position + Vector2(0, -52.0)
+		dmg_num.global_position = global_position + Vector2(0, -52.0 * MobScaleScript.MOB_SCALE)
 		var container: Node = tree.current_scene
 		if container == null:
 			container = owner if owner != null else get_parent()

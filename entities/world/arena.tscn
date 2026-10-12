@@ -1,0 +1,82 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/arena_encounter.gd" id="1_arena"]
+[ext_resource type="Script" path="res://core/wave_manager.gd" id="2_wave"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
+resource_local_to_scene = true
+size = Vector2(1020, 300)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_barrier"]
+size = Vector2(12, 400)
+
+[node name="Arena" type="Area2D"]
+script = ExtResource("1_arena")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="."]
+position = Vector2(0, -150)
+shape = SubResource("RectangleShape2D_trigger")
+
+[node name="Barriers" type="Node2D" parent="."]
+
+[node name="BarrierLeft" type="StaticBody2D" parent="Barriers"]
+position = Vector2(-530, -200)
+visible = false
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Barriers/BarrierLeft"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="ColorRect" type="ColorRect" parent="Barriers/BarrierLeft"]
+offset_left = -6.0
+offset_top = -200.0
+offset_right = 6.0
+offset_bottom = 200.0
+mouse_filter = 2
+color = Color(1, 0.25, 0.2, 0.55)
+
+[node name="BarrierRight" type="StaticBody2D" parent="Barriers"]
+position = Vector2(530, -200)
+visible = false
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Barriers/BarrierRight"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="ColorRect" type="ColorRect" parent="Barriers/BarrierRight"]
+offset_left = -6.0
+offset_top = -200.0
+offset_right = 6.0
+offset_bottom = 200.0
+mouse_filter = 2
+color = Color(1, 0.25, 0.2, 0.55)
+
+[node name="WaveManager" type="Node" parent="."]
+script = ExtResource("2_wave")
+refill_interval = 0.6
+round_sizes = Array[int]([5])
+rest_between_rounds = 4.0
+auto_start = false
+aggro_on_spawn = true
+
+[node name="Spawn1" type="Marker2D" parent="WaveManager"]
+position = Vector2(130, -1)
+
+[node name="Spawn2" type="Marker2D" parent="WaveManager"]
+position = Vector2(250, -1)
+
+[node name="Spawn3" type="Marker2D" parent="WaveManager"]
+position = Vector2(370, -1)
+
+[node name="StatusLabel" type="Label" parent="."]
+offset_left = -300.0
+offset_top = -260.0
+offset_right = 300.0
+offset_bottom = -230.0
+theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1

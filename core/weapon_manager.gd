@@ -50,6 +50,10 @@ const BODY_SCALE: float = 2.0
 ## Es menor que BODY_SCALE a propósito: las armas no necesitan crecer tanto como el cuerpo.
 const WEAPON_SCALE: float = 1.5
 
+## Martillo en el aire: velocidad de caída forzada (px/s) y tiempo máximo esperando el aterrizaje (s).
+const SLAM_FALL_SPEED: float = 1100.0
+const SLAM_MAX_WAIT: float = 1.5
+
 ## Cuánto se amplía el hitbox melee. Va de la mano con WEAPON_SCALE para que la punta del arma caiga dentro.
 const HITBOX_SCALE: float = 1.5
 
@@ -594,10 +598,23 @@ func _execute_melee_attack() -> void:
 	if _has_weapon_sprite():
 		_play_melee_swing(swung.swing_arc_degrees, swung.swing_duration)
 	weapon_fired.emit(swung)
-	await get_tree().create_timer(delay).timeout
+	if swung.creates_ground_shockwave and player != null and not player.is_on_floor():
+		await _wait_for_landing(swung)
+	else:
+		await get_tree().create_timer(delay).timeout
 	if current_weapon != swung or player == null or not is_instance_valid(player):
 		return
 	_melee_strike(true)
+
+
+## Martillo en el aire: fuerza la caída hasta tocar el piso (o hasta SLAM_MAX_WAIT) para que el golpe caiga al aterrizar.
+func _wait_for_landing(weapon: WeaponData) -> void:
+	var waited: float = 0.0
+	while current_weapon == weapon and player != null and is_instance_valid(player) and not player.is_on_floor() and waited < SLAM_MAX_WAIT:
+		# Se fija antes de que corra la física del jugador, así su desaceleración hacia la caída máxima no lo frena
+		player.velocity.y = SLAM_FALL_SPEED
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
 
 
 ## Crea el golpe efectivo del arma melee: hitbox, impulso y onda de choque.

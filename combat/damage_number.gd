@@ -14,6 +14,11 @@ const COLOR_PLAYER_HIT: Color = Color(1.0, 0.05, 0.05, 1.0) # Rojo intenso: dañ
 const PLAYER_HIT_FONT_SIZE: int = 26
 const PLAYER_HIT_SHAKE: float = 3.0
 const PLAYER_HIT_SHAKE_TIME: float = 0.5
+## Tope de números vivos a la vez (Fase P, punto 3): en masacres los que sobran no se crean.
+## El daño que recibe el jugador se muestra siempre.
+const MAX_ALIVE: int = 40
+
+static var _alive: int = 0
 
 var _shake_left: float = 0.0
 var _label_rest: Vector2 = Vector2.ZERO
@@ -23,6 +28,11 @@ func setup(amount: float, is_critical: bool = false, damage_type: String = "PHYS
 	if not bool((load("res://core/settings.gd") as GDScript).call("get_bool", "damage_numbers")):
 		queue_free()
 		return
+	if _alive >= MAX_ALIVE and damage_type.to_upper() != "PLAYER_HIT":
+		queue_free()
+		return
+	_alive += 1
+	tree_exiting.connect(func() -> void: _alive -= 1, CONNECT_ONE_SHOT)
 	if label == null:
 		label = $Label
 	

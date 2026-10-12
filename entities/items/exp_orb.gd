@@ -29,7 +29,7 @@ const WORLD_MASK: int = 1
 ## Si cae más que esto sin encontrar piso (vacío), se queda quieto donde está en vez de caer para siempre.
 const MAX_FALL_DISTANCE: float = 3000.0
 
-@export var exp_amount: float = 20.0
+@export var exp_amount: float = 15.0
 @export var attract_distance: float = 240.0
 @export var attract_speed: float = 400.0
 

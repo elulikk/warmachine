@@ -152,13 +152,13 @@ const PROFILES: Dictionary = {
 		"hold": {"pos": Vector2(-2.0, -1.0), "rot_deg": -22.0},
 		"swings": [
 			{ # Se alza sobre el hombro y cae con todo el cuerpo; el golpe llega con el impacto
-				"length": 2.8, "hit_delay": 0.22,
+				"length": 2.8, "hit_delay": 0.36,
 				"keys": [
 					{"t": 0.0, "pos": Vector2.ZERO, "rot": 0.0},
 					{"t": 0.30, "pos": Vector2(-10.0, -12.0), "rot": -118.0, "ease": "inout"},
 					{"t": 0.36, "pos": Vector2(-10.0, -12.0), "rot": -118.0},
-					{"t": 0.46, "pos": Vector2(9.0, 9.0), "rot": 52.0, "ease": "in"},
-					{"t": 0.60, "pos": Vector2(9.0, 9.0), "rot": 52.0},
+					{"t": 0.46, "pos": Vector2(9.0, 16.0), "rot": 52.0, "ease": "in"},
+					{"t": 0.60, "pos": Vector2(9.0, 16.0), "rot": 52.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [

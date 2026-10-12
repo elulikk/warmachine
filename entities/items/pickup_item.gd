@@ -6,6 +6,9 @@ extends Area2D
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const PickupAuraScript = preload("res://entities/items/pickup_aura.gd")
 
+## Lado mayor del ícono del objeto en el suelo (px)
+const ICON_SIZE: float = 42.0
+
 @export var item_data: ItemData
 
 ## Si es false, el pickup desaparece al cargar el nivel cuando el jugador ya posee el ítem
@@ -60,11 +63,11 @@ func _apply_visuals() -> void:
 		if ItemIconsScript.get_art_icon(item_data) != null:
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			var longest: float = maxf(float(icon.get_width()), float(icon.get_height()))
-			var fit: float = 30.0 / maxf(longest, 1.0)
+			var fit: float = ICON_SIZE / maxf(longest, 1.0)
 			sprite.scale = Vector2(fit, fit)
 		else:
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-			sprite.scale = Vector2(1.5, 1.5)
+			sprite.scale = Vector2(2.5, 2.5)
 		visuals.add_child(sprite)
 		if visual_rect != null:
 			visual_rect.visible = false

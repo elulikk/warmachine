@@ -451,7 +451,7 @@ func apply_data_to_player(player: Player, data: Dictionary) -> void:
 	if player.stats_manager != null and not stats.is_empty():
 		player.stats_manager.level = clampi(int(stats.get("level", 1)), 1, StatsManager.MAX_LEVEL)
 		player.stats_manager.current_exp = float(stats.get("current_exp", 0.0))
-		player.stats_manager.exp_to_next_level = float(stats.get("exp_to_next_level", 150.0))
+		player.stats_manager.exp_to_next_level = float(stats.get("exp_to_next_level", 75.0))
 		player.stats_manager.coins = int(stats.get("coins", 0))
 		player.stats_manager.current_health = player.stats_manager.get_max_health()
 		player.stats_manager.coins_changed.emit(player.stats_manager.coins)

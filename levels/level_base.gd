@@ -27,6 +27,8 @@ const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 @export var test_loadout_enabled: bool = false
 @export var test_weapon_paths: Array[String] = []
 @export var test_coins: int = 0
+## Consumibles de prueba: id del consumible (`health_potion`, `speed_potion`, `no_reload_potion`) → cantidad.
+@export var test_consumables: Dictionary = {}
 
 @onready var player: Player = get_node_or_null("Player") as Player
 @onready var spawn_point: Marker2D = get_node_or_null("SpawnPoint") as Marker2D
@@ -59,6 +61,12 @@ func _ready() -> void:
 			if hud != null:
 				hud.setup_with_player(player)
 	
+	var sector_hud: HUD = get_tree().get_first_node_in_group(&"hud") as HUD
+	if sector_hud == null:
+		sector_hud = get_node_or_null("HUD") as HUD
+	if sector_hud != null:
+		sector_hud.set_sector(level_title, self)
+
 	_grant_guaranteed_weapons()
 	if test_loadout_enabled:
 		_apply_test_loadout()
@@ -101,7 +109,7 @@ func _grant_guaranteed_weapons() -> void:
 		wm.select_weapon(0)
 
 
-## Equipo de prueba: agrega `test_weapon_paths` al arsenal y `test_coins` al jugador. No marca flags de entrega.
+## Equipo de prueba: agrega `test_weapon_paths` al arsenal, `test_consumables` y `test_coins` al jugador. No marca flags de entrega.
 func _apply_test_loadout() -> void:
 	if player == null:
 		return
@@ -114,10 +122,13 @@ func _apply_test_loadout() -> void:
 				player.weapon_manager.add_weapon(weapon, false)
 		if player.weapon_manager.current_weapon == null and not player.weapon_manager.weapons.is_empty():
 			player.weapon_manager.select_weapon(0)
+	if player.consumable_manager != null:
+		for id in test_consumables:
+			player.consumable_manager.add(str(id), int(test_consumables[id]))
 	if player.stats_manager != null and test_coins > 0:
 		player.stats_manager.coins += test_coins
 		player.stats_manager.coins_changed.emit(player.stats_manager.coins)
-	print("[%s] Equipo de prueba: %d armas, %d monedas." % [level_id, test_weapon_paths.size(), test_coins])
+	print("[%s] Equipo de prueba: %d armas, %d consumibles, %d monedas." % [level_id, test_weapon_paths.size(), test_consumables.size(), test_coins])
 
 
 ## true si el jugador posee el arma en el arsenal, la mochila o el baúl del campamento.

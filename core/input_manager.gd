@@ -56,6 +56,12 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_RIGHT_STICK) # R3
 	])
 
+	# Dash: solo funciona con el Módulo de Dash equipado (ver Player.can_dash).
+	_configure_action("dash", 0.2, [
+		_create_key_event(KEY_SHIFT),
+		_create_joy_button_event(JOY_BUTTON_B) # B (Xbox) / Círculo (PS)
+	])
+
 	_configure_action("reload", 0.2, [
 		_create_key_event(KEY_R),
 		_create_joy_button_event(JOY_BUTTON_X) # X (Xbox) / Cuadrado (PS)
@@ -134,6 +140,11 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_X) # Botón X (Xbox) / Cuadrado (PS)
 	])
 
+	# Despedir a mercenarios contratados y drones de apoyo ([T]); ver AllyDismisser
+	_configure_action("dismiss_allies", 0.2, [
+		_create_key_event(KEY_T)
+	])
+
 	# 7. Firma de Contratos de Zona en Checkpoints ([F])
 	_configure_action("contract_sign", 0.2, [
 		_create_key_event(KEY_F),
@@ -152,10 +163,12 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_BACK) # Back / Select en Gamepad
 	])
 
-	# 10. Arrojadizos Tácticos ([G], gatillo izquierdo). Los botones laterales del ratón
+	# 10. Arrojadizos Tácticos ([G], clic central de la ruedita, gatillo izquierdo). Mantener para apuntar
+	# y cargar alcance; soltar para lanzar (ver ThrowableManager). Los botones laterales del ratón
 	# quedaron reservados para los consumibles (ver sección 12).
 	_configure_action("throw_tactical", 0.5, [
 		_create_key_event(KEY_G),
+		_create_mouse_button_event(MOUSE_BUTTON_MIDDLE),
 		_create_joy_motion_event(JOY_AXIS_TRIGGER_LEFT, 1.0) # L2 / LT
 	])
 

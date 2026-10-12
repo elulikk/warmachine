@@ -6,6 +6,7 @@ extends EnemyBase
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
 const CHASE_ACCEL: float = 900.0
 
 @export var contact_damage: float = 24.0
@@ -25,13 +26,14 @@ var is_aggroed: bool = false
 
 
 func _ready() -> void:
-	EnemyArtScript.attach(self, "brute")
+	var art: Node2D = EnemyArtScript.attach(self, "brute")
 	entity_name = "Bruto Acorazado"
 	max_health = 250.0
 	move_speed = 38.0
 	super._ready()
 	if overhead_bar != null:
 		overhead_bar.set("vertical_offset_y", -80.0)
+	MobScaleScript.apply(self, art)
 	
 	if visual_rect != null:
 		original_color = visual_rect.color
@@ -140,7 +142,7 @@ func _spawn_damage_number(amount: float, is_critical: bool, damage_type: String)
 	var dmg_instance: Node = damage_number_scene.instantiate()
 	if dmg_instance is DamageNumber:
 		var dmg_num: DamageNumber = dmg_instance as DamageNumber
-		dmg_num.global_position = global_position + Vector2(0, -64.0)
+		dmg_num.global_position = global_position + Vector2(0, -64.0 * MobScaleScript.MOB_SCALE)
 		var container: Node = tree.current_scene
 		if container == null:
 			container = owner if owner != null else get_parent()

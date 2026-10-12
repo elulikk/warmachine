@@ -29,7 +29,7 @@ const DAMAGE_PER_LEVEL: float = 0.03
 @export_group("Progresión")
 @export var level: int = 1
 @export var current_exp: float = 0.0
-@export var exp_to_next_level: float = 150.0
+@export var exp_to_next_level: float = 75.0
 
 var current_health: float = 100.0
 var coins: int = 0

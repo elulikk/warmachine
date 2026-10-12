@@ -27,6 +27,7 @@ const HEAR_MAX_DISTANCE: float = 1400.0
 const DEFAULT_MIN_INTERVAL_MSEC: int = 35
 const MIN_INTERVAL_MSEC: Dictionary = {
 	&"shot_flame": 120,
+	&"fire_ignite": 260,
 	&"shot_auto": 40,
 	&"exp": 45,
 	&"coin": 22,
@@ -35,6 +36,7 @@ const MIN_INTERVAL_MSEC: Dictionary = {
 	&"jump": 120,
 	&"land": 120,
 	&"hurt": 150,
+	&"hurt_thud": 150,
 	&"heartbeat": 200,
 	&"enemy_death": 60,
 	&"reload_out": 100,
@@ -49,7 +51,7 @@ const PREWARM_SOUNDS: Array[StringName] = [
 	&"swing", &"swing_light", &"swing_heavy",
 	&"hit_flesh", &"hit_blade", &"hit_armor", &"hit_crit", &"hit_shield", &"hit_world",
 	&"enemy_death", &"reload_out", &"reload_in", &"reload_done", &"reload_shell", &"reload_rack", &"weapon_swap",
-	&"hurt", &"heartbeat", &"jump", &"land", &"coin", &"exp", &"pickup_gear", &"levelup",
+	&"hurt", &"hurt_thud", &"heartbeat", &"jump", &"land", &"coin", &"exp", &"pickup_gear", &"levelup",
 ]
 
 const WAVE_SQUARE: int = 0
@@ -646,6 +648,11 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_n(0.0, 0.12, 0.4, 2.5, 1800.0, 500.0),
 				_s(0.0, 0.10, 120.0, 60.0, 0.5, 2.0),
 			], 7, 2, 1.4)
+		&"hurt_thud":  # cuerpo enemigo que empuja al jugador: golpe sordo que se suma al grito de "hurt"
+			return _render(0.16, [
+				_s(0.0, 0.14, 150.0, 45.0, 1.0, 2.2),
+				_n(0.0, 0.05, 0.5, 3.0, 2500.0, 600.0),
+			], 7, 2, 1.3)
 		&"heartbeat":
 			# Dos golpes sordos seguidos (lub-dub), graves y sin brillo
 			return _render(0.42, [
@@ -738,6 +745,12 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_l(0.0, 0.25, 2500.0, 500.0, sq, 0.2, 2.5, 0.125, 0.0, 0.0, 4000.0),
 				_s(0.0, 0.25, 120.0, 40.0, 0.7, 2.0),
 			], 7, 1, 1.5, 70.0, 0.25)
+		&"fire_ignite":
+			# Charco de combustible que se prende: soplido corto y grave, sin golpe (suena muchas veces seguidas).
+			return _render(0.25, [
+				_n(0.0, 0.25, 0.4, 1.4, 500.0, 1600.0, 0.4),
+				_s(0.0, 0.2, 70.0, 50.0, 0.3, 1.5),
+			], 8, 1, 1.2, 38.0, 0.15)
 		&"boom_fire":
 			return _render(0.7, [
 				_s(0.0, 0.55, 85.0, 22.0, 1.0, 1.4),

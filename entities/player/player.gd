@@ -31,6 +31,8 @@ const ConsumableManagerScript = preload("res://core/consumables/consumable_manag
 var consumable_manager: ConsumableManagerScript = null
 ## Invocador de esqueletos de la espada Frostmourne (se crea en _ready).
 const FrostmourneSummonerScript = preload("res://entities/allies/frostmourne_summoner.gd")
+## Despide a mercenarios y drones con la tecla T (se crea en _ready).
+const AllyDismisserScript = preload("res://entities/allies/ally_dismisser.gd")
 ## Aura visual de subida de nivel (estilo MU Online / WoW)
 const LevelUpAuraScript = preload("res://entities/player/level_up_aura.gd")
 const LowHealthFeedbackScript = preload("res://entities/player/low_health_feedback.gd")
@@ -70,7 +72,17 @@ var has_wings: bool = false
 var max_flaps: int = 5
 var current_flaps: int = 0
 var has_magic_flight: bool = false
+## Dash (Fase D): lo habilita el ítem `dash_module`. Un impulso horizontal corto sin gravedad; uno por salto en el aire.
+const DASH_SPEED: float = 560.0
+const DASH_TIME: float = 0.16
+const DASH_COOLDOWN: float = 0.7
+var can_dash: bool = false
+var _dash_time_left: float = 0.0
+var _dash_cooldown_left: float = 0.0
+var _dash_dir: float = 1.0
+var _air_dash_used: bool = false
 var jetpack_particles: CPUParticles2D = null
+var dash_trail: CPUParticles2D = null
 
 ## Agachado: hitbox y hurtbox más bajas, el cuerpo baja y se camina más lento. Siempre disponible (sin ítem).
 const STAND_HEIGHT: float = 64.0
@@ -84,6 +96,11 @@ var _hurtbox_shape: RectangleShape2D = null
 var _hurtbox_shape_node: CollisionShape2D = null
 
 var hurt_cooldown: float = 0.0
+## Empujón al tocar a un enemigo: el jugador pierde el control horizontal unos instantes (ver is_knocked_back).
+const CONTACT_KNOCK_SPEED: float = 260.0
+const CONTACT_KNOCK_UP: float = -120.0
+const CONTACT_KNOCK_TIME: float = 0.18
+var _knock_time_left: float = 0.0
 ## Sin empujones: ni el retroceso de las propias armas ni el de los golpes recibidos (Sala de Estrés en modo inmortal).
 var knockback_immune: bool = false
 var _hit_flash_tween: Tween = null
@@ -127,6 +144,7 @@ func _ready() -> void:
 
 	_setup_crouch()
 	_setup_jetpack_particles()
+	_setup_dash_trail()
 
 	consumable_manager = ConsumableManagerScript.new()
 	consumable_manager.name = "ConsumableManager"
@@ -135,6 +153,10 @@ func _ready() -> void:
 	var frostmourne_summoner: Node = FrostmourneSummonerScript.new()
 	frostmourne_summoner.name = "FrostmourneSummoner"
 	add_child(frostmourne_summoner)
+
+	var ally_dismisser: Node = AllyDismisserScript.new()
+	ally_dismisser.name = "AllyDismisser"
+	add_child(ally_dismisser)
 
 	var low_health: Node = LowHealthFeedbackScript.new()
 	low_health.name = "LowHealthFeedback"
@@ -176,6 +198,36 @@ func _setup_jetpack_particles() -> void:
 	
 	jetpack_particles.position = Vector2(-5, -24)
 	add_child(jetpack_particles)
+
+
+## Estela del dash: partículas que quedan fijas en el mundo (local_coords = false) en el camino recorrido.
+func _setup_dash_trail() -> void:
+	dash_trail = CPUParticles2D.new()
+	dash_trail.name = "DashTrail"
+	dash_trail.emitting = false
+	dash_trail.local_coords = false
+	dash_trail.amount = 70
+	dash_trail.lifetime = 0.4
+	dash_trail.direction = Vector2.LEFT
+	dash_trail.spread = 6.0
+	dash_trail.initial_velocity_min = 10.0
+	dash_trail.initial_velocity_max = 30.0
+	dash_trail.gravity = Vector2.ZERO
+	dash_trail.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	dash_trail.emission_rect_extents = Vector2(4, STAND_HEIGHT * 0.5)
+	dash_trail.scale_amount_min = 3.0
+	dash_trail.scale_amount_max = 6.0
+	dash_trail.z_index = -1
+	dash_trail.z_as_relative = true
+
+	var grad: Gradient = Gradient.new()
+	grad.set_color(0, Color(1.0, 1.0, 1.0, 1.0))       # Núcleo blanco
+	grad.add_point(0.4, Color(0.5, 0.95, 1.0, 0.9))    # Cian brillante
+	grad.set_color(1, Color(0.4, 0.9, 1.0, 0.0))       # Se disipa
+	dash_trail.color_ramp = grad
+
+	dash_trail.position = Vector2(0, -STAND_HEIGHT * 0.5)
+	add_child(dash_trail)
 
 
 ## Duplica las formas de colisión para que agacharse no modifique el recurso compartido de la escena.
@@ -227,8 +279,11 @@ func _set_crouching(value: bool) -> void:
 
 func _physics_process(delta: float) -> void:
 	_update_crouch()
+	_update_dash(delta)
 	if hurt_cooldown > 0.0:
 		hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
+	if _knock_time_left > 0.0:
+		_knock_time_left = maxf(0.0, _knock_time_left - delta)
 	if phase_timer > 0.0:
 		phase_timer = maxf(0.0, phase_timer - delta)
 	
@@ -252,7 +307,7 @@ func _physics_process(delta: float) -> void:
 				var dmg: float = 12.0
 				if "contact_damage" in body:
 					dmg = float(body.contact_damage)
-				take_damage(dmg)
+				take_contact_damage(dmg, body)
 				break
 	
 	if is_on_floor():
@@ -261,6 +316,42 @@ func _physics_process(delta: float) -> void:
 	
 	_update_animation()
 	_update_precision_timers(delta)
+
+
+## Dash: arranca con la acción "dash" si el ítem está equipado. Los estados leen `is_dashing()`.
+func _update_dash(delta: float) -> void:
+	if _dash_time_left > 0.0:
+		_dash_time_left = maxf(0.0, _dash_time_left - delta)
+	if _dash_cooldown_left > 0.0:
+		_dash_cooldown_left = maxf(0.0, _dash_cooldown_left - delta)
+	if dash_trail != null:
+		dash_trail.emitting = is_dashing()
+	if is_on_floor():
+		_air_dash_used = false
+	if not can_dash or _dash_cooldown_left > 0.0 or is_crouching or has_magic_flight:
+		return
+	if not InputMap.has_action(&"dash") or not Input.is_action_just_pressed(&"dash"):
+		return
+	if not is_on_floor():
+		if _air_dash_used:
+			return
+		_air_dash_used = true
+	var input_dir: float = get_horizontal_input()
+	_dash_dir = signf(input_dir) if absf(input_dir) > 0.05 else float(facing_direction)
+	if dash_trail != null:
+		dash_trail.direction = Vector2(-_dash_dir, 0.0)
+	_dash_time_left = DASH_TIME
+	_dash_cooldown_left = DASH_COOLDOWN
+	velocity = Vector2(_dash_dir * DASH_SPEED, 0.0)
+	GameFeel.sfx(self, &"throw", Vector2.INF, -4.0)
+
+
+func is_dashing() -> bool:
+	return _dash_time_left > 0.0
+
+
+func get_dash_velocity() -> float:
+	return _dash_dir * DASH_SPEED
 
 
 ## Actualiza de forma continua los temporizadores de Coyote Time y Jump Buffer en cada tick.
@@ -496,7 +587,29 @@ func _on_hurtbox_body_entered(body: Node2D) -> void:
 		var dmg: float = 12.0
 		if "contact_damage" in body:
 			dmg = float(body.contact_damage)
-		take_damage(dmg)
+		take_contact_damage(dmg, body)
+
+
+## Daño por contacto con un enemigo: además del daño, empuja al jugador en sentido contrario al enemigo.
+## Si el golpe no cuenta (cooldown de invulnerabilidad), no hay empujón ni sonido.
+func take_contact_damage(amount: float, source: Node2D) -> void:
+	if hurt_cooldown > 0.0:
+		return
+	take_damage(amount)
+	if knockback_immune or source == null or not is_inside_tree():
+		return
+	var dir: float = signf(global_position.x - source.global_position.x)
+	if dir == 0.0:
+		dir = -float(facing_direction)
+	velocity.x = dir * CONTACT_KNOCK_SPEED
+	velocity.y = minf(velocity.y, CONTACT_KNOCK_UP)
+	_knock_time_left = CONTACT_KNOCK_TIME
+	GameFeel.sfx(self, &"hurt_thud")
+
+
+## Verdadero mientras dura el empujón: los estados de movimiento no pisan la velocidad horizontal.
+func is_knocked_back() -> bool:
+	return _knock_time_left > 0.0
 
 
 func _on_hurtbox_area_entered(area: Area2D) -> void:

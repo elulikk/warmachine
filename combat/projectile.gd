@@ -134,6 +134,9 @@ func _handle_collision(target: Node) -> void:
 		# Evitar golpear repetidamente al mismo objetivo si está atravesándolo por perforación
 		if _pierced_targets.has(receiver):
 			return
+		# Fuego amigo: un proyectil de aliado (dron) pasa de largo sobre el Jugador y sobre otros aliados
+		if _is_friendly_fire(receiver):
+			return
 		_pierced_targets.append(receiver)
 		receiver.take_hit(payload)
 		_spawn_impact_fx(global_position)
@@ -150,6 +153,14 @@ func _handle_collision(target: Node) -> void:
 		_has_impacted = true
 		set_physics_process(false)
 		call_deferred("recycle")
+
+
+## Verdadero si el emisor es un jugador o aliado y el receptor es el Jugador o un aliado.
+func _is_friendly_fire(receiver: Node) -> bool:
+	var src: Node = payload.source_node
+	if src == null or not (src.is_in_group(&"player") or src.is_in_group(&"allies")):
+		return false
+	return receiver.is_in_group(&"player") or receiver.is_in_group(&"allies")
 
 
 ## Actualiza la paleta visual (Glow, Núcleo y Sprite2D) según el estado elemental, si es hostil o desviado.

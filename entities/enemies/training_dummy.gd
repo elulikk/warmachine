@@ -18,9 +18,20 @@ const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
 @onready var health_component: HealthComponent = get_node_or_null("HealthComponent") as HealthComponent
 @onready var overhead_bar: Node2D = get_node_or_null("OverheadHealthBar") as Node2D
 
+## Tiempo sin impactos tras el cual el DPS se reinicia.
+const DPS_IDLE_RESET_SEC: float = 4.0
+## Ventana mínima (s) para calcular el DPS, así un solo golpe no da un valor inflado.
+const DPS_MIN_WINDOW_SEC: float = 1.0
+
 var original_color: Color = Color(0.88, 0.2, 0.2, 1.0)
 var _flash_tween: Tween = null
 var total_damage_received: float = 0.0
+
+var _dps_label: Label = null
+var _dps_active: bool = false
+var _dps_damage: float = 0.0
+var _dps_first_ms: int = 0
+var _dps_last_ms: int = 0
 
 
 func _ready() -> void:
@@ -66,6 +77,13 @@ func _ready() -> void:
 	if overhead_bar != null and health_component != null and overhead_bar.has_method("setup"):
 		overhead_bar.call("setup", health_component, entity_name)
 
+	_setup_dps_label()
+
+
+func _process(_delta: float) -> void:
+	if _dps_active and Time.get_ticks_msec() - _dps_last_ms >= int(DPS_IDLE_RESET_SEC * 1000.0):
+		_reset_dps()
+
 
 ## Receptor del impacto transportado por un HitPayload.
 func take_hit(payload: HitPayload) -> void:
@@ -83,7 +101,8 @@ func take_hit(payload: HitPayload) -> void:
 
 func _on_damage_taken(effective_amount: float, is_crit: bool, dmg_type: String) -> void:
 	total_damage_received += effective_amount
-	
+	_register_dps_hit(effective_amount)
+
 	print("[%s] IMPACTO RECIBIDO:" % dummy_name)
 	print("  - Daño efectivo entrante: %.1f" % effective_amount)
 	print("  - Daño total acumulado:   %.1f" % total_damage_received)
@@ -106,6 +125,51 @@ func _on_damage_taken(effective_amount: float, is_crit: bool, dmg_type: String) 
 					dmg_num.global_position = global_position + Vector2(0, -48.0)
 					container.add_child(dmg_num)
 					dmg_num.setup(effective_amount, is_crit, dmg_type)
+
+
+## Etiqueta de DPS encima del dummy (se muestra solo mientras se le dispara).
+func _setup_dps_label() -> void:
+	_dps_label = Label.new()
+	_dps_label.name = "DpsLabel"
+	_dps_label.position = Vector2(-70.0, -98.0)
+	_dps_label.size = Vector2(140.0, 20.0)
+	_dps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_dps_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dps_label.add_theme_font_size_override("font_size", 12)
+	_dps_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3, 1.0))
+	_dps_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	_dps_label.add_theme_constant_override("outline_size", 3)
+	add_child(_dps_label)
+	_refresh_dps_label()
+
+
+## Acumula el daño de cada impacto de la sesión de disparo actual.
+func _register_dps_hit(effective_amount: float) -> void:
+	var now: int = Time.get_ticks_msec()
+	if not _dps_active:
+		_dps_active = true
+		_dps_damage = 0.0
+		_dps_first_ms = now
+	_dps_damage += effective_amount
+	_dps_last_ms = now
+	_refresh_dps_label()
+
+
+func _reset_dps() -> void:
+	_dps_active = false
+	_dps_damage = 0.0
+	_refresh_dps_label()
+
+
+## DPS promedio = daño acumulado / tiempo entre el primer y el último impacto.
+func _refresh_dps_label() -> void:
+	if _dps_label == null:
+		return
+	if not _dps_active:
+		_dps_label.text = "DPS: 0.0"
+		return
+	var window: float = maxf(float(_dps_last_ms - _dps_first_ms) / 1000.0, DPS_MIN_WINDOW_SEC)
+	_dps_label.text = "DPS: %.1f" % (_dps_damage / window)
 
 
 ## Ejecuta un parpadeo blanco de 0.08 segundos antes de regresar al color original.

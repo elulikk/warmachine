@@ -173,6 +173,8 @@ func _apply_item_abilities(item: ItemData, is_equipping: bool) -> void:
 				player.current_flaps = player.max_flaps
 		"flight_ring":
 			player.has_magic_flight = is_equipping
+		"dash_module":
+			player.can_dash = is_equipping
 
 
 ## Retorna el ítem equipado en una ranura específica.

@@ -138,7 +138,10 @@ func _handle_target_collision(target: Node) -> void:
 		if parent != null and parent.has_method("take_hit"):
 			receiver = parent
 	
-	if receiver != null and receiver != source_player and not hit_targets.has(receiver):
+	# Fuego amigo: un tajo de aliado (mercenario) no lastima al Jugador ni a otros aliados
+	var friendly: bool = source_player != null and source_player.is_in_group(&"allies") \
+		and (receiver.is_in_group(&"player") or receiver.is_in_group(&"allies"))
+	if receiver != null and receiver != source_player and not hit_targets.has(receiver) and not friendly:
 		if receiver.has_method("take_hit"):
 			hit_targets.append(receiver)
 			var delivery_payload: HitPayload = payload

@@ -58,6 +58,7 @@ const REMAPPABLE: Dictionary = {
 	"move_up": "Arriba / apuntar arriba",
 	"move_down": "Abajo",
 	"jump": "Saltar",
+	"dash": "Dash (con módulo)",
 	"attack": "Atacar / disparar",
 	"attack_secondary": "Mano secundaria",
 	"reload": "Recargar",

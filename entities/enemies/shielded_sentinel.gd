@@ -6,6 +6,7 @@ extends EnemyBase
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
 const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
 const CHASE_ACCEL: float = 900.0
 
@@ -26,11 +27,12 @@ var is_aggroed: bool = false
 
 
 func _ready() -> void:
-	EnemyArtScript.attach(self, "sentinel")
+	var art: Node2D = EnemyArtScript.attach(self, "sentinel")
 	entity_name = "Centinela de Escudo"
 	max_health = 70.0
 	move_speed = 70.0
 	super._ready()
+	MobScaleScript.apply(self, art)
 	
 	if visual_rect != null:
 		original_color = visual_rect.color
@@ -55,7 +57,7 @@ func _ready() -> void:
 		var energy_shield: Node2D = EnergyShieldScript.new()
 		energy_shield.name = "EnergyShield"
 		visuals.add_child(energy_shield)
-		energy_shield.setup(health_component, Vector2(0, -24), Vector2(24, 32))
+		energy_shield.setup(health_component, Vector2(0, -24) * MobScaleScript.MOB_SCALE, Vector2(24, 32) * MobScaleScript.MOB_SCALE)
 
 	target_player = get_tree().get_first_node_in_group(&"player") as Player
 
@@ -135,7 +137,7 @@ func _spawn_damage_number(amount: float, is_critical: bool, damage_type: String)
 	var dmg_instance: Node = damage_number_scene.instantiate()
 	if dmg_instance is DamageNumber:
 		var dmg_num: DamageNumber = dmg_instance as DamageNumber
-		dmg_num.global_position = global_position + Vector2(0, -56.0)
+		dmg_num.global_position = global_position + Vector2(0, -56.0 * MobScaleScript.MOB_SCALE)
 		var container: Node = tree.current_scene
 		if container == null:
 			container = owner if owner != null else get_parent()

@@ -6,6 +6,7 @@ extends EnemyBase
 ## un proyectil veloz de alto daño.
 
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
 @export var scan_radius: float = 550.0
 @export var aim_duration: float = 1.2
 @export var attack_cooldown: float = 2.0
@@ -29,11 +30,12 @@ var locked_aim_direction: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	EnemyArtScript.attach(self, "turret")
+	var art: Node2D = EnemyArtScript.attach(self, "turret")
 	entity_name = "Torreta Francotiradora"
 	max_health = 100.0
 	move_speed = 0.0
 	super._ready()
+	MobScaleScript.apply(self, art)
 	
 	if visual_rect != null:
 		original_color = visual_rect.color

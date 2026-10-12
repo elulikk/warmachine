@@ -15,7 +15,7 @@ signal died
 @export_group("Estadísticas")
 @export var max_health: float = 50.0
 @export var move_speed: float = 100.0
-@export var exp_reward: float = 20.0
+@export var exp_reward: float = 15.0
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
 const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")

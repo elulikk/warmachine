@@ -1,6 +1,7 @@
 extends Area2D
 
 const FireVfx = preload("res://combat/fire_vfx.gd")
+const SfxScript = preload("res://core/sfx.gd")
 ## Charco de fuego del lanzallamas de combustible. Quema (burn) con ticks a quien lo pisa.
 ## Visual: sprites animados o partículas según el ajuste gráfico (ver FireVfx).
 
@@ -33,6 +34,7 @@ func _ready() -> void:
 	
 	_visual = FireVfx.make("pool", pool_width * 1.1, true)
 	add_child(_visual)
+	SfxScript.play(self, &"fire_ignite", global_position, -6.0, randf_range(0.9, 1.1))
 
 
 func _physics_process(delta: float) -> void:
