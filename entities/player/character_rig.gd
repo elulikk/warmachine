@@ -726,12 +726,14 @@ func _animate_arms() -> void:
 		_aim_angle = lerp_angle(_aim_angle, aim_angle, blend)
 		_aim_angle_off = lerp_angle(_aim_angle_off, off_angle, blend)
 		var hand_angle: float = _aim_angle if holding else 0.0
-		_aim_chain(1, _arm_front, _shoulder_front, hand_front, hand_angle, holding)
+		# Mano de adelante girada 45 grados antihorario respecto del arma (referencia de agarre de rifle)
+		_aim_chain(1, _arm_front, _shoulder_front, hand_front, hand_angle + (deg_to_rad(-45.0) if holding else 0.0), holding)
 		if off_holding:
 			_aim_chain(0, _arm_back, _shoulder_back, hand_back, _aim_angle_off, true)
 		else:
 			_aim_chain(0, _arm_back, _shoulder_back, hand_back, hand_angle, two_handed)
-		_hand_sprite[0].z_index = 3 if ((holding and two_handed) or off_holding) and not preview_mode else 0
+		# Mano de atrás a dos manos: detrás del arma, solo asoman las puntas de los dedos (referencia de agarre)
+		_hand_sprite[0].z_index = 3 if off_holding and not preview_mode else 0
 		# La cabeza acompaña la puntería, sin llegar a girar entera
 		var look: float = clampf(_aim_angle, deg_to_rad(-70.0), deg_to_rad(70.0)) * 0.35 if holding else 0.0
 		_neck_bone.rotation = lerp_angle(_neck_bone.rotation, look, blend)
