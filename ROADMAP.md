@@ -474,6 +474,30 @@ Contenido mínimo para validarlo:
 
 ---
 
+## 6h. Fase X — Lanzallamas de Combustible
+*Objetivo:* Un lanzallamas que rocía combustible encendido: lo que cae al piso se prende y deja fuego en el suelo que quema a quien lo pisa. Hoy el lanzallamas que existe (`data/weapons/plasma_flamethrower.tres`) hace pulsos de fuego en el aire y no deja nada en el piso. **Prioridad alta:** se pidió agregarlo cuanto antes.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium**. Cada paso de abajo es una tarea aparte, una por vez.
+
+**Comportamiento pedido:**
+- Automático mientras se mantiene el clic, con cadencia alta y cargador de combustible.
+- Cada gota sale encendida, vuela un poco, cae y forma un charco de fuego en el piso.
+- El charco quema a quien lo pisa o está adentro (estado `burn` existente de `StatusReceiverComponent`) y hace daño por tick.
+- El charco dura unos segundos y después se apaga solo. No se propaga a otros charcos en esta primera versión.
+- Sin arte por ahora: las gotas y los charcos son cuadrados de color naranja/amarillo que parpadean.
+
+**Pasos:**
+1. **Arma:** nuevo `.tres` en `data/weapons/` con familia lanzallamas (ya existe en `FAMILY_RULES`), automática y con el fuego como efecto. Sin lógica nueva en este paso.
+2. **Gota:** proyectil basado en `combat/projectile.tscn`, con gravedad leve. Al caer deja de moverse y crea el charco.
+3. **Charco de fuego:** basado en `combat/throwables/acid_pool.gd` (charco persistente que hace ticks), pero aplica `burn` y tiene su duración propia. Visual: cuadrados que parpadean.
+4. **Sonido:** usar el perfil de lanzallamas de `core/sfx.gd`. Un sonido de charco prendido queda opcional.
+5. **Arte (cuando llegue la hoja de sprites):** reemplazar los cuadrados por sprites de gota, charco animado, boquilla del arma e ícono de inventario (`ui/item_icons.gd`). No bloquea la lógica: se puede hacer después de los pasos 1 a 4.
+
+**Archivos:** `data/weapons/` (nuevo `.tres`), `combat/projectile.gd` o un script de gota nuevo, `combat/throwables/acid_pool.gd` como referencia, `core/status_receiver_component.gd` (burn), `core/sfx.gd`.
+
+**Criterio de cierre:** en el Banco de Pruebas o en el 1-1, con F5: mantener el clic deja charcos naranjas en el piso; quien pisa un charco arde y recibe daño; el fuego se apaga solo; el arma se equipa, recarga y vende como cualquier otra; sin errores de script en el log.
+
+---
+
 ## 7. Después del Prototipo (no entra ahora)
 - Los 50 niveles y los 5 capítulos (Fase 16 del plan anterior). Hechos: 1-1 a 1-5.
 - Stand-by de la sección 0.
