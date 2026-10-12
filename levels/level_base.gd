@@ -5,6 +5,8 @@ extends Node2D
 ## el HUD, la detección de caída al vacío y el enlace con la ExitGate.
 
 const LevelSkinScript = preload("res://levels/level_skin.gd")
+## Prefijo del flag del slot que marca un arma garantizada ya entregada al personaje.
+const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 
 @export var level_id: String = "1_01"
 @export var level_title: String = "Sector 1-01"
@@ -60,18 +62,27 @@ func _ready() -> void:
 	print("[%s] %s inicializado. Spawn: %s" % [level_id, level_title, initial_spawn_position])
 
 
-## Agrega al arsenal las armas de `guaranteed_weapon_paths` que el jugador aún no posea.
+## Agrega al arsenal las armas de `guaranteed_weapon_paths`, una sola vez por personaje.
+## La entrega queda marcada en los flags del slot (`weapon_granted:<ruta>`): si el jugador después la vende
+## o la guarda, el nivel no se la devuelve. Si ya la posee al llegar (partidas anteriores), solo se marca.
 func _grant_guaranteed_weapons() -> void:
 	if player == null or player.weapon_manager == null:
 		return
 
 	var wm: WeaponManager = player.weapon_manager
 	for path in guaranteed_weapon_paths:
-		if _player_has_weapon(path) or not ResourceLoader.exists(path):
+		var flag: String = GRANTED_FLAG_PREFIX + path
+		if SaveManager.has_world_flag(flag):
+			continue
+		if _player_has_weapon(path):
+			SaveManager.set_world_flag(flag)
+			continue
+		if not ResourceLoader.exists(path):
 			continue
 		var weapon: WeaponData = load(path) as WeaponData
 		if weapon != null:
 			wm.add_weapon(weapon, false)
+			SaveManager.set_world_flag(flag)
 
 	if wm.current_weapon == null and not wm.weapons.is_empty():
 		wm.select_weapon(0)
