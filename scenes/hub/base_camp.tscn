@@ -17,7 +17,7 @@
 [ext_resource type="PackedScene" path="res://entities/interactables/scene_door.tscn" id="15_stress_door"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_camp_floor"]
-size = Vector2(1600, 48)
+size = Vector2(4600, 48)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_camp_wall"]
 size = Vector2(40, 600)
@@ -62,32 +62,46 @@ collision_mask = 0
 shape = SubResource("RectangleShape2D_camp_floor")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/MainFloor" unique_id=1064422794]
-offset_left = -800.0
+offset_left = -2300.0
 offset_top = -24.0
-offset_right = 800.0
+offset_right = 2300.0
 offset_bottom = 24.0
 color = Color(0.12, 0.16, 0.22, 1)
 
 [node name="TopBorder" type="ColorRect" parent="Environment/MainFloor" unique_id=857930074]
-offset_left = -800.0
+offset_left = -2300.0
 offset_top = -24.0
-offset_right = 800.0
+offset_right = 2300.0
 offset_bottom = -21.0
 color = Color(0.3, 0.5, 0.75, 1)
 
 [node name="LeftWall" type="StaticBody2D" parent="Environment" unique_id=1736246163 groups=["world"]]
-position = Vector2(-150, 300)
+position = Vector2(-1650, 300)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/LeftWall" unique_id=1805489683]
 shape = SubResource("RectangleShape2D_camp_wall")
 
+[node name="Visual" type="ColorRect" parent="Environment/LeftWall"]
+offset_left = -20.0
+offset_top = -300.0
+offset_right = 20.0
+offset_bottom = 300.0
+color = Color(0.18, 0.26, 0.38, 1)
+
 [node name="RightWall" type="StaticBody2D" parent="Environment" unique_id=1964405845 groups=["world"]]
-position = Vector2(1350, 300)
+position = Vector2(2850, 300)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall" unique_id=839581744]
 shape = SubResource("RectangleShape2D_camp_wall")
+
+[node name="Visual" type="ColorRect" parent="Environment/RightWall"]
+offset_left = -20.0
+offset_top = -300.0
+offset_right = 20.0
+offset_bottom = 300.0
+color = Color(0.18, 0.26, 0.38, 1)
 
 [node name="HubBanner" type="PanelContainer" parent="Environment" unique_id=2010650722]
 offset_left = 460.0
@@ -138,9 +152,9 @@ position = Vector2(600, 520)
 [node name="Camera2D" type="Camera2D" parent="." unique_id=518321900 node_paths=PackedStringArray("target")]
 position = Vector2(600, 480)
 zoom = Vector2(1.2, 1.2)
-limit_left = -200
+limit_left = -1700
 limit_top = 100
-limit_right = 1400
+limit_right = 2900
 limit_bottom = 620
 position_smoothing_enabled = true
 script = ExtResource("3_camera")

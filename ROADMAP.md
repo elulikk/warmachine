@@ -486,8 +486,8 @@ Contenido mínimo para validarlo:
 - Sin arte por ahora: las gotas y los charcos son cuadrados de color naranja/amarillo que parpadean.
 
 **Pasos:**
-1. **Arma:** nuevo `.tres` en `data/weapons/` con familia lanzallamas (ya existe en `FAMILY_RULES`), automática y con el fuego como efecto. Sin lógica nueva en este paso.
-2. **Gota:** proyectil basado en `combat/projectile.tscn`, con gravedad leve. Al caer deja de moverse y crea el charco.
+1. **Arma:** nuevo `.tres` en `data/weapons/` con familia lanzallamas (ya existe en `FAMILY_RULES`), automática y con el fuego como efecto. Sin lógica nueva en este paso. **HECHO (2026-10-11):** `data/weapons/fuel_flamethrower.tres` (automática, 80 de cargador, 14 disparos/s, FIRE innato). Entra al mercader por `sell_everything`.
+2. **Gota:** proyectil basado en `combat/projectile.tscn`, con gravedad leve. Al caer deja de moverse y crea el charco. **HECHO (2026-10-11):** `combat/fuel_droplet.gd/.tscn` (subclase de `Projectile`, cuadrado naranja, gravedad 520). Al tocar el piso crea un `combat/throwables/fuel_pool.gd` provisorio (solo visual, sin burn: paso 3). `WeaponManager` ahora usa el pool solo si la escena del arma es `projectile.tscn`; las demás se instancian aparte. Probado con escena descartable: la gota cae, crea 1 charco y se libera, sin errores. **Sin verificar:** a mano en juego.
 3. **Charco de fuego:** basado en `combat/throwables/acid_pool.gd` (charco persistente que hace ticks), pero aplica `burn` y tiene su duración propia. Visual: cuadrados que parpadean.
 4. **Sonido:** usar el perfil de lanzallamas de `core/sfx.gd`. Un sonido de charco prendido queda opcional.
 5. **Arte (cuando llegue la hoja de sprites):** reemplazar los cuadrados por sprites de gota, charco animado, boquilla del arma e ícono de inventario (`ui/item_icons.gd`). No bloquea la lógica: se puede hacer después de los pasos 1 a 4.

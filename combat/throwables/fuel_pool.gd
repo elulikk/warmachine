@@ -1,0 +1,75 @@
+extends Area2D
+## Charco de fuego del lanzallamas de combustible. Quema (burn) con ticks a quien lo pisa.
+## Placeholder visual: cuadrados que parpadean.
+
+@export var lifetime: float = 5.0
+@export var tick_interval: float = 0.4
+@export var tick_damage: float = 4.0
+@export var pool_width: float = 64.0
+@export var pool_height: float = 20.0
+
+var source_node: Node2D = null
+
+var _age: float = 0.0
+var _tick_timer: float = 0.1
+
+
+func _ready() -> void:
+	collision_layer = 0
+	collision_mask = 2
+	monitoring = true
+	monitorable = false
+	z_index = 5
+
+	var shape_node: CollisionShape2D = CollisionShape2D.new()
+	var rect: RectangleShape2D = RectangleShape2D.new()
+	rect.size = Vector2(pool_width, pool_height)
+	shape_node.shape = rect
+	shape_node.position = Vector2(0.0, -pool_height * 0.5)
+	add_child(shape_node)
+
+
+func _physics_process(delta: float) -> void:
+	_age += delta
+	if _age >= lifetime:
+		queue_free()
+		return
+
+	_tick_timer -= delta
+	if _tick_timer <= 0.0:
+		_tick_timer = tick_interval
+		_apply_tick()
+
+	queue_redraw()
+
+
+func _apply_tick() -> void:
+	var targets: Array[Node2D] = ThrowableUtil.collect_hostile_targets(self)
+	for target in targets:
+		if not is_instance_valid(target):
+			continue
+		var effects: Array[String] = ["FIRE"]
+		var payload: HitPayload = HitPayload.new(
+			tick_damage,
+			0.0,
+			Vector2.ZERO,
+			source_node,
+			effects,
+			1,
+			0.0,
+			0.0
+		)
+		ThrowableUtil.deliver_hit(target, payload)
+
+
+func _draw() -> void:
+	var fade: float = clampf((lifetime - _age) / 0.8, 0.0, 1.0)
+	var phase: int = int(_age * 12.0)
+	var cells: int = 6
+	var cell_w: float = pool_width / float(cells)
+	for i in range(cells):
+		var on: bool = (phase + i) % 2 == 0
+		var col: Color = Color(1.0, 0.55, 0.1, 0.85) if on else Color(1.0, 0.85, 0.2, 0.85)
+		col.a *= fade
+		var h: float = 8.0 + float((phase + i * 3) % 3) * 3.0
+		draw_rect(Rect2(-pool_width * 0.5 + float(i) * cell_w, -h, cell_w - 2.0, h), col)

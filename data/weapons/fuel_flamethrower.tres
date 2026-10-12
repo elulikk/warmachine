@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3]
+
+[ext_resource type="Script" uid="uid://cscpl4ofuoe7b" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/fuel_droplet.tscn" id="2_drop"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Lanzallamas de Combustible"
+family = 9
+grip = 1
+is_automatic = true
+damage = 3.0
+fire_rate = 14.0
+knockback_force = 10.0
+recoil_force = 8.0
+projectile_speed = 300.0
+magazine_size = 80
+reload_time = 2.2
+spread_angle_degrees = 8.0
+projectile_scene = ExtResource("2_drop")
+innate_status_effects = Array[String](["FIRE"])
+rarity = 3
+gold_value = 180
+description = "Rocia combustible encendido. Las gotas caen al piso y dejan charcos de fuego."

@@ -146,6 +146,9 @@ static func load_and_apply(ctx: Node) -> void:
 		_loaded = true
 	_ensure_host(ctx)
 	apply_all(ctx)
+	# Al arrancar, la ventana en modo ventana se abre maximizada (una sola vez; no cambia la resolución guardada)
+	if get_int("display_mode") == DISPLAY_WINDOWED and DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
 
 
 static func save() -> void:

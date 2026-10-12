@@ -159,22 +159,22 @@ static func setup_inputs() -> void:
 		_create_joy_motion_event(JOY_AXIS_TRIGGER_LEFT, 1.0) # L2 / LT
 	])
 
-	# 11. Herramientas de Movilidad Táctica (Click Derecho / Botón lateral XBUTTON2 / Gatillo o botón dedicado)
-	_configure_action("use_tool", 0.5, [
-		_create_mouse_button_event(MOUSE_BUTTON_RIGHT),
+	# 11. Herramientas de Movilidad Táctica (gancho): Ratón 5 (XBUTTON2) / [F] / L1
+	_enforce_action_events("use_tool", 0.5, [
+		_create_mouse_button_event(MOUSE_BUTTON_XBUTTON2),
 		_create_key_event(KEY_F),
 		_create_joy_button_event(JOY_BUTTON_LEFT_SHOULDER) # L1 / LB
 	])
 
 
-	# 12. Consumibles rápidos: botones laterales del ratón. M4 = consumible 1, M5 = consumible 2.
-	# Se fuerzan solo con el botón: las teclas 4 / 5 / 6 ahora eligen casillero de la barra.
+	# 12. Consumibles rápidos: M4 = consumible 1, [X] = consumible 2 (M5 quedó para el gancho).
+	# Las teclas 4 / 5 / 6 eligen casillero de la barra.
 	_enforce_action_events("consumable_1", 0.2, [
 		_create_mouse_button_event(MOUSE_BUTTON_XBUTTON1)
 	])
 
 	_enforce_action_events("consumable_2", 0.2, [
-		_create_mouse_button_event(MOUSE_BUTTON_XBUTTON2)
+		_create_key_event(KEY_X)
 	])
 
 

@@ -516,7 +516,8 @@ func fire() -> void:
 			armor_pen
 		)
 		
-		if pool != null:
+		# El pool solo reutiliza el proyectil estándar; las escenas propias (gotas) van por fuera.
+		if pool != null and current_weapon.projectile_scene.resource_path == "res://combat/projectile.tscn":
 			pool.get_projectile(spawn_pos, pellet_dir, payload, current_weapon.projectile_speed, bounces, pierces, forks)
 		else:
 			# Fallback de reserva si no existe pool en la escena
