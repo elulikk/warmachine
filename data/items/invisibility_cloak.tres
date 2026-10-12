@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "invisibility_cloak"
+item_name = "Capa de Invisibilidad"
+item_color = Color(0.45, 0.6, 0.9, 1)
+equip_slot = "ACCESSORY"
+elemental_infusion = ""
+tags = []
+modifiers = []
+grants_extra_jump = 0
+rarity = 3
+gold_value = 280
+description = "Con . (Select en el mando) te vuelves invisible 8 s y los enemigos pierden el rastro. Si uno te toca o te pega, te roba la capa y queda invisible: no la recuperás hasta matarlo."

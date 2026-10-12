@@ -42,6 +42,9 @@
 [ext_resource type="Resource" path="res://data/items/throwables/ice_grenade.tres" id="42_ice"]
 [ext_resource type="Resource" path="res://data/items/throwables/root_net.tres" id="60_net"]
 [ext_resource type="Resource" path="res://data/weapons/mirror_shield.tres" id="61_mirror"]
+[ext_resource type="Resource" path="res://data/items/throwables/boomerang.tres" id="62_boom"]
+[ext_resource type="Resource" path="res://data/items/laser_helmet.tres" id="63_laser"]
+[ext_resource type="Resource" path="res://data/items/invisibility_cloak.tres" id="64_cloak"]
 [ext_resource type="Resource" path="res://data/items/throwables/acid_grenade.tres" id="43_acid"]
 [ext_resource type="Resource" path="res://data/items/throwables/gas_bomb.tres" id="44_gas"]
 [ext_resource type="Resource" path="res://data/weapons/heavy_hammer.tres" id="45_hammer"]
@@ -569,6 +572,18 @@ item_data = ExtResource("44_gas")
 [node name="NetPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
 position = Vector2(3330, 575)
 item_data = ExtResource("60_net")
+
+[node name="BoomerangPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(3880, 575)
+item_data = ExtResource("62_boom")
+
+[node name="LaserHelmetPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(3960, 575)
+item_data = ExtResource("63_laser")
+
+[node name="CloakPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(4040, 575)
+item_data = ExtResource("64_cloak")
 
 [node name="GasDummy1" parent="DemolitionZone" instance=ExtResource("4_dummy")]
 position = Vector2(3420, 575)

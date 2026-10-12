@@ -25,7 +25,9 @@ func _physics_process(delta: float) -> void:
 	var desired: Vector2 = Vector2.ZERO
 	if target_player != null and is_instance_valid(target_player):
 		var aim: Vector2 = (target_player.global_position + Vector2(0.0, BODY_CENTER_Y)) - (global_position + Vector2(0.0, BODY_CENTER_Y))
-		if aim.length() <= aggro_range:
+		if target_player.is_invisible:
+			is_aggroed = false
+		elif aim.length() <= aggro_range:
 			is_aggroed = true
 		if is_aggroed and aim.length() > 18.0:
 			desired = aim.normalized() * effective_speed

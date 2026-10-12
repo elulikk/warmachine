@@ -59,6 +59,8 @@ const REMAPPABLE: Dictionary = {
 	"move_down": "Abajo",
 	"jump": "Saltar",
 	"dash": "Dash (con módulo)",
+	"eye_laser": "Rayo láser (con casco)",
+	"cloak": "Capa de invisibilidad",
 	"attack": "Atacar / disparar",
 	"attack_secondary": "Mano secundaria",
 	"reload": "Recargar",

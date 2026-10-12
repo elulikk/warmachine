@@ -62,6 +62,17 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_B) # B (Xbox) / Círculo (PS)
 	])
 
+	# Rayo láser del Casco Láser (mantener) y Capa de Invisibilidad (alternar): solo con el ítem equipado.
+	_configure_action("eye_laser", 0.2, [
+		_create_key_event(KEY_P),
+		_create_joy_button_event(JOY_BUTTON_LEFT_STICK) # L3
+	])
+
+	_configure_action("cloak", 0.2, [
+		_create_key_event(KEY_PERIOD),
+		_create_joy_button_event(JOY_BUTTON_BACK) # Select / Back
+	])
+
 	_configure_action("reload", 0.2, [
 		_create_key_event(KEY_R),
 		_create_joy_button_event(JOY_BUTTON_X) # X (Xbox) / Cuadrado (PS)

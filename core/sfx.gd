@@ -28,6 +28,7 @@ const DEFAULT_MIN_INTERVAL_MSEC: int = 35
 const MIN_INTERVAL_MSEC: Dictionary = {
 	&"shot_flame": 120,
 	&"fire_ignite": 260,
+	&"laser_beam": 80,
 	&"shot_auto": 40,
 	&"exp": 45,
 	&"coin": 22,
@@ -751,6 +752,23 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_n(0.0, 0.25, 0.4, 1.4, 500.0, 1600.0, 0.4),
 				_s(0.0, 0.2, 70.0, 50.0, 0.3, 1.5),
 			], 8, 1, 1.2, 38.0, 0.15)
+		&"laser_beam":
+			# Tick del haz: zumbido eléctrico corto y agudo (suena cada 0.1 s con el rayo sostenido)
+			return _render(0.12, [
+				_l(0.0, 0.1, 1500.0, 900.0, saw, 0.3, 1.2, 0.5, 0.0, 0.0, 3500.0),
+				_n(0.0, 0.08, 0.25, 1.4, 6000.0, 2500.0),
+			], 8, 1, 1.0)
+		&"cloak_on":
+			# Tela que se abre / roce: soplido filtrado ascendente
+			return _render(0.35, [
+				_n(0.0, 0.3, 0.4, 1.6, 600.0, 2800.0, 0.3),
+				_l(0.0, 0.25, 220.0, 520.0, sine, 0.2, 1.4),
+			], 7, 1, 1.1, 40.0, 0.2)
+		&"cloak_off":
+			return _render(0.3, [
+				_n(0.0, 0.25, 0.4, 1.5, 2800.0, 500.0, 0.3),
+				_l(0.0, 0.2, 520.0, 200.0, sine, 0.2, 1.4),
+			], 7, 1, 1.1, 40.0, 0.2)
 		&"net_deploy":
 			# Red que se abre: soplido de tela con un chasquido corto y grave al caer.
 			return _render(0.45, [

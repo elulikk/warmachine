@@ -37,6 +37,8 @@ const AllyDismisserScript = preload("res://entities/allies/ally_dismisser.gd")
 const LevelUpAuraScript = preload("res://entities/player/level_up_aura.gd")
 const LowHealthFeedbackScript = preload("res://entities/player/low_health_feedback.gd")
 const MirrorReflectorScript = preload("res://entities/shield/mirror_reflector.gd")
+const EyeLaserScript = preload("res://entities/player/eye_laser.gd")
+const CloakControllerScript = preload("res://entities/player/cloak_controller.gd")
 const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
 const DamageNumberScene = preload("res://combat/damage_number.tscn")
 var _level_up_aura: Node2D = null
@@ -78,6 +80,12 @@ const DASH_SPEED: float = 560.0
 const DASH_TIME: float = 0.16
 const DASH_COOLDOWN: float = 0.7
 var can_dash: bool = false
+## Casco Láser equipado: habilita la acción `eye_laser` (ver eye_laser.gd).
+var has_eye_laser: bool = false
+## Capa de Invisibilidad equipada y estado de invisibilidad (ver cloak_controller.gd). Los enemigos leen `is_invisible`.
+var has_cloak: bool = false
+var is_invisible: bool = false
+var cloak_controller: Node = null
 var _dash_time_left: float = 0.0
 var _dash_cooldown_left: float = 0.0
 var _dash_dir: float = 1.0
@@ -168,6 +176,14 @@ func _ready() -> void:
 	var mirror_reflector: Node = MirrorReflectorScript.new()
 	mirror_reflector.name = "MirrorReflector"
 	add_child(mirror_reflector)
+
+	var eye_laser: Node = EyeLaserScript.new()
+	eye_laser.name = "EyeLaser"
+	add_child(eye_laser)
+
+	cloak_controller = CloakControllerScript.new()
+	cloak_controller.name = "CloakController"
+	add_child(cloak_controller)
 
 	# Escudo de energía: hoy el jugador no tiene escudo, así que no se ve hasta que tenga
 	var energy_shield: Node2D = EnergyShieldScript.new()
@@ -467,6 +483,9 @@ func take_damage(amount: float) -> void:
 		return
 	hurt_cooldown = 0.6
 	GameFeel.sfx(self, &"hurt")
+	# Invisible: quien lo toca o le pega le roba la capa
+	if is_invisible and cloak_controller != null:
+		cloak_controller.on_player_hit()
 	# Dificultad elegida en Opciones (Recluta 0.6x ... Pesadilla 1.75x)
 	amount *= float((load("res://core/settings.gd") as GDScript).call("enemy_damage_mult"))
 	if _is_shield_blocking():

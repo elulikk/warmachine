@@ -66,7 +66,9 @@ func _physics_process(delta: float) -> void:
 	
 	if target_player != null and is_instance_valid(target_player):
 		var dist: float = global_position.distance_to(target_player.global_position)
-		if dist <= aggro_range:
+		if target_player.is_invisible:
+			is_aggroed = false
+		elif dist <= aggro_range:
 			is_aggroed = true
 		
 		if is_aggroed:
