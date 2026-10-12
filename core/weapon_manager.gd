@@ -33,6 +33,9 @@ enum OffhandState { EMPTY, READY, BLOCKED_TWO_HANDS, BLOCKED_SAME_WEAPON }
 ## Posición del arma secundaria respecto de la principal (espacio del pivote: +x al apuntado, +y hacia abajo).
 ## Arte provisional: queda más atrás y un poco más abajo, sostenida por el brazo de atrás.
 const OFFHAND_SPRITE_OFFSET: Vector2 = Vector2(-2.0, 4.0)
+## Escudo levantado (clic derecho mantenido): desplazamiento del sprite desde la mano, en el pivote (+x = hacia la puntería).
+const SHIELD_RAISE_OFFSET: Vector2 = Vector2(14.0, -4.0)
+const SHIELD_RAISE_SPEED: float = 10.0
 
 ## Cuándo (fracción de `reload_time`) cae lo que suelta el arma al recargar, según qué suelta.
 const RELOAD_DROP_TIMING: Dictionary = {
@@ -110,6 +113,8 @@ var main_manager: WeaponManager = null
 
 var _off_pressed: bool = false
 var _off_held: bool = false
+## 0 = escudo bajado, 1 = escudo levantado enfrente del personaje (ver `_update_shield_pose`).
+var _shield_raise: float = 0.0
 var _debris_tween: Tween = null
 var _offhand_sprite_name: String = "WeaponSprite"
 
@@ -338,7 +343,27 @@ func _process(delta: float) -> void:
 		_off_held = _off_held and Input.is_action_pressed("attack_secondary")
 		if current_weapon == null:
 			_off_pressed = false
+		_update_shield_pose(delta)
 	_handle_firing_input()
+
+
+## true si la mano secundaria sostiene un escudo y el clic derecho está mantenido: bloquea daño.
+func is_shield_raised() -> bool:
+	if hand != Hand.OFF or current_weapon == null or current_weapon.grip != WeaponData.Grip.SHIELD:
+		return false
+	return Input.is_action_pressed("attack_secondary")
+
+
+## Sube o baja el escudo según el clic derecho: levantado queda enfrente del personaje, en la dirección de la puntería.
+func _update_shield_pose(delta: float) -> void:
+	_shield_raise = move_toward(_shield_raise, 1.0 if is_shield_raised() else 0.0, delta * SHIELD_RAISE_SPEED)
+	if current_weapon == null or current_weapon.grip != WeaponData.Grip.SHIELD:
+		_shield_raise = 0.0
+		return
+	if _weapon_sprite == null or not is_instance_valid(_weapon_sprite):
+		return
+	_weapon_sprite.position = _sprite_rest_position + SHIELD_RAISE_OFFSET * _shield_raise
+	_weapon_sprite.rotation = lerp_angle(_sprite_rest_rotation, 0.0, _shield_raise)
 
 
 ## Obtiene la munición actual del arma especificada en el diccionario de cargadores.

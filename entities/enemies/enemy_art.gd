@@ -141,7 +141,7 @@ func _hide_originals() -> void:
 			# `modulate.a = 0` oculta el dibujo sin tocar `color`, que el combate sigue leyendo
 			rect.modulate.a = 0.0
 		elif child is AnimatedSprite2D or child is Sprite2D:
-			(child as CanvasItem).modulate.a = 0.0
+			(child as CanvasItem).visible = false # Solo alfa no alcanza: el flash de impacto y el tinte de estado reescriben `modulate`
 	# Dummy: el rectángulo cuelga del anfitrión
 	var host: Node = parent.get_parent() if parent.name == &"Visuals" else parent
 	if host != null and host != parent:

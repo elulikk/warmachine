@@ -464,7 +464,7 @@ func take_damage(amount: float) -> void:
 	GameFeel.sfx(self, &"hurt")
 	# Dificultad elegida en Opciones (Recluta 0.6x ... Pesadilla 1.75x)
 	amount *= float((load("res://core/settings.gd") as GDScript).call("enemy_damage_mult"))
-	if _has_shield_equipped():
+	if _is_shield_blocking():
 		amount *= SHIELD_BLOCK_MULT
 	# Mitigación por armadura: 100 / (100 + armadura), igual que HealthComponent.
 	var final_amount: float = amount
@@ -488,12 +488,9 @@ func take_damage(amount: float) -> void:
 		_handle_player_death()
 
 
-## true si la mano secundaria sostiene un escudo (grip SHIELD). Ver SHIELD_BLOCK_MULT.
-func _has_shield_equipped() -> bool:
-	if weapon_manager == null or weapon_manager.offhand == null:
-		return false
-	var off_weapon: WeaponData = weapon_manager.offhand.current_weapon
-	return off_weapon != null and off_weapon.grip == WeaponData.Grip.SHIELD
+## true si el escudo de la mano secundaria está levantado (clic derecho mantenido). Ver SHIELD_BLOCK_MULT.
+func _is_shield_blocking() -> bool:
+	return weapon_manager != null and weapon_manager.offhand != null and weapon_manager.offhand.is_shield_raised()
 
 
 ## Daño recibido como texto rojo grande y tembloroso sobre el jugador (ver DamageNumber, tipo "PLAYER_HIT").
