@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Rifle Viejo"
+family = 6
+grip = 1
+weapon_type = 0
+is_automatic = false
+damage = 19.0
+fire_rate = 2.6
+knockback_force = 250.0
+recoil_force = 50.0
+projectile_speed = 520.0
+armor_penetration = 0.1
+magazine_size = 8
+reload_time = 1.8
+pellets_per_shot = 1
+spread_angle_degrees = 2.0
+innate_pierce = 0
+projectile_scene = ExtResource("2_proj")
+innate_status_effects = []
+max_sockets = 2
+socketed_runes = []
+rarity = 0
+gold_value = 30
+description = "Rifle antiguo reparado a mano. Dispara más lento que la carabina de chatarra y tiene un cargador más chico, pero cada bala perfora un poco de armadura."

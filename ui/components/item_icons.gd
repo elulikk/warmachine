@@ -621,7 +621,7 @@ static func _weapon_kind(weapon: WeaponData) -> String:
 			return "shotgun"
 		"heavy_sniper":
 			return "rifle"
-		"scrap_carbine":
+		"scrap_carbine", "old_rifle":
 			return "carbine"
 		"corrosive_blaster":
 			return "blaster"

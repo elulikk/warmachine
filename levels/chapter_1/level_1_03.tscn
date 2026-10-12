@@ -10,7 +10,7 @@
 [ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="8_gate"]
 [ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="9_runner"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="10_wpickup"]
-[ext_resource type="Resource" path="res://data/weapons/scrap_carbine.tres" id="11_carbine"]
+[ext_resource type="Resource" path="res://data/weapons/old_rifle.tres" id="11_carbine"]
 [ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="12_checkpoint"]
 [ext_resource type="Script" path="res://core/arena_encounter.gd" id="13_arena"]
 [ext_resource type="Script" path="res://core/wave_manager.gd" id="14_wave"]
@@ -578,7 +578,7 @@ offset_right = 8880
 offset_bottom = 464
 theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
 theme_override_font_sizes/font_size = 13
-text = "Carabina de Chatarra: 10 balas, más cadencia y atraviesa a un enemigo"
+text = "Rifle Viejo: 8 balas, perfora un poco de armadura"
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
