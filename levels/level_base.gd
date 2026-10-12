@@ -83,6 +83,10 @@ func _grant_guaranteed_weapons() -> void:
 		if weapon != null:
 			wm.add_weapon(weapon, false)
 			SaveManager.set_world_flag(flag)
+			# La marca se guarda al instante: si el jugador sale sin guardar, el arma no vuelve a entregarse
+			var sm: SaveManager = SaveManager.get_instance()
+			if sm != null:
+				sm.save_to_disk()
 
 	if wm.current_weapon == null and not wm.weapons.is_empty():
 		wm.select_weapon(0)

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Frostmourne"
+family = 11
+grip = 1
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 140.0
+swing_duration = 0.16
+damage = 46.0
+fire_rate = 2.2
+knockback_force = 280.0
+recoil_force = 0.0
+projectile_speed = 0.0
+innate_status_effects = ["ICE"]
+ice_duration = 2.0
+ice_speed_multiplier = 0.5
+rarity = 3
+gold_value = 200
+description = "Espada de hielo forjada bajo la luna helada. Cada golpe congela al enemigo. Al matar con ella, el cadaver se levanta como esqueleto aliado."

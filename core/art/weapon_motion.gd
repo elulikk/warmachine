@@ -85,6 +85,42 @@ const PROFILES: Dictionary = {
 			}
 		]
 	},
+	"frostmourne": {
+		"pose": {"support": Vector2(14.0, 48.7)},
+		"hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -8.0},
+		"swings": [
+			{ # Tajo amplio descendente con cuerpo y brazos acompañando
+				"length": 2.4, "hit_delay": 0.02,
+				"keys": [
+					{"t": 0.0, "pos": Vector2(-8.0, -6.0), "rot": -72.0},
+					{"t": 0.36, "pos": Vector2(13.0, 5.0), "rot": 68.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(14.0, 6.0), "rot": 78.0},
+					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
+				],
+				"body": [
+					{"t": 0.0, "lean": -7.0, "x": -2.5},
+					{"t": 0.36, "lean": 12.0, "x": 5.0},
+					{"t": 0.58, "lean": 6.0, "x": 2.0},
+					{"t": 1.0, "lean": 0.0, "x": 0.0}
+				]
+			},
+			{ # Tajo amplio de revés con giro del torso
+				"length": 2.4, "hit_delay": 0.02,
+				"keys": [
+					{"t": 0.0, "pos": Vector2(-6.0, 7.0), "rot": 68.0},
+					{"t": 0.36, "pos": Vector2(13.0, -5.0), "rot": -68.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(14.0, -6.0), "rot": -78.0},
+					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
+				],
+				"body": [
+					{"t": 0.0, "lean": 6.0, "x": -2.0},
+					{"t": 0.36, "lean": -10.0, "x": 4.5},
+					{"t": 0.58, "lean": -5.0, "x": 1.8},
+					{"t": 1.0, "lean": 0.0, "x": 0.0}
+				]
+			}
+		]
+	},
 	"katana": {
 		"pose": {"support": Vector2(16.0, 26.1)},
 		"hold": {"pos": Vector2(0.0, 2.0), "rot_deg": -16.0},

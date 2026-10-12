@@ -36,6 +36,8 @@ var _selected: int = 0
 var _previous: int = 0
 ## Último arma que emitió WeaponManager: distingue un cambio real de un refresco (recarga, poción sin recarga)
 var _last_weapon: WeaponData = null
+## true cuando el arma equipada no entró a la barra (barra llena): la mano no se cambia por el casillero seleccionado.
+var _hand_off_bar: bool = false
 ## Layout guardado que todavía no se pudo resolver (el arsenal aún no cargó)
 var _layout_pending: bool = false
 ## Armas en el arsenal la última vez que se miró: si crece, las nuevas entran a la barra (ver `_place_loose_weapons`).
@@ -133,10 +135,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_select(i)
 			return
 
-	if event.is_action_pressed("weapon_next"):
+	# Ctrl + rueda es el zoom de la cámara (core/camera_follow.gd): no cambia de arma.
+	var zoom_held: bool = Input.is_key_pressed(KEY_CTRL)
+	if event.is_action_pressed("weapon_next") and not zoom_held:
 		get_viewport().set_input_as_handled()
 		_step(1)
-	elif event.is_action_pressed("weapon_prev"):
+	elif event.is_action_pressed("weapon_prev") and not zoom_held:
 		get_viewport().set_input_as_handled()
 		_step(-1)
 	elif event.is_action_pressed("weapon_toggle"):
@@ -269,9 +273,11 @@ func _on_weapon_changed(weapon: WeaponData, _index: int) -> void:
 	if target < 0:
 		target = _first_empty()
 	if target < 0:
-		target = _selected
-		_slots[target].set_item(weapon)
-	elif _entry(target) != weapon:
+		# Barra llena: el arma queda en la mano y en el inventario, sin pisar ningún casillero
+		_hand_off_bar = true
+		return
+	_hand_off_bar = false
+	if _entry(target) != weapon:
 		_slots[target].set_item(weapon)
 	_selected = target
 
@@ -334,6 +340,7 @@ func _clean_stale() -> void:
 func _select(index: int) -> void:
 	if not _bound or index == _selected:
 		return
+	_hand_off_bar = false
 	_previous = _selected
 	_selected = index
 	_refresh()
@@ -542,6 +549,8 @@ func _refresh_offhand_slot() -> void:
 ## con un casillero vacío o un consumible el personaje queda con la mano vacía.
 func _sync_hand() -> void:
 	var wm: WeaponManager = _player.weapon_manager
+	if _hand_off_bar and wm.current_weapon != null and _slot_holding(wm.current_weapon) < 0:
+		return
 	var hand: Resource = _entry(_selected)
 	var hand_weapon: WeaponData = hand as WeaponData
 	var has_weapon: bool = hand_weapon != null and wm.weapons.has(hand_weapon)

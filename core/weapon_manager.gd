@@ -629,7 +629,9 @@ func _melee_strike(visual_done: bool) -> void:
 		3.0,
 		current_weapon.get_armor_penetration()
 	)
-	
+	payload.ice_duration = current_weapon.ice_duration
+	payload.ice_speed_multiplier = current_weapon.ice_speed_multiplier
+
 	var melee_scene: PackedScene = preload("res://combat/melee_hitbox.tscn")
 	var melee_instance: MeleeHitbox = melee_scene.instantiate() as MeleeHitbox
 	

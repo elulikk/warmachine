@@ -1,0 +1,60 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://entities/allies/frostmourne_skeleton.gd" id="1_skel"]
+[ext_resource type="Texture2D" path="res://assets/art/skeleton/frostmourne_skeleton.png" id="6_tex"]
+[ext_resource type="Script" path="res://core/health_component.gd" id="2_health"]
+[ext_resource type="Script" path="res://core/status_receiver_component.gd" id="3_status"]
+[ext_resource type="Script" path="res://core/components/target_scanner_component.gd" id="4_scanner"]
+[ext_resource type="Script" path="res://core/components/voice_component.gd" id="5_voice"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(28, 48)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(30, 48)
+
+[node name="FrostmourneSkeleton" type="CharacterBody2D" groups=["allies"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_skel")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -24)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Visuals" type="Node2D" parent="."]
+
+[node name="Sprite" type="Sprite2D" parent="Visuals"]
+position = Vector2(0, -24)
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("6_tex")
+hframes = 4
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+max_health = 80.0
+
+[node name="StatusReceiverComponent" type="Node" parent="." node_paths=PackedStringArray("health_component", "visual_node")]
+script = ExtResource("3_status")
+health_component = NodePath("../HealthComponent")
+visual_node = NodePath("../Visuals/Sprite")
+
+[node name="TargetScannerComponent" type="Node2D" parent="."]
+script = ExtResource("4_scanner")
+detection_radius = 320.0
+target_groups = ["enemies"]
+scan_interval = 0.2
+
+[node name="VoiceComponent" type="Node2D" parent="."]
+script = ExtResource("5_voice")
+offset_y = -60.0
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 4
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -24)
+shape = SubResource("RectangleShape2D_hurtbox")

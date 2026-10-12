@@ -16,6 +16,15 @@ var status_receiver: StatusReceiverComponent = null
 ## Registro de badges personalizados para debuffs adicionales { "POISON": HBoxContainer, ... }
 var _custom_badges: Dictionary = {}
 
+## Iconos de estado (assets/art/status). Si un estado no está acá, su badge usa un cuadro de color.
+const ICON_PATHS: Dictionary = {
+	"POISON": "res://assets/art/status/status_poison.png",
+	"ACID": "res://assets/art/status/status_acid.png",
+	"STUN": "res://assets/art/status/status_stun.png",
+	"CRITICAL": "res://assets/art/status/status_critical.png",
+	"SLOW": "res://assets/art/status/status_slow.png",
+}
+
 
 func _ready() -> void:
 	position.y = offset_y
@@ -93,10 +102,19 @@ func register_custom_status(status_id: String, badge_color: Color, show_label: b
 	badge.visible = false
 	badge.add_theme_constant_override("separation", 2)
 	
-	var icon: ColorRect = ColorRect.new()
-	icon.custom_minimum_size = Vector2(12, 12)
-	icon.color = badge_color
-	badge.add_child(icon)
+	var icon_path: String = ICON_PATHS.get(key, "")
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		var tex_icon: TextureRect = TextureRect.new()
+		tex_icon.custom_minimum_size = Vector2(14, 14)
+		tex_icon.texture = load(icon_path) as Texture2D
+		tex_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		badge.add_child(tex_icon)
+	else:
+		var icon: ColorRect = ColorRect.new()
+		icon.custom_minimum_size = Vector2(12, 12)
+		icon.color = badge_color
+		badge.add_child(icon)
 	
 	if show_label:
 		var lbl: Label = Label.new()

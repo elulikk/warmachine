@@ -268,6 +268,7 @@ func save_to_disk() -> bool:
 						"Katana": "res://data/weapons/katana.tres",
 						"Martillo Pesado": "res://data/weapons/heavy_hammer.tres",
 						"Espada de Hierro": "res://data/weapons/iron_sword.tres",
+						"Frostmourne": "res://data/weapons/frostmourne.tres",
 						"Lanzallamas de Plasma": "res://data/weapons/plasma_flamethrower.tres",
 						"Lanzallamas de Combustible": "res://data/weapons/fuel_flamethrower.tres",
 						"Pistola de Lava": "res://data/weapons/lava_pistol.tres",

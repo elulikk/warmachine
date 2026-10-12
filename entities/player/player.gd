@@ -29,6 +29,8 @@ signal died
 ## Se carga por preload y no por class_name: run.bat no refresca el registro de clases globales.
 const ConsumableManagerScript = preload("res://core/consumables/consumable_manager.gd")
 var consumable_manager: ConsumableManagerScript = null
+## Invocador de esqueletos de la espada Frostmourne (se crea en _ready).
+const FrostmourneSummonerScript = preload("res://entities/allies/frostmourne_summoner.gd")
 ## Aura visual de subida de nivel (estilo MU Online / WoW)
 const LevelUpAuraScript = preload("res://entities/player/level_up_aura.gd")
 const LowHealthFeedbackScript = preload("res://entities/player/low_health_feedback.gd")
@@ -117,6 +119,10 @@ func _ready() -> void:
 	consumable_manager = ConsumableManagerScript.new()
 	consumable_manager.name = "ConsumableManager"
 	add_child(consumable_manager)
+
+	var frostmourne_summoner: Node = FrostmourneSummonerScript.new()
+	frostmourne_summoner.name = "FrostmourneSummoner"
+	add_child(frostmourne_summoner)
 
 	var low_health: Node = LowHealthFeedbackScript.new()
 	low_health.name = "LowHealthFeedback"

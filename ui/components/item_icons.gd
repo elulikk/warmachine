@@ -601,7 +601,7 @@ static func _weapon_kind(weapon: WeaponData) -> String:
 	match path.get_file().get_basename():
 		"combat_knife":
 			return "knife"
-		"iron_sword":
+		"iron_sword", "frostmourne":
 			return "sword"
 		"katana":
 			return "katana"

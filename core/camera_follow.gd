@@ -18,6 +18,11 @@ var _base_offset: Vector2 = Vector2.ZERO
 ## la misma porción del mundo (ver `ui_scale` en core/settings.gd).
 var _base_zoom: Vector2 = Vector2.ONE
 var _applied_ui_scale: float = -1.0
+## Zoom que pide el jugador con Ctrl + rueda (1.0 = el del nivel).
+const ZOOM_STEP: float = 1.1
+const ZOOM_MIN: float = 0.5
+const ZOOM_MAX: float = 2.5
+var _user_zoom: float = 1.0
 var _shake_strength: float = 0.0
 var _shake_duration: float = 0.0
 var _shake_time_left: float = 0.0
@@ -61,7 +66,28 @@ func _sync_ui_scale() -> void:
 	if is_equal_approx(ui_scale, _applied_ui_scale):
 		return
 	_applied_ui_scale = ui_scale
-	zoom = _base_zoom / maxf(ui_scale, 0.1)
+	_apply_zoom()
+
+
+## Zoom final: base del nivel, compensado por la escala de interfaz, multiplicado por el zoom del jugador.
+func _apply_zoom() -> void:
+	var ui_scale: float = get_tree().root.content_scale_factor
+	zoom = _base_zoom / maxf(ui_scale, 0.1) * _user_zoom
+
+
+## Ctrl + rueda acerca (arriba) o aleja (abajo) la cámara. Mantener Ctrl es lo que lo activa.
+func _unhandled_input(event: InputEvent) -> void:
+	var wheel: InputEventMouseButton = event as InputEventMouseButton
+	if wheel == null or not wheel.pressed or not Input.is_key_pressed(KEY_CTRL):
+		return
+	if wheel.button_index == MOUSE_BUTTON_WHEEL_UP:
+		_user_zoom = clampf(_user_zoom * ZOOM_STEP, ZOOM_MIN, ZOOM_MAX)
+	elif wheel.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		_user_zoom = clampf(_user_zoom / ZOOM_STEP, ZOOM_MIN, ZOOM_MAX)
+	else:
+		return
+	_apply_zoom()
+	get_viewport().set_input_as_handled()
 
 
 func _process(delta: float) -> void:

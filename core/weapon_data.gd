@@ -87,6 +87,12 @@ signal runes_changed
 ## Duración de intangibilidad/fase contra enemigos al realizar el tajo (Katana: 0.15s).
 @export var melee_phase_duration: float = 0.0
 
+## Duración del hielo que aplica cada golpe melee (Frostmourne: 2.0 s). 0 = la del receptor (2.5 s).
+@export var ice_duration: float = 0.0
+
+## Velocidad restante bajo hielo tras cada golpe melee (0.5 = mitad). 0 = la del receptor.
+@export var ice_speed_multiplier: float = 0.0
+
 ## Si es true, al ejecutar o conectar el ataque genera una onda de choque en el suelo (Martillo Pesado).
 @export var creates_ground_shockwave: bool = false
 @export var shockwave_scene: PackedScene = null
