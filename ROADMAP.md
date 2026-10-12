@@ -498,6 +498,35 @@ Contenido mínimo para validarlo:
 
 ---
 
+## 6i. Fase Y — Espada Frostmourne (esqueletos aliados y congelado)
+*Objetivo:* Una espada que congela a lo que golpea y que, al matar, recluta esqueletos aliados que pelean al lado del jugador. Cada aliado vivo le quita vida máxima al jugador, así que el arma se paga con riesgo.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium**. Cada paso de abajo es una tarea aparte, una por vez.
+
+**Comportamiento pedido:**
+- **Congelado:** cada golpe de la espada ralentiza al enemigo. Se reutiliza el efecto de hielo que ya existe (`ice_duration` e `ice_speed_multiplier` en `HitPayload`, aplicado por `apply_ice` en `StatusReceiverComponent`). Valores iniciales a ajustar en la Sala de Estrés.
+- **Invocación:** cada enemigo que el jugador mata con la espada invoca un esqueleto aliado junto al cadáver.
+- **Duración:** el esqueleto pelea con el jugador (ataca enemigos y lo sigue) hasta morir. No expira.
+- **Tope:** como máximo **5 esqueletos a la vez**. Si hay 5 vivos, matar más no invoca nada.
+- **Costo:** cada esqueleto vivo le quita **5 % de la vida máxima base** del jugador, de forma lineal (apilado sumando, no multiplicando). Con 5 vivos, 25 % menos.
+- **Recuperación:** cuando un esqueleto muere, la vida máxima vuelve a subir.
+- **Sin arte por ahora:** el esqueleto y el arma son placeholders (cuadrado de color del tamaño de un enemigo humano). Los sprites los pasa el usuario después.
+
+**Supuesto a confirmar:** si la vida máxima baja por debajo de la vida actual, la vida actual se recorta al nuevo máximo.
+
+**Pasos:**
+1. **Arma:** nuevo `.tres` en `data/weapons/` de tipo espada, con `ice_duration` e `ice_speed_multiplier` en el payload de sus golpes. Sin lógica nueva en este paso.
+2. **Congelado:** verificar que un golpe de la espada aplica el hielo al enemigo y que el enemigo se mueve más lento mientras dura. Ajustar duración y velocidad.
+3. **Invocación:** al matar con la espada, crear el aliado en la posición del cadáver. Se engancha en la señal de muerte del enemigo y respeta el tope de 5.
+4. **Aliado esqueleto:** basado en `entities/allies/ally_base.gd` (ya maneja grupos de aliados, vida y muerte). Revisar si `entities/allies/mercenary_skeleton.gd` sirve como base, aunque los mercenarios siguen en stand-by.
+5. **Penalidad de vida máxima:** contar los esqueletos vivos y bajar la vida máxima del jugador en `StatsManager` (5 % de la base por aliado). Al morir un aliado, recalcular. No tocar la fórmula de subida de nivel.
+6. **Arte (cuando el usuario pase la hoja de sprites):** reemplazar el cuadrado por el esqueleto animado e ícono de la espada.
+
+**Archivos:** `data/weapons/` (nuevo `.tres`), `combat/hit_payload.gd` y `core/status_receiver_component.gd` (hielo, ya existen), `entities/allies/ally_base.gd`, `entities/allies/mercenary_skeleton.gd` (referencia), `StatsManager` (vida máxima), `core/health_component.gd` (señal de muerte).
+
+**Criterio de cierre:** en el Banco de Pruebas, con F5: cada golpe de la espada ralentiza al enemigo; matar con la espada invoca un esqueleto que pelea; nunca hay más de 5 vivos a la vez; la vida máxima baja 5 % de la base por cada esqueleto vivo y vuelve al morir; sin errores de script en el log.
+
+---
+
 ## 7. Después del Prototipo (no entra ahora)
 - Los 50 niveles y los 5 capítulos (Fase 16 del plan anterior). Hechos: 1-1 a 1-5.
 - Stand-by de la sección 0.
