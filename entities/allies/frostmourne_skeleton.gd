@@ -3,6 +3,12 @@ extends AllyBase
 ## Nace contratado: sigue al jugador y ataca al enemigo más cercano que detecta.
 ## No tiene fin de duración: pelea hasta morir. Sus golpes salen con source_node = él mismo y se aplican
 ## directo al enemigo (sin hitbox), así que nunca lastiman al Player ni a otros aliados.
+## Al invocarse se arma desde el suelo (hoja de spawn, 6 cuadros) y mientras tanto no se mueve ni recibe golpes.
+
+const ArtScript = preload("res://core/art/art.gd")
+const SPAWN_SHEET_PATH: String = "res://assets/art/skeleton/frostmoon_spawn_sheet.png"
+const SPAWN_FRAMES: int = 6
+const SPAWN_FPS: float = 9.0
 
 enum SkeletonState { FOLLOW, COMBAT }
 
@@ -22,6 +28,9 @@ var current_state: SkeletonState = SkeletonState.FOLLOW
 var _slash_timer: float = 0.0
 var _attack_show: float = 0.0
 var _walk_t: float = 0.0
+var _spawning: bool = false
+var _spawn_t: float = 0.0
+var _walk_texture: Texture2D = null
 @onready var sprite: Sprite2D = get_node_or_null("Visuals/Sprite") as Sprite2D
 
 
@@ -29,6 +38,7 @@ func _ready() -> void:
 	# Antes de super._ready: AllyBase activa la hurtbox según is_hired.
 	is_hired = true
 	super._ready()
+	_start_spawn()
 
 
 func _physics_process(delta: float) -> void:
@@ -36,6 +46,11 @@ func _physics_process(delta: float) -> void:
 		return
 	if not is_on_floor():
 		velocity.y += gravity * delta
+	if _spawning:
+		_process_spawn(delta)
+		move_and_slide()
+		super._physics_process(delta)
+		return
 	if _slash_timer > 0.0:
 		_slash_timer = maxf(0.0, _slash_timer - delta)
 
@@ -62,6 +77,45 @@ func _animate(delta: float) -> void:
 		sprite.frame = int(_walk_t) % 3
 	else:
 		sprite.frame = 0
+
+
+## Arranca la animación de armado: cambia a la hoja de 6 cuadros y bloquea movimiento y golpes.
+func _start_spawn() -> void:
+	var spawn_tex: Texture2D = ArtScript.tex(SPAWN_SHEET_PATH)
+	if sprite == null or spawn_tex == null:
+		return
+	_walk_texture = sprite.texture
+	sprite.texture = spawn_tex
+	sprite.hframes = SPAWN_FRAMES
+	sprite.frame = 0
+	_spawning = true
+	_spawn_t = 0.0
+
+
+func _process_spawn(delta: float) -> void:
+	velocity.x = 0.0
+	_spawn_t += delta
+	var step: int = int(_spawn_t * SPAWN_FPS)
+	if step >= SPAWN_FRAMES:
+		_end_spawn()
+		return
+	if sprite != null:
+		sprite.frame = step
+
+
+func _end_spawn() -> void:
+	_spawning = false
+	if sprite != null and _walk_texture != null:
+		sprite.texture = _walk_texture
+		sprite.hframes = 4
+		sprite.frame = 0
+
+
+## Mientras se arma no recibe golpes.
+func take_hit(payload: HitPayload) -> void:
+	if _spawning:
+		return
+	super.take_hit(payload)
 
 
 func _process_follow_state(delta: float) -> void:

@@ -525,6 +525,7 @@ Contenido mínimo para validarlo:
 4. **Aliado esqueleto:** ✅ `entities/allies/frostmourne_skeleton.gd/.tscn`, basado en `AllyBase` (no en `mercenary_skeleton`, que tiene prompt de contratación y arte de esqueleto). Arte: hoja `assets/art/skeleton/frostmourne_skeleton.png` (4 cuadros, escala 0.7; cuadros 0 a 2 al caminar, 3 al golpear). Colisión 28×48, 80 de vida. Ataca al enemigo más cercano con golpes directos (sin hitbox, así no alcanza al Player). *(Verificado: sigue al jugador y mata a un corredor; el jugador no pierde vida. Sin verificar a mano.)*
 5. **Penalidad de vida máxima:** ✅ en `frostmourne_summoner.gd`: modificador plano de `max_health` de −5 por esqueleto (5 % de `base_max_health`), que vuelve al morir el aliado o al salir de la escena. No se tocó la fórmula de nivel. *(Verificado: 180 → 155 con 5 vivos; 160 al morir uno. Sin verificar a mano la barra de vida.)*
 6. **Arte:** ✅ `assets/art/weapons/frostmourne.png` (256 px de ancho, fondo quitado, sin halo) y registro en `weapon_art.gd`, `weapon_motion.gd`, `item_icons.gd` y `save_manager.gd`. *(Verificado: el id de movimiento, el perfil de tajos, la textura y el ícono "sword" resuelven. No se vio el arma en mano en juego.)* Los pasos 3 a 5 están hechos (ver arriba). El halo residual es alfa 1 a 3, invisible.
+7. **Armado (spawn):** ✅ el esqueleto nace con la hoja `assets/art/skeleton/frostmoon_spawn_sheet.png` (6 cuadros de 68×71, a 9 fps, unos 0.6 s) y después vuelve a la hoja de caminar. Mientras se arma no se mueve, no ataca y no recibe golpes (`take_hit`). *(Verificado con una escena descartable: 6 cuadros en orden, luego la hoja de 4 cuadros; sin errores de script. Sin verificar a mano.)* Pendiente de arte: el último cuadro de la hoja es un caballero con armadura y capa, y el esqueleto de caminar es más simple, así que hay un salto visual al final del armado; se corrige regenerando la hoja.
 
 **Archivos:** `data/weapons/frostmourne.tres` (nuevo), `core/weapon_data.gd` (`ice_duration`, `ice_speed_multiplier`), `core/weapon_manager.gd` (`_melee_strike` pasa el hielo al payload), `entities/player/player.gd` (crea el invocador), `entities/allies/frostmourne_summoner.gd` (invocación, tope y penalidad), `entities/allies/frostmourne_skeleton.gd/.tscn` (aliado), `entities/allies/ally_base.gd` (base), `core/art/weapon_art.gd`, `core/art/weapon_motion.gd`, `ui/components/item_icons.gd`, `core/managers/save_manager.gd` (arte y registro del arma).
 
@@ -534,10 +535,111 @@ Contenido mínimo para validarlo:
 
 ---
 
+## 6j. Fase Z — Escudo espejo
+*Objetivo:* Un escudo al estilo del espejo de Zelda: refleja los ataques arrojadizos (proyectiles que vuelan hacia el jugador) en lugar de absorberlos, y el jugador **elige la dirección** del rebote. Cada rebote quita la **mitad del daño**, así que el proyectil puede rebotar varias veces, perdiendo la mitad en cada una. Sirve para derrotar enemigos que no se pueden alcanzar directamente.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium**. Cada paso de abajo es una tarea aparte, una por vez.
+
+**Comportamiento pedido:**
+- Un proyectil que toca el escudo espejo no hace daño al jugador: sale rebotado en la dirección que apunta el jugador (no necesariamente de vuelta a quien lo disparó).
+- Cada rebote, sea del escudo o de una superficie, deja el proyectil con **50 % del daño** que tenía antes del rebote. El daño se va dividiendo en cada rebote.
+- **Superficies reflejantes:** en algunos mapas habrá plataformas o paredes que reflejan igual que el escudo (sin que el jugador apunte). Un proyectil que rebota contra ellas también pierde la mitad de daño.
+- Los proyectiles pueden rebotar varias veces, por el escudo o por superficies, mientras tengan daño.
+- Sirve para llegar a enemigos inalcanzables: el proyectil rebotado daña a los enemigos que toca, y los enemigos también pueden ser dañados por los rebotes.
+
+**Supuestos a confirmar:**
+- "Arrojadizos" = proyectiles (los de `combat/` y `data/weapons/` como proyectil, y los de `combat/throwables/`). Los golpes cuerpo a cuerpo no se reflejan.
+- Quién lo tiene: hoy el jugador no tiene escudo; el espejo sería una defensa aparte del escudo de energía (8). Falta decidir si es un ítem, una habilidad o un estado.
+- Control de dirección: por defecto, el jugador apunta con el mouse (la dirección del cursor al momento del reflejo). Confirmar si se quiere apuntar con el stick u otra cosa.
+- Tope de rebotes: por defecto no hay tope fijo; el daño ya se corta solo. Un valor mínimo de daño (por ejemplo, si baja de 1) hace que el proyectil desaparezca.
+- Si el proyectil rebotado daña al jugador otra vez (por un rebote en pared que vuelva hacia él), por defecto sí, con el daño ya reducido.
+
+**Pasos:**
+1. **Detección:** que el escudo espejo reconozca el proyectil que lo toca y lo marque como reflejable. Sin cambiar el daño todavía.
+2. **Dirección de reflejo:** el proyectil sale en la dirección que apunta el jugador. Reemplazar el rebote a quien disparó por el rebote hacia el cursor.
+3. **Mitad de daño por rebote:** cada rebote (escudo o superficie) multiplica el daño por 0.5 (valor en una constante, ajustable). Cambia el dueño del proyectil para que dañe a los enemigos.
+4. **Superficies reflejantes:** paredes y plataformas marcadas como reflejantes en los mapas. El proyectil rebota en ellas con la regla de reflejo (ángulo de incidencia) y aplica la mitad de daño.
+5. **Visual y sonido:** destello al reflejar (reusar el anillo de `entities/shield/energy_shield.gd`), rastro del proyectil y un sonido de rebote. Opcional, se puede hacer después.
+
+**Archivos:** `entities/shield/` (nuevo escudo espejo), `combat/projectile.gd` (rebote, dirección y dueño del proyectil), superficies reflejantes en `entities/` o `levels/` (nuevo script de pared/plataforma), `core/sfx.gd` (rebote, opcional).
+
+**Criterio de cierre:** en el Banco de Pruebas, con F5: un proyectil enemigo que llega al escudo espejo sale hacia donde apunta el jugador con la mitad de daño; el jugador no recibe daño por ese proyectil; un proyectil que rebota en una pared reflejante pierde la mitad de daño de nuevo; el proyectil puede derrotar a un enemigo que el jugador no alcanza; sin errores de script en el log.
+
+---
+
+## 6k. Fase R — Red arraigadora
+*Objetivo:* Un ítem arrojadizo que funciona como una granada: se lanza, cae al piso y, al tocarlo, despliega una red que deja **arraigados** a los enemigos que quedan dentro durante un par de segundos.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium**. Cada paso de abajo es una tarea aparte, una por vez.
+
+**Comportamiento pedido:**
+- Se lanza como las granadas existentes (`combat/throwables/`): arco, rebota poco y cae al piso.
+- Al tocar el piso despliega una red en un área, visible, que dura poco.
+- Los enemigos dentro del área quedan **arraigados** durante **unos 2 segundos**: no pueden moverse. Al terminar, se liberan solos.
+- Un enemigo que entra en la red mientras está activa también queda arraigado.
+
+**Supuestos a confirmar:**
+- Arraigado = no se mueve. Por defecto puede seguir atacando a distancia y recibir daño. Confirmar si también debe impedir atacar.
+- La red no hace daño por sí sola. Por defecto, cero daño; si se quiere daño, se suma después.
+- Duración por defecto 2.0 s y radio por defecto a definir en la Sala de Estrés.
+- Ítem: se vende en el mercader y entra al inventario como las demás granadas (`data/items/throwables/`).
+
+**Pasos:**
+1. **Ítem:** nuevo `.tres` en `data/items/throwables/` con su ícono. Sin lógica nueva en este paso.
+2. **Lanzamiento y caída:** basado en `combat/throwables/frag_grenade.tscn`, con la misma trayectoria y el mismo tiempo de caída. Al tocar el piso crea la red.
+3. **Red y arraigo:** la red detecta a los enemigos dentro del área y les aplica el estado de arraigo por el tiempo definido. El arraigo impide el movimiento (no la acción por defecto). Usar `StatusReceiverComponent` como con el hielo y el fuego.
+4. **Visual y sonido:** dibujo procedural de la red (líneas en el piso) y un sonido corto al desplegar. Opcional.
+
+**Archivos:** `data/items/throwables/` (nuevo `.tres`), `combat/throwables/` (nueva escena de red), `core/status_receiver_component.gd` (estado de arraigo), `core/sfx.gd` (sonido, opcional).
+
+**Criterio de cierre:** en el Banco de Pruebas, con F5: la red cae al piso donde se lanza; los enemigos que quedan dentro no se mueven durante unos 2 s y luego se liberan; un enemigo que entra con la red activa también queda arraigado; el ítem se compra en el mercader y se lanza como las demás granadas; sin errores de script en el log.
+
+---
+
+## 6l. Fase J — Invocaciones que se separan y se mueven solas
+*Objetivo:* Que las invocaciones (los esqueletos de Frostmourne y cualquier otra invocación futura) no se amontonen. Hoy, con varias vivas, se superponen en el mismo punto y parecen una sola. Tienen que ocupar su propio espacio alrededor del jugador y moverse solas.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium**. Cada paso de abajo es una tarea aparte, una por vez.
+
+**Comportamiento pedido:**
+- Las invocaciones se reparten alrededor del jugador (free roaming): cada una tiene su lugar y no se pisa con las demás.
+- Se mueven de un lado a otro dentro de ese espacio, y a veces se detienen un rato antes de volver a moverse. Es un movimiento de ambiente, no de combate.
+- Se separan entre sí: dos invocaciones no pueden ocupar el mismo punto.
+- Vale para todas las invocaciones (Frostmourne y las futuras), no solo para los esqueletos.
+
+**Supuestos a confirmar:**
+- Radio alrededor del jugador: por defecto, una distancia que deje ver a cada una (a definir en la Sala de Estrés).
+- Cuando el jugador se mueve, las invocaciones lo siguen en lugar de quedarse atrás.
+- Cuando hay combate, las invocaciones van a atacar enemigos, y al terminar vuelven a su zona alrededor del jugador.
+
+**Pasos:**
+1. **Separación:** cada invocación empuja a las demás si quedan demasiado cerca, para que no se superpongan. Sin cambiar el movimiento todavía.
+2. **Zona de descanso:** asignar a cada invocación un punto alrededor del jugador y que vuelva a él cuando no hay enemigo cerca.
+3. **Movimiento de ambiente:** que cada invocación camine a un punto cercano de su zona, se detenga un rato (tiempo al azar) y siga. Usar valores en constantes.
+4. **Prueba con seis invocaciones:** en la Sala de Estrés, invocar seis esqueletos y verificar que se ven separados y se mueven distinto.
+
+**Archivos:** `entities/allies/ally_base.gd` (separación y zona de descanso, para todas las invocaciones), `entities/allies/frostmourne_skeleton.gd` (ajustes propios si hacen falta), `entities/allies/frostmourne_summoner.gd` (si hace falta pasar el punto de referencia).
+
+**Criterio de cierre:** en la Sala de Estrés, con F5: con seis invocaciones vivas, se ven seis separadas alrededor del jugador, sin superponerse; se mueven de un lado a otro y hacen pausas; siguen al jugador y vuelven a su zona después de pelear; sin errores de script en el log.
+
+---
+
 ## 7. Después del Prototipo (no entra ahora)
 - Los 50 niveles y los 5 capítulos (Fase 16 del plan anterior). Hechos: 1-1 a 1-5.
 - Stand-by de la sección 0.
 - Cierre y exportación a `.exe` (cuando el bucle esté validado): el pipeline ya está listo (sección 6b), falta instalar las plantillas y probar.
+
+**Ideas a futuro (sin fecha):**
+- **Capa de invisibilidad (ítem, al estilo de Harry Potter):**
+  - *Efecto:* el jugador se vuelve invisible y los enemigos pierden el agro sobre él (dejan de perseguirlo y de dispararle).
+  - *Robo de la capa:* mientras el jugador está invisible, si un enemigo lo ataca o lo toca, le roba la capa. El enemigo queda invisible, y el jugador no puede recuperar la capa hasta matar a ese enemigo.
+  - *Supuestos a confirmar:* el enemigo ladrón queda invisible para todo el mundo (incluido el jugador, que lo tiene que encontrar por otros medios, como un efecto de sonido o un contorno tenue), y no se puede recuperar la capa si el enemigo muere de otra forma (por ejemplo, con una explosión o un proyectil).
+  - *Archivos (futuro):* nuevo ítem en `data/items/`, estado de invisibilidad en `core/status_receiver_component.gd`, y agro en `entities/enemies/`.
+- **Boomerang (ítem arrojadizo):**
+  - *Efecto:* se lanza hacia el cursor, vuela en arco, daña a los enemigos que toca en la ida y en la vuelta, y regresa a la mano del jugador. Se puede atrapar antes de que llegue o dejar que vuelva solo.
+  - *Supuestos a confirmar:* daño por golpe (si un enemigo se golpea dos veces, en la ida y la vuelta, cuenta como dos); si cae al piso antes de volver, se recupera caminando hasta él.
+  - *Archivos (futuro):* `data/items/throwables/` (nuevo `.tres`), `combat/throwables/` (nueva escena con trayectoria de regreso).
+- **Casco de rayo láser (estilo Superman, Cíclope u Homelander):**
+  - *Efecto:* el jugador dispara un rayo láser desde los ojos, apuntado al cursor. Es un haz continuo mientras se mantiene el clic, con daño por tick, o un disparo corto, según se decida.
+  - *Supuestos a confirmar:* si consume munición o energía (sugerencia: una barra de energía que se recarga sola), si el rayo atraviesa a varios enemigos (sugerencia: sí, como Cíclope), y si el casco va en el slot de cabeza.
+  - *Archivos (futuro):* nuevo ítem en `data/items/`, nueva arma de tipo láser en `data/weapons/`, visual del haz en `combat/`.
 
 ---
 
