@@ -22,6 +22,13 @@ const EARLY_MAX_TIER: int = 1
 
 @export var entries: Array[LootEntry] = []
 
+@export_group("Escudo")
+## Probabilidad (por muerte) de soltar `shield_item`. No depende del tier de botín del nivel,
+## así que sirve para los primeros sectores, donde el resto del equipo todavía no cae.
+@export_range(0.0, 1.0) var shield_chance: float = 0.0
+## Escudo que puede soltar esta tabla (`WeaponData` con grip SHIELD). Vacío = no suelta escudo.
+@export var shield_item: Resource = null
+
 @export_group("Equipo")
 ## Probabilidad base (0 a 1) de soltar una pieza de equipo en un nivel de tier 1.
 ## Crece 50% por cada tier de nivel adicional. 0 = esta tabla no suelta equipo.

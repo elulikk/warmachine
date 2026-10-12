@@ -12,7 +12,12 @@ const IMPLEMENTED_LEVELS: Array[String] = [
 	"res://levels/chapter_1/level_1_02.tscn",
 	"res://levels/chapter_1/level_1_03.tscn",
 	"res://levels/chapter_1/level_1_04.tscn",
-	"res://levels/chapter_1/level_1_05.tscn"
+	"res://levels/chapter_1/level_1_05.tscn",
+	"res://levels/chapter_1/level_1_06.tscn",
+	"res://levels/chapter_1/level_1_07.tscn",
+	"res://levels/chapter_1/level_1_08.tscn",
+	"res://levels/chapter_1/level_1_09.tscn",
+	"res://levels/chapter_1/level_1_10.tscn"
 ]
 
 static var CHAPTER_NAMES: Dictionary = {

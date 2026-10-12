@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="9_runner"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="10_wpickup"]
 [ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="11_knife"]
+[ext_resource type="Resource" path="res://data/weapons/wooden_shield.tres" id="40_shield"]
 [ext_resource type="Resource" path="res://data/weapons/rust_revolver.tres" id="12_revolver"]
 [ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="13_checkpoint"]
 [ext_resource type="PackedScene" path="res://entities/enemies/training_dummy.tscn" id="14_dummy"]
@@ -409,6 +410,31 @@ position = Vector2(160, 545)
 [node name="KnifePickup" parent="." instance=ExtResource("10_wpickup")]
 position = Vector2(2700, 512)
 weapon_data = ExtResource("11_knife")
+
+[node name="PedestalShield" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(2830, 547)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalShield"]
+shape = SubResource("RectangleShape2D_pedestal")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalShield"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+color = Color(0.25, 0.3, 0.42, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalShield"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="ShieldPickup" parent="." instance=ExtResource("10_wpickup")]
+position = Vector2(2830, 512)
+weapon_data = ExtResource("40_shield")
 
 [node name="KnifeRunner1" parent="." instance=ExtResource("9_runner")]
 position = Vector2(3350, 555)

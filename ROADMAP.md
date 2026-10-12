@@ -11,7 +11,7 @@
   - Rarezas y tooltips RPG, forja con el Herrero.
 * **Ya existe y se reutiliza:** `LevelRegistry`, `MapSelector` (pestañas por capítulo y grilla de niveles), `LevelBase`, orbes de EXP.
 * **Validado en juego:** Fase A (game feel) y los sectores 1-1 a 1-4 (secciones 2.1 a 2.2c). El balance fino de cada nivel sigue anotado como pendiente en su sección.
-* **Armado, pendiente de validar:** Sector 1-5 (sección 2.2d) y la segunda tanda de la Fase O (opciones, posprocesado, recarga por arma, pantalla de carga, registro de errores, ícono y versión del `.exe`).
+* **Armado, pendiente de validar:** Sector 1-5 (sección 2.2d), sectores 1-6 a 1-10 (sección 2.2e), el escudo de madera (Fase G) y la segunda tanda de la Fase O (opciones, posprocesado, recarga por arma, pantalla de carga, registro de errores, ícono y versión del `.exe`).
 * **Hecho y validado en juego (2026-10-11):** comercio de dos columnas con venta y recompra (`TradeSession`, `TraderData`, `TradeWindow`; sección 2.3), arrastrar armas de la mochila a la barra de acceso rápido, fogonazo y humo del arma, chispas contra el entorno, sangre / manchas / heridas / tripas al dañar y matar enemigos con arte propio (`combat/damage_fx.gd`, `assets/art/fx/`), botón SIGUIENTE SECTOR en la victoria y relleno de suelos solo sobre el vacío.
 * **Hecho (2026-10-11, pendiente de validar en juego):** Sala de Estrés con monitor de rendimiento, fusión de botín y orbes, experiencia con gravedad, cola de efectos de muerte (sin congelamiento al matar muchos juntos), engranaje de munición que recarga al instante. Ver sección 6c.
 * **Versión:** `config/version` en `project.godot` (hoy 0.5.0); se ve en el menú principal y en las propiedades del `.exe`.
@@ -179,7 +179,7 @@ Contenido mínimo para validarlo:
 | 5 | Desvío opcional | 5750–6450 | Escalera de 3 plataformas a la **Runa de Perforación** (+1 enemigo atravesado). Checkpoint (x 5750). |
 | 6 | Arena final | 6800–8150 | **Rondas `[4, 6, 6]`**, Centinelas `[1, 1, 2]`, descanso de 5 s. Checkpoint (x 6650). |
 | 7 | Recompensa | 8450 | Pedestal con el **Subfusil MP5** (automático, 7 de daño a 9 tiros/s). |
-| 8 | Extracción | 8800 | `ExitGate`. Desbloquea el Sector 1-6 (todavía esqueleto, sale como PENDIENTE). |
+| 8 | Extracción | 8800 | `ExitGate`. Desbloquea el Sector 1-6 (sección 2.2e). |
 
 **Reglas y decisiones:**
 - **Cómo se resuelve:** 190 de vida efectiva (130 + 60). La carabina (10 balas de 20) lo mata con un cargador si acierta todo; el revólver (6 de 18) necesita recargar, y su recarga (2.0 s) es menor que la espera del escudo (3.0 s): si se recarga y se sigue tirando, el escudo no vuelve.
@@ -190,6 +190,32 @@ Contenido mínimo para validarlo:
 - **Barra rápida:** las armas garantizadas, compradas o recogidas sin equipar ahora entran solas a los casilleros 1-3 libres (antes una partida con barra guardada no las mostraba y había que ir al inventario).
 
 **Pendiente de balance:** si la arena final con 2 Centinelas es demasiado y si el MP5 llega tarde o temprano.
+
+---
+
+## 2.2e Fase A.6 a A.10 — Niveles 6 a 10 (Sectores 1-6 a 1-10): oleadas grandes
+*Estado:* Armados en `levels/chapter_1/level_1_06.tscn` a `level_1_10.tscn` y registrados en `LevelRegistry.IMPLEMENTED_LEVELS`. Cargan sin errores de script en headless. **Sin validar en juego.**
+*Objetivo:* Cerrar el primer mundo con arenas de oleadas grandes (de 5 a 18 enemigos por ronda) y subir la dificultad de a poco.
+
+**Estructura común (igual que el 1-5):** entrada → arena 1 → pasillo → arena 2 → desvío con runa opcional (no en 1-7 ni 1-9) → arena 3 → pedestal de recompensa → extracción. Las tres arenas están en las mismas posiciones del 1-5 y el recorrido mide 9000 px.
+
+| Sector | Tema | Rondas (arena 1 / 2 / 3) | Élite por ronda | Recompensa | Runa en el desvío | Tier de botín |
+|---|---|---|---|---|---|---|
+| 1-6 | Enjambre | [5] / [6, 7] / [7, 9, 9] | Bruto en 2 y 3 | Revólver Colt .44 | Bifurcación | 2 |
+| 1-7 | Escopeta | [6, 6] / [8] / [8, 10, 10] | Zombi (1), Centinela (2), Bruto (3) | Escopeta de Choque | — | 2 |
+| 1-8 | Horda | [10] / [10, 12] / [12, 12, 14] | Zombi (2), Centinela (3) | AK-47 | Rebote | 3 |
+| 1-9 | Asedio | [8, 10] / [10, 10, 12] / [12, 14, 14] | Bruto (1 y 3), Centinela (2) | Desert Eagle | — | 3 |
+| 1-10 | Núcleo | [12] / [14, 14] / [16, 16, 18] | Bruto (1 y 3), Centinela (2) | Rifle de Precisión | Filo | 3 |
+
+**Pasillos (enemigos sueltos):** 1-6 ladrón, ladrón, zombi · 1-7 ladrón, bruto, ladrón · 1-8 ladrón, fantasma, ladrón, zombi · 1-9 centinela, ladrón, zombi · 1-10 ladrón, centinela, fantasma, zombi.
+
+**Reglas y decisiones:**
+- **Sin mecánicas nuevas:** solo se usan los enemigos que ya existen (ladrón, zombi, fantasma, bruto, centinela). Las rondas son de `WaveManager` con descanso de 5 s y aparición cada 0.6 s.
+- **Élites sin límite:** la presión sale de las cantidades; no hay tope de élites vivos como en el 1-5. Si una arena resulta injusta, se corrige con `elite_per_round` o `round_sizes` en el Inspector.
+- **Sector 1-10 [JEFE]:** el nombre dice jefe, pero el juego todavía no tiene mecánica de jefe. Se usa como la oleada final más grande del primer mundo. **Pendiente:** decidir si lleva un jefe.
+- **Victoria del 1-10:** lleva al Capítulo 2, que todavía no está armado.
+
+**Pendiente de balance:** cantidades por ronda, si las arenas de 16 a 18 enemigos son justas, y cuánto cambia la dificultad con el escudo de madera (Fase G).
 
 ---
 
@@ -218,7 +244,7 @@ Contenido mínimo para validarlo:
 ---
 
 ## 2.5 Fase S — Sonido Básico (8-bit)
-*Estado:* Armado (pendiente de validación en juego). Efectos con estética shooter clásico (tipo Doom: ruido filtrado, golpe grave, eco de sala y grano ~11 kHz / 7 bits). Módulo `core/sfx.gd` con unos 55 efectos sintetizados, enganchado en armas, combate, jugador, recolección, tienda, granadas y mundo. Ver PROJECT_CONTEXT (`sfx.gd` y `GameFeel`) para el catálogo. Quedan sin sonido a propósito: música, ambiente, pasos y voces.
+*Estado:* Armado (pendiente de validación en juego). Efectos con estética shooter clásico (tipo Doom: ruido filtrado, golpe grave, eco de sala y grano ~11 kHz / 7 bits). Módulo `core/sfx.gd` con unos 55 efectos sintetizados, enganchado en armas, combate, jugador, recolección, tienda, granadas y mundo. Ver PROJECT_CONTEXT (`sfx.gd` y `GameFeel`) para el catálogo. Quedan sin sonido a propósito: música, ambiente, pasos y voces. **Decidido (2026-10-12):** el sonido 8-bit es provisorio. El objetivo es sonido de calidad, como la música: crear o importar los efectos por separado (tarea aparte, no bloquea nada). El gancho `fire_stream` / `hit_stream` de `WeaponData` sirve para cambiarlos arma por arma.
 *Objetivo:* Que cada disparo, golpe, recarga y daño tenga sonido, con efectos sintetizados por código (ondas cuadradas y ruido, estilo 8-bit) y una estructura que permita **reemplazarlos después por audio real sin tocar la lógica**.
 * **Modelo recomendado:** Sonnet, esfuerzo **medium** (ya armado; los ajustes que falten se hacen de a un sistema por vez).
 * **Alcance:**
@@ -312,8 +338,10 @@ Contenido mínimo para validarlo:
 **Ampliación (agregada 2026-10-11, pendiente):**
 - **Agacharse:** ✅ hecho (2026-10-12). Siempre disponible, sin ítem. Mantener abajo en el suelo agacha: cápsula y hurtbox pasan de 64 a 40 px, el arma baja con el cuerpo y se camina a la mitad de velocidad. Al soltar se levanta solo si hay espacio (`test_move`); con techo bajo sigue agachado. Verificado en headless: hitbox, techo bajo, disparo y recarga agachado, sin errores de script. **Sin verificar a mano:** cómo se ve la pose agachada (sentadilla: torso 12 px más abajo e inclinado, muslos adelante y rodillas dobladas; los pies quedan a la altura del suelo (medido). Ajustable con `CROUCH_DROP`, `CROUCH_LEAN` y los ángulos en `character_rig.gd`. Agachado en el suelo se descarta el rebote vertical del retroceso del arma) y la sensación de velocidad.
 - **Dash:** **HECHO (2026-10-12, sin verificar a mano):** ítem `data/items/dash_module.tres` ("Módulo de Dash", accesorio, rara, 180 de oro; sale en el Mercader por `sell_everything`). `EquipmentManager` prende `Player.can_dash` al equiparlo. Acción nueva `dash` (Shift / B del mando, reasignable en Opciones). Impulso de 560 px/s durante 0.16 s, sin gravedad, cada 0.7 s; en el aire uno por salto; no funciona agachado ni en vuelo mágico. Los estados lo leen con `player.is_dashing()` en `PlayerState` (sin estado nuevo en la FSM). Probado con escena descartable: sin el ítem no hace nada; con el ítem recorre ~185 px, en el aire anula la caída, y al desequiparlo se apaga. **Sin verificar:** la sensación (distancia, cooldown) y el sonido (usa `throw`). Constantes `DASH_*` en `player.gd`.
-- **Roll:** pendiente. Mismo esquema que el dash (flag de ítem leído por la FSM). Texto original: Se habilitan con ítems (una ranura de movilidad nueva o un ítem consumible de un solo uso según el caso), así que la FSM tiene que leer el flag del ítem y no hardcodearlo. Desbloqueables a futuro, sin fecha.
-- **Modelo recomendado:** Sonnet, esfuerzo **medium** (toca la FSM del jugador). Agacharse, roll y dash son tareas separadas: una por vez.
+- **Roll:** descartado (2026-10-12): no se usa, el dash cumple la misma función. Texto original, como referencia: Mismo esquema que el dash (flag de ítem leído por la FSM). Texto original: Se habilitan con ítems (una ranura de movilidad nueva o un ítem consumible de un solo uso según el caso), así que la FSM tiene que leer el flag del ítem y no hardcodearlo. Desbloqueables a futuro, sin fecha.
+- **Modelo recomendado:** Sonnet, esfuerzo **medium** (toca la FSM del jugador). Agacharse y dash son tareas separadas: una por vez.
+
+**Fase D CERRADA (2026-10-12):** dash, Botas de Súper Velocidad y agacharse validados a mano.
 
 **Prioridad alta (pedido 2026-10-11, lo antes posible):**
 - **Botas de Súper Velocidad:** una mejora de movilidad por encima de las `Botas Ligeras` del Sector 1-2 (+60 de velocidad). Se vende en el **Mercader** (sección 2.3), así que el ítem tiene precio y aparece en su stock.
@@ -354,7 +382,7 @@ Contenido mínimo para validarlo:
 
 **Pendiente:**
 1. **Enemigos con arte por piezas:** el ladrón, el bruto y el centinela son una ilustración partida en cintura; para brazos que golpeen de verdad hay que separar brazos y arma como se hizo con el héroe (`assets/PSD`). Tarea de arte + `enemy_art.gd`. *Arte a mano, luego Sonnet.*
-2. **Instalar las plantillas de exportación 4.7.2** (Editor > Administrar plantillas) y correr `build_exe.bat`; después **probar el `.zip` en una PC limpia** (sin Godot). No se puede hacer desde el código.
+2. **Diferido (todavía no, falta mucho para una versión final):** instalar las plantillas de exportación 4.7.2 (Editor > Administrar plantillas) y correr `build_exe.bat`; después **probar el `.zip` en una PC limpia** (sin Godot). No se puede hacer desde el código.
 3. **Sombras 2D:** necesitan `LightOccluder2D` en las plataformas y luces por nivel; conviene hacerlo junto con un pase de iluminación de los niveles. Cuando estén, colgarlas del preajuste Ultra.
 4. **Idioma y subtítulos:** quedan fuera mientras el juego tenga un solo idioma (español) y no haya voces. El paso previo sería pasar los textos a `tr()` con un archivo de traducción.
 
@@ -618,6 +646,25 @@ Contenido mínimo para validarlo:
 **Archivos:** `entities/allies/ally_base.gd` (separación y zona de descanso, para todas las invocaciones), `entities/allies/frostmourne_skeleton.gd` (ajustes propios si hacen falta), `entities/allies/frostmourne_summoner.gd` (si hace falta pasar el punto de referencia).
 
 **Criterio de cierre:** en la Sala de Estrés, con F5: con seis invocaciones vivas, se ven seis separadas alrededor del jugador, sin superponerse; se mueven de un lado a otro y hacen pausas; siguen al jugador y vuelven a su zona después de pelear; sin errores de script en el log.
+
+---
+
+## 6m. Fase G — Escudo de madera
+*Objetivo:* El primer escudo del juego, en la mano secundaria. Sirve de base para el escudo espejo (Fase Z), que usará la misma empuñadura `Grip.SHIELD`.
+
+**Hecho (2026-10-12, sin verificar a mano):**
+- **Ítem:** `data/weapons/wooden_shield.tres`: grip escudo, no ataca, 40 de oro, rareza común.
+- **Bloqueo:** mientras está en la mano secundaria, el jugador recibe el 75 % del daño (`SHIELD_BLOCK_MULT` en `entities/player/player.gd`). Probado en headless: 20 de daño pasan a 15.
+- **Drop:** el ladrón suelta el escudo con 5 % de probabilidad (`shield_chance` en `data/loot/basic_runner_loot.tres`). No depende del tier de botín, así que cae desde el 1-1. No cae si el jugador ya lo posee.
+- **Pedestal:** en el Sector 1-1, junto al pedestal del cuchillo (x 2830, el cuchillo está en x 2700).
+
+**Supuestos a confirmar:**
+- El bloqueo es plano: protege de todo, no solo de lo que viene de enfrente.
+- Sin arte propio: usa el ícono y el arte de respaldo.
+
+**Pendiente:** arte del escudo en la mano; decidir si el bloqueo debe ser direccional (solo de frente).
+
+**Archivos:** `data/weapons/wooden_shield.tres` (nuevo), `core/loot/loot_table.gd` (`shield_chance`, `shield_item`), `core/loot/gear_loot.gd` (tirada del escudo), `data/loot/basic_runner_loot.tres`, `entities/player/player.gd` (bloqueo), `levels/chapter_1/level_1_01.tscn` (pedestal).
 
 ---
 

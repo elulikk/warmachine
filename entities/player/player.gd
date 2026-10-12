@@ -100,6 +100,8 @@ var hurt_cooldown: float = 0.0
 const CONTACT_KNOCK_SPEED: float = 260.0
 const CONTACT_KNOCK_UP: float = -120.0
 const CONTACT_KNOCK_TIME: float = 0.18
+## Escudo de madera en la mano secundaria: multiplica el daño que entra (0.75 = 25 % menos).
+const SHIELD_BLOCK_MULT: float = 0.75
 var _knock_time_left: float = 0.0
 ## Sin empujones: ni el retroceso de las propias armas ni el de los golpes recibidos (Sala de Estrés en modo inmortal).
 var knockback_immune: bool = false
@@ -462,6 +464,8 @@ func take_damage(amount: float) -> void:
 	GameFeel.sfx(self, &"hurt")
 	# Dificultad elegida en Opciones (Recluta 0.6x ... Pesadilla 1.75x)
 	amount *= float((load("res://core/settings.gd") as GDScript).call("enemy_damage_mult"))
+	if _has_shield_equipped():
+		amount *= SHIELD_BLOCK_MULT
 	# Mitigación por armadura: 100 / (100 + armadura), igual que HealthComponent.
 	var final_amount: float = amount
 	if stats_manager != null:
@@ -482,6 +486,14 @@ func take_damage(amount: float) -> void:
 
 	if is_dead:
 		_handle_player_death()
+
+
+## true si la mano secundaria sostiene un escudo (grip SHIELD). Ver SHIELD_BLOCK_MULT.
+func _has_shield_equipped() -> bool:
+	if weapon_manager == null or weapon_manager.offhand == null:
+		return false
+	var off_weapon: WeaponData = weapon_manager.offhand.current_weapon
+	return off_weapon != null and off_weapon.grip == WeaponData.Grip.SHIELD
 
 
 ## Daño recibido como texto rojo grande y tembloroso sobre el jugador (ver DamageNumber, tipo "PLAYER_HIT").

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Escudo de Madera"
+family = 0
+grip = 2
+weapon_type = 1
+is_automatic = false
+damage = 0.0
+fire_rate = 1.0
+knockback_force = 0.0
+recoil_force = 0.0
+projectile_speed = 0.0
+innate_status_effects = []
+max_sockets = 0
+socketed_runes = []
+rarity = 0
+gold_value = 40
+description = "Tablón de madera reforzado con tiras de hierro. En la mano secundaria reduce un 25 % el daño que recibe el personaje. No ataca."
