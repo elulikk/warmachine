@@ -220,7 +220,7 @@ Contenido mínimo para validarlo:
 ## 2.5 Fase S — Sonido Básico (8-bit)
 *Estado:* Armado (pendiente de validación en juego). Efectos con estética shooter clásico (tipo Doom: ruido filtrado, golpe grave, eco de sala y grano ~11 kHz / 7 bits). Módulo `core/sfx.gd` con unos 55 efectos sintetizados, enganchado en armas, combate, jugador, recolección, tienda, granadas y mundo. Ver PROJECT_CONTEXT (`sfx.gd` y `GameFeel`) para el catálogo. Quedan sin sonido a propósito: música, ambiente, pasos y voces.
 *Objetivo:* Que cada disparo, golpe, recarga y daño tenga sonido, con efectos sintetizados por código (ondas cuadradas y ruido, estilo 8-bit) y una estructura que permita **reemplazarlos después por audio real sin tocar la lógica**.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (toca arma, combate, jugador y pickups a la vez).
+* **Modelo recomendado:** Sonnet, esfuerzo **medium** (ya armado; los ajustes que falten se hacen de a un sistema por vez).
 * **Alcance:**
   1. **Generador central** (helper estático con `preload`, sin `class_name`, como `GameFeel`): sintetiza `AudioStreamWAV` (onda cuadrada, triangular, ruido, barrido de frecuencia, envolvente), los cachea y los reproduce con un pool de `AudioStreamPlayer`. Variación de tono ±5% y límite de voces simultáneas para que las armas automáticas no saturen.
   2. **Buses de audio** `Master`, `SFX` y `Music` (volumen ajustable; el menú de opciones queda para después).
@@ -238,7 +238,7 @@ Contenido mínimo para validarlo:
 
 ## 3. Fase B — Bucle Piñata (Oleadas, Loot y XP)
 *Objetivo:* El núcleo del juego: muchos enemigos, muertes que sueltan recompensas.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (toca varios sistemas a la vez).
+* **Modelo recomendado:** Sonnet, esfuerzo **medium** (un sistema por tarea: primero armas, luego combate, luego jugador).
 * **Alcance:**
   1. `WaveManager`: oleadas con cantidad creciente por ronda, y ráfagas además del mantener-uno-vivo actual.
   2. `EnemyBase`: al morir, dispersa monedas, loot y orbes de XP con `LootTable`.
@@ -303,7 +303,7 @@ Contenido mínimo para validarlo:
 
 ## 5. Fase D — Movilidad Mínima
 *Objetivo:* Una sola mejora de movimiento, sin tocar el resto de la FSM.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (la FSM del jugador es la parte más delicada). Si solo se agrega un valor o un flag en `ItemData`, medium alcanza.
+* **Modelo recomendado:** Sonnet, esfuerzo **medium** (la FSM del jugador es delicada: un cambio por tarea). Si solo se agrega un valor o un flag en `ItemData`, Haiku, esfuerzo **low**, alcanza.
 * **Alcance:**
   1. Elegir una: doble salto, salto más alto o velocidad. **Elegida: velocidad**, como `Botas Ligeras` en la recompensa del Sector 1-2 (sección 2.2). Criterio de cierre validado en juego.
   2. Dejarla como mejora obtenible (pickup o desbloqueo por nivel).
@@ -312,7 +312,7 @@ Contenido mínimo para validarlo:
 **Ampliación (agregada 2026-10-11, pendiente):**
 - **Agacharse:** disponible siempre, sin ítem. Achica la hitbox y baja el cuerpo; el arma sigue funcionando agachado.
 - **Roll y dash:** no están desbloqueados. Se habilitan con ítems (una ranura de movilidad nueva o un ítem consumible de un solo uso según el caso), así que la FSM tiene que leer el flag del ítem y no hardcodearlo. Desbloqueables a futuro, sin fecha.
-- **Modelo recomendado:** Sonnet, esfuerzo **high** (toca la FSM del jugador).
+- **Modelo recomendado:** Sonnet, esfuerzo **medium** (toca la FSM del jugador). Agacharse, roll y dash son tareas separadas: una por vez.
 
 ---
 
@@ -370,14 +370,14 @@ Contenido mínimo para validarlo:
 3. **Cuadro del golpe en masacres:** ~55 ms con 300 muertes (números de daño, señales) y ~148 ms el siguiente (liberar los enemigos). Pool o tope de números de daño y liberación repartida.
 - **Cuándo adelantarlo:** si se diseñan niveles u hordas de más de 30-40 enemigos simultáneos, si el registro muestra caídas con pocos enemigos, o antes de probar el `.exe` en PCs más modestas.
 - **Regla desde ya:** cada sistema pesado nuevo (explosiones, misiles, efectos de área) se prueba en la Sala de Estrés apenas está armado.
-- **Modelo recomendado:** Sonnet, esfuerzo **high** (toca enemigos, componentes y física).
+- **Modelo recomendado:** Sonnet, esfuerzo **medium**. Cada punto pendiente de abajo es una tarea aparte (sensores, pool de enemigos, liberación de números de daño).
 - **Criterio de cierre:** 100 enemigos persiguiendo a 60 FPS estables y 200 jugables en la Sala de Estrés, comparando la tabla "FPS según enemigos vivos" antes y después.
 
 ---
 
 ## 6d. Fase W — Armas: Manos, Tipos y Animación
 *Objetivo:* Que cada arma se sienta distinta en la mano, y que el personaje pueda llevar dos cosas a la vez. Es la base de varios puntos de abajo, así que el sistema de tipos va primero.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (toca armas, animación y FSM de combate).
+* **Modelo recomendado:** Sonnet, esfuerzo **medium**. Las verificaciones en F5 pendientes son tareas chicas, una por vez.
 
 **Hecho (2026-10-11, pendiente de validar en juego con F5):**
 - **Punto 1, tipos:** `WeaponData.family` (pistola, revólver, carabina, subfusil, escopeta, fusil, rifle de precisión, energía, lanzallamas, melee corto, espada, arma pesada) y `WeaponData.grip` (una mano, dos manos, escudo), asignados en los 19 `.tres` (incluyendo espada de hierro y katana a dos manos). `FAMILY_RULES` guarda por familia: nombre, qué suelta al recargar, techo de perforación y piso de penetración de armadura. El tooltip muestra familia y empuñadura. Sonido procedural (`weapon_fire_profile` en `core/sfx.gd`) resuelto por familia.
@@ -445,13 +445,20 @@ Contenido mínimo para validarlo:
 5. **Pantalla roja con vida baja (Sonnet, medium):** a medida que baja la vida, un borde rojo o viñeta crece en pantalla. Reusar `core/post_fx.gd` y respetar "reducir destellos" de Accesibilidad.
 6. **Latido sin vida ni escudo (Sonnet, medium):** sonido de latido en bucle cuando la vida está en el tramo crítico y el escudo vacío. Ritmo más rápido cuanto menos vida. Definir el umbral: hoy vida 0 equivale a muerte, así que el latido empieza antes de ese punto. Archivos: `core/sfx.gd`, `entities/player/player.gd`.
 7. **Texto flotante rojo al recibir daño (Sonnet, medium):** además del número de daño que se hace, el daño que recibe el jugador aparece como texto rojo intenso, más grande y con un leve temblor, que se nota como malo. Reusa el sistema de números de daño de la Fase O.
-8. **Escudo de energía como aura (Sonnet, high):** reemplazar el rectángulo azul por una esfera de energía animada que envuelve al personaje. Se enciende en el punto del golpe o del balazo que recibe. Archivo del escudo por ubicar (no está identificado todavía en el código).
+8. **Escudo de energía como aura (dividido en tres tareas):**
+   - **8a (Haiku, low):** ubicar el nodo que dibuja el rectángulo azul del escudo y reportar archivo y línea. No cambiar nada.
+   - **8b (Sonnet, medium):** reemplazar el rectángulo por una esfera de energía animada que envuelve al personaje (dibujo procedural, sin arte nuevo).
+   - **8c (Sonnet, medium):** destello en el punto del golpe o del balazo que recibe el escudo.
 9. **Subfusil con más dispersión (Haiku, medium):** hoy se siente demasiado preciso. Subir la dispersión del subfusil en su `.tres` de `data/weapons/`. Es un cambio de valor (ver tarea 7 de la sección 8).
 
 **Movimiento y personaje:**
 10. **Salto base más alto (Haiku, medium):** subir un poco la velocidad de salto por defecto (hoy 530) en `entities/player/player.gd`. Cambia la altura de los bloques y pozos de los niveles, así que después revisar que los sectores 1-1 y 1-2 sigan siendo alcanzables (ver tarea 8 de la sección 8).
-11. **Brazos abiertos al saltar (Sonnet, high):** al despegar, los brazos se abren hacia afuera y arriba como en un salto real, y vuelven al aterrizar. Toca el rig y la animación del personaje. Archivo: `entities/player/character_rig.gd`.
-12. **Manos sosteniendo el arma (Sonnet, high):** girar las manos del personaje como en la imagen de referencia que se pidió (agarre de rifle). La imagen no quedó guardada en el repo; conviene ponerla en una carpeta de referencia. Archivos: `core/art/weapon_motion.gd`, `entities/player/character_rig.gd`, `ui/item_icons.gd` (`WEAPON_POSES`).
+11. **Brazos abiertos al saltar (dividido en dos tareas):**
+   - **11a (Sonnet, medium):** al despegar, los brazos se abren hacia afuera y arriba como en un salto real. Archivo: `entities/player/character_rig.gd`.
+   - **11b (Haiku, low):** que vuelvan a la pose normal al aterrizar, ajustando solo los tiempos o valores de interpolación.
+12. **Manos sosteniendo el arma (dividido en dos tareas):** la imagen de referencia no quedó guardada en el repo; conviene ponerla en una carpeta de referencia antes de empezar.
+   - **12a (Sonnet, medium):** girar la mano delantera y la trasera en la pose de agarre de rifle, según la referencia. Archivos: `core/art/weapon_motion.gd`, `entities/player/character_rig.gd`.
+   - **12b (Haiku, low):** ajustar `WEAPON_POSES` en `ui/item_icons.gd` para que el ícono del inventario coincida con la nueva pose.
 
 **Enemigos:**
 13. **Mobs al 1.5x (Sonnet, medium):** escalar a 1.5x a todos los enemigos (sprite, colisión, hurtbox y hitbox). Esto cambia lo que dice la Fase C ("los enemigos no se escalaron"). Riesgo: los pasillos de techo bajo de los sectores 1-2 a 1-5 y los fosos del 1-3 pueden quedar chicos para los enemigos; revisar cada nivel después del cambio.
@@ -492,6 +499,7 @@ Contenido mínimo para validarlo:
 
 ## Reglas para Ahorrar Cuota
 - Una sesión nueva por fase.
-- Empezar siempre en Sonnet medium, subir a high solo si el cambio toca varios sistemas.
+- Empezar siempre en Sonnet medium; para tareas mecánicas, Haiku low o medium.
 - Haiku para tareas mecánicas (valores, recursos, textos).
-- Opus solo si Sonnet high falla dos veces en el mismo bug.
+- **Ninguna tarea se asigna a esfuerzo high ni a Opus.** Si una tarea parece pedir high, se parte en subtareas chicas hasta que cada una sea low o medium.
+- Si una subtarea falla dos veces con Sonnet medium, se vuelve a dividir antes de subir de esfuerzo.
