@@ -244,6 +244,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if hand != Hand.OFF:
 		return
 	if event.is_action_pressed("attack_secondary"):
+		# Prioridad: la función secundaria del arma principal gana sobre el arma de la mano 2
+		if main_manager != null and main_manager.current_weapon != null and main_manager.current_weapon.has_secondary_function():
+			return
 		_off_pressed = true
 		_off_held = true
 

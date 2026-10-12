@@ -733,30 +733,49 @@ func _trader_zone_rejected(payload: Dictionary) -> void:
 	if _session == null:
 		return
 	var context: String = str(payload.get("context_tag", ""))
-	var index: int = int(payload.get("slot_index", -1))
-	if context == CTX_PLAYER and index >= 0 and index < _player_view.size():
-		_handle_result(_session.call(&"can_sell", _player_view[index], 1), Callable())
+	var sell_entry: Dictionary = _sell_entry_for(payload)
+	if not sell_entry.is_empty():
+		_handle_result(_session.call(&"can_sell", sell_entry, 1), Callable())
 	elif context == CTX_STOCK or context == CTX_BUYBACK:
 		_say("Para comprar, arrastralo a tu columna (la de la izquierda).", COLOR_WARN)
 
 
 ## Columna del comerciante: recibe ventas del jugador.
 func _trader_zone_accepts(_res: Resource, payload: Dictionary) -> bool:
-	if _session == null or str(payload.get("context_tag", "")) != CTX_PLAYER:
+	if _session == null:
 		return false
-	var index: int = int(payload.get("slot_index", -1))
-	if index < 0 or index >= _player_view.size():
+	var entry: Dictionary = _sell_entry_for(payload)
+	if entry.is_empty():
 		return false
-	return bool((_session.call(&"can_sell", _player_view[index], 1) as RefCounted).get("ok"))
+	return bool((_session.call(&"can_sell", entry, 1) as RefCounted).get("ok"))
 
 
 func _trader_zone_drop(payload: Dictionary) -> bool:
-	var index: int = int(payload.get("slot_index", -1))
-	if str(payload.get("context_tag", "")) != CTX_PLAYER or index < 0 or index >= _player_view.size():
+	var entry: Dictionary = _sell_entry_for(payload)
+	if entry.is_empty():
 		return false
-	if _player_view[index]["res"] != payload.get("resource"):
-		return false
-	return _do_sell(_player_view[index], Input.is_key_pressed(KEY_SHIFT))
+	return _do_sell(entry, Input.is_key_pressed(KEY_SHIFT))
+
+
+## Entrada de venta (de `get_player_entries`) que corresponde a lo arrastrado, o {} si no es vendible desde acá.
+## Las armas y consumibles de la barra rápida (y el arma de la mano 2) se buscan por identidad.
+func _sell_entry_for(payload: Dictionary) -> Dictionary:
+	var context: String = str(payload.get("context_tag", ""))
+	var res: Resource = payload.get("resource") as Resource
+	if context == CTX_PLAYER:
+		var index: int = int(payload.get("slot_index", -1))
+		if index >= 0 and index < _player_view.size() and _player_view[index]["res"] == res:
+			return _player_view[index]
+		return {}
+	if (context != "hotbar" and context != "offhand") or res == null or _session == null:
+		return {}
+	for entry: Dictionary in _player_view:
+		if entry["res"] == res and str(entry.get("context", "")) != "backpack":
+			return entry
+	for entry: Dictionary in (_session.call(&"get_player_entries") as Array[Dictionary]):
+		if entry["res"] == res and str(entry.get("context", "")) != "backpack":
+			return entry
+	return {}
 
 
 ## Clic derecho: acción rápida según la columna de origen.

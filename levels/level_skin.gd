@@ -187,6 +187,11 @@ static func _install_backdrop(level: Node, chapter: int) -> void:
 	var layer: CanvasLayer = level.get_node_or_null("Background") as CanvasLayer
 	if layer == null:
 		return
+	# El ColorRect de fondo de las escenas nace con filtro STOP y cubre toda la pantalla: se tragaba el clic derecho
+	# antes de que llegara a `_unhandled_input` (mano secundaria). Un fondo nunca debe capturar el ratón.
+	for child: Node in layer.get_children():
+		if child is Control:
+			(child as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var file: String = str(CHAPTER_BACKDROPS.get(clampi(chapter, 0, 5), "workshop.jpg"))
 	var texture: Texture2D = ArtScript.tex(BG_DIR + file)
 	if texture == null:

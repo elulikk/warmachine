@@ -5,6 +5,9 @@ extends Area2D
 
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 
+## Armas que entran al arsenal (las que llenan la barra rápida); el resto va a la mochila.
+const ARSENAL_LIMIT: int = 9
+
 @export var weapon_data: WeaponData
 
 ## Si es false, el pickup desaparece al cargar el nivel cuando el jugador ya posee esa arma
@@ -115,7 +118,7 @@ func _on_body_entered(body: Node2D) -> void:
 		var player: Player = body as Player
 		var added_success: bool = false
 		if player.weapon_manager != null:
-			if player.weapon_manager.weapons.size() < 3:
+			if player.weapon_manager.weapons.size() < ARSENAL_LIMIT:
 				_collected = true
 				added_success = true
 				player.weapon_manager.add_weapon(weapon_data, true)

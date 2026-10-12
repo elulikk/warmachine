@@ -259,6 +259,13 @@ func can_be_offhand() -> bool:
 	return grip == Grip.ONE_HAND or grip == Grip.SHIELD
 
 
+## true si el arma tiene una función propia en el clic derecho (apuntar, bloquear, etc.). Hoy ninguna la tiene:
+## es el punto de enganche de la regla de prioridad. Si la principal la tiene, el clic derecho es suyo y la
+## mano 2 no dispara (ver `WeaponManager._unhandled_input`).
+func has_secondary_function() -> bool:
+	return false
+
+
 ## true si puede ser el arma principal (todo menos el escudo).
 func can_be_main_hand() -> bool:
 	return grip != Grip.SHIELD
