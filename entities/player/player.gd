@@ -72,6 +72,17 @@ var current_flaps: int = 0
 var has_magic_flight: bool = false
 var jetpack_particles: CPUParticles2D = null
 
+## Agachado: hitbox y hurtbox más bajas, el cuerpo baja y se camina más lento. Siempre disponible (sin ítem).
+const STAND_HEIGHT: float = 64.0
+const CROUCH_HEIGHT: float = 40.0
+const CROUCH_SPEED_MULT: float = 0.5
+## Velocidad vertical ascendente (px/s) por debajo de la cual, agachado en el suelo, se descarta (retroceso de armas).
+const CROUCH_HOP_CANCEL: float = -150.0
+var is_crouching: bool = false
+var _stand_pivot_y: float = -54.0
+var _hurtbox_shape: RectangleShape2D = null
+var _hurtbox_shape_node: CollisionShape2D = null
+
 var hurt_cooldown: float = 0.0
 ## Sin empujones: ni el retroceso de las propias armas ni el de los golpes recibidos (Sala de Estrés en modo inmortal).
 var knockback_immune: bool = false
@@ -114,6 +125,7 @@ func _ready() -> void:
 			stats_manager.level_gained.connect(_on_level_gained)
 		_sync_armor_to_health_component()
 
+	_setup_crouch()
 	_setup_jetpack_particles()
 
 	consumable_manager = ConsumableManagerScript.new()
@@ -166,7 +178,55 @@ func _setup_jetpack_particles() -> void:
 	add_child(jetpack_particles)
 
 
+## Duplica las formas de colisión para que agacharse no modifique el recurso compartido de la escena.
+func _setup_crouch() -> void:
+	if weapon_pivot != null:
+		_stand_pivot_y = weapon_pivot.position.y
+	if collision_shape != null and collision_shape.shape is CapsuleShape2D:
+		collision_shape.shape = collision_shape.shape.duplicate()
+	if hurtbox != null:
+		_hurtbox_shape_node = hurtbox.get_node_or_null("CollisionShape2D") as CollisionShape2D
+		if _hurtbox_shape_node != null and _hurtbox_shape_node.shape is RectangleShape2D:
+			_hurtbox_shape = (_hurtbox_shape_node.shape as RectangleShape2D).duplicate() as RectangleShape2D
+			_hurtbox_shape_node.shape = _hurtbox_shape
+
+
+## Agacharse con la tecla abajo (solo en el suelo). Se levanta al soltar, pero solo si hay espacio encima.
+func _update_crouch() -> void:
+	# El retroceso del arma empuja hacia arriba si se apunta hacia abajo: agachado en el suelo no despega
+	if is_crouching and is_on_floor() and velocity.y < 0.0 and velocity.y > CROUCH_HOP_CANCEL:
+		velocity.y = 0.0
+	# Se mantiene agachado un instante (coyote) tras perder el suelo, para no "ponerse de pie" con un rebote
+	var grounded: bool = is_on_floor() or (is_crouching and coyote_timer > 0.0 and velocity.y > CROUCH_HOP_CANCEL)
+	var wants_crouch: bool = Input.is_action_pressed("move_down") and grounded and not has_magic_flight
+	if is_crouching:
+		if not wants_crouch and _has_headroom():
+			_set_crouching(false)
+	elif wants_crouch:
+		_set_crouching(true)
+
+
+## true si hay lugar para volver a la altura de pie sin chocar con el techo.
+func _has_headroom() -> bool:
+	return not test_move(global_transform, Vector2(0.0, -(STAND_HEIGHT - CROUCH_HEIGHT)))
+
+
+func _set_crouching(value: bool) -> void:
+	is_crouching = value
+	var height: float = CROUCH_HEIGHT if value else STAND_HEIGHT
+	var capsule: CapsuleShape2D = collision_shape.shape as CapsuleShape2D
+	if capsule != null:
+		capsule.height = height
+	collision_shape.position.y = -height * 0.5
+	if _hurtbox_shape != null:
+		_hurtbox_shape.size.y = height
+		_hurtbox_shape_node.position.y = -height * 0.5
+	if weapon_pivot != null:
+		weapon_pivot.position.y = _stand_pivot_y + (STAND_HEIGHT - CROUCH_HEIGHT) * (0.75 if value else 0.0)
+
+
 func _physics_process(delta: float) -> void:
+	_update_crouch()
 	if hurt_cooldown > 0.0:
 		hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
 	if phase_timer > 0.0:
@@ -231,9 +291,10 @@ func _update_precision_timers(delta: float) -> void:
 
 ## Obtiene la velocidad horizontal efectiva leyendo dinámicamente el StatsManager.
 func get_current_move_speed() -> float:
+	var speed: float = movement_data.move_speed if movement_data != null else 240.0
 	if stats_manager != null:
-		return stats_manager.get_move_speed()
-	return movement_data.move_speed if movement_data != null else 240.0
+		speed = stats_manager.get_move_speed()
+	return speed * (CROUCH_SPEED_MULT if is_crouching else 1.0)
 
 
 ## Retorna la gravedad efectiva teniendo en cuenta modificadores de contratos activos.
@@ -365,6 +426,8 @@ func respawn(spawn_pos: Vector2) -> void:
 	global_position = spawn_pos
 	velocity = Vector2.ZERO
 	hurt_cooldown = 0.0
+	if is_crouching:
+		_set_crouching(false)
 	if stats_manager != null:
 		stats_manager.current_health = stats_manager.get_max_health()
 		stats_manager.health_changed.emit(stats_manager.current_health, stats_manager.get_max_health())

@@ -83,6 +83,12 @@ var _was_on_floor: bool = true
 ## Cuánto están abiertos los brazos por estar en el aire (0 = pose normal, 1 = abiertos hacia afuera y arriba).
 var _jump_open: float = 0.0
 var _land_squash: float = 0.0
+## Cuánto está agachado (0 = de pie, 1 = agachado del todo), suavizado.
+var _crouch: float = 0.0
+## Cuánto baja la cadera y el torso agachado (px de juego).
+const CROUCH_DROP: float = 12.0
+## Inclinación del torso hacia adelante al agacharse (rad).
+const CROUCH_LEAN: float = 0.16
 var _has_legs: bool = true
 var _hover: bool = false
 var _leg_base_y_l: float = -30.0
@@ -549,13 +555,23 @@ func _animate_body(delta: float) -> void:
 			leg_l_target = deg_to_rad(22.0)
 			leg_r_target = deg_to_rad(-20.0)
 
+	var crouching: bool = _player != null and _player.is_crouching and not preview_mode
+	_crouch = move_toward(_crouch, 1.0 if crouching else 0.0, delta * 10.0)
+	var crouch_ease: float = smoothstep(0.0, 1.0, _crouch)
+	if crouch_ease > 0.0:
+		# Agachado: las piernas se pliegan en vez de correr
+		leg_l_target = lerpf(leg_l_target, deg_to_rad(-72.0), crouch_ease)
+		leg_r_target = lerpf(leg_r_target, deg_to_rad(-68.0), crouch_ease)
+		lift_l *= 1.0 - crouch_ease
+		lift_r *= 1.0 - crouch_ease
+
 	var blend: float = minf(1.0, delta * 18.0)
 	_leg_l.rotation = lerp_angle(_leg_l.rotation, leg_l_target, blend)
 	_leg_r.rotation = lerp_angle(_leg_r.rotation, leg_r_target, blend)
 	if _articulated:
 		_animate_knees(on_floor, jetting, vertical, run_amount, blend)
-	_leg_l.position.y = _leg_base_y_l - lift_l
-	_leg_r.position.y = _leg_base_y_r - lift_r
+	_leg_l.position.y = _leg_base_y_l - lift_l + crouch_ease * CROUCH_DROP
+	_leg_r.position.y = _leg_base_y_r - lift_r + crouch_ease * CROUCH_DROP
 
 	# Cuerpo: respiración en reposo, rebote al correr, aplastamiento al caer
 	var bob: float = sin(_time * 2.4) * 0.5
@@ -564,7 +580,7 @@ func _animate_body(delta: float) -> void:
 	if _hover:
 		# Sin piernas (fantasma): flota y se mece
 		bob = -3.0 + sin(_time * 2.2) * 1.8
-	_body.position.y = bob + _land_squash * 1.5
+	_body.position.y = bob + _land_squash * 1.5 + crouch_ease * CROUCH_DROP
 	_body.scale = Vector2(1.0 + _land_squash * 0.06, 1.0 - _land_squash * 0.08)
 	_body.rotation = sin(_phase) * 0.03 * minf(run_amount, 1.0) if on_floor else 0.0
 	if swipe > 0.0:
@@ -578,10 +594,10 @@ func _animate_body(delta: float) -> void:
 			var u: float = _motion_t / _motion_len
 			lean = deg_to_rad(WeaponMotion.sample(_motion_body, u, "lean"))
 			push = WeaponMotion.sample(_motion_body, u, "x")
-		_body.rotation += lean - _recoil * 0.05
+		_body.rotation += lean - _recoil * 0.05 + crouch_ease * CROUCH_LEAN
 		_body.position.x = push - _recoil * 1.2
 		# El torso se inclina desde la cadera, no desde los pies
-		var hip: Vector2 = Vector2(0.0, _leg_base_y_r)
+		var hip: Vector2 = Vector2(0.0, _leg_base_y_r + crouch_ease * CROUCH_DROP)
 		_body.position += hip - hip.rotated(_body.rotation)
 
 	var back_node: Node2D = _back
@@ -634,10 +650,14 @@ func _animate_knees(on_floor: bool, jetting: bool, vertical: float, run_amount: 
 	else:
 		flex = [deg_to_rad(10.0), deg_to_rad(16.0)]
 	var hips: Array[Node2D] = [_leg_l, _leg_r]
+	if _crouch > 0.0:
+		var bend: float = smoothstep(0.0, 1.0, _crouch)
+		flex[0] = lerpf(flex[0], deg_to_rad(112.0), bend)
+		flex[1] = lerpf(flex[1], deg_to_rad(108.0), bend)
 	for i in range(2):
 		_shin[i].rotation = lerp_angle(_shin[i].rotation, flex[i], blend)
 		# El pie compensa parte del giro para no apuntar al suelo al levantar la pierna
-		_foot_bone[i].rotation = -(hips[i].rotation + _shin[i].rotation) * 0.45
+		_foot_bone[i].rotation = -(hips[i].rotation + _shin[i].rotation) * lerpf(0.45, 1.0, smoothstep(0.0, 1.0, _crouch))
 
 
 ## Orienta cada brazo hacia el punto que debe sostener. Sin arma queda colgando con el vaivén de la marcha.

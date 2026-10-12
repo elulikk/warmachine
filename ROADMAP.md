@@ -310,13 +310,14 @@ Contenido mínimo para validarlo:
 * **Criterio de cierre:** Con la mejora equipada, el salto o la velocidad cambian; sin ella, el comportamiento actual no cambia.
 
 **Ampliación (agregada 2026-10-11, pendiente):**
-- **Agacharse:** disponible siempre, sin ítem. Achica la hitbox y baja el cuerpo; el arma sigue funcionando agachado.
+- **Agacharse:** ✅ hecho (2026-10-12). Siempre disponible, sin ítem. Mantener abajo en el suelo agacha: cápsula y hurtbox pasan de 64 a 40 px, el arma baja con el cuerpo y se camina a la mitad de velocidad. Al soltar se levanta solo si hay espacio (`test_move`); con techo bajo sigue agachado. Verificado en headless: hitbox, techo bajo, disparo y recarga agachado, sin errores de script. **Sin verificar a mano:** cómo se ve la pose agachada (sentadilla: torso 12 px más abajo e inclinado, muslos adelante y rodillas dobladas; los pies quedan a la altura del suelo (medido). Ajustable con `CROUCH_DROP`, `CROUCH_LEAN` y los ángulos en `character_rig.gd`. Agachado en el suelo se descarta el rebote vertical del retroceso del arma) y la sensación de velocidad.
 - **Roll y dash:** no están desbloqueados. Se habilitan con ítems (una ranura de movilidad nueva o un ítem consumible de un solo uso según el caso), así que la FSM tiene que leer el flag del ítem y no hardcodearlo. Desbloqueables a futuro, sin fecha.
 - **Modelo recomendado:** Sonnet, esfuerzo **medium** (toca la FSM del jugador). Agacharse, roll y dash son tareas separadas: una por vez.
 
 **Prioridad alta (pedido 2026-10-11, lo antes posible):**
 - **Botas de Súper Velocidad:** una mejora de movilidad por encima de las `Botas Ligeras` del Sector 1-2 (+60 de velocidad). Se vende en el **Mercader** (sección 2.3), así que el ítem tiene precio y aparece en su stock.
 - **Por definir antes de empezar:** cuánta velocidad da (el valor de las Ligeras es referencia), precio de venta, si ocupa la ranura de pies que hoy usan las Ligeras (y si reemplaza a las Ligeras al equiparlas) y si tiene rareza propia.
+- **HECHO (2026-10-12, sin verificar a mano en el Mercader):** decisiones: +110 de velocidad (la base es 140, las Ligeras dan +60; resultado 250), ranura de pies (reemplaza a las Ligeras), rareza 2 (rara), precio 150 de oro. Archivo: `data/items/super_speed_boots.tres`. Se vende en el Mercader por `sell_everything`. Prueba con escena descartable: se equipa en la ranura BOTAS y la velocidad pasa de 200 (Ligeras) a 250. **Sin verificar:** que aparezca en la tienda y se vea bien en el inventario (no tiene arte propio, usa el ícono de respaldo).
 - **Modelo recomendado:** Haiku, esfuerzo **low** si es solo un `ItemData` con un valor de velocidad y una entrada en el stock del `TraderData`; Sonnet, esfuerzo **medium** si hay que tocar la lógica de equipamiento de la ranura de pies.
 
 ---
