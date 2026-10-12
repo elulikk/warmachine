@@ -255,6 +255,8 @@ func _build_video() -> Control:
 				_rebuild()))
 	_row(page, "Densidad de partículas", _slider(SettingsScript.get_float("particles"), 0.25, 1.0, 0.05,
 		func(v: float) -> void: _put("particles", v)))
+	_row(page, "Estilo del fuego", _option(["Sprites (liviano)", "Partículas"] as Array[String], SettingsScript.get_int("fire_style"),
+		func(i: int) -> void: _put("fire_style", i)))
 	for entry: Array in [["fx_vignette", "Viñeta"], ["fx_grain", "Grano de película"], ["fx_bloom", "Resplandor (bloom)"]]:
 		var key: String = str(entry[0])
 		_row(page, str(entry[1]), _check(SettingsScript.get_bool(key), func(on: bool) -> void:

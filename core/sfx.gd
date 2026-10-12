@@ -26,7 +26,7 @@ const HEAR_MAX_DISTANCE: float = 1400.0
 ## Separación mínima entre dos reproducciones del mismo sonido (evita saturar con ráfagas).
 const DEFAULT_MIN_INTERVAL_MSEC: int = 35
 const MIN_INTERVAL_MSEC: Dictionary = {
-	&"shot_flame": 55,
+	&"shot_flame": 120,
 	&"shot_auto": 40,
 	&"exp": 45,
 	&"coin": 22,
@@ -152,6 +152,9 @@ static func play_weapon_swing(ctx: Node, weapon: WeaponData) -> void:
 
 ## Elige la receta de disparo a partir de la familia y datos del arma (no depende del nombre).
 static func weapon_fire_profile(weapon: WeaponData) -> StringName:
+	# Armas que escupen combustible encendido (no lanzallamas): chasquido mágico suave en vez de bala.
+	if weapon.projectile_scene != null and weapon.projectile_scene.resource_path.ends_with("fuel_droplet.tscn") and weapon.family != WeaponData.WeaponFamily.FLAMETHROWER:
+		return &"shot_magic"
 	match weapon.family:
 		WeaponData.WeaponFamily.SHOTGUN:
 			return &"shot_shotgun"
@@ -480,10 +483,16 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_s(0.42, 0.05, 180.0, 90.0, 0.5, 2.5),
 			], 7, 2, 1.9, 95.0, 0.35)
 		&"shot_flame":
-			return _render(0.13, [
-				_n(0.0, 0.11, 0.7, 0.9, 3500.0, 1500.0),
-				_s(0.0, 0.11, 75.0, 60.0, 0.5, 1.0, 0.1),
-			], 7, 2, 1.3)
+			# Soplido de gas encendido: ruido suave que sube y baja, rugido grave y chisporroteo.
+			# Se dispara cada ~120 ms con 0.3 s de duración, así los disparos se funden en un rugido continuo.
+			return _render(0.3, [
+				_n(0.0, 0.3, 0.55, 1.2, 700.0, 2400.0, 0.35),
+				_n(0.0, 0.3, 0.35, 1.0, 1800.0, 600.0, 0.5),
+				_s(0.0, 0.3, 62.0, 48.0, 0.55, 1.0, 0.08),
+				_n(0.05, 0.015, 0.35, 3.0, 5000.0, 2500.0),
+				_n(0.14, 0.012, 0.3, 3.0, 4500.0, 2000.0),
+				_n(0.22, 0.015, 0.3, 3.0, 5500.0, 2500.0),
+			], 8, 1, 1.2, 38.0, 0.15)
 		&"shot_ice":
 			return _render(0.24, [
 				_n(0.0, 0.10, 0.5, 2.5, 7000.0, 2000.0),

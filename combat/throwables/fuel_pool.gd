@@ -1,6 +1,8 @@
 extends Area2D
+
+const FireVfx = preload("res://combat/fire_vfx.gd")
 ## Charco de fuego del lanzallamas de combustible. Quema (burn) con ticks a quien lo pisa.
-## Placeholder visual: cuadrados que parpadean.
+## Visual: sprites animados o partículas según el ajuste gráfico (ver FireVfx).
 
 @export var lifetime: float = 5.0
 @export var tick_interval: float = 0.4
@@ -12,6 +14,7 @@ var source_node: Node2D = null
 
 var _age: float = 0.0
 var _tick_timer: float = 0.1
+var _visual: Node2D = null
 
 
 func _ready() -> void:
@@ -27,6 +30,9 @@ func _ready() -> void:
 	shape_node.shape = rect
 	shape_node.position = Vector2(0.0, -pool_height * 0.5)
 	add_child(shape_node)
+	
+	_visual = FireVfx.make("pool", pool_width * 1.1, true)
+	add_child(_visual)
 
 
 func _physics_process(delta: float) -> void:
@@ -40,7 +46,8 @@ func _physics_process(delta: float) -> void:
 		_tick_timer = tick_interval
 		_apply_tick()
 
-	queue_redraw()
+	var fade: float = clampf((lifetime - _age) / 0.8, 0.0, 1.0)
+	_visual.modulate.a = fade
 
 
 func _apply_tick() -> void:
@@ -61,15 +68,3 @@ func _apply_tick() -> void:
 		)
 		ThrowableUtil.deliver_hit(target, payload)
 
-
-func _draw() -> void:
-	var fade: float = clampf((lifetime - _age) / 0.8, 0.0, 1.0)
-	var phase: int = int(_age * 12.0)
-	var cells: int = 6
-	var cell_w: float = pool_width / float(cells)
-	for i in range(cells):
-		var on: bool = (phase + i) % 2 == 0
-		var col: Color = Color(1.0, 0.55, 0.1, 0.85) if on else Color(1.0, 0.85, 0.2, 0.85)
-		col.a *= fade
-		var h: float = 8.0 + float((phase + i * 3) % 3) * 3.0
-		draw_rect(Rect2(-pool_width * 0.5 + float(i) * cell_w, -h, cell_w - 2.0, h), col)

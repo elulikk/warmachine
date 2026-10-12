@@ -607,7 +607,7 @@ static func _weapon_kind(weapon: WeaponData) -> String:
 			return "katana"
 		"heavy_hammer":
 			return "hammer"
-		"pistol", "pistol_9mm", "desert_eagle":
+		"pistol", "pistol_9mm", "desert_eagle", "lava_pistol":
 			return "pistol"
 		"rust_revolver", "revolver", "colt_44":
 			return "revolver"
@@ -625,7 +625,7 @@ static func _weapon_kind(weapon: WeaponData) -> String:
 			return "carbine"
 		"corrosive_blaster":
 			return "blaster"
-		"plasma_flamethrower":
+		"plasma_flamethrower", "fuel_flamethrower":
 			return "flamer"
 	# Armas sin ícono propio: por tipo
 	if weapon.weapon_type == WeaponData.WeaponType.MELEE:

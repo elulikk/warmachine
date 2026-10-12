@@ -3,10 +3,23 @@ extends Projectile
 ## Gota de combustible encendido: vuela con gravedad leve y, al tocar el piso, deja un charco de fuego.
 
 const FuelPoolScript = preload("res://combat/throwables/fuel_pool.gd")
+const FireVfx = preload("res://combat/fire_vfx.gd")
 
 @export var fall_gravity: float = 520.0
 
 var _velocity: Vector2 = Vector2.ZERO
+
+
+func _ready() -> void:
+	super._ready()
+	var core: CanvasItem = get_node_or_null("ColorRect") as CanvasItem
+	if core != null:
+		core.visible = false
+	# Cada gota sale distinta (tamaño, velocidad y caída), como un chorro de líquido.
+	var size_mult: float = randf_range(0.7, 1.7)
+	scale = Vector2.ONE * size_mult
+	fall_gravity *= randf_range(0.8, 1.3)
+	add_child(FireVfx.make("droplet", 36.0))
 
 
 func setup(
@@ -17,7 +30,7 @@ func setup(
 	_p_forks: int = 0
 ) -> void:
 	super.setup(p_speed, p_payload, 0, 0, 0)
-	_velocity = transform.x * p_speed
+	_velocity = transform.x * p_speed * randf_range(0.65, 1.15)
 
 
 func _physics_process(delta: float) -> void:

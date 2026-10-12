@@ -134,6 +134,7 @@ const PROFILES: Dictionary = {
 	},
 	# --- Armas de fuego: retroceso propio ---
 	"pistol": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 8.0, "time": 0.14, "body": 0.5}},
+	"lava_pistol": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 8.0, "time": 0.14, "body": 0.5}},
 	"pistol_9mm": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 7.0, "time": 0.13, "body": 0.5}},
 	"desert_eagle": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 3.2, "climb_deg": 12.0, "time": 0.2, "body": 0.9}},
 	"revolver": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.6, "climb_deg": 10.0, "time": 0.18, "body": 0.7}},
@@ -147,6 +148,7 @@ const PROFILES: Dictionary = {
 	"shotgun": {"kick": {"back": 5.0, "climb_deg": 9.0, "time": 0.24, "body": 1.7}},
 	"heavy_sniper": {"kick": {"back": 6.0, "climb_deg": 6.0, "time": 0.36, "body": 2.0}},
 	"plasma_flamethrower": {"kick": {"back": 0.6, "climb_deg": 0.0, "time": 0.06, "body": 0.15}},
+	"fuel_flamethrower": {"kick": {"back": 0.6, "climb_deg": 0.0, "time": 0.06, "body": 0.15}},
 	"corrosive_blaster": {"kick": {"back": 1.2, "climb_deg": 2.0, "time": 0.1, "body": 0.3}}
 }
 
@@ -170,6 +172,7 @@ const RELOADS: Dictionary = {
 	"scrap_carbine": {"style": "mag_rifle"},
 	"mp5": {"style": "mag_rifle"},
 	"plasma_flamethrower": {"style": "canister"},
+	"fuel_flamethrower": {"style": "canister"},
 	"corrosive_blaster": {"style": "canister"},
 }
 
@@ -182,6 +185,7 @@ const PATTERNS: Dictionary = {
 	"ak47": {"window": 0.2, "climb_step": 1.6, "max_climb": 11.0, "sway": 2.2, "recover": 0.3},
 	"m4": {"window": 0.19, "climb_step": 1.1, "max_climb": 8.0, "sway": 1.0, "recover": 0.26},
 	"plasma_flamethrower": {"window": 0.12, "climb_step": 0.3, "max_climb": 3.0, "sway": 2.6, "recover": 0.2},
+	"fuel_flamethrower": {"window": 0.12, "climb_step": 0.3, "max_climb": 3.0, "sway": 2.6, "recover": 0.2},
 }
 
 

@@ -269,6 +269,8 @@ func save_to_disk() -> bool:
 						"Martillo Pesado": "res://data/weapons/heavy_hammer.tres",
 						"Espada de Hierro": "res://data/weapons/iron_sword.tres",
 						"Lanzallamas de Plasma": "res://data/weapons/plasma_flamethrower.tres",
+						"Lanzallamas de Combustible": "res://data/weapons/fuel_flamethrower.tres",
+						"Pistola de Lava": "res://data/weapons/lava_pistol.tres",
 						"Bláster Corrosivo": "res://data/weapons/corrosive_blaster.tres"
 					}
 					path_to_save = str(known_paths.get(w.weapon_name, ""))

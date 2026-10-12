@@ -18,6 +18,7 @@ const RELOAD_INDICATOR_SCRIPT: GDScript = preload("res://ui/reload_indicator.gd"
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
 const ShotFx = preload("res://combat/shot_fx.gd")
+const FireVfx = preload("res://combat/fire_vfx.gd")
 const ReloadDebris = preload("res://combat/reload_debris.gd")
 const SettingsScript = preload("res://core/settings.gd")
 
@@ -535,8 +536,12 @@ func fire() -> void:
 				container.add_child(fallback_node)
 	
 	_play_weapon_kick()
-	ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
-	ShotFx.muzzle_smoke(self, spawn_pos, aim_dir)
+	# El lanzallamas de combustible ya tiene su propio chorro: sin destello ni humo de bala encima.
+	if current_weapon.projectile_scene.resource_path == "res://combat/fuel_droplet.tscn":
+		FireVfx.spawn_jet(get_tree().current_scene, spawn_pos, aim_dir)
+	else:
+		ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
+		ShotFx.muzzle_smoke(self, spawn_pos, aim_dir)
 	GameFeel.sfx_weapon_fire(self, current_weapon)
 
 	# 3. Aplicar fuerza de retroceso sobre el jugador

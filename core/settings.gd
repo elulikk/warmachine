@@ -90,6 +90,7 @@ const DEFAULTS: Dictionary = {
 	"quality": 2,
 	"msaa": 2,
 	"particles": 1.0,
+	"fire_style": 0,  ## 0 = sprites (liviano), 1 = partículas
 	"fx_vignette": true,
 	"fx_grain": true,
 	"fx_bloom": false,
