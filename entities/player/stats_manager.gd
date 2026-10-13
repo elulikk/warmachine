@@ -9,6 +9,8 @@ signal leveled_up(new_level: int)
 ## Se emite solo cuando el nivel se gana jugando (no al cargar una partida).
 signal level_gained(new_level: int)
 signal coins_changed(new_coins: int)
+## Cristales de tiempo: la moneda de los Agentes del Tiempo (todavía no se gastan en nada).
+signal crystals_changed(new_crystals: int)
 signal stats_recalculated
 
 ## Nivel máximo del prototipo.
@@ -205,6 +207,16 @@ func take_damage(amount: float) -> void:
 func heal(amount: float) -> void:
 	current_health = minf(get_max_health(), current_health + amount)
 	health_changed.emit(current_health, get_max_health())
+
+
+var time_crystals: int = 0
+
+
+func add_crystals(amount: int) -> void:
+	if amount <= 0:
+		return
+	time_crystals += amount
+	crystals_changed.emit(time_crystals)
 
 
 ## Añade monedas a la reserva del jugador y notifica al HUD.

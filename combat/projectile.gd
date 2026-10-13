@@ -4,12 +4,17 @@ extends Area2D
 ## Diseñado para trabajar con ProjectilePool y el Sistema de Runas (Rebote, Perforación, Bifurcación).
 
 const ShotFx = preload("res://combat/shot_fx.gd")
+const DEFAULT_BULLETS_TEX: Texture2D = preload("res://assets/sprites/bullets.png")
 
 @export var speed: float = 520.0
 @export var max_lifetime: float = 3.0
 @export var is_hostile: bool = false
 
+## Sprite propio del arma (proyectiles/*.png). Si es null se usa el atlas bullets.png.
+var sprite_texture: Texture2D = null
 var payload: HitPayload = null
+## Escena que aparece donde el proyectil termina (`WeaponData.impact_scene`); la asigna WeaponManager tras activarlo.
+var impact_scene: PackedScene = null
 var current_lifetime: float = 0.0
 var _has_impacted: bool = false
 var is_parried: bool = false
@@ -42,10 +47,11 @@ func reset_state() -> void:
 	is_hostile = false
 	_pierced_targets.clear()
 	reflections = 0
+	impact_scene = null
 	visible = true
 	modulate = Color.WHITE
 	collision_layer = 4
-	collision_mask = 3
+	collision_mask = 35
 	set_physics_process(true)
 	_update_appearance()
 
@@ -63,7 +69,7 @@ func deflect(new_source: Node2D, damage_multiplier: float = 1.5) -> void:
 		payload.base_damage *= damage_multiplier
 	
 	collision_layer = 4
-	collision_mask = 3
+	collision_mask = 35
 	_update_appearance()
 
 
@@ -87,7 +93,7 @@ func reflect(direction: Vector2, new_source: Node2D = null) -> bool:
 		is_hostile = false
 		is_parried = true
 		collision_layer = 4
-		collision_mask = 3
+		collision_mask = 35
 	current_lifetime = 0.0
 	_has_impacted = false
 	_pierced_targets.clear()
@@ -110,10 +116,12 @@ func setup(
 	p_payload: HitPayload,
 	p_bounces: int = 0,
 	p_pierces: int = 0,
-	p_forks: int = 0
+	p_forks: int = 0,
+	p_sprite: Texture2D = null
 ) -> void:
 	speed = p_speed
 	payload = p_payload
+	sprite_texture = p_sprite
 	bounces_left = p_bounces
 	pierces_left = p_pierces
 	forks_left = p_forks
@@ -164,6 +172,7 @@ func _handle_collision(target: Node) -> void:
 		else:
 			_has_impacted = true
 			set_physics_process(false)
+			_spawn_impact_scene()
 			call_deferred("recycle")
 			return
 	
@@ -196,7 +205,24 @@ func _handle_collision(target: Node) -> void:
 		
 		_has_impacted = true
 		set_physics_process(false)
+		_spawn_impact_scene()
 		call_deferred("recycle")
+
+
+## Instancia `impact_scene` (área de fuego, veneno...) donde terminó el proyectil.
+func _spawn_impact_scene() -> void:
+	if impact_scene == null or not is_inside_tree():
+		return
+	var node: Node2D = impact_scene.instantiate() as Node2D
+	if node == null:
+		return
+	node.global_position = global_position
+	if payload != null and "source_node" in node:
+		node.set("source_node", payload.source_node)
+	var container: Node = get_tree().current_scene
+	if container == null:
+		container = get_tree().root
+	container.call_deferred("add_child", node)
 
 
 ## Verdadero si el emisor es un jugador o aliado y el receptor es el Jugador o un aliado.
@@ -210,7 +236,19 @@ func _is_friendly_fire(receiver: Node) -> bool:
 ## Actualiza la paleta visual (Glow, Núcleo y Sprite2D) según el estado elemental, si es hostil o desviado.
 func _update_appearance() -> void:
 	var sprite_node: Sprite2D = get_node_or_null("Sprite2D") as Sprite2D
-	if sprite_node != null:
+	if sprite_node != null and sprite_texture != null:
+		# Sprite propio del arma: se tiñe solo si es hostil o desviado
+		sprite_node.texture = sprite_texture
+		sprite_node.region_enabled = false
+		if is_hostile:
+			sprite_node.modulate = Color(1.0, 0.3, 0.3, 1.0)
+		elif is_parried:
+			sprite_node.modulate = Color(0.2, 1.0, 1.0, 1.0)
+		else:
+			sprite_node.modulate = Color.WHITE
+	elif sprite_node != null:
+		sprite_node.texture = DEFAULT_BULLETS_TEX
+		sprite_node.region_enabled = true
 		# Seleccionar sub-región según el proyectil:
 		# 0: Balística estándar [0, 0, 16, 16]
 		# 1: Plasma / cian [16, 0, 16, 16]
@@ -307,7 +345,8 @@ func _execute_fork() -> void:
 				speed,
 				bounces_left,
 				pierces_left,
-				0 # Los proyectiles hijos no bifurcan en cascada infinita
+				0, # Los proyectiles hijos no bifurcan en cascada infinita
+				sprite_texture
 			)
 		else:
 			# Fallback de reserva si no existe pool
@@ -321,7 +360,7 @@ func _execute_fork() -> void:
 					container.add_child(child_proj)
 					child_proj.global_position = global_position
 					child_proj.rotation = fork_ang
-					child_proj.setup(speed, fork_payload, bounces_left, pierces_left, 0)
+					child_proj.setup(speed, fork_payload, bounces_left, pierces_left, 0, sprite_texture)
 
 
 

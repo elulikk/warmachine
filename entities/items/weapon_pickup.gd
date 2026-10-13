@@ -56,7 +56,8 @@ func _apply_visuals() -> void:
 		sprite.texture = icon
 		# Arte HD: se reduce a ICON_SIZE px de lado mayor; los íconos 16x16 de respaldo conservan su ampliación pixelada
 		if ItemIconsScript.get_art_icon(weapon_data) != null:
-			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			# Los íconos simplificados de 32 px van con filtro de píxel; el arte HD, lineal
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if ItemIconsScript.is_icon_file(weapon_data) else CanvasItem.TEXTURE_FILTER_LINEAR
 			var longest: float = maxf(float(icon.get_width()), float(icon.get_height()))
 			var fit: float = ICON_SIZE / maxf(longest, 1.0)
 			sprite.scale = Vector2(fit, fit)

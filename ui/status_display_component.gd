@@ -49,6 +49,8 @@ func _find_status_receiver() -> void:
 		# Sincronización inicial
 		_update_fire_display(status_receiver.burn_stacks)
 		_update_ice_display(status_receiver.is_frozen)
+		# Con el receptor enlazado las señales alcanzan: no hace falta resincronizar cada cuadro
+		set_process(false)
 
 
 func _process(_delta: float) -> void:

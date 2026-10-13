@@ -24,6 +24,8 @@ const MERGE_BATCH: int = 10
 ## Cuántas entradas mira hacia adelante para juntar las del mismo tipo.
 const MERGE_LOOKAHEAD: int = 40
 const SPAWN_OFFSET: Vector2 = Vector2(0.0, -16.0)
+## La experiencia que sueltan los enemigos se reduce a la mitad (el botín se reduce en LootTable.DROP_AMOUNT_MULT).
+const EXP_MULT: float = 0.5
 
 var _gore: Array[Dictionary] = []
 var _loot: Array[Dictionary] = []
@@ -141,7 +143,7 @@ func _run_gore(entry: Dictionary) -> void:
 		"gore":
 			var mechanical: bool = bool(entry["mechanical"])
 			var host: Node2D = _host()
-			BloodFx.gibs(host, pos, 12, mechanical, 1.0)
+			BloodFx.gibs(host, pos, 6, mechanical, 1.0)
 			BloodFx.spray(host, pos, Vector2.UP, 60.0, mechanical)
 			BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, mechanical)
 			BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, mechanical)
@@ -177,6 +179,8 @@ func _spawn_next_loot() -> void:
 		var value: float = float(entry["value"])
 		if item_type == "EXP" and value < 0.0:
 			value = _scene_default_exp(entry["scene"] as PackedScene)
+		if item_type == "EXP":
+			value *= EXP_MULT
 		total += value
 		center += entry["pos"] as Vector2
 	center /= float(batch.size())

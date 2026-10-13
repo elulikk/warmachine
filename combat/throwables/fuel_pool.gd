@@ -2,6 +2,9 @@ extends Area2D
 
 const FireVfx = preload("res://combat/fire_vfx.gd")
 const SfxScript = preload("res://core/sfx.gd")
+const EffectCapScript = preload("res://core/effect_cap.gd")
+## Charcos de fuego vivos a la vez: al pasarse, el más viejo se apaga (lanzallamas en ráfaga, lluvia de fuego).
+const MAX_ALIVE: int = 40
 ## Charco de fuego del lanzallamas de combustible. Quema (burn) con ticks a quien lo pisa.
 ## Visual: sprites animados o partículas según el ajuste gráfico (ver FireVfx).
 
@@ -34,6 +37,8 @@ func _ready() -> void:
 	
 	_visual = FireVfx.make("pool", pool_width * 1.1, true)
 	add_child(_visual)
+	_tick_timer = randf_range(0.05, tick_interval)
+	EffectCapScript.register(&"fuel_pool", self, MAX_ALIVE)
 	SfxScript.play(self, &"fire_ignite", global_position, -6.0, randf_range(0.9, 1.1))
 
 
@@ -50,6 +55,11 @@ func _physics_process(delta: float) -> void:
 
 	var fade: float = clampf((lifetime - _age) / 0.8, 0.0, 1.0)
 	_visual.modulate.a = fade
+
+
+## El charco se apaga rápido (lo pide el tope de charcos vivos).
+func expire() -> void:
+	lifetime = minf(lifetime, _age + 0.4)
 
 
 func _apply_tick() -> void:

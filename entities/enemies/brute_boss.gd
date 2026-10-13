@@ -1,5 +1,5 @@
 extends "res://entities/enemies/armored_brute.gd"
-## Coloso del Núcleo: jefe del Sector 1-10 (primer jefe del juego).
+## Coloso del Núcleo: jefe del Sector 10 (primer jefe del juego).
 ## Un Bruto Acorazado más grande, con más vida y una onda de choque en el suelo que se esquiva saltando.
 ## Al bajar de la mitad de vida se enfurece: más rápido, más golpe, onda más seguida y llama refuerzos.
 ## Va al grupo `boss` (música de jefe). Sin class_name a propósito: se carga por preload / escena.

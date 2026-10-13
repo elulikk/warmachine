@@ -40,7 +40,7 @@ var stash_items: Array = []
 ## Estado persistido de cada comerciante (stock limitado y recompra), por `trader_id`.
 ## Lo escribe `TradeSession` (core/trade/trade_session.gd); una clave ausente significa estado inicial.
 var trade_state: Dictionary = {}
-var unlocked_levels: Array[String] = ["res://levels/chapter_1/level_1_01.tscn"]
+var unlocked_levels: Array[String] = ["res://levels/chapter_4/level_4_01.tscn"]
 
 var world_flags: Dictionary = {}
 var last_checkpoint_position: Vector2 = Vector2.ZERO
@@ -242,12 +242,14 @@ func save_to_disk() -> bool:
 	var exp_val: float = 0.0
 	var exp_next_val: float = 100.0
 	var coins_val: int = 0
+	var crystals_val: int = 0
 	
 	if player != null and player.stats_manager != null:
 		level_val = player.stats_manager.level
 		exp_val = player.stats_manager.current_exp
 		exp_next_val = player.stats_manager.exp_to_next_level
 		coins_val = player.stats_manager.coins
+		crystals_val = player.stats_manager.time_crystals
 	
 	# Armas activas y sus runas
 	var weapons_data: Array[Dictionary] = []
@@ -325,7 +327,8 @@ func save_to_disk() -> bool:
 			"level": level_val,
 			"current_exp": exp_val,
 			"exp_to_next_level": exp_next_val,
-			"coins": coins_val
+			"coins": coins_val,
+			"time_crystals": crystals_val
 		},
 		"weapons": weapons_data,
 		"active_weapon": active_weapon_index,
@@ -385,11 +388,9 @@ func load_from_disk(slot_id: int) -> bool:
 		character_name = "OPERADOR"
 	
 	unlocked_levels.clear()
-	var raw_unlocked: Array = data.get("unlocked_levels", ["res://levels/chapter_1/level_1_01.tscn"])
+	var raw_unlocked: Array = data.get("unlocked_levels", ["res://levels/chapter_4/level_4_01.tscn"])
 	for ul in raw_unlocked:
 		unlocked_levels.append(str(ul))
-	if not unlocked_levels.has("res://levels/chapter_1/level_1_01.tscn"):
-		unlocked_levels.append("res://levels/chapter_1/level_1_01.tscn")
 	
 	world_flags = data.get("world_flags", {})
 	
@@ -453,6 +454,8 @@ func apply_data_to_player(player: Player, data: Dictionary) -> void:
 		player.stats_manager.current_exp = float(stats.get("current_exp", 0.0))
 		player.stats_manager.exp_to_next_level = float(stats.get("exp_to_next_level", 75.0))
 		player.stats_manager.coins = int(stats.get("coins", 0))
+		player.stats_manager.time_crystals = int(stats.get("time_crystals", 0))
+		player.stats_manager.crystals_changed.emit(player.stats_manager.time_crystals)
 		player.stats_manager.current_health = player.stats_manager.get_max_health()
 		player.stats_manager.coins_changed.emit(player.stats_manager.coins)
 		player.stats_manager.exp_changed.emit(player.stats_manager.current_exp, player.stats_manager.exp_to_next_level)
@@ -581,7 +584,8 @@ func delete_slot(slot_id: int) -> bool:
 
 
 func _init_new_profile() -> void:
-	unlocked_levels = ["res://levels/chapter_1/level_1_01.tscn"]
+	# Partida nueva: el juego arranca en Ciudad de Jano (sector 01). Los demás mundos se abren al entrar a la Caja.
+	unlocked_levels = ["res://levels/chapter_4/level_4_01.tscn"]
 	stash_items.clear()
 	trade_state.clear()
 	world_flags.clear()

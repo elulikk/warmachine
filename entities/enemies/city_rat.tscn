@@ -1,0 +1,32 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="1_runner"]
+[ext_resource type="Resource" path="res://data/loot/city_loot.tres" id="2_loot"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(24, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(28, 18)
+
+[node name="CityRat" instance=ExtResource("1_runner")]
+loot_table = ExtResource("2_loot")
+entity_name = "Rata"
+move_speed = 130.0
+aggro_range = 320.0
+art_kind = "rat"
+contact_damage = 5.0
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(0, -8)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="HealthComponent" parent="." index="2"]
+max_health = 24.0
+
+[node name="StatusDisplayComponent" parent="." index="4"]
+position = Vector2(0, -40)
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+position = Vector2(0, -8)
+shape = SubResource("RectangleShape2D_hurtbox")

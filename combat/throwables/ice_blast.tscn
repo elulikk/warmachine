@@ -11,3 +11,4 @@ ice_duration = 3.0
 ice_speed_multiplier = 0.2
 burst_color = Color(0.35, 0.85, 1, 1)
 visual_duration = 0.5
+sprite_path = "res://assets/sprites/efectos/ice_blast.png"

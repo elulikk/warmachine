@@ -72,6 +72,9 @@ func _ensure_references() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Lo normal: ningún estado activo (cuatro llamadas por enemigo y por cuadro que no hacen nada)
+	if burn_stacks <= 0 and not is_frozen and not is_stunned and stun_timer <= 0.0 and not is_rooted:
+		return
 	_process_fire_status(delta)
 	_process_ice_status(delta)
 	_process_stun_status(delta)

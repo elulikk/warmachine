@@ -26,5 +26,14 @@ const MOBS: Dictionary = {
 	"runner_blade_a": {"file": "res://assets/art/mobs/runner_blade_a.png", "size": Vector2(15.67, 8.00), "foot": Vector2(3.05, 8.00)},
 	"runner_crossbow": {"file": "res://assets/art/mobs/runner_crossbow.png", "size": Vector2(17.67, 11.00), "foot": Vector2(10.51, 11.00)},
 	"brute_hammer": {"file": "res://assets/art/mobs/brute_hammer.png", "size": Vector2(45.33, 13.67), "foot": Vector2(9.19, 13.67)},
-	"sentinel_spear": {"file": "res://assets/art/mobs/sentinel_spear.png", "size": Vector2(60.00, 5.33), "foot": Vector2(50.44, 5.33)}
+	"sentinel_spear": {"file": "res://assets/art/mobs/sentinel_spear.png", "size": Vector2(60.00, 5.33), "foot": Vector2(50.44, 5.33)},
+	# Mundo 4 (El Presente), ver art_source/world4/process.py
+	"rat": {"file": "res://assets/art/world4/mob_rat.png", "size": Vector2(30.00, 20.00), "foot": Vector2(15.00, 20.00)},
+	"thief": {"file": "res://assets/art/world4/mob_thief.png", "size": Vector2(37.67, 46.00), "foot": Vector2(18.83, 46.00)},
+	"thug": {"file": "res://assets/art/world4/mob_thug.png", "size": Vector2(37.00, 54.00), "foot": Vector2(18.50, 54.00)},
+	"gunman": {"file": "res://assets/art/world4/mob_gunman.png", "size": Vector2(37.33, 52.00), "foot": Vector2(18.67, 52.00)},
+	"bouncer": {"file": "res://assets/art/world4/mob_bouncer.png", "size": Vector2(27.67, 62.00), "foot": Vector2(13.83, 62.00)},
+	"hitman_elite": {"file": "res://assets/art/world4/mob_hitman_elite.png", "size": Vector2(26.33, 56.00), "foot": Vector2(13.17, 56.00)},
+	"hitman_smg": {"file": "res://assets/art/world4/mob_hitman_smg.png", "size": Vector2(24.33, 54.00), "foot": Vector2(12.17, 54.00)},
+	"time_agent": {"file": "res://assets/art/world4/mob_time_agent.png", "size": Vector2(44.33, 54.00), "foot": Vector2(22.17, 54.00)}
 }

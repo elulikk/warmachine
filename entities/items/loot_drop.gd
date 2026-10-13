@@ -154,6 +154,8 @@ func _update_visuals() -> void:
 		match item_type.to_upper():
 			"COIN":
 				anim_sprite.modulate = TIER_TINT[clampi(merge_tier, 0, MAX_TIER)] # Dorado original; más grande y otro tono al fundirse
+			"CRYSTAL":
+				anim_sprite.modulate = Color(0.45, 1.2, 1.6, 1.0) # moneda teñida de cian: cristal de tiempo
 			"AMMO":
 				anim_sprite.modulate = Color(0.75, 0.92, 1.1, 1.0) # Engranaje con leve tinte frío (fundido: solo más grande)
 			"HEALTH":
@@ -287,6 +289,10 @@ func _collect(player: Player) -> void:
 			_last_coin_msec = now_msec
 			# Las fundidas suenan más graves (más pesadas)
 			GameFeel.sfx(self, &"coin", Vector2.INF, -1.0, pow(2.0, float(_coin_combo - merge_tier * 4) / 12.0))
+		"CRYSTAL":
+			if player.stats_manager != null:
+				player.stats_manager.add_crystals(amount)
+			GameFeel.sfx(self, &"coin", Vector2.INF, -2.0, 1.5)
 		"AMMO":
 			if player.weapon_manager != null:
 				player.weapon_manager.add_ammo(amount)

@@ -21,37 +21,19 @@ shape = SubResource("RectangleShape2D_trigger")
 
 [node name="BarrierLeft" type="StaticBody2D" parent="Barriers"]
 position = Vector2(-530, -200)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Barriers/BarrierLeft"]
 shape = SubResource("RectangleShape2D_barrier")
 
-[node name="ColorRect" type="ColorRect" parent="Barriers/BarrierLeft"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-mouse_filter = 2
-color = Color(1, 0.25, 0.2, 0.55)
-
 [node name="BarrierRight" type="StaticBody2D" parent="Barriers"]
 position = Vector2(530, -200)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Barriers/BarrierRight"]
 shape = SubResource("RectangleShape2D_barrier")
-
-[node name="ColorRect" type="ColorRect" parent="Barriers/BarrierRight"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-mouse_filter = 2
-color = Color(1, 0.25, 0.2, 0.55)
 
 [node name="WaveManager" type="Node" parent="."]
 script = ExtResource("2_wave")

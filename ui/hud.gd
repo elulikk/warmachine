@@ -3,21 +3,18 @@ extends CanvasLayer
 ## Interfaz de combate y estado (HUD) unificada para WARMACHINE.
 ## Conecta en tiempo real con las señales de HealthComponent, StatsManager y WeaponManager:
 ## - Superior izquierda: barra de salud y valor numérico legible (HP).
-## - Superior derecha: contador de monedas de StatsManager.coins.
 ## - Inferior derecha: arma equipada y visualización gráfica de los 3 sockets de runas.
 ## - Centro inferior: barra de acceso rápido de 9 casilleros (ui/hotbar.gd), que reemplaza los botones de arma.
 
 const SteamSkin = preload("res://ui/components/steam_skin.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const HotbarScript = preload("res://ui/hotbar.gd")
-const SectorMinimapScript = preload("res://ui/sector_minimap.gd")
 
 @onready var health_bar: ProgressBar = %HealthBar
 @onready var health_label: Label = %HealthLabel
 @onready var level_label: Label = %LevelLabel
 @onready var character_name_label: Label = get_node_or_null("%CharacterNameLabel") as Label
 @onready var exp_bar: ProgressBar = %ExpBar
-@onready var coins_label: Label = %CoinsLabel
 @onready var stats_label: Label = get_node_or_null("%StatsLabel") as Label
 
 @onready var weapon_name_label: Label = %WeaponNameLabel
@@ -42,7 +39,6 @@ var _is_reloading: bool = false
 var _level_banner: Label = null
 var _level_banner_tween: Tween = null
 var _sector_title: Label = null
-var _minimap: Control = null
 
 
 func _ready() -> void:
@@ -71,28 +67,12 @@ func _ready() -> void:
 		weapon_slot_3_btn.pressed.connect(func() -> void: _on_slot_button_pressed(2))
 
 
-## Aspecto steampunk: placas, tubo de salud, cartel de monedas y sockets con ícono de runa.
+## Aspecto steampunk: placas, tubo de salud, barra de EXP y sockets con ícono de runa.
 func _apply_steam_skin() -> void:
 	for path: String in ["TopLeftContainer/Panel", "BottomRightContainer/Panel"]:
 		var plate: PanelContainer = get_node_or_null(path) as PanelContainer
 		if plate != null:
 			plate.add_theme_stylebox_override("panel", SteamSkin.hud_plate_style())
-	var coins_panel: PanelContainer = get_node_or_null("TopRightContainer/Panel") as PanelContainer
-	if coins_panel != null:
-		coins_panel.add_theme_stylebox_override("panel", SteamSkin.coin_style())
-		coins_panel.custom_minimum_size = Vector2(190, 56)
-		var top_right: Control = get_node_or_null("TopRightContainer") as Control
-		if top_right != null:
-			top_right.offset_left = -214.0
-			top_right.offset_top = 10.0
-			top_right.offset_right = -16.0
-			top_right.offset_bottom = 70.0
-	if coins_label != null:
-		coins_label.add_theme_font_override("font", SteamSkin.title_font())
-		coins_label.add_theme_color_override("font_color", SteamSkin.COLOR_TITLE)
-		coins_label.add_theme_color_override("font_outline_color", SteamSkin.COLOR_OUTLINE)
-		coins_label.add_theme_constant_override("outline_size", 3)
-		coins_label.add_theme_font_size_override("font_size", 14)
 
 	if health_bar != null:
 		health_bar.custom_minimum_size = Vector2(236, 28)
@@ -129,24 +109,11 @@ func _apply_steam_skin() -> void:
 	SteamSkin.skin_tree(self)
 
 
-## Título del sector arriba al centro y minimapa bajo las monedas. `level` aporta la geometría (ver sector_minimap.gd).
-func set_sector(title: String, level: Node) -> void:
+## Título del sector arriba al centro.
+func set_sector(title: String) -> void:
 	if _sector_title != null:
 		_sector_title.text = title
 		_sector_title.visible = not title.is_empty()
-	if _minimap == null:
-		_minimap = Control.new()
-		_minimap.set_script(SectorMinimapScript)
-		_minimap.name = "SectorMinimap"
-		_minimap.custom_minimum_size = Vector2(180, 110)
-		_minimap.anchor_left = 1.0
-		_minimap.anchor_right = 1.0
-		_minimap.offset_left = -196.0
-		_minimap.offset_right = -16.0
-		_minimap.offset_top = 70.0
-		_minimap.offset_bottom = 180.0
-		add_child(_minimap)
-	_minimap.call("setup", level)
 
 
 func _build_sector_title() -> void:
@@ -209,11 +176,9 @@ func setup_with_player(player: Player) -> void:
 			stats.health_changed.connect(_on_health_changed)
 		_on_health_changed(stats.current_health, stats.get_max_health())
 	
-	# 2. Conexión de Monedas y Progresión (StatsManager)
+	# 2. Conexión de Progresión (StatsManager). Las monedas se ven en el inventario (ui/inventory_window.gd)
 	if player.stats_manager != null:
 		var stats: StatsManager = player.stats_manager
-		if not stats.coins_changed.is_connected(_on_coins_changed):
-			stats.coins_changed.connect(_on_coins_changed)
 		if not stats.exp_changed.is_connected(_on_exp_changed):
 			stats.exp_changed.connect(_on_exp_changed)
 		if not stats.leveled_up.is_connected(_on_leveled_up):
@@ -222,9 +187,8 @@ func setup_with_player(player: Player) -> void:
 			stats.level_gained.connect(_show_level_up_banner)
 		if not stats.stats_recalculated.is_connected(_refresh_stats_label):
 			stats.stats_recalculated.connect(_refresh_stats_label)
-		
+
 		# Sincronización inicial
-		_on_coins_changed(stats.coins)
 		_on_exp_changed(stats.current_exp, stats.exp_to_next_level)
 		_on_leveled_up(stats.level)
 	
@@ -278,11 +242,6 @@ func _on_shield_changed(_cur_shield: float, _max_shld: float) -> void:
 	var player_node: Player = get_tree().get_first_node_in_group(&"player") as Player
 	if player_node != null and player_node.health_component != null:
 		_on_health_changed(player_node.health_component.current_health, player_node.health_component.max_health)
-
-
-func _on_coins_changed(new_coins: int) -> void:
-	if coins_label != null:
-		coins_label.text = "🪙 Monedas: %d" % new_coins
 
 
 func _on_exp_changed(current: float, max_exp: float) -> void:

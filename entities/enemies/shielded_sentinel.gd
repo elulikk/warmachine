@@ -6,6 +6,7 @@ extends EnemyBase
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
 const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
 const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
 const CHASE_ACCEL: float = 900.0
@@ -100,6 +101,7 @@ func _physics_process(delta: float) -> void:
 	if contact_cooldown > 0.0:
 		contact_cooldown = maxf(0.0, contact_cooldown - delta)
 	
+	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
 	
 	if contact_cooldown <= 0.0:

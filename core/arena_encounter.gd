@@ -1,11 +1,18 @@
 class_name ArenaEncounter
 extends Area2D
-## Encuentro de arena: al entrar el jugador se cierran las barreras y arrancan las rondas
-## del WaveManager hijo. Al superar la última ronda las barreras se abren.
+## Encuentro de arena: al entrar el jugador la cámara se congela en la zona y aparecen paredes invisibles
+## en los bordes de la pantalla; arrancan las rondas del WaveManager hijo. Al superar la última ronda
+## la cámara vuelve a seguir al jugador.
 ## Si el jugador es derrotado, el encuentro se reinicia para poder repetirse desde el checkpoint.
 
 signal encounter_started
 signal encounter_cleared
+
+## Mitad del grosor de las paredes (12 px en el .tscn): la cara interior queda justo en el borde de la pantalla.
+const WALL_HALF_WIDTH: float = 6.0
+## Capa de las paredes (capa 6). Solo el jugador y las balas la tienen en la máscara: los enemigos la atraviesan
+## para entrar desde fuera de la pantalla.
+const WALL_LAYER: int = 32
 
 @export var wave_manager_path: NodePath = ^"WaveManager"
 @export var barriers_path: NodePath = ^"Barriers"
@@ -13,7 +20,8 @@ signal encounter_cleared
 
 var _wave_manager: WaveManager = null
 var _status_label: Label = null
-var _barriers: Array[StaticBody2D] = []
+var _wall_left: StaticBody2D = null
+var _wall_right: StaticBody2D = null
 var _started: bool = false
 var _cleared: bool = false
 
@@ -27,13 +35,14 @@ func _ready() -> void:
 
 	var barriers_root: Node = get_node_or_null(barriers_path)
 	if barriers_root != null:
-		for child: Node in barriers_root.get_children():
-			if child is StaticBody2D:
-				_barriers.append(child as StaticBody2D)
-	_set_barriers_locked(false)
+		_wall_left = barriers_root.get_node_or_null("BarrierLeft") as StaticBody2D
+		_wall_right = barriers_root.get_node_or_null("BarrierRight") as StaticBody2D
+	_set_walls_active(false)
 
 	_wave_manager = get_node_or_null(wave_manager_path) as WaveManager
 	if _wave_manager != null:
+		# Los enemigos nacen fuera de la pantalla y se acercan: así no aparecen de la nada
+		_wave_manager.spawn_offscreen = true
 		_wave_manager.round_started.connect(_on_round_started)
 		_wave_manager.round_cleared.connect(_on_round_cleared)
 		_wave_manager.all_rounds_cleared.connect(_on_all_rounds_cleared)
@@ -50,9 +59,10 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 
 	_started = true
-	_set_barriers_locked(true)
+	_lock_camera()
+	_set_walls_active(true)
 	encounter_started.emit()
-	print("[ArenaEncounter] %s iniciada: barreras cerradas." % name)
+	print("[ArenaEncounter] %s iniciada: cámara bloqueada." % name)
 	# Diferido: body_entered ocurre durante el flush de física y no se pueden instanciar cuerpos ahí
 	_wave_manager.start.call_deferred()
 
@@ -70,10 +80,11 @@ func _on_round_cleared(round_number: int) -> void:
 
 func _on_all_rounds_cleared() -> void:
 	_cleared = true
-	_set_barriers_locked(false)
+	_set_walls_active(false)
+	_unlock_camera()
 	_set_status_text("¡ZONA DESPEJADA! El paso está libre.")
 	encounter_cleared.emit()
-	print("[ArenaEncounter] %s despejada: barreras abiertas." % name)
+	print("[ArenaEncounter] %s despejada: cámara liberada." % name)
 
 
 ## Reinicia el encuentro si el jugador cae en combate, para que no quede trabado tras reaparecer.
@@ -84,19 +95,37 @@ func _on_player_defeated() -> void:
 	if _wave_manager != null:
 		_wave_manager.stop_and_clear()
 	_started = false
-	_set_barriers_locked(false)
+	_set_walls_active(false)
+	_unlock_camera()
 	_set_status_text("")
 	print("[ArenaEncounter] %s reiniciada tras la derrota del jugador." % name)
 
 
-func _set_barriers_locked(locked: bool) -> void:
-	for barrier in _barriers:
-		if barrier.visible != locked:
-			GameFeel.sfx(self, &"barrier_close" if locked else &"barrier_open", global_position)
-			break
-	for barrier in _barriers:
-		barrier.visible = locked
-		barrier.set_deferred("collision_layer", 1 if locked else 0)
+## Congela la cámara en el centro de la arena y pone las paredes en los bordes de lo que se ve.
+func _lock_camera() -> void:
+	var camera: CameraFollow = get_tree().get_first_node_in_group(&"game_camera") as CameraFollow
+	var trigger: CollisionShape2D = get_node_or_null(^"TriggerShape") as CollisionShape2D
+	if camera == null or trigger == null or _wall_left == null or _wall_right == null:
+		return
+
+	var view_edges: Vector2 = camera.lock_horizontal(trigger.global_position.x)
+	_wall_left.set_deferred("global_position", Vector2(view_edges.x - WALL_HALF_WIDTH, _wall_left.global_position.y))
+	_wall_right.set_deferred("global_position", Vector2(view_edges.y + WALL_HALF_WIDTH, _wall_right.global_position.y))
+
+
+func _unlock_camera() -> void:
+	var camera: CameraFollow = get_tree().get_first_node_in_group(&"game_camera") as CameraFollow
+	if camera != null:
+		camera.unlock_horizontal()
+
+
+func _set_walls_active(active: bool) -> void:
+	if _wall_left == null or _wall_right == null:
+		return
+	if (_wall_left.collision_layer != 0) != active:
+		GameFeel.sfx(self, &"barrier_close" if active else &"barrier_open", global_position)
+	for wall: StaticBody2D in [_wall_left, _wall_right]:
+		wall.set_deferred("collision_layer", WALL_LAYER if active else 0)
 
 
 func _set_status_text(text: String) -> void:

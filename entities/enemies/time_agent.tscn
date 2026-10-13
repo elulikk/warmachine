@@ -1,0 +1,40 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="1_runner"]
+[ext_resource type="Resource" path="res://data/loot/time_agent_loot.tres" id="2_loot"]
+[ext_resource type="Script" path="res://entities/enemies/armed_enemy.gd" id="3_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(26, 52)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
+size = Vector2(30, 54)
+
+[node name="TimeAgent" instance=ExtResource("1_runner")]
+script = ExtResource("3_script")
+loot_table = ExtResource("2_loot")
+entity_name = "Agente del Tiempo"
+move_speed = 72.0
+aggro_range = 420.0
+art_kind = "time_agent"
+gun = "pistol"
+shot_damage = 11.0
+fire_interval = 1.4
+shoot_range = 520
+keep_distance = 240
+shot_tint = Color(0.55, 0.9, 1, 1)
+projectile_speed = 700.0
+
+[node name="CollisionShape2D" parent="." index="0"]
+position = Vector2(0, -26)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="HealthComponent" parent="." index="2"]
+max_health = 230.0
+
+[node name="StatusDisplayComponent" parent="." index="4"]
+position = Vector2(0, -72)
+
+[node name="CollisionShape2D" parent="Hurtbox" index="0"]
+position = Vector2(0, -26)
+shape = SubResource("RectangleShape2D_hurtbox")

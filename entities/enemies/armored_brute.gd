@@ -6,9 +6,17 @@ extends EnemyBase
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
 const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
 const CHASE_ACCEL: float = 900.0
 
+## Tipo de arte de `EnemyArt` (ver enemy_art.gd): "brute", "thug", "bouncer"...
+@export var art_kind: String = "brute"
+## Datos propios de cada variante (matón, patovica): nombre, vida, armadura y velocidad.
+@export var brute_name: String = "Bruto Acorazado"
+@export var brute_health: float = 250.0
+@export var brute_armor: float = 65.0
+@export var brute_speed: float = 38.0
 @export var contact_damage: float = 24.0
 @export var aggro_range: float = 350.0
 @export var gravity: float = 980.0
@@ -26,10 +34,10 @@ var is_aggroed: bool = false
 
 
 func _ready() -> void:
-	var art: Node2D = EnemyArtScript.attach(self, "brute")
-	entity_name = "Bruto Acorazado"
-	max_health = 250.0
-	move_speed = 38.0
+	var art: Node2D = EnemyArtScript.attach(self, art_kind)
+	entity_name = brute_name
+	max_health = brute_health
+	move_speed = brute_speed
 	super._ready()
 	if overhead_bar != null:
 		overhead_bar.set("vertical_offset_y", -80.0)
@@ -39,9 +47,9 @@ func _ready() -> void:
 		original_color = visual_rect.color
 	
 	if health_component != null:
-		health_component.max_health = 250.0
-		health_component.current_health = 220.0
-		health_component.armor = 65.0
+		health_component.max_health = brute_health
+		health_component.current_health = minf(brute_health, brute_health * 0.88)
+		health_component.armor = brute_armor
 		if not health_component.damage_taken.is_connected(_on_damage_taken):
 			health_component.damage_taken.connect(_on_damage_taken)
 		if not health_component.died.is_connected(die):
@@ -88,6 +96,7 @@ func _physics_process(delta: float) -> void:
 	if contact_cooldown > 0.0:
 		contact_cooldown = maxf(0.0, contact_cooldown - delta)
 	
+	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
 	
 	# Ataque melee contundente por contacto físico

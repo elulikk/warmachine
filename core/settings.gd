@@ -93,10 +93,12 @@ const DEFAULTS: Dictionary = {
 	"quality": 2,
 	"msaa": 2,
 	"particles": 1.0,
-	"fire_style": 0,  ## 0 = sprites (liviano), 1 = partículas
+	"fire_style": 0,  ## estilo de fuego y ácido: 0 = sprites (liviano), 1 = partículas, 2 = shaders
+	"enemy_lod": true,  ## enemigos lejanos del jugador se dibujan como un solo sprite en vez del esqueleto
 	"fx_vignette": true,
 	"fx_grain": true,
 	"fx_bloom": false,
+	"parallax_bg": true,  ## fondos por capas con paralaje; apagado = imagen fija
 	"master_volume": 1.0,
 	"music_volume": 0.8,
 	"sfx_volume": 1.0,

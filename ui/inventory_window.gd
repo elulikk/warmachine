@@ -3,7 +3,7 @@ extends DraggableWindow
 ## Interfaz de Inventario y Mochila del Jugador.
 ## Hereda de DraggableWindow para permitir arrastre y posicionamiento libre.
 ## Panel izquierdo: Ranuras de equipo activo (Armas 1/2/3, 3 Sockets del arma seleccionada, y HEAD, CHEST, GLOVES, BOOTS, BACK, ACCESSORY_1/2, TACTICAL).
-## Panel derecho: Grilla de 5x4 con los 20 casilleros de la mochila.
+## Panel derecho: Grilla de 5x4 con los 20 casilleros de la mochila, y debajo las monedas y cristales de tiempo.
 ## Arrastrar o clic derecho transfiere recursos limpiamente entre la mochila y las ranuras equipadas.
 
 
@@ -25,6 +25,7 @@ extends DraggableWindow
 @onready var equip_tactical_slot: ItemSlot = %EquipTacticalSlot
 
 @onready var backpack_grid: GridContainer = %BackpackGrid
+@onready var currency_label: Label = %CurrencyLabel
 
 ## Segundos de espera tras el último cambio antes de guardar la partida en disco.
 const AUTOSAVE_DELAY: float = 0.8
@@ -68,6 +69,33 @@ func open_window() -> void:
 func _bind_player() -> void:
 	if player == null or not is_instance_valid(player):
 		player = get_tree().get_first_node_in_group(&"player") as Player
+	_connect_currency_signals()
+
+
+## Monedas y cristales de tiempo: se actualizan aunque la ventana esté abierta mientras se juntan.
+func _connect_currency_signals() -> void:
+	if player == null or player.stats_manager == null:
+		return
+	var stats: StatsManager = player.stats_manager
+	if not stats.coins_changed.is_connected(_on_currency_changed):
+		stats.coins_changed.connect(_on_currency_changed)
+	if not stats.crystals_changed.is_connected(_on_currency_changed):
+		stats.crystals_changed.connect(_on_currency_changed)
+
+
+func _on_currency_changed(_amount: int) -> void:
+	_refresh_currency()
+
+
+## Cartel de monedas; el cristal de tiempo aparece al juntar el primero.
+func _refresh_currency() -> void:
+	if currency_label == null or player == null or player.stats_manager == null:
+		return
+	var stats: StatsManager = player.stats_manager
+	var text: String = "🪙 Monedas: %d" % stats.coins
+	if stats.time_crystals > 0:
+		text += "   ◆ Cristales: %d" % stats.time_crystals
+	currency_label.text = text
 
 
 func _init_backpack_grid() -> void:
@@ -83,6 +111,8 @@ func _init_backpack_grid() -> void:
 		slot_instance.slot_type = "ANY"
 		slot_instance.slot_index = i
 		slot_instance.context_tag = "backpack"
+		# Mochila más holgada que el equipo: casilleros de 50 px
+		slot_instance.custom_minimum_size = Vector2(50, 50)
 		slot_instance.accept_filter = _backpack_accepts
 		slot_instance.slot_right_clicked.connect(_on_backpack_slot_right_clicked)
 		slot_instance.item_dropped_on_slot.connect(_on_item_dropped_on_slot)
@@ -159,7 +189,9 @@ func refresh_all() -> void:
 	_bind_player()
 	if player == null:
 		return
-	
+
+	_refresh_currency()
+
 	# 1. Refrescar Mochila
 	if player.inventory_manager != null:
 		for i in range(_backpack_slots.size()):

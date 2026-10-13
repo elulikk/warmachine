@@ -4,6 +4,11 @@ extends Area2D
 ## no se queda trabado para siempre. No hace daño. Visual procedural: telaraña sobre el piso.
 
 const SfxScript = preload("res://core/sfx.gd")
+const EffectCapScript = preload("res://core/effect_cap.gd")
+const ViewCullScript = preload("res://core/view_cull.gd")
+## Redes vivas a la vez: al pasarse, la más vieja se suelta.
+const MAX_ALIVE: int = 16
+const SPRITE_PATH: String = "res://assets/sprites/efectos/root_net.png"
 
 @export var lifetime: float = 4.0
 @export var root_duration: float = 2.0
@@ -15,6 +20,7 @@ var source_node: Node2D = null
 
 var _age: float = 0.0
 var _check_timer: float = 0.0
+var _sprite: Texture2D = null
 var _caught: Dictionary = {} ## instance_id -> true (ya arraigados por esta red)
 
 
@@ -31,7 +37,11 @@ func _ready() -> void:
 	shape_node.shape = circle
 	shape_node.position = Vector2(0.0, -radius * 0.25)
 	add_child(shape_node)
+	if ResourceLoader.exists(SPRITE_PATH):
+		_sprite = load(SPRITE_PATH) as Texture2D
 	SfxScript.play(self, &"net_deploy", global_position, -2.0, randf_range(0.95, 1.05))
+	_check_timer = randf_range(0.0, check_interval)
+	EffectCapScript.register(&"root_net", self, MAX_ALIVE)
 
 
 func _physics_process(delta: float) -> void:
@@ -43,7 +53,13 @@ func _physics_process(delta: float) -> void:
 	if _check_timer <= 0.0:
 		_check_timer = check_interval
 		_root_targets()
-	queue_redraw()
+	if ViewCullScript.near(self, radius + 60.0):
+		queue_redraw()
+
+
+## La red se suelta rápido (la pide el tope de redes vivas).
+func expire() -> void:
+	lifetime = minf(lifetime, _age + 0.3)
 
 
 func _root_targets() -> void:
@@ -70,6 +86,9 @@ func _draw() -> void:
 	var fill: Color = net_color
 	fill.a = 0.16 * fade
 	var center: Vector2 = Vector2(0.0, -ry * 0.5)
+	if _sprite != null:
+		draw_texture_rect(_sprite, Rect2(center - Vector2(rx, ry), Vector2(rx, ry) * 2.0), false, Color(1, 1, 1, fade))
+		return
 	# Relleno y anillos concéntricos
 	var outline: PackedVector2Array = PackedVector2Array()
 	for i: int in 33:

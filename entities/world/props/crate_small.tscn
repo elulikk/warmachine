@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://entities/world/world_prop.gd" id="1_prop"]
+
+[node name="CrateSmall" type="StaticBody2D" groups=["world"]]
+collision_mask = 0
+script = ExtResource("1_prop")
+size = Vector2(60, 60)
+art_path = "res://assets/art/world/props/crate_small.png"
+placeholder_color = Color(0.5, 0.36, 0.2, 1)

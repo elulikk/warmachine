@@ -36,7 +36,7 @@ size = Vector2(64, 18)
 [node name="Level_1_07" type="Node2D"]
 script = ExtResource("e17")
 level_id = "1_07"
-level_title = "Sector 1-7"
+level_title = "Sector 07"
 chapter_number = 1
 next_level_path = "res://levels/chapter_1/level_1_08.tscn"
 gear_loot_tier = 2
@@ -186,35 +186,19 @@ shape = SubResource("s4")
 
 [node name="BarrierLeft" type="StaticBody2D" parent="Arena1/Barriers"]
 position = Vector2(1300, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierLeft"]
 shape = SubResource("s5")
 
-[node name="ColorRect" type="ColorRect" parent="Arena1/Barriers/BarrierLeft"]
-offset_left = -6
-offset_top = -200
-offset_right = 6
-offset_bottom = 200
-color = Color(1, 0.35, 0.25, 0.55)
-
 [node name="BarrierRight" type="StaticBody2D" parent="Arena1/Barriers"]
 position = Vector2(2500, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierRight"]
 shape = SubResource("s5")
-
-[node name="ColorRect" type="ColorRect" parent="Arena1/Barriers/BarrierRight"]
-offset_left = -6
-offset_top = -200
-offset_right = 6
-offset_bottom = 200
-color = Color(1, 0.35, 0.25, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena1"]
 script = ExtResource("e3")
@@ -330,35 +314,19 @@ shape = SubResource("s4")
 
 [node name="BarrierLeft" type="StaticBody2D" parent="Arena2/Barriers"]
 position = Vector2(4400, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierLeft"]
 shape = SubResource("s5")
 
-[node name="ColorRect" type="ColorRect" parent="Arena2/Barriers/BarrierLeft"]
-offset_left = -6
-offset_top = -200
-offset_right = 6
-offset_bottom = 200
-color = Color(1, 0.35, 0.25, 0.55)
-
 [node name="BarrierRight" type="StaticBody2D" parent="Arena2/Barriers"]
 position = Vector2(5600, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierRight"]
 shape = SubResource("s5")
-
-[node name="ColorRect" type="ColorRect" parent="Arena2/Barriers/BarrierRight"]
-offset_left = -6
-offset_top = -200
-offset_right = 6
-offset_bottom = 200
-color = Color(1, 0.35, 0.25, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena2"]
 script = ExtResource("e3")
@@ -474,35 +442,19 @@ shape = SubResource("s6")
 
 [node name="BarrierLeft" type="StaticBody2D" parent="Arena3/Barriers"]
 position = Vector2(6800, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierLeft"]
 shape = SubResource("s5")
 
-[node name="ColorRect" type="ColorRect" parent="Arena3/Barriers/BarrierLeft"]
-offset_left = -6
-offset_top = -200
-offset_right = 6
-offset_bottom = 200
-color = Color(1, 0.35, 0.25, 0.55)
-
 [node name="BarrierRight" type="StaticBody2D" parent="Arena3/Barriers"]
 position = Vector2(8150, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierRight"]
 shape = SubResource("s5")
-
-[node name="ColorRect" type="ColorRect" parent="Arena3/Barriers/BarrierRight"]
-offset_left = -6
-offset_top = -200
-offset_right = 6
-offset_bottom = 200
-color = Color(1, 0.35, 0.25, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena3"]
 script = ExtResource("e3")
@@ -616,4 +568,4 @@ offset_right = 1260
 offset_bottom = 464
 theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 13
-text = "Sector 1-7: ESCOPETA. Oleadas mixtas: zombis, ladrones y brutos. La escopeta gana en distancia corta."
+text = "Sector 07: ESCOPETA. Oleadas mixtas: zombis, ladrones y brutos. La escopeta gana en distancia corta."

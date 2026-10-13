@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/armored_brute.tscn" id="1_brute"]
+[ext_resource type="Resource" path="res://data/loot/city_elite_loot.tres" id="2_loot"]
+
+[node name="CityBouncer" instance=ExtResource("1_brute")]
+loot_table = ExtResource("2_loot")
+art_kind = "bouncer"
+brute_name = "Patovica"
+brute_health = 320.0
+brute_armor = 35.0
+brute_speed = 46.0
+contact_damage = 24.0

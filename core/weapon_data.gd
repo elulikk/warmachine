@@ -136,11 +136,21 @@ signal runes_changed
 ## Cantidad de perforaciones innatas a enemigos que atraviesa el proyectil.
 @export var innate_pierce: int = 0
 
+## Rebotes innatos contra paredes y suelo (se suman a los de las runas).
+@export var innate_bounces: int = 0
+
 ## Escena del proyectil que será instanciada en cada disparo.
 @export var projectile_scene: PackedScene
 
+## Sprite de la bala de esta arma (res://assets/sprites/proyectiles/). Si está vacío se usa el atlas por defecto.
+@export var projectile_sprite: Texture2D = null
+
 ## Efectos de estado innatos transmitidos por los proyectiles de esta arma (ej: ["ICE"]).
 @export var innate_status_effects: Array[String] = []
+
+## Escena que aparece donde el proyectil termina (al chocar con un enemigo o con el mundo): área de fuego, veneno...
+## Un Node2D; si tiene `source_node` recibe al tirador (ver `AreaBurst`).
+@export var impact_scene: PackedScene = null
 
 @export_group("Sockets y Runas")
 ## Cantidad máxima de ranuras de engarce disponibles para runas.
@@ -211,7 +221,7 @@ func get_effective_damage() -> float:
 
 ## Retorna el total de rebotes contra paredes acumulados de todas las runas.
 func get_total_bounces() -> int:
-	var total: int = 0
+	var total: int = innate_bounces
 	for rune in socketed_runes:
 		if rune != null:
 			total += rune.extra_bounces

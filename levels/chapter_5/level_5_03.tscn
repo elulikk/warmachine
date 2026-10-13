@@ -21,7 +21,7 @@ size = Vector2(180, 20)
 [node name="Level_5_03" type="Node2D"]
 script = ExtResource("1_level")
 level_id = "5_03"
-level_title = "Sector 5-3"
+level_title = "Sector 03"
 chapter_number = 5
 next_level_path = "res://levels/chapter_5/level_5_04.tscn"
 

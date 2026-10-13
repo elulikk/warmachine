@@ -27,9 +27,10 @@ func setup(
 	p_payload: HitPayload,
 	_p_bounces: int = 0,
 	_p_pierces: int = 0,
-	_p_forks: int = 0
+	_p_forks: int = 0,
+	p_sprite: Texture2D = null
 ) -> void:
-	super.setup(p_speed, p_payload, 0, 0, 0)
+	super.setup(p_speed, p_payload, 0, 0, 0, p_sprite)
 	_velocity = transform.x * p_speed * randf_range(0.65, 1.15)
 
 

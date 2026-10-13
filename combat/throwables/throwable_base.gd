@@ -34,9 +34,11 @@ var _detonated: bool = false
 
 func _ready() -> void:
 	_fuse_left = fuse_time
-	contact_monitor = true
-	max_contacts_reported = 4
-	body_entered.connect(_on_body_entered)
+	# Reportar contactos cuesta por cuerpo y por cuadro: solo si la granada detona al tocar el piso
+	contact_monitor = detonate_on_ground
+	max_contacts_reported = 4 if detonate_on_ground else 0
+	if detonate_on_ground:
+		body_entered.connect(_on_body_entered)
 	
 	if impact_sensor != null:
 		impact_sensor.body_entered.connect(_on_sensor_target_entered)

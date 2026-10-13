@@ -3,8 +3,10 @@
 [ext_resource type="Script" uid="uid://cscpl4ofuoe7b" path="res://core/weapon_data.gd" id="1_650de"]
 [ext_resource type="Script" uid="uid://x45v4u34qja8" path="res://core/runes/rune_data.gd" id="2_4aacp"]
 [ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="3_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/bala_pistola.png" id="3_sprite"]
 
 [resource]
+projectile_sprite = ExtResource("3_sprite")
 script = ExtResource("1_650de")
 weapon_name = "Revólver Oxidado"
 family = 2

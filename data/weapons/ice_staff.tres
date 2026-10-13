@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/art/world2/iceball.png" id="3_sprite"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Báculo de Hielo"
+family = 0
+grip = 0
+is_automatic = false
+damage = 13.0
+fire_rate = 2.8
+knockback_force = 30.0
+recoil_force = 10.0
+projectile_speed = 460.0
+magazine_size = 12
+reload_time = 1.8
+projectile_scene = ExtResource("2_proj")
+projectile_sprite = ExtResource("3_sprite")
+innate_status_effects = Array[String](["ICE"])
+rarity = 2
+gold_value = 110
+description = "Báculo de cristal helado. Sus orbes de hielo congelan y frenan a los enemigos. 12 cargas de maná."

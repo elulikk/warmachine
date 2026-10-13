@@ -33,6 +33,12 @@ const SpawnTelegraph := preload("res://combat/spawn_telegraph.gd")
 ## Segundos de destello en el punto de nacimiento antes de que aparezca cada enemigo (0 = al instante).
 @export var spawn_warning: float = 1.0
 
+## Si es true los enemigos nacen fuera de la vista de la cámara, a un lado de la pantalla, y se acercan al jugador.
+## Lo activan las arenas. La altura sale del marcador; si no hay lugar a ningún lado, nace en el marcador.
+@export var spawn_offscreen: bool = false
+## Distancia (px) entre el borde de la pantalla y el nacimiento fuera de cámara (se suma un poco de jitter).
+@export var offscreen_margin: float = 40.0
+
 @export_group("Rondas")
 ## Tamaño de cada ronda (ej: [3, 4, 6]). Vacío = modo continuo.
 @export var round_sizes: Array[int] = []
@@ -143,7 +149,11 @@ func _spawn_one(use_elite: bool = false) -> bool:
 
 	var chosen_marker: Marker2D = spawn_points.pick_random()
 	var spawn_pos: Vector2 = _marker_world_position(chosen_marker)
-	spawn_pos.x += randf_range(-spawn_jitter, spawn_jitter)
+	var offscreen_x: float = _pick_offscreen_x() if spawn_offscreen else NAN
+	if is_nan(offscreen_x):
+		spawn_pos.x += randf_range(-spawn_jitter, spawn_jitter)
+	else:
+		spawn_pos.x = offscreen_x
 
 	if spawn_warning <= 0.0:
 		return _instantiate_enemy(scene, spawn_pos)
@@ -152,6 +162,25 @@ func _spawn_one(use_elite: bool = false) -> bool:
 	_in_flight += 1
 	get_tree().create_timer(spawn_warning).timeout.connect(_on_telegraph_finished.bind(scene, spawn_pos, _generation))
 	return true
+
+
+## Coordenada X de un nacimiento justo fuera de la vista de la cámara, del lado que todavía cae dentro del nivel.
+## Retorna NAN si no hay cámara o ningún lado tiene lugar.
+func _pick_offscreen_x() -> float:
+	var camera: CameraFollow = get_tree().get_first_node_in_group(&"game_camera") as CameraFollow
+	if camera == null:
+		return NAN
+	var view: Vector2 = camera.get_horizontal_view()
+	var candidates: Array[float] = []
+	var left_x: float = view.x - offscreen_margin - randf_range(0.0, spawn_jitter)
+	var right_x: float = view.y + offscreen_margin + randf_range(0.0, spawn_jitter)
+	if left_x >= camera.limit_left + offscreen_margin:
+		candidates.append(left_x)
+	if right_x <= camera.limit_right - offscreen_margin:
+		candidates.append(right_x)
+	if candidates.is_empty():
+		return NAN
+	return candidates.pick_random()
 
 
 ## Posición en el mundo de un marcador. El WaveManager es un `Node` (no `Node2D`), así que la cadena de

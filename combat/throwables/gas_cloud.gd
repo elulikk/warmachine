@@ -5,6 +5,10 @@ extends Area2D
 ## plasma, lanzallamas, otra explosión ígnea o enemigos que ya estén ardiendo).
 
 const FIRE_EXPLOSION_SCENE: PackedScene = preload("res://combat/throwables/fire_explosion.tscn")
+const EffectCapScript = preload("res://core/effect_cap.gd")
+const ViewCullScript = preload("res://core/view_cull.gd")
+## Nubes vivas a la vez: al pasarse, la más vieja se disipa (protege la lluvia de bombas de gas).
+const MAX_ALIVE: int = 24
 
 @export var lifetime: float = 6.0
 @export var tick_interval: float = 0.4
@@ -19,10 +23,15 @@ var source_node: Node2D = null
 var _age: float = 0.0
 var _tick_timer: float = 0.0
 var _ignited: bool = false
+var _sprite: Texture2D = null
+
+const SPRITE_PATH: String = "res://assets/sprites/efectos/gas_cloud.png"
 var _puffs: Array[Vector3] = [] # x, y = offset normalizado; z = fase de animación
 
 
 func _ready() -> void:
+	if ResourceLoader.exists(SPRITE_PATH):
+		_sprite = load(SPRITE_PATH) as Texture2D
 	# Capa 0 (no es detectada). Máscara 2|4|8: entidades, proyectiles y fuentes de ignición.
 	collision_layer = 0
 	collision_mask = 14
@@ -41,7 +50,9 @@ func _ready() -> void:
 		_puffs.append(Vector3(cos(ang) * dist, sin(ang) * dist, randf() * TAU))
 	
 	area_entered.connect(_on_area_entered)
-	_tick_timer = 0.2
+	# Desfasado al azar: los ticks de muchas nubes no caen en el mismo cuadro
+	_tick_timer = randf_range(0.05, tick_interval)
+	EffectCapScript.register(&"gas_cloud", self, MAX_ALIVE)
 
 
 func _physics_process(delta: float) -> void:
@@ -58,7 +69,9 @@ func _physics_process(delta: float) -> void:
 		_tick_timer = tick_interval
 		_apply_tick()
 	
-	queue_redraw()
+	# Fuera de la cámara no hace falta redibujar (el daño y la ignición siguen igual)
+	if ViewCullScript.near(self, radius + 60.0):
+		queue_redraw()
 
 
 func _apply_tick() -> void:
@@ -100,6 +113,11 @@ func _on_area_entered(area: Area2D) -> void:
 		ignite()
 
 
+## La nube se disipa rápido (la pide el tope de nubes vivas).
+func expire() -> void:
+	lifetime = minf(lifetime, _age + 0.4)
+
+
 ## Consume la nube instantáneamente en una explosión masiva de fuego.
 func ignite() -> void:
 	if _ignited:
@@ -128,6 +146,18 @@ func _draw() -> void:
 	var fade_in: float = clampf(_age / 0.4, 0.0, 1.0)
 	var fade_out: float = clampf((lifetime - _age) / 1.0, 0.0, 1.0)
 	var alpha_mult: float = fade_in * fade_out
+	
+	if _sprite != null:
+		# La nube respira y gira lento; dos capas a distinto giro dan sensación de volutas.
+		var size: float = radius * (0.95 + 0.05 * fade_in) * 2.0
+		var tint: Color = Color(1.0, 1.0, 1.0, 0.7 * alpha_mult)
+		draw_set_transform(Vector2.ZERO, _age * 0.25, Vector2.ONE)
+		draw_texture_rect(_sprite, Rect2(Vector2(-size, -size) * 0.5, Vector2(size, size)), false, tint)
+		draw_set_transform(Vector2.ZERO, -_age * 0.4 + 1.3, Vector2.ONE * 0.8)
+		tint.a *= 0.55
+		draw_texture_rect(_sprite, Rect2(Vector2(-size, -size) * 0.5, Vector2(size, size)), false, tint)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		return
 	
 	var base: Color = cloud_color
 	base.a = 0.22 * alpha_mult

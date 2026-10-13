@@ -5,6 +5,7 @@ extends CharacterBody2D
 ## y genera números de daño flotantes (DamageNumber) al recibir impactos.
 
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
 const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
 signal died
 
@@ -94,6 +95,7 @@ func _physics_process(delta: float) -> void:
 	if contact_cooldown > 0.0:
 		contact_cooldown = maxf(0.0, contact_cooldown - delta)
 	
+	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
 	
 	# Daño por contacto si colisiona con el cuerpo del jugador (inhibido si el enemigo está aturdido)

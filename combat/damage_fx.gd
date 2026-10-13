@@ -101,7 +101,7 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 
 	for threshold: float in THRESHOLDS:
 		if _last_ratio > threshold and ratio <= threshold:
-			BloodFx.gibs(_host, spot, 3, _mechanical, 0.8)
+			BloodFx.gibs(_host, spot, 2, _mechanical, 0.8)
 	_last_ratio = ratio
 
 

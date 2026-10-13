@@ -25,6 +25,8 @@ const TRACKS: Dictionary = {
 	&"combat": {"path": "res://ost/combat.ogg", "loop": true, "db": 0.0},
 	&"elite": {"path": "res://ost/elite.ogg", "loop": true, "db": 0.0},
 	&"boss": {"path": "res://ost/boss.ogg", "loop": true, "db": 0.0},
+	# Discoteca del presente (4-7): el usuario pone el tema después; hasta entonces suena la exploración
+	&"club": {"path": "res://ost/club.ogg", "loop": true, "db": 0.0},
 	&"victory": {"path": "res://ost/victory.ogg", "loop": false, "db": 0.0},
 	&"death": {"path": "res://ost/death.ogg", "loop": false, "db": 0.0},
 }

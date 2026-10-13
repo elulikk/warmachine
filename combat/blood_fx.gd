@@ -22,6 +22,9 @@ const GibScript = preload("res://combat/gib.gd")
 const FX_DIR: String = "res://assets/art/fx/"
 const GIB_GROUP: StringName = &"gibs"
 const GIB_LIMIT: int = 40
+## Reparto de trozos orgánicos: carne hasta CHUNK, luego tripas (pocas, eran el 30 %) y el resto huesos.
+const GUT_CHANCE_CHUNK: float = 0.42
+const GUT_CHANCE: float = 0.06
 
 const FX_Z_INDEX: int = 15
 const BLOOD: Color = Color(0.55, 0.03, 0.05, 1.0)
@@ -35,6 +38,19 @@ const STAIN_FADE: float = 3.0
 ## Tope de manchas vivas: al pasarse se borran las más viejas.
 const STAIN_LIMIT: int = 60
 const STAIN_GROUP: StringName = &"blood_stains"
+## Manchas de sangre y tripas: mismo método que el charco de ácido (combat/throwables/acid_pool.gd).
+const POOL_PATH: String = "res://assets/sprites/efectos/blood_pool_%d.png"
+const POOL_FRAMES: int = 4
+## Las manchas cuelgan del piso y se comprimen en vertical para que los goteos no bajen demasiado.
+const POOL_VSQUASH: float = 0.5
+const POOL_SPLAT_TIME: float = 0.3
+## Px que la mancha asoma por encima del borde del piso o la plataforma.
+const POOL_RAISE: float = 7.0
+## En plataformas finas (el arte de la tira ya tiene volumen sobre la colisión) asoma bastante menos.
+const POOL_RAISE_THIN: float = 2.0
+const THIN_MAX_HEIGHT: float = 40.0
+## La mancha de sangre y tripas es más grande que la antigua mancha plana de `blood_stain_*`.
+const POOL_WIDTH_MULT: float = 1.6
 ## Distancia máxima hasta el piso al buscar dónde cae una gota.
 const FLOOR_RAY_LENGTH: float = 420.0
 ## Debajo de esta densidad de partículas no hay salpicaduras ni trozos (las manchas del piso sí).
@@ -157,10 +173,10 @@ static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power
 		if mechanical:
 			kind = "scrap" if roll < 0.65 else "spring"
 			texture = variant_tex("gore_scrap", 2) if kind == "scrap" else variant_tex("gore_spring", 1)
-		elif roll < 0.5:
+		elif roll < GUT_CHANCE_CHUNK:
 			kind = "chunk"
 			texture = variant_tex("gore_chunk", 4)
-		elif roll < 0.8:
+		elif roll < GUT_CHANCE_CHUNK + GUT_CHANCE:
 			kind = "gut"
 			texture = variant_tex("gore_gut", 2)
 		else:
@@ -242,8 +258,25 @@ static func _place_stain(host: Node, hit: Dictionary, size_mult: float, mechanic
 	var width: float = randf_range(9.0, 24.0) * size_mult
 	var height: float = randf_range(2.4, 4.2) * clampf(size_mult, 0.7, 1.4)
 	var color: Color = OIL if mechanical else BLOOD_DARK
-	var art: Texture2D = null if mechanical else variant_tex("blood_stain", 3)
-	if art != null:
+	var pool_art: Texture2D = null if mechanical else _pool_texture()
+	var art: Texture2D = null if mechanical or pool_art != null else variant_tex("blood_stain", 3)
+	if pool_art != null:
+		# Mismo método que el charco de ácido (AcidPool): la mancha cuelga del borde del piso, se
+		# comprime en vertical y al aparecer se estira desde el impacto con un pequeño rebote.
+		var pool_sprite: Sprite2D = Sprite2D.new()
+		pool_sprite.texture = pool_art
+		pool_sprite.centered = false
+		var pool_width: float = clampf(width * POOL_WIDTH_MULT, 14.0, 52.0)
+		var pool_factor: float = pool_width / float(pool_art.get_width())
+		var flip: float = -1.0 if randf() < 0.5 else 1.0
+		pool_sprite.offset = Vector2(-float(pool_art.get_width()) * 0.5, -(POOL_RAISE_THIN if _is_thin(floor_body) else POOL_RAISE) / pool_factor / POOL_VSQUASH)
+		var end_scale: Vector2 = Vector2(pool_factor * flip, pool_factor * POOL_VSQUASH)
+		pool_sprite.scale = Vector2(end_scale.x * 0.3, end_scale.y * 0.35)
+		stain.add_child(pool_sprite)
+		var splat: Tween = pool_sprite.create_tween()
+		splat.tween_interval(delay)
+		splat.tween_property(pool_sprite, "scale", end_scale, POOL_SPLAT_TIME).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	elif art != null:
 		var sprite: Sprite2D = Sprite2D.new()
 		sprite.texture = art
 		var factor: float = width / float(art.get_width())
@@ -254,13 +287,37 @@ static func _place_stain(host: Node, hit: Dictionary, size_mult: float, mechanic
 		var center_color: Color = Color(0.2, 0.2, 0.22, 0.9) if mechanical else Color(color.r * 1.6, color.g * 1.4, color.b * 1.4, 0.9)
 		stain.add_child(_ellipse(width * 0.55, height * 0.6, center_color))
 	parent.add_child(stain)
-	stain.global_position = (hit["position"] as Vector2) + Vector2(0.0, 1.5)
+	stain.global_position = (hit["position"] as Vector2) + Vector2(0.0, 0.0 if pool_art != null else 1.5)
 
 	tree.create_timer(delay).timeout.connect(stain.set_visible.bind(true))
 	var fade: Tween = stain.create_tween()
 	fade.tween_interval(delay + STAIN_LIFETIME)
 	fade.tween_property(stain, "modulate:a", 0.0, STAIN_FADE)
 	fade.tween_callback(stain.queue_free)
+
+
+## Cuadro al azar de la mancha de sangre y tripas (`blood_pool_0..3.png`, mismo formato que `acid_pool_*`),
+## o null si no hay arte.
+static func _pool_texture() -> Texture2D:
+	var start: int = randi_range(0, POOL_FRAMES - 1)
+	for i in range(POOL_FRAMES):
+		var path: String = POOL_PATH % ((start + i) % POOL_FRAMES)
+		var tex: Texture2D = ArtScript.tex(path)
+		if tex != null:
+			return tex
+	return null
+
+
+## Plataforma fina: su colisión rectangular no pasa de THIN_MAX_HEIGHT (mismo criterio que level_skin.gd).
+static func _is_thin(body: Node2D) -> bool:
+	if body == null:
+		return false
+	for child: Node in body.get_children():
+		var shape_node: CollisionShape2D = child as CollisionShape2D
+		if shape_node != null and shape_node.shape is RectangleShape2D:
+			var size: Vector2 = (shape_node.shape as RectangleShape2D).size
+			return size.y <= THIN_MAX_HEIGHT and size.x > size.y
+	return false
 
 
 static func _ellipse(width: float, height: float, color: Color) -> Polygon2D:

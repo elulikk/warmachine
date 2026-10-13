@@ -5,14 +5,30 @@ extends Node2D
 ## el HUD, la detección de caída al vacío y el enlace con la ExitGate.
 
 const LevelSkinScript = preload("res://levels/level_skin.gd")
+const CityAmbienceScript = preload("res://levels/city_ambience.gd")
+## Exteriores del presente (P-1, P-2, P-4, P-5, P-8). Los interiores (alcantarilla, hotel, discoteca) no
+## llevan tráfico ni gente de la calle, y el 4-9 y 4-10 son otro contenido (Ciudadela Blindada).
+const CITY_EXTERIOR_IDS: Array[String] = ["4_01", "4_02", "4_04", "4_05", "4_08"]
 ## Prefijo del flag del slot que marca un arma garantizada ya entregada al personaje.
 const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 
 @export var level_id: String = "1_01"
-@export var level_title: String = "Sector 1-01"
+@export var level_title: String = "Sector 01"
 @export var chapter_number: int = 1
+## Fondo pintado propio del nivel (archivo dentro de `assets/art/bg/`); vacío = el del capítulo.
+@export var backdrop_file: String = ""
 @export var next_level_path: String = ""
+## Pista base del nivel cuando no es la de exploración (si el .ogg todavía no existe, queda la de exploración).
+@export var base_music: StringName = &"explore"
 @export var abyss_threshold: float = 950.0
+
+## Evento de los Agentes del Tiempo (helicóptero o destello): probabilidad por nivel de que ocurra (0 = nunca).
+## `agent_events_enabled` lo apaga por nivel sin tocar la probabilidad. `agent_event_style`: "helicopter" o "portal".
+@export_group("Agentes del Tiempo")
+@export var agent_events_enabled: bool = true
+@export_range(0.0, 1.0) var agent_event_chance: float = 0.0
+@export var agent_event_style: String = "helicopter"
+@export_group("")
 
 ## Tier del botín de equipo que sueltan los enemigos de este nivel (0 = no sueltan equipo).
 ## Sube la probabilidad (+50% por tier) y las rarezas posibles. Ver LootTable.roll_gear().
@@ -38,8 +54,12 @@ var initial_spawn_position: Vector2 = Vector2(160, 545)
 
 
 func _ready() -> void:
-	LevelSkinScript.apply(self, chapter_number)
+	LevelSkinScript.apply(self, chapter_number, backdrop_file)
 	GameFeel.music_start_level(self)
+	if base_music != &"explore" and FileAccess.file_exists("res://ost/%s.ogg" % String(base_music)):
+		GameFeel.music_set_base(self, base_music)
+	if CITY_EXTERIOR_IDS.has(level_id):
+		add_child(CityAmbienceScript.new() as Node)
 	if spawn_point != null:
 		initial_spawn_position = spawn_point.global_position
 	elif player != null:
@@ -65,9 +85,13 @@ func _ready() -> void:
 	if sector_hud == null:
 		sector_hud = get_node_or_null("HUD") as HUD
 	if sector_hud != null:
-		sector_hud.set_sector(level_title, self)
+		sector_hud.set_sector(level_title)
 
 	_grant_guaranteed_weapons()
+	if agent_events_enabled and agent_event_chance > 0.0 and randf() < agent_event_chance:
+		var event: Node = (load("res://levels/agent_event.gd") as GDScript).new() as Node
+		event.set("style", agent_event_style)
+		add_child(event)
 	if test_loadout_enabled:
 		_apply_test_loadout()
 	SaveManager.set_respawn_point(initial_spawn_position)

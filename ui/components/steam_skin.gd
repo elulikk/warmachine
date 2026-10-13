@@ -96,16 +96,6 @@ static func hud_plate_style() -> StyleBox:
 	return box
 
 
-## Cartel de monedas (bolsa y engranajes).
-static func coin_style() -> StyleBox:
-	if _styles.has("coin"):
-		return _styles["coin"] as StyleBox
-	var box: StyleBox = _texture_box("coin_panel.png", Vector4(0, 0, 0, 0), Vector4(62, 10, 40, 10),
-			_flat_fallback(Color(0.16, 0.11, 0.09, 0.95), COLOR_COPPER, 2, 5))
-	_styles["coin"] = box
-	return box
-
-
 ## Casillero cuadrado pequeño de cobre (sockets de runas del HUD).
 static func socket_style() -> StyleBox:
 	if _styles.has("socket"):

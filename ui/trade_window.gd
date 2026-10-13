@@ -31,9 +31,9 @@ const COLOR_DIM: Color = Color(0.62, 0.58, 0.52, 1.0)
 const COLOR_OK: Color = Color(0.5, 1.0, 0.65, 1.0)
 const COLOR_WARN: Color = Color(1.0, 0.55, 0.4, 1.0)
 
-## [clave de categoría de TradeSession, texto]. Clave vacía = todo.
+## [clave de categoría de TradeSession, texto]. Clave vacía = todo (va al final: al abrir se parte de
+## la primera categoría con ítems, para que la lista no abrume de entrada).
 const CATEGORY_FILTERS: Array = [
-	["", "Todo"],
 	["WEAPON", "Armas"],
 	["HEAD", "Cabeza"],
 	["CHEST", "Pecho"],
@@ -45,6 +45,7 @@ const CATEGORY_FILTERS: Array = [
 	["CONSUMABLE", "Consumibles"],
 	["RUNE", "Runas"],
 	["OTHER", "Otros"],
+	["", "Todo"],
 ]
 const SORT_LABELS: Array[String] = ["Orden original", "Precio: menor", "Precio: mayor", "Rareza", "Nombre"]
 const SORT_ORIGINAL: int = 0
@@ -138,11 +139,14 @@ func open_trade(trader_data: Resource = null) -> void:
 	if player == null or player.stats_manager == null:
 		return
 	var data: Resource = trader_data if trader_data != null else DefaultTrader
-	if data != _trader:
+	var changed: bool = data != _trader
+	if changed:
 		_trader = data
 		_reset_filters()
 		_tab = TAB_BUY
 	_open_session()
+	if changed or not visible:
+		_apply_default_categories()
 
 	window_title = str(_trader.get("display_name"))
 	_greeting_label.text = str(_trader.get("greeting"))
@@ -426,6 +430,31 @@ func _reset_filters() -> void:
 		col.search.text = ""
 	if _buy_tab_button != null:
 		_buy_tab_button.button_pressed = true
+
+
+## Al abrir, cada columna arranca en la primera categoría que tenga algo (Armas, si hay) en vez de "Todo".
+func _apply_default_categories() -> void:
+	if _session == null:
+		return
+	var stock_res: Array[Resource] = []
+	for offer: Dictionary in (_session.get("stock") as Array):
+		stock_res.append(offer["res"] as Resource)
+	var player_res: Array[Resource] = []
+	for entry: Dictionary in (_session.call(&"get_player_entries") as Array[Dictionary]):
+		player_res.append(entry["res"] as Resource)
+	_select_first_populated(_trader_col, stock_res)
+	_select_first_populated(_player_col, player_res)
+
+
+func _select_first_populated(col: TradeColumn, resources: Array[Resource]) -> void:
+	var last: int = CATEGORY_FILTERS.size() - 1 # "Todo"
+	for i in range(last):
+		var key: String = str((CATEGORY_FILTERS[i] as Array)[0])
+		for res: Resource in resources:
+			if TradeSessionScript.category_of(res) == key:
+				col.category.select(i)
+				return
+	col.category.select(last)
 
 
 func _on_filter_changed(_value: Variant = null) -> void:

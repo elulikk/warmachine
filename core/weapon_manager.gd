@@ -559,7 +559,9 @@ func fire() -> void:
 		
 		# El pool solo reutiliza el proyectil estándar; las escenas propias (gotas) van por fuera.
 		if pool != null and current_weapon.projectile_scene.resource_path == "res://combat/projectile.tscn":
-			pool.get_projectile(spawn_pos, pellet_dir, payload, current_weapon.projectile_speed, bounces, pierces, forks)
+			var pooled: Projectile = pool.get_projectile(spawn_pos, pellet_dir, payload, current_weapon.projectile_speed, bounces, pierces, forks, current_weapon.projectile_sprite) as Projectile
+			if pooled != null:
+				pooled.impact_scene = current_weapon.impact_scene
 		else:
 			# Fallback de reserva si no existe pool en la escena
 			var fallback_node: Node = current_weapon.projectile_scene.instantiate()
@@ -567,7 +569,8 @@ func fire() -> void:
 				var proj: Projectile = fallback_node as Projectile
 				proj.global_position = spawn_pos
 				proj.rotation = pellet_dir.angle()
-				proj.setup(current_weapon.projectile_speed, payload, bounces, pierces, forks)
+				proj.setup(current_weapon.projectile_speed, payload, bounces, pierces, forks, current_weapon.projectile_sprite)
+				proj.impact_scene = current_weapon.impact_scene
 				var container: Node = get_tree().current_scene
 				if container == null:
 					container = owner.get_parent() if owner != null else get_parent()
@@ -576,8 +579,8 @@ func fire() -> void:
 				container.add_child(fallback_node)
 	
 	_play_weapon_kick()
-	# El lanzallamas de combustible ya tiene su propio chorro: sin destello ni humo de bala encima.
-	if current_weapon.projectile_scene.resource_path == "res://combat/fuel_droplet.tscn":
+	# Los lanzallamas (combustible y plasma) tienen su propio chorro: sin destello ni humo de bala encima.
+	if current_weapon.family == WeaponData.WeaponFamily.FLAMETHROWER or current_weapon.projectile_scene.resource_path == "res://combat/fuel_droplet.tscn":
 		FireVfx.spawn_jet(get_tree().current_scene, spawn_pos, aim_dir)
 	else:
 		ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
@@ -732,8 +735,9 @@ func _melee_strike(visual_done: bool) -> void:
 	
 	# Mecánica Martillo Pesado: Onda de expansión física en el piso
 	if current_weapon.creates_ground_shockwave:
-		_spawn_ground_shockwave(spawn_pos, aim_dir)
-		GameFeel.shake(self, 6.0, 0.25)
+		_spawn_ground_shockwave(spawn_pos, aim_dir, _impact_world_position())
+		GameFeel.shake(self, 9.0, 0.3)
+		GameFeel.hit_stop(self, 0.07)
 
 	# Si tiene recoil force, empujar al jugador
 	if player != null and current_weapon.recoil_force > 0.0 and not player.knockback_immune:
@@ -742,7 +746,8 @@ func _melee_strike(visual_done: bool) -> void:
 
 
 ## Genera una onda de expansión física proyectada sobre el suelo más cercano.
-func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2) -> void:
+## Con `head_pos` (cabeza del arma en el mundo) la onda nace justo debajo de ella, sobre el suelo.
+func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2, head_pos: Vector2 = Vector2.INF) -> void:
 	var shock_scene: PackedScene = current_weapon.shockwave_scene
 	if shock_scene == null:
 		shock_scene = preload("res://combat/ground_shockwave.tscn")
@@ -757,10 +762,14 @@ func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2) -> void:
 	
 	# Proyectar rayo hacia abajo para encontrar la superficie del suelo
 	var ground_pos: Vector2 = from_pos + aim_dir * 32.0
+	var ray_lift: float = 16.0
+	if head_pos != Vector2.INF:
+		ground_pos = head_pos
+		ray_lift = 40.0
 	if player != null and player.is_inside_tree():
 		var space_state: PhysicsDirectSpaceState2D = player.get_world_2d().direct_space_state
 		var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
-			ground_pos + Vector2(0.0, -16.0),
+			ground_pos + Vector2(0.0, -ray_lift),
 			ground_pos + Vector2(0.0, 120.0),
 			1 # Capa 1: Terreno
 		)
@@ -779,6 +788,16 @@ func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2) -> void:
 
 
 
+
+
+## Punto de la cabeza del arma (`impact` del perfil, en px de la textura) en coordenadas del mundo; INF si no lo define.
+func _impact_world_position() -> Vector2:
+	var impact: Variant = WeaponMotion.profile_for(current_weapon).get("impact", null)
+	if impact == null or not _has_weapon_sprite():
+		return Vector2.INF
+	var pose: Dictionary = ItemIconsScript.get_weapon_pose(current_weapon)
+	var grip: Vector2 = pose.get("grip", Vector2.ZERO) as Vector2
+	return _weapon_sprite.to_global((impact as Vector2) - grip)
 
 
 ## Obtiene o genera la reserva de proyectiles en la escena actual.
@@ -889,7 +908,7 @@ func _update_weapon_visual() -> void:
 ## Coloca el sprite del ícono del arma activa en la mano. Devuelve false si no hay ícono o pose.
 func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 	var pose: Dictionary = ItemIconsScript.get_weapon_pose(current_weapon)
-	var icon: Texture2D = ItemIconsScript.get_icon_for(current_weapon) as Texture2D
+	var icon: Texture2D = ItemIconsScript.get_held_texture(current_weapon)
 	if pose.is_empty() or icon == null:
 		return false
 

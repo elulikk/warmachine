@@ -16,6 +16,22 @@ extends Node2D
 const RigScript = preload("res://entities/player/character_rig.gd")
 const ArtScript = preload("res://core/art/art.gd")
 const ArmorArt = preload("res://core/art/armor_art.gd")
+const ViewCullScript = preload("res://core/view_cull.gd")
+const SettingsScript = preload("res://core/settings.gd")
+## Enemigos lejanos del jugador (px en horizontal) se dibujan como UN sprite en vez del esqueleto o las piezas.
+## Con histéresis: vuelve a la marioneta recién cuando se acerca a LOD_NEAR_DISTANCE (evita el parpadeo).
+const LOD_FAR_DISTANCE: float = 340.0
+const LOD_NEAR_DISTANCE: float = 280.0
+const LOD_CHECK_INTERVAL: float = 0.3
+## Cuadro donde se hornea la imagen del esqueleto (px de juego) y dónde quedan los pies.
+const SNAP_W: int = 128
+const SNAP_H: int = 128
+const SNAP_FOOT_MARGIN: float = 8.0
+
+static var _snaps: Dictionary = {}
+static var _baking: Dictionary = {}
+## Más lejos que esto de la cámara (px) el arte no se anima: nadie lo ve y el combate no depende de él.
+const SLEEP_MARGIN: float = 220.0
 
 const PROPS_DIR: String = "res://assets/art/props/"
 
@@ -46,6 +62,14 @@ const MOB_SPLIT: Dictionary = {
 	"runner": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 7.0, "lean": 0.34, "step": 3.4},
 	"brute": {"waist": 0.63, "overlap": 9.0, "scale": 1.25, "attack": 0.58, "lunge": 8.0, "lean": 0.28, "step": 2.6},
 	"sentinel": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.42, "lunge": 9.0, "lean": 0.18, "step": 2.8},
+	# Mundo 4 (El Presente): una ilustración por enemigo (`MOBS` de armor_art.gd), misma marcha partida
+	"thief": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 7.0, "lean": 0.34, "step": 3.4},
+	"thug": {"waist": 0.63, "overlap": 9.0, "scale": 1.0, "attack": 0.58, "lunge": 8.0, "lean": 0.28, "step": 2.6},
+	"bouncer": {"waist": 0.63, "overlap": 9.0, "scale": 1.0, "attack": 0.58, "lunge": 8.0, "lean": 0.24, "step": 2.6},
+	"gunman": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 4.0, "lean": 0.10, "step": 3.0},
+	"hitman_elite": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 4.0, "lean": 0.10, "step": 3.0},
+	"hitman_smg": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 4.0, "lean": 0.10, "step": 3.0},
+	"time_agent": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 4.0, "lean": 0.12, "step": 3.2},
 }
 
 var _upper: Sprite2D = null
@@ -57,6 +81,14 @@ var _walk_amount: float = 0.0
 var _attack_t: float = 99.0
 var _last_cooldown: float = 0.0
 var _rig: Node2D = null
+var _skin: String = ""
+var _rig_scale: float = 1.0
+var _mob_tex: Texture2D = null
+var _mob_size: Vector2 = Vector2.ZERO
+var _mob_foot: Vector2 = Vector2.ZERO
+var _proxy: Sprite2D = null
+var _lod_far: bool = false
+var _lod_timer: float = 0.0
 
 
 ## Crea y devuelve el nodo de arte dentro del `Visuals` del anfitrión (o del anfitrión mismo).
@@ -103,6 +135,9 @@ func _ready() -> void:
 			_build_training_turret()
 		"drone":
 			_build_drone()
+		_:
+			# Mobs sin caso propio (mundo 4: rata, ladrón, matón...): ilustración en `MOBS`
+			_build_mob(kind)
 
 
 func _find_body() -> CharacterBody2D:
@@ -160,6 +195,9 @@ func _build_mob(mob_name: String) -> void:
 		return
 	var size: Vector2 = data.get("size", Vector2(40.0, 56.0)) as Vector2
 	var foot: Vector2 = data.get("foot", Vector2(size.x * 0.5, size.y)) as Vector2
+	_mob_tex = texture
+	_mob_size = size
+	_mob_foot = foot
 	_split = MOB_SPLIT.get(kind, {}) as Dictionary
 	if not _split.is_empty():
 		_art.scale = Vector2(float(_split.get("scale", 1.0)), float(_split.get("scale", 1.0)))
@@ -231,6 +269,8 @@ func _build_person(loadout: Dictionary, scale_factor: float) -> void:
 	rig.scale = Vector2(scale_factor, scale_factor)
 	_art.add_child(rig)
 	_rig = rig
+	_skin = str(current.get("skin", ""))
+	_rig_scale = scale_factor
 
 
 func _build_sniper_turret() -> void:
@@ -283,8 +323,18 @@ func _build_drone() -> void:
 
 
 func _process(delta: float) -> void:
+	if _host != null and not ViewCullScript.near(_host, SLEEP_MARGIN):
+		return
 	_time += delta
 	_attack_t += delta
+	_lod_timer -= delta
+	if _lod_timer <= 0.0:
+		_lod_timer = LOD_CHECK_INTERVAL + randf() * 0.1
+		_update_lod()
+	if _lod_far:
+		# Lejos: un solo sprite quieto; solo se mantiene el tinte (hielo, fuego, golpe)
+		_apply_tint()
+		return
 	_detect_attack()
 	_apply_tint()
 	match kind:
@@ -295,8 +345,97 @@ func _process(delta: float) -> void:
 		"drone":
 			_art.position.y = sin(_time * 3.2) * 2.0
 			_art.rotation = sin(_time * 1.7) * 0.12
-		"runner", "brute", "sentinel", "dummy":
-			_sway_mob(delta)
+		_:
+			_sway_mob(delta) # solo actúa con ilustraciones (`_sprite_mob`)
+
+
+## ¿Se puede reemplazar este arte por un solo sprite? (esqueleto o ilustración partida)
+func _lod_supported() -> bool:
+	if _host == null or _art == null:
+		return false
+	if _rig != null:
+		return not _skin.is_empty()
+	return _sprite_mob and _upper != null and _mob_tex != null
+
+
+func _update_lod() -> void:
+	if not _lod_supported():
+		return
+	var want_far: bool = false
+	if SettingsScript.get_bool("enemy_lod"):
+		var player: Node2D = _player_target()
+		if player != null:
+			var dist: float = absf(player.global_position.x - _host.global_position.x)
+			want_far = dist > (LOD_NEAR_DISTANCE if _lod_far else LOD_FAR_DISTANCE)
+	if want_far == _lod_far:
+		return
+	if want_far and not _ensure_proxy():
+		return
+	_lod_far = want_far
+	for child: Node in _art.get_children():
+		if child != _proxy and child is CanvasItem:
+			(child as CanvasItem).visible = not want_far
+	_proxy.visible = want_far
+	if _rig != null:
+		_rig.set_process(not want_far)
+
+
+## Crea el sprite único (una vez). Devuelve false si todavía se está horneando la imagen del esqueleto.
+func _ensure_proxy() -> bool:
+	if _proxy != null:
+		return true
+	var proxy: Sprite2D = Sprite2D.new()
+	proxy.name = "LodProxy"
+	proxy.centered = false
+	proxy.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	if _rig != null:
+		var tex: Texture2D = _snapshot_for(_skin, get_tree())
+		if tex == null:
+			proxy.free()
+			return false
+		proxy.texture = tex
+		proxy.scale = Vector2(_rig_scale, _rig_scale)
+		proxy.position = -Vector2(float(SNAP_W) * 0.5, float(SNAP_H) - SNAP_FOOT_MARGIN) * _rig_scale
+	else:
+		proxy.texture = _mob_tex
+		proxy.scale = Vector2(MOB_TEX_SCALE, MOB_TEX_SCALE)
+		proxy.position = Vector2(-_mob_foot.x, -_mob_size.y)
+	proxy.visible = false
+	_art.add_child(proxy)
+	_proxy = proxy
+	return true
+
+
+## Imagen del esqueleto en reposo, horneada una vez por cuerpo desde un SubViewport (null mientras se hornea).
+static func _snapshot_for(skin: String, tree: SceneTree) -> Texture2D:
+	if _snaps.has(skin):
+		return _snaps[skin] as Texture2D
+	if not _baking.has(skin):
+		_baking[skin] = true
+		_bake_snapshot(skin, tree)
+	return null
+
+
+static func _bake_snapshot(skin: String, tree: SceneTree) -> void:
+	var vp: SubViewport = SubViewport.new()
+	vp.size = Vector2i(SNAP_W, SNAP_H)
+	vp.transparent_bg = true
+	vp.disable_3d = true
+	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	var rig: Node2D = RigScript.new() as Node2D
+	var current: Dictionary = rig.get("loadout") as Dictionary
+	current["skin"] = skin
+	rig.position = Vector2(float(SNAP_W) * 0.5, float(SNAP_H) - SNAP_FOOT_MARGIN)
+	vp.add_child(rig)
+	tree.root.add_child(vp)
+	await tree.process_frame
+	await tree.process_frame
+	await RenderingServer.frame_post_draw
+	var image: Image = vp.get_texture().get_image()
+	vp.queue_free()
+	_baking.erase(skin)
+	if image != null and not image.is_empty():
+		_snaps[skin] = ImageTexture.create_from_image(image)
 
 
 ## El enemigo ataca cuando su tiempo de espera por contacto salta de golpe (golpe efectivo sobre el jugador).

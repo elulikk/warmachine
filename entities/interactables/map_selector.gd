@@ -272,12 +272,12 @@ func _render_levels_grid() -> void:
 		var lvl_path: String = str(lvl.get("path", ""))
 		var lvl_num: int = int(lvl.get("number", 1))
 		var is_boss: bool = bool(lvl.get("is_boss", false))
-		var title: String = str(lvl.get("title", "Sector %d-%02d" % [_current_chapter, lvl_num]))
+		var title: String = str(lvl.get("title", "Sector %02d" % lvl_num))
 		
 		var is_unlocked: bool = true
 		if sm != null:
 			# Si SaveManager tiene lista de desbloqueados, lo indicamos visualmente
-			is_unlocked = sm.unlocked_levels.has(lvl_path) or (lvl_num == 1 and _current_chapter == 1)
+			is_unlocked = sm.unlocked_levels.has(lvl_path) or (lvl_num == 1 and _current_chapter == 4)
 		
 		var btn: Button = Button.new()
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -17,45 +17,91 @@ const IMPLEMENTED_LEVELS: Array[String] = [
 	"res://levels/chapter_1/level_1_07.tscn",
 	"res://levels/chapter_1/level_1_08.tscn",
 	"res://levels/chapter_1/level_1_09.tscn",
-	"res://levels/chapter_1/level_1_10.tscn"
+	"res://levels/chapter_1/level_1_10.tscn",
+	"res://levels/chapter_2/level_2_01.tscn",
+	"res://levels/chapter_2/level_2_02.tscn",
+	"res://levels/chapter_2/level_2_03.tscn",
+	"res://levels/chapter_2/level_2_04.tscn",
+	"res://levels/chapter_2/level_2_05.tscn",
+	"res://levels/chapter_2/level_2_06.tscn",
+	"res://levels/chapter_2/level_2_07.tscn",
+	"res://levels/chapter_2/level_2_08.tscn",
+	"res://levels/chapter_2/level_2_09.tscn",
+	"res://levels/chapter_2/level_2_10.tscn",
+	"res://levels/chapter_3/level_3_01.tscn",
+	"res://levels/chapter_3/level_3_02.tscn",
+	"res://levels/chapter_3/level_3_03.tscn",
+	"res://levels/chapter_3/level_3_04.tscn",
+	"res://levels/chapter_3/level_3_05.tscn",
+	"res://levels/chapter_3/level_3_06.tscn",
+	"res://levels/chapter_3/level_3_07.tscn",
+	"res://levels/chapter_3/level_3_08.tscn",
+	"res://levels/chapter_3/level_3_09.tscn",
+	"res://levels/chapter_3/level_3_10.tscn",
+	# Capítulo 4: El Presente (ciudad moderna, 8 sectores)
+	"res://levels/chapter_4/level_4_01.tscn",
+	"res://levels/chapter_4/level_4_02.tscn",
+	"res://levels/chapter_4/level_4_03.tscn",
+	"res://levels/chapter_4/level_4_04.tscn",
+	"res://levels/chapter_4/level_4_05.tscn",
+	"res://levels/chapter_4/level_4_06.tscn",
+	"res://levels/chapter_4/level_4_07.tscn",
+	"res://levels/chapter_4/level_4_08.tscn"
 ]
 
+## Cantidad de niveles por capítulo cuando no es LEVELS_PER_CHAPTER. El último de cada capítulo es el jefe o el final.
+const LEVEL_COUNTS: Dictionary = {4: 8}
+## La Caja: campamento y pasillo de puertas. Es el destino del último sector de cada mundo y el hub de la campaña.
+const HUB_PATH: String = "res://scenes/hub/base_camp.tscn"
+## Destino del último nivel de un mundo: siempre la Caja (los mundos ya no encadenan entre sí).
+const CHAPTER_EXIT: Dictionary = {1: HUB_PATH, 2: HUB_PATH, 3: HUB_PATH, 4: HUB_PATH, 5: HUB_PATH}
+## Nombres de los sectores de Ciudad de Jano (capítulo 4). Los demás sectores solo llevan el número.
+const JANO_SECTOR_NAMES: Dictionary = {
+	1: "La calle", 2: "Los callejones", 3: "Las alcantarillas", 4: "El barrio de casitas",
+	5: "El muelle", 6: "El hotel", 7: "La discoteca", 8: "La azotea"
+}
+
+## Nombres visibles de los mundos. Sin número: el orden no importa, todos se abren desde la Caja.
 static var CHAPTER_NAMES: Dictionary = {
-	1: "CAPÍTULO 1: PERIFERIA SUBTERRÁNEA",
-	2: "CAPÍTULO 2: COMPLEJO INDUSTRIAL",
-	3: "CAPÍTULO 3: LABORATORIOS BIOTEC",
-	4: "CAPÍTULO 4: CIUDADELA BLINDADA",
-	5: "CAPÍTULO 5: NÚCLEO DEL REACTOR"
+	1: "PERIFERIA SUBTERRÁNEA",
+	2: "VALLE ESMERALDA",
+	3: "ABISMO ÍGNEO",
+	4: "CIUDAD DE JANO",
+	5: "NÚCLEO DEL REACTOR"
 }
 
 static var CHAPTER_COLORS: Dictionary = {
 	1: Color(0.2, 0.65, 0.85, 1.0), # Azul metálico frío
-	2: Color(0.9, 0.55, 0.2, 1.0),  # Naranja herrumbre industrial
-	3: Color(0.2, 0.85, 0.55, 1.0), # Verde cian biológico
-	4: Color(0.85, 0.3, 0.35, 1.0), # Carmesí blindado
+	2: Color(0.45, 0.85, 0.35, 1.0), # Verde pradera medieval
+	3: Color(1.0, 0.38, 0.12, 1.0), # Rojo fuego infernal
+	4: Color(0.5, 0.65, 1.0, 1.0), # Azul frío de ciudad nocturna
 	5: Color(0.75, 0.35, 0.95, 1.0) # Púrpura plasma reactor
 }
+
+
+static func levels_in_chapter(chapter: int) -> int:
+	return int(LEVEL_COUNTS.get(chapter, LEVELS_PER_CHAPTER))
 
 
 ## Genera el listado completo de los 50 niveles con sus metadatos.
 static func get_all_levels() -> Array[Dictionary]:
 	var list: Array[Dictionary] = []
 	for chap in range(1, TOTAL_CHAPTERS + 1):
-		for lvl in range(1, LEVELS_PER_CHAPTER + 1):
+		var count: int = levels_in_chapter(chap)
+		for lvl in range(1, count + 1):
 			var id_str: String = "%d_%02d" % [chap, lvl]
 			var path_str: String = "res://levels/chapter_%d/level_%d_%02d.tscn" % [chap, chap, lvl]
-			var is_boss: bool = (lvl == LEVELS_PER_CHAPTER)
+			var is_boss: bool = (lvl == count)
 			var suffix: String = " [JEFE]" if is_boss else ""
-			var name_str: String = "Sector %d-%d%s" % [chap, lvl, suffix]
+			var sector_name: String = (" · " + JANO_SECTOR_NAMES[lvl]) if chap == 4 and JANO_SECTOR_NAMES.has(lvl) else ""
+			var name_str: String = "Sector %02d%s%s" % [lvl, sector_name, suffix]
 
 			var next_path: String = ""
-			if lvl < LEVELS_PER_CHAPTER:
+			if lvl < count:
 				next_path = "res://levels/chapter_%d/level_%d_%02d.tscn" % [chap, chap, lvl + 1]
-			elif chap < TOTAL_CHAPTERS:
-				next_path = "res://levels/chapter_%d/level_%d_01.tscn" % [chap + 1, chap + 1]
 			else:
-				next_path = "res://scenes/hub/base_camp.tscn"
-			
+				next_path = str(CHAPTER_EXIT.get(chap, HUB_PATH))
+
 			list.append({
 				"id": id_str,
 				"chapter": chap,
@@ -96,3 +142,13 @@ static func get_next_level_path(current_path: String) -> String:
 	if not info.is_empty():
 		return str(info.get("next_path", "res://scenes/hub/base_camp.tscn"))
 	return "res://scenes/hub/base_camp.tscn"
+
+
+## Primer sector de cada mundo que tiene contenido jugable. La Caja los desbloquea todos al entrar.
+static func world_entry_paths() -> Array[String]:
+	var list: Array[String] = []
+	for chap in range(1, TOTAL_CHAPTERS + 1):
+		var entry: String = "res://levels/chapter_%d/level_%d_01.tscn" % [chap, chap]
+		if is_implemented(entry):
+			list.append(entry)
+	return list

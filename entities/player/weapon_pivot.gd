@@ -4,6 +4,8 @@ extends Node2D
 ## Detecta tanto la posición del mouse como la inclinación analógica del stick derecho del joystick.
 ## Ajusta la rotación y orientación vertical del arma para evitar inversión visual.
 
+const WeaponMotion = preload("res://core/art/weapon_motion.gd")
+
 @export var stick_deadzone: float = 0.25
 
 var last_aim_direction: Vector2 = Vector2.RIGHT
@@ -38,6 +40,10 @@ func _update_aim() -> void:
 			aim_dir = diff.normalized()
 			last_aim_direction = aim_dir
 	
+	# Armas con trayecto fijo (martillo): el pivote queda horizontal, mirando hacia el lado del cursor
+	if _has_fixed_aim():
+		aim_dir = Vector2(1.0 if aim_dir.x >= 0.0 else -1.0, 0.0)
+	
 	# Aplicar rotación continua
 	rotation = aim_dir.angle()
 	
@@ -50,6 +56,14 @@ func _update_aim() -> void:
 		scale.y = 1.0
 		if player != null:
 			player.update_facing_direction(1.0)
+
+
+## El arma en mano tiene `fixed_aim` en su perfil de `weapon_motion.gd`: no se inclina con el cursor.
+func _has_fixed_aim() -> bool:
+	if player == null or player.weapon_manager == null:
+		return false
+	var weapon: WeaponData = player.weapon_manager.current_weapon
+	return weapon != null and bool(WeaponMotion.profile_for(weapon).get("fixed_aim", false))
 
 
 ## Devuelve el vector de dirección normalizado hacia el que apunta actualmente el arma.

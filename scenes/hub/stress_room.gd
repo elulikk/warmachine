@@ -12,11 +12,15 @@ extends Node2D
 ## - Nada de lo que pasa adentro se guarda: `SaveManager.saving_suspended` mientras la sala existe; al volver,
 ##   el campamento recarga el slot del disco.
 ##
-## Atajos: F4 panel · F5 generador continuo · F6 congelar · F7 limpiar escombros · F8 censo de nodos ·
+## Atajos: F4 panel · F5 generador continuo · F6 congelar · F7 limpiar escombros · F8 censo de nodos · F9 lluvia del cielo ·
+## F11 cambia lo que cae (ácido, granadas, fuego, balas...) · F10 lluvia de la ciudad ·
 ## N/Z/V/B/M lote de corredor/zombi/fantasma/bruto/centinela · K matar todos · L curar · Supr borrar sin efectos.
 
 const LevelSkinScript = preload("res://levels/level_skin.gd")
 const PerfMonitorScript = preload("res://core/debug/perf_monitor.gd")
+const SettingsScript = preload("res://core/settings.gd")
+const FX_STYLES: Array[String] = ["Sprites (como está)", "Partículas", "Shaders"]
+const CityDecorScript = preload("res://levels/city_decor.gd")
 const SceneDoorScene: PackedScene = preload("res://entities/interactables/scene_door.tscn")
 
 const RUNNER_SCENE: PackedScene = preload("res://entities/enemies/basic_runner.tscn")
@@ -24,6 +28,13 @@ const ZOMBIE_SCENE: PackedScene = preload("res://entities/enemies/zombie.tscn")
 const GHOST_SCENE: PackedScene = preload("res://entities/enemies/ghost.tscn")
 const BRUTE_SCENE: PackedScene = preload("res://entities/enemies/armored_brute.tscn")
 const SENTINEL_SCENE: PackedScene = preload("res://entities/enemies/shielded_sentinel.tscn")
+const ACID_GRENADE_SCENE: PackedScene = preload("res://combat/throwables/acid_grenade.tscn")
+const FRAG_GRENADE_SCENE: PackedScene = preload("res://combat/throwables/frag_grenade.tscn")
+const ICE_GRENADE_SCENE: PackedScene = preload("res://combat/throwables/ice_grenade.tscn")
+const GAS_BOMB_SCENE: PackedScene = preload("res://combat/throwables/gas_bomb.tscn")
+const ROOT_NET_SCENE: PackedScene = preload("res://combat/throwables/root_net_grenade.tscn")
+const FUEL_DROPLET_SCENE: PackedScene = preload("res://combat/fuel_droplet.tscn")
+const FIRE_EXPLOSION_SCENE: PackedScene = preload("res://combat/throwables/fire_explosion.tscn")
 
 const CAMP_SCENE: String = "res://scenes/hub/base_camp.tscn"
 
@@ -39,6 +50,21 @@ const CAPS: Array[int] = [10, 25, 50, 100, 200, 300, 500, 1000]
 ## 0 = todos en el mismo cuadro (peor caso).
 const PER_FRAME: Array[int] = [1, 5, 10, 25, 0]
 const AUTO_FIRE_RATES: Array[float] = [0.0, 5.0, 15.0, 30.0, 60.0]
+## Lluvia del cielo: qué cae, cuántos por segundo, y desde dónde.
+const SKY_KINDS: Array[String] = [
+	"Ácido", "Fragmentación", "Hielo", "Gas", "Red", "Granadas variadas",
+	"Fuego: gotas de combustible", "Fuego: llamaradas", "Balas", "Todo junto",
+]
+const SKY_ACID: int = 0
+const SKY_MIX_GRENADES: int = 5
+const SKY_FUEL: int = 6
+const SKY_FLARE: int = 7
+const SKY_BULLETS: int = 8
+const SKY_ALL: int = 9
+const SKY_RAIN_RATES: Array[float] = [2.0, 5.0, 10.0, 20.0, 40.0, 80.0, 160.0]
+## La lluvia cae a esta distancia (px) a cada lado del jugador, dentro de la arena, y desde esta altura.
+const SKY_RAIN_HALF_WIDTH: float = 720.0
+const SKY_RAIN_HEIGHT: float = -140.0
 
 # Arena
 const ARENA_LEFT: float = 0.0
@@ -76,6 +102,19 @@ var loot_enabled: bool = true
 var aggro_on_spawn: bool = true
 var god_mode: bool = true
 var infinite_ammo: bool = true
+var sky_rain_on: bool = false
+var sky_rain_rate: float = 10.0
+var sky_kind: int = SKY_ACID
+var _sky_accum: float = 0.0
+var _sky_thrown: int = 0
+var _sky_rain_button: CheckButton = null
+var _sky_kind_option: OptionButton = null
+var _fx_style_option: OptionButton = null
+## Valores originales de las opciones que se tocan en la sala (se restauran al salir)
+var _saved_settings: Dictionary = {}
+## Lluvia de la ciudad (Mundo 4): gotas que chocan con los sólidos, salpicaduras y relámpagos.
+var city_rain_on: bool = false
+var _city_rain_button: CheckButton = null
 
 var _queue: Array[int] = []
 var _spawn_accum: float = 0.0
@@ -136,6 +175,9 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	SaveManager.saving_suspended = false
+	# Los estilos probados acá no se guardan: vuelven a lo que tenía el jugador
+	for key: String in _saved_settings.keys():
+		SettingsScript.values[key] = _saved_settings[key]
 	if _ui_layer != null and is_instance_valid(_ui_layer):
 		_ui_layer.queue_free()
 
@@ -160,6 +202,12 @@ func _physics_process(delta: float) -> void:
 			alive += 1
 
 	_process_queue()
+
+	if sky_rain_on:
+		_sky_accum += sky_rain_rate * delta
+		while _sky_accum >= 1.0:
+			_sky_accum -= 1.0
+			_sky_drop()
 
 	if auto_fire_rate > 0.0:
 		_fire_accum += auto_fire_rate * delta
@@ -205,6 +253,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				clear_debris()
 			KEY_F8:
 				monitor.call("log_census")
+			KEY_F9:
+				set_sky_rain(not sky_rain_on)
+			KEY_F11:
+				set_sky_kind((sky_kind + 1) % SKY_KINDS.size())
+			KEY_F10:
+				set_city_rain(not city_rain_on)
 			KEY_DELETE:
 				remove_all_silently()
 			_:
@@ -435,6 +489,112 @@ func _set_spawner(on: bool) -> void:
 	_log("Generador continuo %s (%.0f/s, tope %d, %s)" % ["ENCENDIDO" if on else "apagado", spawn_rate, alive_cap, TYPE_NAMES[enemy_type]])
 
 
+func set_sky_rain(on: bool) -> void:
+	sky_rain_on = on
+	_sky_accum = 0.0
+	if _sky_rain_button != null:
+		_sky_rain_button.set_pressed_no_signal(on)
+	_log("Lluvia del cielo %s (%s, %.0f/s)" % ["ENCENDIDA" if on else "apagada", SKY_KINDS[sky_kind], sky_rain_rate])
+
+
+## Estilo de fuego y ácido: 0 sprites, 1 partículas, 2 shaders (vale para lo que aparezca desde ahora).
+func set_fx_style(index: int) -> void:
+	_remember_setting("fire_style")
+	SettingsScript.values["fire_style"] = clampi(index, 0, FX_STYLES.size() - 1)
+	if _fx_style_option != null:
+		_fx_style_option.select(int(SettingsScript.values["fire_style"]))
+	_log("Estilo de fuego y ácido: %s" % FX_STYLES[int(SettingsScript.values["fire_style"])])
+
+
+## Enemigos lejanos como un solo sprite (opción "enemy_lod").
+func set_enemy_lod(on: bool) -> void:
+	_remember_setting("enemy_lod")
+	SettingsScript.values["enemy_lod"] = on
+	_log("Enemigos lejanos como sprite: %s" % ("sí" if on else "no"))
+
+
+func _remember_setting(key: String) -> void:
+	if not _saved_settings.has(key):
+		_saved_settings[key] = SettingsScript.values.get(key)
+
+
+func set_sky_kind(index: int) -> void:
+	sky_kind = clampi(index, 0, SKY_KINDS.size() - 1)
+	if _sky_kind_option != null:
+		_sky_kind_option.select(sky_kind)
+	_log("Lluvia del cielo: %s" % SKY_KINDS[sky_kind])
+
+
+## Enciende o apaga la lluvia de la ciudad con los sólidos de la arena (misma rutina que usan los sectores 4-x).
+func set_city_rain(on: bool) -> void:
+	for node_name: String in ["RainDrops", "RainSplashes", "Rain"]:
+		var old: Node = get_node_or_null(node_name)
+		if old != null:
+			old.free()
+	city_rain_on = on
+	if on:
+		var solids: Array[Rect2] = []
+		var environment: Node = get_node_or_null("Environment")
+		if environment != null:
+			for body: Node in environment.get_children():
+				if not body is StaticBody2D:
+					continue
+				for child: Node in body.get_children():
+					var shape_node: CollisionShape2D = child as CollisionShape2D
+					if shape_node != null and shape_node.shape is RectangleShape2D:
+						var size: Vector2 = (shape_node.shape as RectangleShape2D).size
+						solids.append(Rect2((body as StaticBody2D).position - size * 0.5, size))
+		CityDecorScript.add_rain(self, solids)
+	if _city_rain_button != null:
+		_city_rain_button.set_pressed_no_signal(on)
+	_log("Lluvia de la ciudad %s" % ("ENCENDIDA" if on else "apagada"))
+
+
+## Suelta algo del cielo según `sky_kind`; todo pasa por el circuito real (fusible, efecto, sonido, gotas).
+func _sky_drop() -> void:
+	var kind: int = sky_kind
+	if kind == SKY_ALL:
+		kind = randi() % SKY_ALL
+	var x: float = _sky_x()
+	var thrown_player: Node2D = player
+	match kind:
+		SKY_FUEL:
+			var droplet: Node2D = FUEL_DROPLET_SCENE.instantiate() as Node2D
+			add_child(droplet)
+			droplet.global_position = Vector2(x, SKY_RAIN_HEIGHT)
+			droplet.rotation = PI * 0.5 + randf_range(-0.25, 0.25)
+			var effects: Array[String] = ["FIRE"]
+			var payload: HitPayload = HitPayload.new(4.0, 0.0, Vector2.DOWN, thrown_player, effects)
+			droplet.call("setup", randf_range(260.0, 420.0), payload)
+		SKY_FLARE:
+			var flare: AreaBurst = FIRE_EXPLOSION_SCENE.instantiate() as AreaBurst
+			flare.radius = 70.0
+			flare.source_node = thrown_player
+			flare.position = Vector2(x, FLOOR_TOP - randf_range(10.0, 80.0))
+			add_child(flare)
+		SKY_BULLETS:
+			var pool: ProjectilePool = get_tree().get_first_node_in_group(&"projectile_pool") as ProjectilePool
+			if pool != null:
+				var down: Vector2 = Vector2.DOWN.rotated(randf_range(-0.2, 0.2))
+				pool.get_projectile(Vector2(x, SKY_RAIN_HEIGHT), down,
+						HitPayload.new(AUTO_FIRE_DAMAGE, 90.0, down, thrown_player), AUTO_FIRE_SPEED)
+		_:
+			var scenes: Array[PackedScene] = [ACID_GRENADE_SCENE, FRAG_GRENADE_SCENE, ICE_GRENADE_SCENE, GAS_BOMB_SCENE, ROOT_NET_SCENE]
+			var scene: PackedScene = scenes[kind] if kind < scenes.size() else scenes[randi() % scenes.size()]
+			var grenade: Node = scene.instantiate()
+			add_child(grenade)
+			grenade.call("launch", Vector2(x, SKY_RAIN_HEIGHT),
+					Vector2(randf_range(-70.0, 70.0), randf_range(0.0, 140.0)), thrown_player)
+	_sky_thrown += 1
+
+
+func _sky_x() -> float:
+	var center_x: float = player.global_position.x if player != null else (ARENA_LEFT + ARENA_RIGHT) * 0.5
+	var min_x: float = maxf(ARENA_LEFT + 60.0, center_x - SKY_RAIN_HALF_WIDTH)
+	var max_x: float = minf(ARENA_RIGHT - 60.0, center_x + SKY_RAIN_HALF_WIDTH)
+	return randf_range(min_x, max_x)
+
+
 func _set_frozen(on: bool) -> void:
 	frozen = on
 	for node: Node in get_tree().get_nodes_in_group(&"enemies"):
@@ -544,6 +704,27 @@ func _build_panel() -> void:
 		_log("Fuego automático: %s" % fire_labels[i])))
 
 	box.add_child(_separator())
+	_sky_rain_button = _toggle("Lluvia del cielo (F9)", sky_rain_on, func(on: bool) -> void: set_sky_rain(on))
+	box.add_child(_sky_rain_button)
+	var kind_row: HBoxContainer = _option_row("Cae", SKY_KINDS, sky_kind, func(i: int) -> void: set_sky_kind(i))
+	_sky_kind_option = kind_row.get_child(1) as OptionButton
+	box.add_child(kind_row)
+	var rain_labels: Array[String] = []
+	for r: float in SKY_RAIN_RATES:
+		rain_labels.append("%.0f / s" % r)
+	box.add_child(_option_row("Ritmo", rain_labels, SKY_RAIN_RATES.find(sky_rain_rate), func(i: int) -> void:
+		sky_rain_rate = SKY_RAIN_RATES[i]
+		_log("Lluvia del cielo: %.0f/s" % sky_rain_rate)))
+
+	box.add_child(_separator())
+	var style_row: HBoxContainer = _option_row("Estilo", FX_STYLES, SettingsScript.get_int("fire_style"),
+			func(i: int) -> void: set_fx_style(i))
+	_fx_style_option = style_row.get_child(1) as OptionButton
+	box.add_child(style_row)
+	box.add_child(_toggle("Enemigos lejanos como sprite", SettingsScript.get_bool("enemy_lod"),
+			func(on: bool) -> void: set_enemy_lod(on)))
+	_city_rain_button = _toggle("Lluvia de la ciudad (F10)", city_rain_on, func(on: bool) -> void: set_city_rain(on))
+	box.add_child(_city_rain_button)
 	_freeze_button = _toggle("Congelar enemigos (F6)", frozen, func(on: bool) -> void: _set_frozen(on))
 	box.add_child(_freeze_button)
 	box.add_child(_toggle("Aggro al aparecer", aggro_on_spawn, func(on: bool) -> void: aggro_on_spawn = on))
@@ -581,8 +762,10 @@ func _build_panel() -> void:
 func _update_status() -> void:
 	if _status_label == null or not _panel.visible:
 		return
-	_status_label.text = "Vivos %d  ·  en cola %d  ·  generados %d\nÚltimo lote: %d en %.1f ms" % [
-		get_tree().get_node_count_in_group(&"enemies"), _queue.size(), _spawned_total, _last_spawn_count, _last_spawn_ms]
+	_status_label.text = "Vivos %d  ·  en cola %d  ·  generados %d\nÚltimo lote: %d en %.1f ms
+Lluvia del cielo: %d lanzados  ·  charcos de ácido %d" % [
+		get_tree().get_node_count_in_group(&"enemies"), _queue.size(), _spawned_total, _last_spawn_count, _last_spawn_ms,
+		_sky_thrown, get_tree().get_nodes_in_group(&"acid_pools").size()]
 
 
 func _label(text: String, font_size: int, color: Color) -> Label:

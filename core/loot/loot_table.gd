@@ -44,6 +44,17 @@ const EARLY_MAX_TIER: int = 1
 @export_range(0.0, 1.0) var jackpot_chance: float = 0.0005
 
 
+## Cuánto botín (monedas, munición, vida) suelta cada enemigo respecto de lo que dice la tabla.
+const DROP_AMOUNT_MULT: float = 0.5
+
+
+## Cantidad por DROP_AMOUNT_MULT con redondeo al azar: el promedio queda exacto aunque la cantidad sea 1.
+static func _scaled_amount(amount: int) -> int:
+	var scaled: float = float(amount) * DROP_AMOUNT_MULT
+	var whole: int = int(floor(scaled))
+	return whole + (1 if randf() < scaled - float(whole) else 0)
+
+
 ## Evalúa el porcentaje de cada entrada y devuelve una lista de diccionarios con el tipo y la cantidad resultante.
 func roll_drops() -> Array[Dictionary]:
 	var results: Array[Dictionary] = []
@@ -51,7 +62,7 @@ func roll_drops() -> Array[Dictionary]:
 		if entry == null:
 			continue
 		if randf() <= entry.drop_chance:
-			var amount: int = randi_range(entry.min_amount, entry.max_amount)
+			var amount: int = _scaled_amount(randi_range(entry.min_amount, entry.max_amount))
 			if amount > 0:
 				results.append({
 					"type": entry.item_type,

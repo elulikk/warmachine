@@ -162,11 +162,11 @@ func try_throw() -> bool:
 	return _spawn(origin, _get_target_position(origin))
 
 
-## Empieza el apuntado (al mantener [G] / clic central / L2). El gancho se lanza al instante, sin apuntado.
+## Empieza el apuntado (al mantener [G] / clic central / L2). El gancho y el boomerang se lanzan al instante, sin apuntado.
 func begin_aim() -> void:
 	if not _can_throw():
 		return
-	if equipped_throwable.item_id == "grappling_hook":
+	if equipped_throwable.item_id == "grappling_hook" or _is_straight_throw():
 		try_throw()
 		return
 	is_aiming = true
@@ -259,7 +259,7 @@ func _spawn(origin: Vector2, target: Vector2) -> bool:
 		push_warning("[ThrowableManager] No se pudo instanciar la escena de '%s'." % equipped_throwable.item_name)
 		return false
 
-	var velocity: Vector2 = _compute_ballistic_velocity(origin, target)
+	var velocity: Vector2 = _launch_velocity(origin, target)
 
 	host.add_child(instance)
 	if instance.has_method("launch"):
@@ -274,6 +274,9 @@ func _spawn(origin: Vector2, target: Vector2) -> bool:
 		current_cooldown = 1.5
 	elif equipped_throwable.item_id == "grappling_hook":
 		current_cooldown = 1.2
+	elif equipped_throwable.item_id == "acid_grenade":
+		# Sin recarga: se puede tirar una tras otra.
+		current_cooldown = 0.0
 
 	cooldown_left = current_cooldown
 	cooldown_changed.emit(cooldown_left, current_cooldown)
@@ -305,6 +308,19 @@ func _get_target_position(origin: Vector2) -> Vector2:
 			fallback_dir = player.weapon_pivot.get_aim_direction()
 		return origin + fallback_dir * min_throw_range
 	return mouse_target
+
+
+## true si el arrojadizo equipado sale en línea recta hacia el cursor, como un disparo (boomerang).
+func _is_straight_throw() -> bool:
+	return equipped_throwable != null and equipped_throwable.item_id == "boomerang"
+
+
+## Velocidad con la que se lanza el proyectil. Los de línea recta solo usan la dirección hacia `target`;
+## el resto sigue la parábola balística.
+func _launch_velocity(origin: Vector2, target: Vector2) -> Vector2:
+	if _is_straight_throw():
+		return (target - origin).normalized()
+	return _compute_ballistic_velocity(origin, target)
 
 
 ## Calcula la velocidad inicial que describe una parábola desde `origin` hasta `target`.

@@ -430,9 +430,40 @@ func _take_weapon_from_backpack(weapon: WeaponData, backpack_index: int) -> bool
 	return true
 
 
+## Clic derecho: el arma pasa a la mochila (si no hay lugar, se queda donde estaba). Los consumibles solo salen de la barra.
 func _on_slot_right_clicked(slot) -> void:
+	var res: Resource = slot.get_item()
+	if res is WeaponData and _bound:
+		if not _weapon_to_backpack(res as WeaponData):
+			_show_message("Mochila llena: no hay lugar para el arma.")
+			return
 	slot.set_item(null)
 	_refresh()
+
+
+## Saca un arma del arsenal y la pone en la mochila (misma lógica que arrastrarla desde la barra a la mochila).
+## Devuelve false, sin tocar nada, si el arma no está en el arsenal o la mochila está llena.
+func _weapon_to_backpack(weapon: WeaponData) -> bool:
+	var wm: WeaponManager = _player.weapon_manager
+	var inventory: InventoryManager = _player.inventory_manager
+	var arsenal_index: int = wm.weapons.find(weapon)
+	if arsenal_index < 0 or inventory == null or not inventory.add_item(weapon):
+		return false
+	if wm.offhand_weapon == weapon:
+		wm.set_offhand_weapon(null)
+	var holding: WeaponData = wm.current_weapon
+	wm.weapons.remove_at(arsenal_index)
+	wm.weapon_magazines.erase(weapon)
+	if wm.weapons.is_empty():
+		wm.select_weapon(0)
+	elif holding != null and holding != weapon and wm.weapons.has(holding):
+		wm.select_weapon(wm.weapons.find(holding))
+	else:
+		wm.select_weapon(0)
+	var inventory_window: InventoryWindow = get_tree().get_first_node_in_group(&"inventory_window") as InventoryWindow
+	if inventory_window != null and inventory_window.visible:
+		inventory_window.refresh_all()
+	return true
 
 
 ## Mano secundaria: acepta armas del arsenal de una mano o escudos (no la que sostiene la mano principal).

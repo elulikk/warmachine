@@ -45,7 +45,7 @@ size = Vector2(1260, 300)
 [node name="Level_1_04" type="Node2D"]
 script = ExtResource("1_level")
 level_id = "1_04"
-level_title = "Sector 1-4"
+level_title = "Sector 04"
 chapter_number = 1
 next_level_path = "res://levels/chapter_1/level_1_05.tscn"
 gear_loot_tier = 1
@@ -478,35 +478,19 @@ shape = SubResource("RectangleShape2D_1160x300")
 
 [node name="BarrierLeft" type="StaticBody2D" parent="Arena1/Barriers"]
 position = Vector2(1500, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierLeft"]
 shape = SubResource("RectangleShape2D_12x400")
 
-[node name="ColorRect" type="ColorRect" parent="Arena1/Barriers/BarrierLeft"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-color = Color(1, 0.25, 0.2, 0.55)
-
 [node name="BarrierRight" type="StaticBody2D" parent="Arena1/Barriers"]
 position = Vector2(2700, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierRight"]
 shape = SubResource("RectangleShape2D_12x400")
-
-[node name="ColorRect" type="ColorRect" parent="Arena1/Barriers/BarrierRight"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-color = Color(1, 0.25, 0.2, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena1"]
 script = ExtResource("14_wave")
@@ -563,35 +547,19 @@ shape = SubResource("RectangleShape2D_1220x300")
 
 [node name="BarrierLeft" type="StaticBody2D" parent="Arena2/Barriers"]
 position = Vector2(4520, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierLeft"]
 shape = SubResource("RectangleShape2D_12x400")
 
-[node name="ColorRect" type="ColorRect" parent="Arena2/Barriers/BarrierLeft"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-color = Color(1, 0.25, 0.2, 0.55)
-
 [node name="BarrierRight" type="StaticBody2D" parent="Arena2/Barriers"]
 position = Vector2(5780, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierRight"]
 shape = SubResource("RectangleShape2D_12x400")
-
-[node name="ColorRect" type="ColorRect" parent="Arena2/Barriers/BarrierRight"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-color = Color(1, 0.25, 0.2, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena2"]
 script = ExtResource("14_wave")
@@ -645,35 +613,19 @@ shape = SubResource("RectangleShape2D_1260x300")
 
 [node name="BarrierLeft" type="StaticBody2D" parent="Arena3/Barriers"]
 position = Vector2(6900, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierLeft"]
 shape = SubResource("RectangleShape2D_12x400")
 
-[node name="ColorRect" type="ColorRect" parent="Arena3/Barriers/BarrierLeft"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-color = Color(1, 0.25, 0.2, 0.55)
-
 [node name="BarrierRight" type="StaticBody2D" parent="Arena3/Barriers"]
 position = Vector2(8200, 356)
-visible = false
 collision_layer = 0
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierRight"]
 shape = SubResource("RectangleShape2D_12x400")
-
-[node name="ColorRect" type="ColorRect" parent="Arena3/Barriers/BarrierRight"]
-offset_left = -6.0
-offset_top = -200.0
-offset_right = 6.0
-offset_bottom = 200.0
-color = Color(1, 0.25, 0.2, 0.55)
 
 [node name="WaveManager" type="Node" parent="Arena3"]
 script = ExtResource("14_wave")

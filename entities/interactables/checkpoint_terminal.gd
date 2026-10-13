@@ -9,7 +9,7 @@ signal checkpoint_activated(checkpoint_id: String)
 
 @export var checkpoint_id: String = "checkpoint_track_mid"
 
-@onready var status_light: ColorRect = get_node_or_null("Visuals/StatusLight") as ColorRect
+@onready var status_light: CanvasItem = get_node_or_null("Visuals/StatusLight") as CanvasItem
 @onready var prompt_ui: Node2D = get_node_or_null("PromptUI") as Node2D
 
 var is_registered: bool = false
@@ -17,7 +17,11 @@ var _prompt_tween: Tween = null
 
 
 func _ready() -> void:
-	PropSkin.apply(self, "terminal")
+	var scene: Node = get_tree().current_scene
+	var chapter: int = int(scene.get("chapter_number")) if scene != null and "chapter_number" in scene else 0
+	PropSkin.apply_checkpoint(self, chapter)
+	# El LED reemplaza al rectángulo de estado: se toma la referencia nueva
+	status_light = get_node_or_null("Visuals/StatusLight") as CanvasItem
 	collision_layer = 0
 	collision_mask = 2 # Player
 
@@ -64,7 +68,12 @@ func _set_status(registered: bool, persist_flag: bool = false) -> void:
 	is_registered = registered
 	if status_light != null:
 		# Rojo = inactivo (no registrado), Verde = registrado
-		status_light.color = Color(0.2, 1.0, 0.4, 1.0) if registered else Color(1.0, 0.22, 0.22, 1.0)
+		var tint: Color = Color(0.2, 1.0, 0.4, 1.0) if registered else Color(1.0, 0.22, 0.22, 1.0)
+		if status_light is ColorRect:
+			(status_light as ColorRect).color = tint
+		else:
+			# El LED es una lente blanca: el color va por modulate
+			status_light.modulate = tint
 
 	if persist_flag:
 		SaveManager.set_world_flag(checkpoint_id, true)

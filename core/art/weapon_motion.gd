@@ -15,7 +15,11 @@ extends RefCounted
 ##             hit_delay  s hasta que el golpe es efectivo (hitbox, dash, onda); la animación arranca de inmediato
 ##             keys       fotogramas {t: 0..1 de la animación, pos: px desde el reposo, rot: grados desde el reposo,
 ##                        ease: "out" | "in" | "inout"}; el último debería volver a pos (0,0) y rot 0
-##             body       fotogramas del cuerpo {t, lean (grados, + = hacia adelante), x (px, + = adelante)}
+##             body       fotogramas del cuerpo {t, lean (grados, + = hacia adelante), x (px, + = adelante),
+##                        leg (grados, opcional: estira hacia atrás la pierna de atrás)}
+##   impact     solo martillo: punto de la textura (px) donde pega la cabeza; la onda de choque nace justo ahí
+##   fixed_aim  el pivote no se inclina con el cursor: queda horizontal mirando al lado del cursor, así el trayecto
+##           del arma es siempre el mismo (martillo)
 ##   scale   multiplica el tamaño del arma en mano (1.0 = el de `weapon_art.gd`)
 ##   kick    solo armas de fuego: {back (px), climb_deg, time (s), body (factor de retroceso del torso)}
 ##
@@ -149,23 +153,31 @@ const PROFILES: Dictionary = {
 	},
 	"heavy_hammer": {
 		"pose": {"support": Vector2(108.0, 60.5)},
+		"fixed_aim": true,
+		"impact": Vector2(225.0, 60.5),
 		"hold": {"pos": Vector2(-2.0, -1.0), "rot_deg": -22.0},
 		"swings": [
-			{ # Se alza sobre el hombro y cae con todo el cuerpo; el golpe llega con el impacto
-				"length": 2.8, "hit_delay": 0.36,
-				"keys": [
-					{"t": 0.0, "pos": Vector2.ZERO, "rot": 0.0},
-					{"t": 0.30, "pos": Vector2(-10.0, -12.0), "rot": -118.0, "ease": "inout"},
-					{"t": 0.36, "pos": Vector2(-10.0, -12.0), "rot": -118.0},
-					{"t": 0.46, "pos": Vector2(9.0, 16.0), "rot": 52.0, "ease": "in"},
-					{"t": 0.60, "pos": Vector2(9.0, 16.0), "rot": 52.0},
-					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
-				],
-				"body": [
-					{"t": 0.0, "lean": 0.0, "x": 0.0}, {"t": 0.30, "lean": -9.0, "x": -3.0},
-					{"t": 0.46, "lean": 14.0, "x": 6.0}, {"t": 0.62, "lean": 12.0, "x": 5.0}, {"t": 1.0, "lean": 0.0, "x": 0.0}
-				]
-			}
+				{ # Tira el martillo atrás con los brazos estirados, lo pasa por arriba y lo descarga contra el piso
+				  # con el torso inclinado hacia adelante. Apoya en t = 0.52 y el golpe efectivo cae en el apoyo (hit_delay ~ 0.57 * 0.28 * length)
+					"length": 3.3, "hit_delay": 0.53,
+					"keys": [
+						{"t": 0.0, "pos": Vector2.ZERO, "rot": 0.0},
+						{"t": 0.07, "pos": Vector2(-3.0, 2.0), "rot": -8.0, "ease": "inout"},
+						{"t": 0.27, "pos": Vector2(-30.0, 2.0), "rot": -150.0, "ease": "inout"},
+						{"t": 0.34, "pos": Vector2(-29.0, -2.0), "rot": -154.0},
+						{"t": 0.44, "pos": Vector2(-4.0, -27.0), "rot": -70.0, "ease": "inout"},
+						{"t": 0.52, "pos": Vector2(30.0, 31.0), "rot": 47.0, "ease": "in"},
+						{"t": 0.57, "pos": Vector2(31.0, 32.0), "rot": 41.0, "ease": "out"},
+						{"t": 0.68, "pos": Vector2(31.0, 32.0), "rot": 43.0},
+						{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
+					],
+					"body": [
+						{"t": 0.0, "lean": 0.0, "x": 0.0, "leg": 0.0}, {"t": 0.07, "lean": -3.0, "x": -1.0, "leg": 6.0},
+						{"t": 0.27, "lean": -15.0, "x": -5.0, "leg": 38.0}, {"t": 0.34, "lean": -17.0, "x": -5.0, "leg": 42.0},
+						{"t": 0.44, "lean": -2.0, "x": 0.0, "leg": 30.0}, {"t": 0.52, "lean": 20.0, "x": 9.0, "leg": 10.0},
+						{"t": 0.57, "lean": 23.0, "x": 10.0, "leg": 6.0}, {"t": 0.70, "lean": 20.0, "x": 8.0, "leg": 0.0}, {"t": 1.0, "lean": 0.0, "x": 0.0, "leg": 0.0}
+					]
+				}
 		]
 	},
 	# --- Armas de fuego: retroceso propio ---
@@ -186,8 +198,27 @@ const PROFILES: Dictionary = {
 	"heavy_sniper": {"kick": {"back": 6.0, "climb_deg": 6.0, "time": 0.36, "body": 2.0}},
 	"plasma_flamethrower": {"kick": {"back": 0.6, "climb_deg": 0.0, "time": 0.06, "body": 0.15}},
 	"fuel_flamethrower": {"kick": {"back": 0.6, "climb_deg": 0.0, "time": 0.06, "body": 0.15}},
-	"corrosive_blaster": {"kick": {"back": 1.2, "climb_deg": 2.0, "time": 0.1, "body": 0.3}}
+	"corrosive_blaster": {"kick": {"back": 1.2, "climb_deg": 2.0, "time": 0.1, "body": 0.3}},
+	"longbow": {"hold": {"pos": Vector2(8, 0), "rot_deg": 0.0}, "kick": {"back": 3.0, "climb_deg": 2.0, "time": 0.18, "body": 0.3}},
+	"javelin": {"kick": {"back": -6.0, "climb_deg": -6.0, "time": 0.22, "body": 1.2}},
+	"fire_staff": {"kick": {"back": 1.5, "climb_deg": 5.0, "time": 0.16, "body": 0.4}},
+	"ice_staff": {"kick": {"back": 1.5, "climb_deg": 5.0, "time": 0.16, "body": 0.4}},
+	# Mundo 3 (Abismo Ígneo). Las melee usan el perfil de otra arma (ver ALIASES)
+	"hell_crossbow": {"hold": {"pos": Vector2(4, 0), "rot_deg": 0.0}, "kick": {"back": 3.5, "climb_deg": 4.0, "time": 0.2, "body": 0.5}},
+	"hell_trident": {"kick": {"back": -6.0, "climb_deg": -6.0, "time": 0.22, "body": 1.2}},
+	"soul_staff": {"kick": {"back": 1.5, "climb_deg": 5.0, "time": 0.16, "body": 0.4}},
+	"sulfur_scepter": {"kick": {"back": 2.0, "climb_deg": 7.0, "time": 0.2, "body": 0.5}}
 }
+
+## Armas que reutilizan el perfil de otra (`base`); el resto de las claves pisan las del perfil base
+## (normalmente `pose` e `impact`, que van en px de la textura propia).
+const ALIASES: Dictionary = {
+	"scythe": {"base": "iron_sword", "pose": {"support": Vector2(115.0, 59.0)}, "hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -14.0}},
+	"demon_sword": {"base": "iron_sword", "pose": {"support": Vector2(10.0, 36.0)}},
+	"abyss_axe": {"base": "heavy_hammer", "pose": {"support": Vector2(108.0, 58.0)}, "impact": Vector2(228.0, 58.0)},
+}
+
+static var _alias_cache: Dictionary = {}
 
 
 ## Recarga propia por arma (en mano). Estilos:
@@ -212,6 +243,10 @@ const RELOADS: Dictionary = {
 	"plasma_flamethrower": {"style": "canister"},
 	"fuel_flamethrower": {"style": "canister"},
 	"corrosive_blaster": {"style": "canister"},
+	"fire_staff": {"style": "canister"},
+	"ice_staff": {"style": "canister"},
+	"soul_staff": {"style": "canister"},
+	"sulfur_scepter": {"style": "canister"},
 }
 
 ## Secuencia de disparo sostenido de las automáticas (combo de retroceso): cada disparo dentro de `window` s
@@ -238,7 +273,19 @@ static func id_of(weapon: WeaponData) -> String:
 
 ## Perfil del arma o un diccionario vacío.
 static func profile_for(weapon: WeaponData) -> Dictionary:
-	return PROFILES.get(id_of(weapon), {}) as Dictionary
+	var id: String = id_of(weapon)
+	if PROFILES.has(id):
+		return PROFILES[id] as Dictionary
+	if not ALIASES.has(id):
+		return {}
+	if not _alias_cache.has(id):
+		var alias: Dictionary = ALIASES[id] as Dictionary
+		var merged: Dictionary = (PROFILES.get(str(alias.get("base", "")), {}) as Dictionary).duplicate()
+		for key: Variant in alias:
+			if key != "base":
+				merged[key] = alias[key]
+		_alias_cache[id] = merged
+	return _alias_cache[id] as Dictionary
 
 
 ## Muestrea una lista de fotogramas {t, <field>} por interpolación lineal. `u` en 0..1.

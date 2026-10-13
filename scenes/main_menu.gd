@@ -268,8 +268,9 @@ func _on_create_confirm_pressed() -> void:
 	if modal_create != null:
 		modal_create.visible = false
 	
-	print("[MainMenu] Personaje '%s' creado en Slot %d. Cargando Campamento Base." % [char_name, _pending_create_slot])
-	GameManager.change_scene("res://scenes/hub/base_camp.tscn")
+	# Partida nueva: directo al P-1 del presente (el campamento queda para las partidas guardadas)
+	print("[MainMenu] Personaje '%s' creado en Slot %d. Entrando al presente (P-1)." % [char_name, _pending_create_slot])
+	GameManager.change_scene("res://levels/chapter_4/level_4_01.tscn")
 
 
 func _on_create_cancel_pressed() -> void:

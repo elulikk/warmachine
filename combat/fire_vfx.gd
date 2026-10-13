@@ -5,6 +5,10 @@ extends RefCounted
 ## Tiras de 4 cuadros: fire_droplet, fire_pool (apoyado en el piso), fire_jet, fire_burn.
 
 const SettingsScript = preload("res://core/settings.gd")
+const FxShadersScript = preload("res://combat/fx_shaders.gd")
+const STYLE_SPRITES: int = 0
+const STYLE_PARTICLES: int = 1
+const STYLE_SHADERS: int = 2
 
 const FRAME_COUNT: int = 4
 const STRIPS: Dictionary = {
@@ -21,14 +25,21 @@ const JET_MIN_GAP_MSEC: int = 70
 
 
 static func use_particles() -> bool:
-	return SettingsScript.get_int("fire_style") == 1
+	return SettingsScript.get_int("fire_style") == STYLE_PARTICLES
+
+
+static func style() -> int:
+	return SettingsScript.get_int("fire_style")
 
 
 ## Crea el visual del tipo pedido. `anchor_bottom` apoya la base del sprite en el origen
 ## (charcos y llamas de estado); si no, queda centrado. `target_width` reescala el cuadro.
 static func make(kind: String, target_width: float = 0.0, anchor_bottom: bool = false) -> Node2D:
-	if use_particles():
-		return _make_particles(kind, target_width, anchor_bottom)
+	match style():
+		STYLE_PARTICLES:
+			return _make_particles(kind, target_width, anchor_bottom)
+		STYLE_SHADERS:
+			return _make_shader(kind, target_width, anchor_bottom)
 	return _make_sprite(kind, target_width, anchor_bottom)
 
 
@@ -72,6 +83,31 @@ static func _make_sprite(kind: String, target_width: float, anchor_bottom: bool)
 	sprite.play(&"default")
 	# Desfasa la animación para que varios charcos no parpadeen al unísono.
 	sprite.frame_progress = randf()
+	return sprite
+
+
+## Llama procedural: un cuadrado con shader (sin cuadros de animación ni partículas).
+static func _make_shader(kind: String, target_width: float, anchor_bottom: bool) -> Node2D:
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = FxShadersScript.white_texture()
+	sprite.material = FxShadersScript.fire_material(kind)
+	var width: float = target_width if target_width > 0.0 else 24.0
+	var size: Vector2 = Vector2(width, width * 0.8)
+	match kind:
+		"pool":
+			size = Vector2(width, width * 0.7)
+		"droplet":
+			size = Vector2(width * 0.6, width * 0.9)
+		"jet":
+			# Se dibuja vertical y se gira: la llama sale hacia +x desde el origen
+			size = Vector2(width * 0.45, width)
+			sprite.rotation = PI * 0.5
+		"burn":
+			size = Vector2(width, width * 1.3)
+	sprite.scale = size / 4.0
+	if anchor_bottom or kind == "jet":
+		sprite.centered = false
+		sprite.offset = Vector2(-2.0, -4.0)
 	return sprite
 
 
