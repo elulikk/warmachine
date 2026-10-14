@@ -34,6 +34,8 @@ const THIN_MAX_HEIGHT: float = 40.0
 ## Relleno bajo los suelos: solo dibujo (la colisión sigue igual), para que no parezcan flotar.
 const GROUND_FILL_DEPTH: float = 1200.0
 const GROUND_FILL_TONE: Color = Color(0.42, 0.4, 0.46, 1.0)
+## Filas de degradé que la franja `ground_strip` pinta sobre el borde de la acera (igual a FADE_PX en process_floor.py).
+const STRIP_TOP_PAD: int = 3
 ## Si hay algo sólido a menos de esta distancia por debajo de un bloque, el bloque es un techo o un piso
 ## superior (no apoya sobre el vacío) y no se rellena: el relleno taparía el pasillo de abajo.
 const FILL_SKIP_GAP: float = 900.0
@@ -308,6 +310,8 @@ static func _build_ground_strip(visual: Node2D, dir: String, extent: Vector2, th
 	var strip: Texture2D = ArtScript.tex(dir + str(theme["ground_strip"]))
 	if strip == null:
 		return false
+	# Detrás del personaje (que siempre pisa por encima) y delante de los edificios del fondo (z -2)
+	visual.z_index = -1
 	var fill_tex: Texture2D = ArtScript.tex(dir + str(theme.get("ground_fill", theme["ground"])))
 	# Lecho bajo otro suelo: solo asfalto liso, sin acera propia
 	if _has_solid_on_top(world_rect):
@@ -315,18 +319,20 @@ static func _build_ground_strip(visual: Node2D, dir: String, extent: Vector2, th
 			_tile_rect(visual, fill_tex, extent)
 		return true
 	var strip_h: float = float(strip.get_height())
+	# La textura trae STRIP_TOP_PAD filas de degradé sobre el borde de la acera: se dibuja desde arriba del suelo
+	var body_h: float = strip_h - float(STRIP_TOP_PAD)
 	var open_below: bool = not _has_solid_below(world_rect)
 	# Con un lecho pegado debajo la franja se muestra entera (el lecho no dibuja acera)
-	var shown_h: float = strip_h if (open_below or _has_solid_touching_below(world_rect)) else minf(strip_h, extent.y)
+	var shown_h: float = strip_h if (open_below or _has_solid_touching_below(world_rect)) else minf(strip_h, extent.y + STRIP_TOP_PAD)
 	var region: AtlasTexture = AtlasTexture.new()
 	region.atlas = strip
 	region.region = Rect2(0.0, 0.0, float(strip.get_width()), shown_h)
-	_tile_rect(visual, region, Vector2(extent.x, shown_h))
+	_tile_rect(visual, region, Vector2(extent.x, shown_h)).position = Vector2(0.0, -float(STRIP_TOP_PAD))
 	if open_below and fill_tex != null:
 		var fill: TextureRect = _tile_rect(visual, fill_tex, Vector2(extent.x, GROUND_FILL_DEPTH))
-		fill.position = Vector2(0.0, maxf(strip_h, extent.y))
-		if extent.y > strip_h:
-			_tile_rect(visual, fill_tex, Vector2(extent.x, extent.y - strip_h)).position = Vector2(0.0, strip_h)
+		fill.position = Vector2(0.0, maxf(body_h, extent.y))
+		if extent.y > body_h:
+			_tile_rect(visual, fill_tex, Vector2(extent.x, extent.y - body_h)).position = Vector2(0.0, body_h)
 	return true
 
 

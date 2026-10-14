@@ -244,130 +244,130 @@ z_index = -2
 [node name="Bld01" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
 position = Vector2(187.3, 566.0)
-scale = Vector2(-2.00, 2.00)
+scale = Vector2(-1.00, 1.00)
 texture = ExtResource("bld_06")
 centered = false
-offset = Vector2(-77.0, -241.0)
+offset = Vector2(-154.0, -482.0)
 
 [node name="Bld02" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(487.1, 566.0)
-scale = Vector2(-2.00, 2.00)
+position = Vector2(499.6, 566.0)
+scale = Vector2(-1.00, 1.00)
 texture = ExtResource("bld_01")
 centered = false
-offset = Vector2(-69.5, -288.0)
+offset = Vector2(-151.5, -576.0)
 
 [node name="Bld03" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(984.6, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(1009.6, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_05")
 centered = false
-offset = Vector2(-63.0, -212.0)
+offset = Vector2(-126.0, -424.0)
 
 [node name="Bld04" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(1343.3, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(1368.3, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_08")
 centered = false
-offset = Vector2(-107.5, -158.0)
+offset = Vector2(-215.0, -316.0)
 
 [node name="Bld05" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(1868.3, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(1893.3, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_02")
 centered = false
-offset = Vector2(-74.5, -587.0)
+offset = Vector2(-149.0, -1174.0)
 
 [node name="Bld06" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(2187.5, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(2212.5, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_04")
 centered = false
-offset = Vector2(-68.5, -372.0)
+offset = Vector2(-137.0, -744.0)
 
 [node name="Bld07" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(2570.0, 566.0)
-scale = Vector2(-2.00, 2.00)
+position = Vector2(2595.0, 566.0)
+scale = Vector2(-1.00, 1.00)
 texture = ExtResource("bld_08")
 centered = false
-offset = Vector2(-107.5, -158.0)
+offset = Vector2(-215.0, -316.0)
 
 [node name="Bld08" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(3080.4, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(3117.9, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_01")
 centered = false
-offset = Vector2(-69.5, -288.0)
+offset = Vector2(-151.5, -576.0)
 
 [node name="Bld09" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(3386.1, 566.0)
-scale = Vector2(-2.00, 2.00)
+position = Vector2(3436.1, 566.0)
+scale = Vector2(-1.00, 1.00)
 texture = ExtResource("bld_03")
 centered = false
-offset = Vector2(-75.5, -315.0)
+offset = Vector2(-151.0, -630.0)
 
 [node name="Bld10" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(3798.8, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(3848.8, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_04")
 centered = false
-offset = Vector2(-68.5, -372.0)
+offset = Vector2(-137.0, -744.0)
 
 [node name="Bld11" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(4157.3, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(4207.3, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_08")
 centered = false
-offset = Vector2(-107.5, -158.0)
+offset = Vector2(-215.0, -316.0)
 
 [node name="Bld12" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(4529.0, 566.0)
-scale = Vector2(-2.00, 2.00)
+position = Vector2(4591.5, 566.0)
+scale = Vector2(-1.00, 1.00)
 texture = ExtResource("bld_01")
 centered = false
-offset = Vector2(-69.5, -288.0)
+offset = Vector2(-151.5, -576.0)
 
 [node name="Bld13" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(4918.4, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(4993.4, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_08")
 centered = false
-offset = Vector2(-107.5, -158.0)
+offset = Vector2(-215.0, -316.0)
 
 [node name="Bld14" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(5511.3, 566.0)
-scale = Vector2(2.00, 2.00)
+position = Vector2(5598.8, 566.0)
+scale = Vector2(1.00, 1.00)
 texture = ExtResource("bld_01")
 centered = false
-offset = Vector2(-69.5, -288.0)
+offset = Vector2(-151.5, -576.0)
 
 [node name="Bld15" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(5815.5, 566.0)
-scale = Vector2(-2.00, 2.00)
+position = Vector2(5915.5, 566.0)
+scale = Vector2(-1.00, 1.00)
 texture = ExtResource("bld_03")
 centered = false
-offset = Vector2(-75.5, -315.0)
+offset = Vector2(-151.0, -630.0)
 
 [node name="Bld16" type="Sprite2D" parent="Buildings"]
 modulate = Color(0.74, 0.8, 0.92, 1)
-position = Vector2(6122.5, 566.0)
-scale = Vector2(-2.00, 2.00)
+position = Vector2(6235.0, 566.0)
+scale = Vector2(-1.00, 1.00)
 texture = ExtResource("bld_01")
 centered = false
-offset = Vector2(-69.5, -288.0)
+offset = Vector2(-151.5, -576.0)
 
 [node name="Props" type="Node2D" parent="."]
 

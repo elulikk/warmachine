@@ -7,6 +7,8 @@ from PIL import Image
 SRC = "art_source/world1/city_floor_src.jpg"
 OUT = "assets/art/world1/"
 SCALE = 0.27       # píxeles de juego por píxel de la fuente (ancho)
+FADE_PX = 3        # degradé del contorno hacia AFUERA (sobre el borde de la acera, hacia el negro del fondo); queda como filas extra arriba. Debe coincidir con STRIP_TOP_PAD en levels/level_skin.gd
+OUTLINE_PX = 3     # contorno negro de la cara superior de la acera (px de juego), une el piso con los edificios
 SCALE_Y = 0.17     # alto: más bajo que el ancho para que la acera ocupe poco y la calle se vea sobre la barra de ítems
 OVERLAP = 220      # ancho del cruce de fundido para que repita sin costura (px de fuente)
 
@@ -27,6 +29,18 @@ head = body[:, :OVERLAP]
 strip[:, :OVERLAP] = tail * (1.0 - t) + head * t
 img = Image.fromarray(strip.clip(0, 255).astype(np.uint8))
 img = img.resize((round(out_w * SCALE), round(bh * SCALE_Y)), Image.LANCZOS)
+# Contorno oscuro de unos píxeles en el borde superior de la acera, con un degradé hacia afuera (arriba)
+dark = np.array([12, 12, 16], dtype=np.float32)
+body_px = np.asarray(img.convert("RGBA")).astype(np.float32)
+body_px[:OUTLINE_PX, :, :3] = dark
+body_px[:OUTLINE_PX, :, 3] = 255
+pad = np.zeros((FADE_PX, body_px.shape[1], 4), dtype=np.float32)
+pad[..., :3] = dark
+for i in range(FADE_PX):
+    d = FADE_PX - i                      # filas por encima de la línea negra: 1 = pegada, FADE_PX = la más lejana
+    pad[i, :, 3] = 255.0 * (FADE_PX + 1 - d) / (FADE_PX + 1)
+arr = np.vstack([pad, body_px]).clip(0, 255).astype(np.uint8)
+img = Image.fromarray(arr)
 img.save(OUT + "city_floor_strip.png")
 print("strip", img.size, "top row", top)
 
