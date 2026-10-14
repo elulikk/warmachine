@@ -1,18 +1,18 @@
 extends RefCounted
-## Decoración del Mundo 4 (El Presente): mobiliario urbano según el sector (faroles, hidrantes, contenedores,
+## Decoración del Mundo 1 (El Presente): mobiliario urbano según el sector (faroles, hidrantes, contenedores,
 ## cercas, bitas, sillones, parlantes...), lluvia y relámpagos en los exteriores, autos que cruzan por el fondo,
 ## luces y bola de espejos en la discoteca, y agua en los pozos entre muelles y canales.
 ## Los objetos de `SOLID_PROPS` (contenedores, tachos, buzones, bancas, cajas...) son sólidos: se agrupan en
 ## escalones de alturas distintas para saltar de uno al otro, y los enemigos los sortean (`obstacle_hop.gd`).
-## El resto es solo dibujo. Sin class_name: la llama LevelSkin (`preload`, tema del capítulo 4).
+## El resto es solo dibujo. Sin class_name: la llama LevelSkin (`preload`, tema del capítulo 1).
 ##
-## La ubicación es determinista (semilla = nombre del nivel). Arte en `assets/art/world4/`
-## (Google Flow, ver `art_source/world4/process.py`).
+## La ubicación es determinista (semilla = nombre del nivel). Arte en `assets/art/world1/`
+## (Google Flow, ver `art_source/world1/process.py`).
 
 const ArtScript = preload("res://core/art/art.gd")
 const SettingsScript = preload("res://core/settings.gd")
 
-const DIR: String = "res://assets/art/world4/"
+const DIR: String = "res://assets/art/world1/"
 
 const MIN_GROUND_WIDTH: float = 110.0
 const THIN_MAX_HEIGHT: float = 40.0
@@ -28,26 +28,26 @@ const HANG_TOP: float = -40.0
 
 ## Por sector: lluvia, autos, relámpagos y objetos de suelo [nombre, peso, alto en juego (px)].
 const SECTORS: Dictionary = {
-	"4_01": {"rain": true, "cars": true, "props": [
+	"1_01": {"rain": true, "cars": true, "props": [
 		["street_lamp", 3, 120.0], ["hydrant", 2, 42.0], ["mailbox", 2, 52.0], ["dumpster", 2, 50.0], ["traffic_light", 1, 118.0],
-		["bus_stop", 1, 100.0], ["phone_booth", 1, 95.0], ["bench", 2, 40.0], ["trash_can", 3, 38.0]]},
-	"4_02": {"rain": true, "cars": false, "props": [
+		["bus_stop", 1, 100.0], ["phone_booth", 1, 120.0], ["trash_can", 3, 38.0]]},
+	"1_02": {"rain": true, "cars": false, "props": [
 		["fire_ladder", 1, 150.0], ["trash_bags", 3, 44.0], ["wet_boxes", 3, 48.0], ["steam_grate", 2, 60.0], ["rust_pipe", 1, 40.0],
 		["barrel", 2, 52.0], ["dumpster", 2, 50.0], ["street_lamp", 1, 120.0]]},
-	"4_03": {"rain": false, "cars": false, "water": true, "props": [
+	"1_03": {"rain": false, "cars": false, "water": true, "props": [
 		["rust_pipe", 2, 40.0], ["valve", 2, 40.0], ["sewer_grate", 1, 50.0], ["puddle", 3, 14.0], ["barrel", 2, 52.0],
 		["iron_ladder", 1, 120.0], ["steam_grate", 1, 60.0], ["trash_bags", 1, 40.0]]},
-	"4_04": {"rain": true, "cars": true, "props": [
+	"1_04": {"rain": true, "cars": true, "props": [
 		["white_fence", 4, 55.0], ["flower_pot", 3, 36.0], ["bicycle", 2, 50.0], ["house_mailbox", 2, 44.0],
-		["street_lamp", 2, 120.0], ["trash_can", 2, 38.0], ["bench", 1, 40.0]]},
-	"4_05": {"rain": true, "cars": false, "water": true, "props": [
+		["street_lamp", 2, 120.0], ["trash_can", 2, 38.0]]},
+	"1_05": {"rain": true, "cars": false, "water": true, "props": [
 		["bollard", 3, 36.0], ["buoy", 2, 48.0], ["crates", 3, 60.0], ["oil_barrel", 3, 50.0], ["rope_coil", 2, 24.0],
 		["dock_lamp", 2, 110.0]]},
-	"4_06": {"rain": false, "cars": false, "hang": "chandelier", "props": [
+	"1_06": {"rain": false, "cars": false, "hang": "chandelier", "props": [
 		["armchair", 3, 56.0], ["big_plant", 3, 80.0], ["luggage_cart", 2, 70.0], ["reception_desk", 1, 60.0]]},
-	"4_07": {"rain": false, "cars": false, "hang": "disco_ball", "club": true, "props": [
+	"1_07": {"rain": false, "cars": false, "hang": "disco_ball", "club": true, "props": [
 		["speaker", 3, 80.0], ["dj_console", 1, 55.0], ["bar_counter", 2, 60.0], ["stage_light", 2, 70.0]]},
-	"4_08": {"rain": true, "cars": false, "props": [
+	"1_08": {"rain": true, "cars": false, "props": [
 		["water_tank", 1, 150.0], ["ac_unit", 3, 60.0], ["antenna", 2, 150.0], ["vent_chimney", 2, 100.0],
 		["roof_sign", 1, 90.0], ["safety_rail", 3, 36.0], ["vent_duct", 2, 50.0], ["heli_spot", 1, 60.0]]},
 }
@@ -58,11 +58,13 @@ const GLOWS: Dictionary = {
 	"bar_sign": Color(1.0, 0.2, 0.3, 0.6), "heli_spot": Color(1.0, 0.3, 0.2, 0.5),
 }
 ## Objetos sólidos: alto en juego [mínimo, máximo] (px). El salto del jugador llega a ~138 px, así que ninguno
-## pasa de 115; en un grupo los extremos se acotan a END_MAX para que se pueda subir desde el suelo.
+## pasa de 115, salvo la cabina telefónica y el contenedor (124, que se saltan de punta); en un grupo los extremos se acotan a END_MAX
+## para que se pueda subir desde el suelo.
 const SOLID_PROPS: Dictionary = {
-	"trash_can": [56.0, 76.0], "house_mailbox": [60.0, 80.0], "mailbox": [76.0, 96.0], "bench": [48.0, 62.0],
-	"dumpster": [100.0, 115.0], "barrel": [64.0, 84.0], "oil_barrel": [66.0, 86.0], "crates": [84.0, 110.0],
+	"trash_can": [56.0, 76.0], "house_mailbox": [60.0, 80.0], "mailbox": [54.0, 62.0],
+	"dumpster": [118.0, 124.0], "barrel": [64.0, 84.0], "oil_barrel": [66.0, 86.0], "crates": [84.0, 110.0],
 	"wet_boxes": [76.0, 100.0], "trash_bags": [52.0, 70.0], "ac_unit": [70.0, 100.0],
+	"phone_booth": [118.0, 124.0],
 }
 const END_MAX: float = 90.0
 ## Diferencia máxima de altura entre dos escalones vecinos.
@@ -71,11 +73,15 @@ const STEP_MAX: float = 56.0
 const HEADROOM: float = 70.0
 ## Distancia mínima a los puntos del nivel que no se deben tapar (inicio, salida, checkpoints, cinemáticas).
 const AVOID_RADIUS: float = 170.0
+## Franja libre de objetos a cada lado del centro de una arena (antes y después del encuentro).
+const ARENA_CLEAR: float = 900.0
 const CAR_FILES: Array[String] = ["car_sedan", "car_taxi", "car_pickup", "car_police"]
 const CLUB_COLORS: Array[Color] = [
 	Color(1.0, 0.2, 0.6, 0.16), Color(0.2, 0.9, 1.0, 0.16), Color(0.6, 0.3, 1.0, 0.18), Color(1.0, 0.8, 0.2, 0.12),
 ]
 
+static var _arena_x: Array[float] = []
+static var _prop_spans: Array[Vector2] = []
 static var _glow_tex: Texture2D = null
 static var _rain_tex: Texture2D = null
 static var _splash_tex: Texture2D = null
@@ -84,8 +90,8 @@ static var _splash_tex: Texture2D = null
 static func decorate(level: Node, solids: Array[Rect2]) -> void:
 	if level.has_node("CityDecorBack"):
 		return
-	var level_id: String = str(level.get("level_id")) if "level_id" in level else "4_01"
-	var cfg: Dictionary = SECTORS.get(level_id, SECTORS["4_01"]) as Dictionary
+	var level_id: String = str(level.get("level_id")) if "level_id" in level else "1_01"
+	var cfg: Dictionary = SECTORS.get(level_id, SECTORS["1_01"]) as Dictionary
 	var environment: Node = level.get_node_or_null("Environment")
 	var back: Node2D = Node2D.new()
 	back.name = "CityDecorBack"
@@ -104,12 +110,9 @@ static func decorate(level: Node, solids: Array[Rect2]) -> void:
 	rng.seed = hash(String(level.name))
 	var props: Array = cfg.get("props", []) as Array
 
-	var solid_root: Node2D = Node2D.new()
-	solid_root.name = "CityDecorSolids"
-	level.add_child(solid_root)
-	if environment != null:
-		level.move_child(solid_root, environment.get_index() + 1)
 	var avoid: Array[float] = _avoid_points(level)
+	_arena_x = _arena_centers(level)
+	_prop_spans = _baked_spans(level)
 
 	var level_end: float = 0.0
 	for rect: Rect2 in solids:
@@ -119,7 +122,7 @@ static func decorate(level: Node, solids: Array[Rect2]) -> void:
 		var x: float = rect.position.x + rng.randf_range(40.0, 140.0)
 		while x < rect.end.x - 30.0:
 			if not _covered_top(rect, solids, x):
-				x = maxf(x, _place_prop(back, front, rect, solids, x, props, rng, solid_root, avoid))
+				x = maxf(x, _place_prop(back, front, rect, solids, x, props, rng, avoid))
 			x += rng.randf_range(130.0, 330.0)
 
 	if cfg.has("hang"):
@@ -139,33 +142,31 @@ static func decorate(level: Node, solids: Array[Rect2]) -> void:
 # ==============================================================================
 
 ## Pone un objeto de suelo en `x` y devuelve el borde derecho que ocupa (para no apilar encima).
+## Los sólidos (`SOLID_PROPS`) no van acá: son props del nivel horneados (ver `plan_solids`).
 static func _place_prop(back: Node2D, front: Node2D, rect: Rect2, solids: Array[Rect2], x: float, props: Array,
-		rng: RandomNumberGenerator, solid_root: Node2D, avoid: Array[float]) -> float:
+		rng: RandomNumberGenerator, avoid: Array[float]) -> float:
 	if props.is_empty():
 		return x
-	var total: int = 0
-	for entry: Array in props:
-		total += int(entry[1])
-	var pick: int = rng.randi_range(1, total)
-	var chosen: Array = props[0]
-	for entry: Array in props:
-		pick -= int(entry[1])
-		if pick <= 0:
-			chosen = entry
-			break
+	var chosen: Array = _pick_entry(props, rng)
 	var name: String = str(chosen[0])
 	if SOLID_PROPS.has(name):
-		return _place_solid_group(back, rect, solids, x, props, name, rng, solid_root, avoid)
+		return x
 	var target_h: float = float(chosen[2]) * rng.randf_range(0.9, 1.1)
 	if not _free_above(rect, solids, x, target_h + 20.0):
 		return x
 	var tex: Texture2D = ArtScript.tex(DIR + name + ".png")
 	if tex == null:
 		return x
+	var s: float = target_h / float(tex.get_height())
+	var half_w: float = tex.get_width() * s * 0.5
+	if _in_arena_zone(x, half_w) or _in_prop_span(x, half_w):
+		return x
+	for point: float in avoid:
+		if absf(point - x) < AVOID_RADIUS + half_w:
+			return x
 	var sprite: Sprite2D = Sprite2D.new()
 	sprite.texture = tex
 	sprite.centered = false
-	var s: float = target_h / float(tex.get_height())
 	var flip: float = -1.0 if rng.randf() < 0.5 and not GLOWS.has(name) else 1.0
 	sprite.scale = Vector2(s * flip, s)
 	sprite.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height() + 4.0 / s)
@@ -177,9 +178,47 @@ static func _place_prop(back: Node2D, front: Node2D, rect: Rect2, solids: Array[
 	return x
 
 
+## Elige un tipo de objeto de `props` según su peso.
+static func _pick_entry(props: Array, rng: RandomNumberGenerator) -> Array:
+	var total: int = 0
+	for entry: Array in props:
+		total += int(entry[1])
+	var pick: int = rng.randi_range(1, total)
+	for entry: Array in props:
+		pick -= int(entry[1])
+		if pick <= 0:
+			return entry
+	return props[0] as Array
+
+
+## Obstáculos sólidos del nivel: lista de props (nombre, centro x, base y, ancho, alto, espejado) que se hornea en
+## el .tscn con art_source/world1/bake_decor_props.gd. En juego no se generan: son nodos `WorldProp` del nivel.
+static func plan_solids(level: Node, solids: Array[Rect2]) -> Array[Dictionary]:
+	var level_id: String = str(level.get("level_id")) if "level_id" in level else "1_01"
+	var cfg: Dictionary = SECTORS.get(level_id, SECTORS["1_01"]) as Dictionary
+	var props: Array = cfg.get("props", []) as Array
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.seed = hash(String(level.name))
+	var avoid: Array[float] = _avoid_points(level)
+	_arena_x = _arena_centers(level)
+	var plan: Array[Dictionary] = []
+	for rect: Rect2 in solids:
+		if rect.size.x < MIN_GROUND_WIDTH or rect.size.y <= THIN_MAX_HEIGHT:
+			continue
+		var x: float = rect.position.x + rng.randf_range(40.0, 140.0)
+		while x < rect.end.x - 30.0:
+			if not _covered_top(rect, solids, x):
+				var chosen: Array = _pick_entry(props, rng)
+				if SOLID_PROPS.has(str(chosen[0])):
+					x = maxf(x, _plan_solid_group(plan, rect, solids, x, props, str(chosen[0]), rng, avoid))
+			x += rng.randf_range(130.0, 330.0)
+	return plan
+
+
 ## Grupo de 1 a 3 objetos sólidos pegados, de alturas distintas y escalonadas (subida, bajada o pico).
-static func _place_solid_group(back: Node2D, rect: Rect2, solids: Array[Rect2], x: float, props: Array, first: String,
-		rng: RandomNumberGenerator, solid_root: Node2D, avoid: Array[float]) -> float:
+## Agrega cada objeto a `plan` y devuelve el borde derecho del último.
+static func _plan_solid_group(plan: Array[Dictionary], rect: Rect2, solids: Array[Rect2], x: float, props: Array,
+		first: String, rng: RandomNumberGenerator, avoid: Array[float]) -> float:
 	var pool: Array[String] = []
 	for entry: Array in props:
 		if SOLID_PROPS.has(str(entry[0])) and not pool.has(str(entry[0])):
@@ -225,9 +264,12 @@ static func _place_solid_group(back: Node2D, rect: Rect2, solids: Array[Rect2], 
 		var w: float = tex.get_width() * s
 		var left: float = cursor
 		if i > 0:
-			left += rng.randf_range(-4.0, 8.0)
+			# Nunca hacia atrás: un objeto encima de la punta del anterior lo tapa
+			left += rng.randf_range(0.0, 8.0)
 		var item: Rect2 = Rect2(left, ground_y - h, w, h)
 		if item.position.x < rect.position.x + 24.0 or item.end.x > rect.end.x - 24.0:
+			break
+		if _in_arena_zone(item.get_center().x, w * 0.5):
 			break
 		var probe: Rect2 = Rect2(item.position.x, item.position.y - HEADROOM, w, h + HEADROOM - 2.0)
 		var blocked: bool = false
@@ -241,45 +283,59 @@ static func _place_solid_group(back: Node2D, rect: Rect2, solids: Array[Rect2], 
 				break
 		if blocked:
 			break
-		var sprite: Sprite2D = Sprite2D.new()
-		sprite.texture = tex
-		sprite.centered = false
-		sprite.scale = Vector2(s * flip, s)
-		sprite.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height() + 4.0 / s)
-		sprite.position = Vector2(item.get_center().x, ground_y)
-		back.add_child(sprite)
-		_add_solid(solid_root, item)
+		plan.append({"name": seq_names[i], "x": item.get_center().x, "y": ground_y, "w": w, "h": h, "flip": flip < 0.0})
 		cursor = item.end.x
 		edge = item.end.x
 	return edge
 
 
-## Cuerpo sólido (como los bloques del nivel: grupo `world`, sin máscara) que además los enemigos saltan.
-static func _add_solid(parent: Node2D, item: Rect2) -> void:
-	var body: StaticBody2D = StaticBody2D.new()
-	body.add_to_group(&"world")
-	body.add_to_group(&"hop_obstacle")
-	body.collision_mask = 0
-	body.position = item.get_center()
-	var shape: RectangleShape2D = RectangleShape2D.new()
-	shape.size = Vector2(item.size.x * 0.92, item.size.y - 4.0)
-	var node: CollisionShape2D = CollisionShape2D.new()
-	node.shape = shape
-	node.position = Vector2(0.0, -2.0)
-	body.add_child(node)
-	parent.add_child(body)
+## Props horneados del nivel (nodo `Props`, grupo `decor_prop`): la decoración de suelo no los tapa.
+static func _baked_spans(level: Node) -> Array[Vector2]:
+	var spans: Array[Vector2] = []
+	var holder: Node = level.get_node_or_null("Props")
+	if holder == null:
+		return spans
+	for child: Node in holder.get_children():
+		var node: Node2D = child as Node2D
+		if node == null or not node.is_in_group(&"decor_prop"):
+			continue
+		var half_w: float = (node.get("size") as Vector2).x * 0.5
+		spans.append(Vector2(node.position.x - half_w, node.position.x + half_w))
+	return spans
 
 
-## Posiciones x del nivel que no deben quedar tapadas: jugador, salida, checkpoints, cinemáticas, tienda...
+static func _in_prop_span(x: float, half_w: float) -> bool:
+	for span: Vector2 in _prop_spans:
+		if x + half_w > span.x and x - half_w < span.y:
+			return true
+	return false
+
+
+## Centros x de las arenas del nivel (nodos `Arena*`): alrededor de cada uno no hay objetos de decoración.
+static func _arena_centers(level: Node) -> Array[float]:
+	var centers: Array[float] = []
+	for child: Node in level.get_children():
+		if str(child.name).begins_with("Arena") and child is Node2D:
+			centers.append((child as Node2D).position.x)
+	return centers
+
+
+## Si un objeto centrado en `x` con semiancho `half_w` cae dentro de la franja libre de alguna arena.
+static func _in_arena_zone(x: float, half_w: float) -> bool:
+	for center: float in _arena_x:
+		if absf(center - x) < ARENA_CLEAR + half_w:
+			return true
+	return false
+
+
+## Posiciones x del nivel que no deben quedar tapadas: jugador, enemigos, salida, checkpoints, cinemáticas, tienda...
 static func _avoid_points(level: Node) -> Array[float]:
 	var points: Array[float] = []
 	for child: Node in level.get_children():
 		var node: Node2D = child as Node2D
 		if node == null or node is StaticBody2D or node is Camera2D:
 			continue
-		if child.name == &"Environment" or str(child.name).begins_with("CityDecor"):
-			continue
-		if node is CharacterBody2D and child.name != &"Player":
+		if child.name == &"Environment" or child.name == &"Props" or child.name == &"Buildings" or str(child.name).begins_with("CityDecor"):
 			continue
 		points.append(node.position.x)
 	return points
