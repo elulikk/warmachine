@@ -8,6 +8,7 @@ Destinos:
   base            campamento (scenes/hub/base_camp.tscn)
   test            sala de pruebas (core/test_level.tscn)
   stress          sala de estrés (scenes/hub/stress_room.tscn)
+  cine            banco de cinemáticas (scenes/hub/cinematic_bench.tscn)
   menu            menú principal (scenes/main_menu.tscn)
   res://... o ruta relativa al proyecto, para cualquier otra escena
 
@@ -29,6 +30,7 @@ ALIASES = {
     "base": "scenes/hub/base_camp.tscn",
     "test": "core/test_level.tscn",
     "stress": "scenes/hub/stress_room.tscn",
+    "cine": "scenes/hub/cinematic_bench.tscn",
     "menu": "scenes/main_menu.tscn",
 }
 DETACHED_PROCESS = 0x00000008
@@ -48,7 +50,7 @@ def resolve(target):
     rel = re.sub(r"^res://", "", target)
     if os.path.isfile(os.path.join(ROOT, rel)):
         return rel
-    raise SystemExit("Destino desconocido: %s. Usá un sector (1_03), base, test, stress, menu o una ruta de escena." % target)
+    raise SystemExit("Destino desconocido: %s. Usá un sector (1_03), base, test, stress, cine, menu o una ruta de escena." % target)
 
 
 def godot_running():

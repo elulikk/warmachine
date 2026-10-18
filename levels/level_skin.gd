@@ -134,6 +134,28 @@ static var _chapter: int = 1
 static var _theme: Dictionary = {}
 
 
+## Fondo pintado (ruta res://) de la escena de juego `path`: un sector (`levels/chapter_N/level_N_MM.tscn`, con el fondo
+## propio de su sector si lo tiene) o el campamento. "" si no se reconoce. Lo usa el menú principal.
+static func backdrop_for_scene(path: String) -> String:
+	var chapter: int = -1
+	var level_id: String = ""
+	if path.ends_with("base_camp.tscn"):
+		chapter = 0
+	else:
+		var found: RegExMatch = RegEx.create_from_string(r"chapter_(\d+)/level_(\d+_\d+)\.tscn$").search(path)
+		if found == null:
+			return ""
+		chapter = int(found.get_string(1))
+		level_id = found.get_string(2)
+	var file: String = str(CHAPTER_BACKDROPS.get(chapter, ""))
+	var theme: Dictionary = CHAPTER_THEMES.get(chapter, {}) as Dictionary
+	file = str(theme.get("backdrop", file))
+	var sectors: Dictionary = theme.get("sectors", {}) as Dictionary
+	if sectors.has(level_id):
+		file = str((sectors[level_id] as Dictionary).get("backdrop", file))
+	return BG_DIR + file if not file.is_empty() else ""
+
+
 ## `backdrop_file` pisa el fondo del capítulo (nombre de archivo dentro de `assets/art/bg/`).
 static func apply(level: Node, chapter: int = 1, backdrop_file: String = "") -> void:
 	_chapter = chapter

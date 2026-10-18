@@ -90,7 +90,7 @@ func is_sandbox() -> bool:
 	if cur is TestLevel:
 		return true
 	var path: String = cur.scene_file_path
-	return path.ends_with("test_level.tscn") or path.ends_with("stress_room.tscn")
+	return path.ends_with("test_level.tscn") or path.ends_with("stress_room.tscn") or path.ends_with("cinematic_bench.tscn")
 
 
 ## Retorna true si la escena activa es el Menú Principal.

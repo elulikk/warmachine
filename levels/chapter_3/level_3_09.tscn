@@ -129,17 +129,6 @@ offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.3, 0.15, 0.12, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(1, 0.55, 0.25, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 3 • ABISMO ÍGNEO • SECTOR 3-9 — MURALLAS DE LA CIUDADELA"
-
 [node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(700.0, 547.0)
 collision_mask = 0
@@ -154,61 +143,6 @@ offset_right = 32.0
 offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 500.0
-offset_top = 430.0
-offset_right = 1020.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Espada Demoníaca — tajos rápidos y amplios que prenden fuego"
-
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(1, 0.9, 0.8, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "La ciudadela del Señor del Abismo. Tres puestos te separan del trono."
-
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 3600.0
-offset_top = 330.0
-offset_right = 4200.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.55, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "PUESTO 1: EL FOSO"
-
-[node name="Tip5" type="Label" parent="Environment"]
-offset_left = 5500.0
-offset_top = 330.0
-offset_right = 6100.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.55, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "PUESTO 2: LA PUERTA DE HIERRO"
-
-[node name="Tip6" type="Label" parent="Environment"]
-offset_left = 7300.0
-offset_top = 330.0
-offset_right = 7900.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.55, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "PUESTO 3: LAS ALMENAS"
 
 [node name="WeaponPickup1" parent="." instance=ExtResource("wpickup")]
 position = Vector2(700.0, 512)

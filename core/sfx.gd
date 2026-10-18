@@ -41,6 +41,7 @@ const MIN_INTERVAL_MSEC: Dictionary = {
 	&"hurt_thud": 150,
 	&"heartbeat": 200,
 	&"enemy_death": 60,
+	&"enemy_death_flesh": 60,
 	&"reload_out": 100,
 	&"reload_done": 100,
 	&"reload_shell": 60,
@@ -588,6 +589,28 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_l(0.0, 0.25, 3600.0, 3600.0, tri, 0.12, 3.0),
 				_n(0.0, 0.06, 0.7, 4.0, 9000.0, 3000.0),
 			], 7, 1, 1.3, 35.0, 0.2)
+		&"drip":  # gota de alcantarilla: "plip" agudo que cae de tono y rebota en la bóveda (eco largo)
+			return _render(0.5, [
+				_l(0.0, 0.09, 1900.0, 700.0, sine, 0.45, 3.0),
+				_l(0.0, 0.05, 3800.0, 1400.0, sine, 0.15, 3.5),
+				_n(0.0, 0.015, 0.2, 4.0, 6000.0, 2500.0),
+			], 9, 1, 1.0, 110.0, 0.5)
+		&"flute_call":  # Flauta de Hamelin: tres notas suaves que suben
+			return _render(0.5, [
+				_arp(0.0, 0.42, PackedFloat32Array([784.0, 988.0, 1319.0]), tri, 0.3, 0.9),
+				_arp(0.0, 0.42, PackedFloat32Array([1568.0, 1976.0, 2637.0]), sine, 0.08, 1.2),
+			], 9, 1, 1.0, 70.0, 0.3)
+		&"rat_screech":  # chillido de la Rata Gigante
+			return _render(0.55, [
+				_l(0.0, 0.5, 2100.0, 650.0, saw, 0.45, 1.4, 0.5, 0.18, 0.0, 3800.0, 900.0),
+				_n(0.0, 0.2, 0.25, 2.0, 5000.0, 1500.0),
+			], 8, 2, 1.3, 60.0, 0.25)
+		&"enemy_death_flesh":  # cuerpo que cae: golpe sordo y húmedo, sin estallido
+			return _render(0.28, [
+				_s(0.0, 0.2, 130.0, 40.0, 0.9, 2.2),
+				_n(0.0, 0.16, 0.5, 2.5, 1800.0, 250.0),
+				_n(0.03, 0.1, 0.3, 3.0, 900.0, 200.0),
+			], 7, 2, 1.5)
 		&"enemy_death":
 			return _render(0.6, [
 				_l(0.0, 0.5, 260.0, 35.0, saw, 0.6, 1.3, 0.5, 0.14, 0.0, 1300.0, 200.0),

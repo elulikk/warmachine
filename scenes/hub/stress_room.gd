@@ -54,6 +54,7 @@ const AUTO_FIRE_RATES: Array[float] = [0.0, 5.0, 15.0, 30.0, 60.0]
 const SKY_KINDS: Array[String] = [
 	"Ácido", "Fragmentación", "Hielo", "Gas", "Red", "Granadas variadas",
 	"Fuego: gotas de combustible", "Fuego: llamaradas", "Balas", "Todo junto",
+	"Solo experiencia",
 ]
 const SKY_ACID: int = 0
 const SKY_MIX_GRENADES: int = 5
@@ -61,6 +62,11 @@ const SKY_FUEL: int = 6
 const SKY_FLARE: int = 7
 const SKY_BULLETS: int = 8
 const SKY_ALL: int = 9
+## Lluvia de orbes de experiencia (no entra en "Todo junto"): prueba el halo, la atracción y la fusión de orbes.
+const SKY_EXP: int = 10
+const EXP_RAIN_AMOUNT: float = 5.0
+const EXP_ORB_SCENE: PackedScene = preload("res://entities/items/exp_orb.tscn")
+const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
 const SKY_RAIN_RATES: Array[float] = [2.0, 5.0, 10.0, 20.0, 40.0, 80.0, 160.0]
 ## La lluvia cae a esta distancia (px) a cada lado del jugador, dentro de la arena, y desde esta altura.
 const SKY_RAIN_HALF_WIDTH: float = 720.0
@@ -585,6 +591,8 @@ func _sky_drop() -> void:
 			flare.source_node = thrown_player
 			flare.position = Vector2(x, FLOOR_TOP - randf_range(10.0, 80.0))
 			add_child(flare)
+		SKY_EXP:
+			DeathFxQueueScript.exp_orb(self, EXP_ORB_SCENE, EXP_RAIN_AMOUNT, Vector2(x, SKY_RAIN_HEIGHT))
 		SKY_BULLETS:
 			var pool: ProjectilePool = get_tree().get_first_node_in_group(&"projectile_pool") as ProjectilePool
 			if pool != null:

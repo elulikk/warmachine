@@ -44,8 +44,8 @@ def asignar(arma, sprite):
     # Subir load_steps en 1
     texto = re.sub(r"load_steps=(\d+)", lambda m: f"load_steps={int(m.group(1)) + 1}", texto, count=1)
 
-    # Propiedad dentro de [resource]
-    texto = texto.replace("[resource]\n", f'[resource]\nprojectile_sprite = ExtResource("{id_ext}")\n', 1)
+    # Propiedad dentro de [resource], DESPUÉS de `script =` (antes de esa línea Godot la descarta al cargar)
+    texto = re.sub(r"^(script = [^\n]*\n)", lambda m: m.group(1) + f'projectile_sprite = ExtResource("{id_ext}")\n', texto, count=1, flags=re.MULTILINE)
 
     with open(ruta, "w", encoding="utf-8", newline="\n") as f:
         f.write(texto)

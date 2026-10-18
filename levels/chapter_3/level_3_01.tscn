@@ -131,28 +131,6 @@ offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.3, 0.15, 0.12, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(1, 0.55, 0.25, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 3 • ABISMO ÍGNEO • SECTOR 3-1 — PUERTAS DEL ABISMO"
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(1, 0.9, 0.8, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Bajaste al Abismo. El aire quema: buscá un arma entre las ruinas."
-
 [node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(700.0, 547.0)
 collision_mask = 0
@@ -168,28 +146,6 @@ offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
 
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 500.0
-offset_top = 430.0
-offset_right = 1020.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Guadaña — [Click] tajos enormes que barren todo lo que tengas adelante"
-
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 1450.0
-offset_top = 440.0
-offset_right = 1810.0
-offset_bottom = 464.0
-theme_override_colors/font_color = Color(1, 0.9, 0.8, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Saltá la grieta [Espacio]"
-
 [node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(2550.0, 480.0)
 collision_mask = 0
@@ -204,17 +160,6 @@ offset_right = 100.0
 offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.3, 0.15, 0.12, 1)
-
-[node name="Tip5" type="Label" parent="Environment"]
-offset_left = 4700.0
-offset_top = 330.0
-offset_right = 5300.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.55, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "LOS CONDENADOS DESPIERTAN"
 
 [node name="Block1" parent="Environment" instance=ExtResource("prop_small")]
 position = Vector2(2100, 556)

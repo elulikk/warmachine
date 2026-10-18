@@ -35,7 +35,7 @@ var burn_stacks: int = 0
 var burn_timer: float = 0.0
 var burn_tick_timer: float = 0.0
 # Llama visible sobre la entidad mientras arde (se crea al prenderse y se libera al apagarse)
-var _burn_vfx: Node2D = null
+var _burn_flames: Array[Node2D] = []
 
 # Estado de Hielo
 var is_frozen: bool = false
@@ -230,25 +230,53 @@ func apply_fire(stacks: int = 1) -> void:
 	_update_visual_tint()
 
 
-## Muestra la llama de estado sobre la entidad (una sola por componente).
+## Llamitas sobre el cuerpo: una por stack de fuego, hasta MAX_VISIBLE_FLAMES, repartidas por el cuerpo.
+const MAX_VISIBLE_FLAMES: int = 6
+## Posición de cada llama como fracción del cuerpo (x: -0.5 a 0.5 desde el centro, y: 0 arriba a 1 en los pies).
+const FLAME_SLOTS: Array[Vector2] = [
+	Vector2(0.0, 0.55), Vector2(-0.28, 0.25), Vector2(0.28, 0.8),
+	Vector2(0.3, 0.3), Vector2(-0.3, 0.75), Vector2(0.0, 0.05),
+]
+
+
 func _ensure_burn_vfx() -> void:
-	if _burn_vfx != null and is_instance_valid(_burn_vfx):
-		return
 	var host: Node2D = owner as Node2D
 	if host == null:
 		host = get_parent() as Node2D
 	if host == null:
 		return
-	_burn_vfx = FireVfxScript.make("burn", 22.0, true)
-	_burn_vfx.position = Vector2(0.0, -16.0)
-	_burn_vfx.z_index = 6
-	host.add_child(_burn_vfx)
+	var wanted: int = mini(burn_stacks, MAX_VISIBLE_FLAMES)
+	while _burn_flames.size() > wanted:
+		var extra: Node2D = _burn_flames.pop_back()
+		if is_instance_valid(extra):
+			extra.queue_free()
+	var body: Rect2 = _body_rect(host)
+	var flame_width: float = clampf(body.size.y * 0.3, 10.0, 20.0)
+	while _burn_flames.size() < wanted:
+		var flame: Node2D = FireVfxScript.make("burn", flame_width, true)
+		flame.z_index = 6
+		host.add_child(flame)
+		_burn_flames.append(flame)
+	for i in range(_burn_flames.size()):
+		var slot: Vector2 = FLAME_SLOTS[i]
+		# La base de la llama apoya en el punto: el slot marca dónde queda el pie de la llama
+		_burn_flames[i].position = body.position + Vector2(body.size.x * (0.5 + slot.x), body.size.y * slot.y + flame_width * 0.5)
+
+
+## Rectángulo del cuerpo (colisión) en coordenadas locales del enemigo.
+func _body_rect(host: Node2D) -> Rect2:
+	var shape_node: CollisionShape2D = host.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if shape_node != null and shape_node.shape is RectangleShape2D:
+		var size: Vector2 = (shape_node.shape as RectangleShape2D).size
+		return Rect2(shape_node.position - size * 0.5, size)
+	return Rect2(-10.0, -34.0, 20.0, 34.0)
 
 
 func _remove_burn_vfx() -> void:
-	if _burn_vfx != null and is_instance_valid(_burn_vfx):
-		_burn_vfx.queue_free()
-	_burn_vfx = null
+	for flame: Node2D in _burn_flames:
+		if is_instance_valid(flame):
+			flame.queue_free()
+	_burn_flames.clear()
 
 
 ## Aplica o renueva la ralentización por congelamiento.

@@ -114,6 +114,8 @@ class Level:
 
     # ---------------------------------------------------------------- contenido
     def label(self, x, y, text, color=TIP, size=13, width=520):
+        # Sin textos flotantes en los niveles: el juego enseña jugando (carteles, tutorial y tips fuera)
+        return
         n = self.uid("Tip")
         self.env.append(
             '[node name="%s" type="Label" parent="Environment"]\noffset_left = %s\noffset_top = %s\noffset_right = %s\noffset_bottom = %s\n'

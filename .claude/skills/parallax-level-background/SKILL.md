@@ -3,6 +3,8 @@ name: parallax-level-background
 description: Crear el fondo con paralaje de un nivel de WARMACHINE. Lee la temática del nivel, genera la imagen base en Google Flow, la separa en capas (también en Flow, con la base de referencia), convierte las capas a WebP y las conecta en levels/level_skin.gd con la imagen base como fondo fijo de respaldo. Usar cuando el usuario pida un fondo de paralaje, capas de fondo o un fondo animado para un nivel.
 ---
 
+> **POLÍTICA VIGENTE (2026-10-18):** generar arte o audio desde el navegador por mi cuenta está **prohibido** (gasta mucha cuota; tampoco usar Claude in Chrome). En su lugar, dar al usuario los prompts y medidas para que él los genere. Detalle y registro de lo rehecho: `.claude/skills/add-level/politicas.md`. Este skill queda como referencia de cómo se hace cuando el usuario lo vuelva a pedir.
+
 # Fondo con paralaje para un nivel
 
 Resultado: un nivel con cuatro capas de paralaje (`assets/art/bg/parallax/`) y, si la opción "Fondos de paralaje (capas)" está apagada, la **imagen base** de Flow como fondo fijo (`assets/art/bg/<nivel>_base.jpg`). La base es la imagen de la que salieron las capas: nunca se usa otra imagen de respaldo.

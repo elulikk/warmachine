@@ -3,7 +3,6 @@
 [ext_resource type="PackedScene" path="res://entities/world/arena.tscn" id="arena"]
 [ext_resource type="Script" path="res://core/camera_follow.gd" id="camera"]
 [ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="checkpoint"]
-[ext_resource type="Script" path="res://core/cinematics/cinematic_trigger.gd" id="cine"]
 [ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="gate"]
 [ext_resource type="PackedScene" path="res://entities/enemies/city_gunman.tscn" id="gunman"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="hud"]
@@ -133,17 +132,6 @@ offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "EL PRESENTE • SECTOR P-5 — EL MUELLE"
-
 [node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(700.0, 547.0)
 collision_mask = 0
@@ -158,28 +146,6 @@ offset_right = 32.0
 offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 500.0
-offset_top = 430.0
-offset_right = 1020.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Escopeta — perdigones a corta distancia; ideal contra matones"
-
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Contenedores apilados y agua negra entre los muelles."
 
 [node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(2670.0, 460.0)
@@ -211,17 +177,6 @@ offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 6100.0
-offset_top = 330.0
-offset_right = 6700.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "LA CARGA DEL BARCO"
-
 [node name="Block1" parent="Environment" instance=ExtResource("prop_medium")]
 position = Vector2(1300, 556)
 size = Vector2(160, 70)
@@ -250,18 +205,6 @@ position = Vector2(3700.0, 555.0)
 position = Vector2(4000.0, 556)
 checkpoint_id = "checkpoint_4_05_a"
 
-[node name="Cine1" type="Node2D" parent="."]
-position = Vector2(4300.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p5_helicopter"
-zone_width = 240.0
-
-[node name="Cine2" type="Node2D" parent="."]
-position = Vector2(0.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p5_crystal"
-needs_crystal = true
-
 [node name="Arena1" parent="." instance=ExtResource("arena")]
 position = Vector2(6400.0, 556)
 
@@ -274,12 +217,6 @@ elite_per_round = Array[int]([1, 2])
 [node name="Checkpoint2" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(7200.0, 556)
 checkpoint_id = "checkpoint_4_05_b"
-
-[node name="Cine3" type="Node2D" parent="."]
-position = Vector2(8200.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p5_stevedore"
-zone_width = 300.0
 
 [node name="Gunman4" parent="." groups=["arena_enemies"] instance=ExtResource("gunman")]
 position = Vector2(7600.0, 555.0)

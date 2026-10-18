@@ -5,6 +5,9 @@ extends Area2D
 ## Los contratos de zona viven en la terminal separada ContractTerminal.
 
 const PropSkin = preload("res://entities/props/prop_skin.gd")
+## Altura del borde de arriba del LED sobre el piso.
+const LED_TOP_Y: float = -44.0
+
 signal checkpoint_activated(checkpoint_id: String)
 
 @export var checkpoint_id: String = "checkpoint_track_mid"
@@ -17,11 +20,18 @@ var _prompt_tween: Tween = null
 
 
 func _ready() -> void:
-	var scene: Node = get_tree().current_scene
-	var chapter: int = int(scene.get("chapter_number")) if scene != null and "chapter_number" in scene else 0
-	PropSkin.apply_checkpoint(self, chapter)
-	# El LED reemplaza al rectángulo de estado: se toma la referencia nueva
+	# Del checkpoint solo queda el LED (rojo = sin tomar, verde = tomado): sin cartel, terminal ni aviso
+	var visuals: Node2D = get_node_or_null("Visuals") as Node2D
+	if visuals != null:
+		for child: Node in visuals.get_children():
+			if child.name != "StatusLight":
+				visuals.remove_child(child)
+				child.queue_free()
+		PropSkin._swap_led(visuals, LED_TOP_Y)
 	status_light = get_node_or_null("Visuals/StatusLight") as CanvasItem
+	if prompt_ui != null:
+		prompt_ui.queue_free()
+		prompt_ui = null
 	collision_layer = 0
 	collision_mask = 2 # Player
 
@@ -34,8 +44,6 @@ func _ready() -> void:
 	else:
 		_set_status(false, false)
 
-	if prompt_ui != null:
-		prompt_ui.visible = false
 
 
 func _on_body_entered(body: Node2D) -> void:

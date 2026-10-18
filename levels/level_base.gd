@@ -6,10 +6,13 @@ extends Node2D
 
 const LevelSkinScript = preload("res://levels/level_skin.gd")
 const CityAmbienceScript = preload("res://levels/city_ambience.gd")
+const SewerAmbienceScript = preload("res://levels/sewer_ambience.gd")
 const AmbushDirectorScript = preload("res://levels/ambush_director.gd")
 ## Exteriores del presente (P-1, P-2, P-4, P-5, P-8). Los interiores (alcantarilla, hotel, discoteca) no
 ## llevan tráfico ni gente de la calle, y el 4-9 y 4-10 son otro contenido (Ciudadela Blindada).
 const CITY_EXTERIOR_IDS: Array[String] = ["1_01", "1_02", "1_04", "1_05", "1_08"]
+## Sectores con ambiente de alcantarilla (goteos) y sin emboscadas del mundo 1.
+const SEWER_IDS: Array[String] = ["1_03"]
 ## Prefijo del flag del slot que marca un arma garantizada ya entregada al personaje.
 const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 
@@ -38,6 +41,10 @@ const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 ## Rutas de armas que el jugador debe tener al entrar. Solo se agregan las que falten (sin duplicar).
 @export var guaranteed_weapon_paths: Array[String] = []
 
+## Powerup de munición: aparece UNA vez en un punto al azar entre estos dos x (0 en el máximo = no aparece).
+@export var ammo_powerup_x_min: float = 0.0
+@export var ammo_powerup_x_max: float = 0.0
+
 ## Equipo de prueba: para probar el nivel desde su escena (F6) sin pasar por el Campamento.
 ## Agrega las armas y monedas en memoria, sin marcar flags de entrega. Si después se guarda la partida, el equipo queda guardado.
 @export_group("Equipo de prueba")
@@ -62,8 +69,11 @@ func _ready() -> void:
 		GameFeel.music_set_base(self, base_music)
 	if CITY_EXTERIOR_IDS.has(level_id):
 		add_child(CityAmbienceScript.new() as Node)
+	# Alcantarillas: gotas que suenan a lo lejos (sin ambiente de ciudad, sin emboscadas: es un pasillo de ratas)
+	if SEWER_IDS.has(level_id):
+		add_child(SewerAmbienceScript.new() as Node)
 	# Mundo 1: los enemigos sueltos salen de tachos, alcantarillas y de atrás de los edificios
-	if chapter_number == 1:
+	if chapter_number == 1 and not SEWER_IDS.has(level_id):
 		add_child(AmbushDirectorScript.new() as Node)
 	if spawn_point != null:
 		initial_spawn_position = spawn_point.global_position
@@ -93,6 +103,7 @@ func _ready() -> void:
 		sector_hud.set_sector(level_title)
 
 	_grant_guaranteed_weapons()
+	_spawn_ammo_powerup()
 	if agent_events_enabled and agent_event_chance > 0.0 and randf() < agent_event_chance:
 		var event: Node = (load("res://levels/agent_event.gd") as GDScript).new() as Node
 		event.set("style", agent_event_style)
@@ -107,6 +118,15 @@ func _ready() -> void:
 		exit_gate.set_meta("next_level_path", next_level_path)
 	
 	print("[%s] %s inicializado. Spawn: %s" % [level_id, level_title, initial_spawn_position])
+
+
+## Deja el powerup de munición en un lugar aleatorio del sector (una sola vez por entrada al nivel).
+func _spawn_ammo_powerup() -> void:
+	if ammo_powerup_x_max <= ammo_powerup_x_min:
+		return
+	var powerup: Area2D = (load("res://entities/items/ammo_powerup.gd") as GDScript).new() as Area2D
+	powerup.position = Vector2(randf_range(ammo_powerup_x_min, ammo_powerup_x_max), initial_spawn_position.y - 20.0)
+	add_child(powerup)
 
 
 ## Los pedestales de las armas del suelo frenaban al jugador: se quitan (el arma queda flotando donde estaba).

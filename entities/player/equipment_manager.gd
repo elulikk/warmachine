@@ -179,6 +179,8 @@ func _apply_item_abilities(item: ItemData, is_equipping: bool) -> void:
 			player.has_eye_laser = is_equipping
 		"invisibility_cloak":
 			player.has_cloak = is_equipping
+		"hamelin_flute":
+			player.has_hamelin_flute = is_equipping
 
 
 ## Retorna el ítem equipado en una ranura específica.

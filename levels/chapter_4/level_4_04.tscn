@@ -393,69 +393,6 @@ offset_right = 8200
 offset_bottom = 560
 color = Color(1, 0.45, 0.35, 1)
 
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 40
-offset_top = 380
-offset_right = 800
-offset_bottom = 404
-theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 4 • PERIFERIA SUBTERRÁNEA • SECTOR 1-4"
-
-[node name="TipArmor" type="Label" parent="Environment"]
-offset_left = 640
-offset_top = 440
-offset_right = 1420
-offset_bottom = 464
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Adelante: BRUTO ACORAZADO — 65 de armadura, tus balas hacen mucho menos daño ([F2] muestra su barra)"
-
-[node name="TipKite" type="Label" parent="Environment"]
-offset_left = 1540
-offset_top = 440
-offset_right = 2320
-offset_bottom = 464
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA — Es lento y no salta: retrocedé disparando o subí a las plataformas"
-
-[node name="TipCorridor" type="Label" parent="Environment"]
-offset_left = 3000
-offset_top = 470
-offset_right = 3700
-offset_bottom = 494
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Pasillo — ladrones de a uno, guardá cargador para el Bruto"
-
-[node name="TipArena2" type="Label" parent="Environment"]
-offset_left = 4560
-offset_top = 440
-offset_right = 5360
-offset_bottom = 464
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA — Ladrones primero; en la segunda oleada llega otro Bruto"
-
-[node name="TipArena3" type="Label" parent="Environment"]
-offset_left = 6940
-offset_top = 440
-offset_right = 7740
-offset_bottom = 464
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA FINAL — Dos oleadas, un Bruto en cada una"
-
-[node name="TipReward" type="Label" parent="Environment"]
-offset_left = 8100
-offset_top = 470
-offset_right = 8860
-offset_bottom = 494
-theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
-theme_override_font_sizes/font_size = 13
-text = "El Mercader vende el Rifle de Precisión (85% de penetración)"
-
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
 
@@ -507,17 +444,6 @@ position = Vector2(2540, 555)
 
 [node name="Spawn2" type="Marker2D" parent="Arena1/WaveManager"]
 position = Vector2(2620, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena1"]
-offset_left = 1600
-offset_top = 300.0
-offset_right = 2200
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="CheckpointCorridor" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(2860, 556)
@@ -583,17 +509,6 @@ position = Vector2(5550, 555)
 [node name="Spawn4" type="Marker2D" parent="Arena2/WaveManager"]
 position = Vector2(5650, 555)
 
-[node name="StatusLabel" type="Label" parent="Arena2"]
-offset_left = 4800
-offset_top = 300.0
-offset_right = 5400
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
-
 [node name="CheckpointRune" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(5900, 556)
 checkpoint_id = "checkpoint_1_04_e"
@@ -654,17 +569,6 @@ position = Vector2(8100, 555)
 
 [node name="Spawn6" type="Marker2D" parent="Arena3/WaveManager"]
 position = Vector2(8150, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena3"]
-offset_left = 7200
-offset_top = 300.0
-offset_right = 7800
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(160, 545)

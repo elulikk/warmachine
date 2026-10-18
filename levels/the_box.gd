@@ -1,6 +1,6 @@
 extends Sprite2D
 ## La Caja del presente: cubo negro liso. Carga su textura por código (el PNG puede no estar importado al lanzar con
-## run.bat). La cinemática del P-8 la abre/cierra cambiando la textura (core/cinematics/cinematic_player.gd, paso `box`).
+## run.bat). Una cinemática puede abrirla o cerrarla con el paso `box` (core/cinematics/commands/box.gd).
 
 const ArtScript = preload("res://core/art/art.gd")
 

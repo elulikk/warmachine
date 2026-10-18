@@ -2,7 +2,7 @@ class_name HUD
 extends CanvasLayer
 ## Interfaz de combate y estado (HUD) unificada para WARMACHINE.
 ## Conecta en tiempo real con las señales de HealthComponent, StatsManager y WeaponManager:
-## - Superior izquierda: barra de salud y valor numérico legible (HP).
+## - Superior izquierda: nivel, nombre y EXP (la vida es el rectángulo rojo sobre la hotbar).
 ## - Inferior derecha: arma equipada y visualización gráfica de los 3 sockets de runas.
 ## - Centro inferior: barra de acceso rápido de 9 casilleros (ui/hotbar.gd), que reemplaza los botones de arma.
 
@@ -42,6 +42,7 @@ var _sector_title: Label = null
 
 
 func _ready() -> void:
+	add_to_group(&"hud")  # las cinemáticas lo ocultan (core/cinematics/cinematic_player.gd)
 	# Capa 2: la 1 es el posprocesado del mundo (core/post_fx.gd), que no debe teñir el HUD
 	layer = maxi(layer, 2)
 	_apply_steam_skin()
@@ -74,11 +75,14 @@ func _apply_steam_skin() -> void:
 		if plate != null:
 			plate.add_theme_stylebox_override("panel", SteamSkin.hud_plate_style())
 
+	# La vida ya no va en la esquina: es el rectángulo rojo sobre la hotbar (ui/hotbar.gd). La barra de aquí queda
+	# oculta pero sigue actualizándose (la leen los tests).
 	if health_bar != null:
-		health_bar.custom_minimum_size = Vector2(236, 28)
-		health_bar.add_theme_stylebox_override("background", SteamSkin.bar_style("bg"))
-		health_bar.add_theme_stylebox_override("fill", SteamSkin.bar_style("fill", Color(0.35, 0.95, 0.42, 1.0)))
+		health_bar.visible = false
+	if health_label != null:
+		health_label.visible = false
 	if exp_bar != null:
+		exp_bar.visible = false # la experiencia va en la barra bajo la hotbar (ui/hotbar.gd)
 		exp_bar.custom_minimum_size = Vector2(236, 8)
 		var exp_bg: StyleBoxFlat = StyleBoxFlat.new()
 		exp_bg.bg_color = Color(0.1, 0.07, 0.06, 1.0)

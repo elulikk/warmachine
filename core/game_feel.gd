@@ -125,13 +125,18 @@ static func music_start_level(level: Node) -> void:
 
 
 ## Explosión de partículas con sonido en la posición global indicada.
-static func death_burst(ctx: Node, world_pos: Vector2) -> void:
+## `mechanical` = chispas y estallido (torretas, muñecos); si no, solo un golpe sordo de carne sin fuego.
+static func death_burst(ctx: Node, world_pos: Vector2, mechanical: bool = true) -> void:
 	if ctx == null or not ctx.is_inside_tree():
 		return
 	var tree: SceneTree = ctx.get_tree()
 	var container: Node = tree.current_scene
 	if container == null:
 		container = tree.root
+
+	if not mechanical:
+		SfxScript.play(container, &"enemy_death_flesh", Vector2.INF, -2.0, randf_range(0.85, 1.15))
+		return
 
 	# Chispas: ráfaga fogosa que cae por gravedad
 	_spawn_emitter(container, world_pos, 18, 0.5, 100.0, 260.0, 3.0, 6.0, Vector2(0.0, 620.0), _make_fire_gradient())

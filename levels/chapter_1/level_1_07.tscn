@@ -4,7 +4,6 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/city_bouncer.tscn" id="bouncer"]
 [ext_resource type="Script" path="res://core/camera_follow.gd" id="camera"]
 [ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="checkpoint"]
-[ext_resource type="Script" path="res://core/cinematics/cinematic_trigger.gd" id="cine"]
 [ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="gate"]
 [ext_resource type="PackedScene" path="res://entities/enemies/city_gunman.tscn" id="gunman"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="hud"]
@@ -117,28 +116,6 @@ offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "EL PRESENTE • SECTOR P-7 — LA DISCOTECA"
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Luces, láseres y música fuerte. El Sindicato lo tiene todo vigilado."
-
 [node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(2700.0, 470.0)
 collision_mask = 0
@@ -169,17 +146,6 @@ offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 4900.0
-offset_top = 330.0
-offset_right = 5500.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "LA PISTA DE BAILE"
-
 [node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(8800.0, 547.0)
 collision_mask = 0
@@ -194,23 +160,6 @@ offset_right = 32.0
 offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
-
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 8600.0
-offset_top = 430.0
-offset_right = 9120.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Desert Eagle — calibre enorme, un tiro letal"
-
-[node name="Cine1" type="Node2D" parent="."]
-position = Vector2(1500.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p7_boss"
-zone_width = 300.0
 
 [node name="Gunman1" parent="." instance=ExtResource("gunman")]
 position = Vector2(1400.0, 555.0)

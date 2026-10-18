@@ -182,69 +182,6 @@ offset_right = 7180.0
 offset_bottom = 560.0
 color = Color(1, 0.45, 0.35, 1)
 
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 700.0
-offset_bottom = 410.0
-theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 4 • PERIFERIA SUBTERRÁNEA • SECTOR 1-2"
-
-[node name="TipIntro" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 780.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Defendete con lo que tenés: cuchillo de cerca, revólver de lejos"
-
-[node name="TipArena" type="Label" parent="Environment"]
-offset_left = 560.0
-offset_top = 440.0
-offset_right = 1100.0
-offset_bottom = 464.0
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA — Al entrar se cierra el paso hasta superar las oleadas"
-
-[node name="TipCorridor1" type="Label" parent="Environment"]
-offset_left = 1800.0
-offset_top = 470.0
-offset_right = 2400.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Pasillo — recuperá el aliento y recargá"
-
-[node name="TipArena2" type="Label" parent="Environment"]
-offset_left = 3040.0
-offset_top = 440.0
-offset_right = 3600.0
-offset_bottom = 464.0
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA 2 — Una oleada más grande"
-
-[node name="TipArena3" type="Label" parent="Environment"]
-offset_left = 5800.0
-offset_top = 440.0
-offset_right = 6400.0
-offset_bottom = 464.0
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA FINAL — La oleada más grande"
-
-[node name="TipBoots" type="Label" parent="Environment"]
-offset_left = 7260.0
-offset_top = 440.0
-offset_right = 7760.0
-offset_bottom = 464.0
-theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
-theme_override_font_sizes/font_size = 13
-text = "Botas Ligeras: tu recompensa — más velocidad al moverte"
-
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
 
@@ -293,17 +230,6 @@ position = Vector2(1500, 555)
 
 [node name="Spawn3" type="Marker2D" parent="Arena1/WaveManager"]
 position = Vector2(1600, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena1"]
-offset_left = 1000.0
-offset_top = 300.0
-offset_right = 1600.0
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="CorridorRunner1" parent="." instance=ExtResource("9_runner")]
 position = Vector2(2250, 555)
@@ -359,17 +285,6 @@ position = Vector2(4150, 555)
 
 [node name="Spawn4" type="Marker2D" parent="Arena2/WaveManager"]
 position = Vector2(4230, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena2"]
-offset_left = 3530.0
-offset_top = 300.0
-offset_right = 4130.0
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="CorridorRunner3" parent="." instance=ExtResource("9_runner")]
 position = Vector2(4800, 555)
@@ -431,17 +346,6 @@ position = Vector2(6960, 555)
 
 [node name="Spawn5" type="Marker2D" parent="Arena3/WaveManager"]
 position = Vector2(7040, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena3"]
-offset_left = 6350.0
-offset_top = 300.0
-offset_right = 6950.0
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="BootsPickup" parent="." instance=ExtResource("10_pickup")]
 position = Vector2(7450, 512)

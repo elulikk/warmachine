@@ -34,6 +34,13 @@ static var _baking: Dictionary = {}
 const SLEEP_MARGIN: float = 220.0
 
 const PROPS_DIR: String = "res://assets/art/props/"
+## Enemigos animados por cuadros dibujados (en vez de la ilustración fija de `MOBS`): carpeta con
+## walk_N / attack_N / hit_N / death_N.png del mismo lienzo (3x el tamaño en juego) y `foot` = punto de los pies.
+## Se generan con art_source/process_anim.py, que imprime la línea de este diccionario.
+const MOB_FRAMES: Dictionary = {
+	"thief": {"dir": "res://assets/art/world1/thief/", "foot": Vector2(77.0, 164), "walk": 5, "attack": 4, "hit": 2, "death": 3},
+	"rat": {"dir": "res://assets/art/world1/rat/", "foot": Vector2(73.0, 88), "walk": 5, "attack": 5, "hit": 2, "death": 3},
+}
 
 ## Cuánto se amplifica como máximo el tinte (el flash blanco parte de un gris oscuro).
 const MAX_TINT: float = 2.4
@@ -89,6 +96,15 @@ var _mob_foot: Vector2 = Vector2.ZERO
 var _proxy: Sprite2D = null
 var _lod_far: bool = false
 var _lod_timer: float = 0.0
+## Cuadros dibujados por animación (ver `MOB_FRAMES`).
+var _fr_sprite: Sprite2D = null
+var _fr_walk: Array[Texture2D] = []
+var _fr_attack: Array[Texture2D] = []
+var _fr_hit: Array[Texture2D] = []
+var _fr_death: Array[Texture2D] = []
+var _fr_hit_t: float = 99.0
+var _fr_foot: Vector2 = Vector2.ZERO
+var _fr_last_hp: float = -1.0
 
 
 ## Crea y devuelve el nodo de arte dentro del `Visuals` del anfitrión (o del anfitrión mismo).
@@ -136,8 +152,10 @@ func _ready() -> void:
 		"drone":
 			_build_drone()
 		_:
-			# Mobs sin caso propio (mundo 1: rata, ladrón, matón...): ilustración en `MOBS`
-			_build_mob(kind)
+			# Mobs sin caso propio (mundo 1: rata, ladrón, matón...): cuadros dibujados si hay (`MOB_FRAMES`),
+			# si no la ilustración en `MOBS`
+			if not (MOB_FRAMES.has(kind) and _build_frames()):
+				_build_mob(kind)
 
 
 func _find_body() -> CharacterBody2D:
@@ -258,6 +276,96 @@ func _make_region_sprite(texture: Texture2D, rect: Rect2, sprite_name: String) -
 	sprite.scale = Vector2(MOB_TEX_SCALE, MOB_TEX_SCALE)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	return sprite
+
+
+## Enemigo animado por cuadros. Devuelve false si faltan (entonces queda la ilustración fija de `MOBS`).
+func _build_frames() -> bool:
+	var info: Dictionary = MOB_FRAMES[kind] as Dictionary
+	_fr_foot = info["foot"] as Vector2
+	_fr_walk = _load_frames(info, "walk")
+	_fr_attack = _load_frames(info, "attack")
+	_fr_hit = _load_frames(info, "hit")
+	_fr_death = _load_frames(info, "death")
+	if _fr_walk.is_empty() or _fr_attack.is_empty():
+		return false
+	_fr_sprite = Sprite2D.new()
+	_fr_sprite.name = "Body"
+	_fr_sprite.texture = _fr_walk[0]
+	_fr_sprite.centered = false
+	_fr_sprite.scale = Vector2(MOB_TEX_SCALE, MOB_TEX_SCALE)
+	_fr_sprite.position = -_fr_foot * MOB_TEX_SCALE
+	_fr_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_art.add_child(_fr_sprite)
+	_sprite_mob = true
+	if _host != null and _host.has_signal(&"died"):
+		_host.connect(&"died", _spawn_corpse)
+	return true
+
+
+func _load_frames(info: Dictionary, prefix: String) -> Array[Texture2D]:
+	var list: Array[Texture2D] = []
+	for i in range(int(info.get(prefix, 0))):
+		var texture: Texture2D = ArtScript.tex("%s%s_%d.png" % [str(info["dir"]), prefix, i])
+		if texture != null:
+			list.append(texture)
+	return list
+
+
+## Cuadro según lo que hace: golpe, ataque (salto y mordida), aire, correr o quieta.
+func _animate_frames(delta: float) -> void:
+	var speed: float = 0.0
+	var on_floor: bool = true
+	if _host != null:
+		speed = absf(_host.velocity.x)
+		on_floor = _host.is_on_floor()
+		var hp_node: Node = _host.get_node_or_null("HealthComponent")
+		if hp_node != null and "current_health" in hp_node:
+			var hp: float = float(hp_node.get("current_health"))
+			if _fr_last_hp >= 0.0 and hp < _fr_last_hp - 0.01:
+				_fr_hit_t = 0.0
+			_fr_last_hp = hp
+	_fr_hit_t += delta
+	var frame: Texture2D = _fr_walk[0]
+	if _fr_hit_t < 0.16 and not _fr_hit.is_empty():
+		frame = _fr_hit[0 if _fr_hit_t < 0.08 else mini(1, _fr_hit.size() - 1)]
+	elif _attack_t < 0.4:
+		frame = _fr_attack[mini(int(_attack_t / 0.4 * float(_fr_attack.size())), _fr_attack.size() - 1)]
+	elif not on_floor:
+		frame = _fr_attack[mini(2, _fr_attack.size() - 1)]
+	elif speed > 12.0:
+		_walk_phase += delta * (7.0 + clampf(speed / 130.0, 0.0, 1.5) * 6.0)
+		frame = _fr_walk[int(_walk_phase) % _fr_walk.size()]
+	_fr_sprite.texture = frame
+
+
+## Al morir deja el cuerpo en el suelo: cae (golpe, vuelco, panza arriba), queda un rato y se desvanece.
+func _spawn_corpse() -> void:
+	if _host != null and (_host.get("no_corpse") == true or _host.get("on_ceiling") == true):
+		return
+	if _fr_death.is_empty() or _host == null or not _host.is_inside_tree():
+		return
+	var container: Node = _host.get_parent()
+	if container == null:
+		return
+	var corpse: Sprite2D = Sprite2D.new()
+	corpse.centered = false
+	corpse.texture = _fr_death[0]
+	corpse.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	var facing: Node2D = get_parent() as Node2D
+	var side: float = signf(facing.scale.x) if facing != null else 1.0
+	if side == 0.0:
+		side = 1.0
+	var s: float = MOB_TEX_SCALE * scale.x
+	corpse.scale = Vector2(s * side, s)
+	corpse.position = _host.global_position + Vector2(-_fr_foot.x * side, -_fr_foot.y) * s
+	corpse.z_index = _host.z_index
+	container.add_child(corpse)
+	var tween: Tween = corpse.create_tween()
+	for i in range(1, _fr_death.size()):
+		tween.tween_callback(corpse.set_texture.bind(_fr_death[i])).set_delay(0.1)
+	tween.tween_interval(1.2)
+	tween.tween_property(corpse, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(corpse.queue_free)
 
 
 func _build_person(loadout: Dictionary, scale_factor: float) -> void:
@@ -462,6 +570,9 @@ func _sway_mob(delta: float) -> void:
 	if _host != null:
 		speed = absf(_host.velocity.x)
 		on_floor = _host.is_on_floor()
+	if _fr_sprite != null:
+		_animate_frames(delta)
+		return
 	var moving: float = clampf(speed / 90.0, 0.0, 1.0)
 	var breathe: float = sin(_time * 2.2) * 0.012
 	if kind == "dummy":

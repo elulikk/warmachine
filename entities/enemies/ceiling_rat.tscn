@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/city_rat.tscn" id="1_rat"]
+[ext_resource type="Script" path="res://entities/enemies/ceiling_rat.gd" id="2_ceiling"]
+
+[node name="CeilingRat" instance=ExtResource("1_rat")]
+script = ExtResource("2_ceiling")
+entity_name = "Rata de techo"

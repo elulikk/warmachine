@@ -16,7 +16,7 @@ Preguntarse (sin preguntarle al usuario si se puede deducir) qué canal del golp
 | **Cámara** | shake | `GameFeel.shake(ctx, fuerza, duración)` |
 | **Tiempo** | hit stop | `GameFeel.hit_stop(ctx, duración)` |
 | **Arma** | retroceso, subida del cañón, fogonazo, casquillos | `WeaponMotion` (`kick`), `ShotFx`, `WeaponData.recoil_force` |
-| **Blanco** | parpadeo, retroceso, sangre/chispas, marcas, trozos | `_play_hit_flash()` de cada enemigo, `DamageFx`, `BloodFx`, `HitPayload.knockback_force` |
+| **Blanco** | parpadeo, retroceso, sangre/chispas, sangrado, trozos | `_play_hit_flash()` de cada enemigo, `DamageFx`, `BloodFx`, `HitPayload.knockback_force` |
 | **Número** | color, tamaño, crítico "!" | `DamageNumber` |
 | **Sonido** | golpe, impacto, muerte, ambiente | `Sfx` (`GameFeel.sfx`) |
 | **Pantalla** | viñeta, borde rojo, destello | `PostFx`, `LowHealthFeedback` |
@@ -34,7 +34,7 @@ Todo entra por `GameFeel` (`core/game_feel.gd`, estático, recibe un nodo de con
 | `GameFeel.on_weapon_fired(ctx, recoil)` | shake solo si `recoil ≥ HEAVY_RECOIL_THRESHOLD (90)` | — |
 | `GameFeel.sfx(ctx, &"nombre", pos?, vol_db?, pitch?)` | sonido sintetizado por nombre; con `pos` se atenúa por distancia (pleno hasta 420 px, silencio a 1400) | — |
 | `DeathFxQueue.burst/gore/loot/exp_orb(ctx, …)` | efectos de muerte con presupuesto por cuadro (2.5 ms) | — |
-| `GameFeel.death_burst(ctx, pos)` | explosión de muerte (llamar vía `DeathFxQueue.burst`, no directo) | 18 chispas + 5 de destello |
+| `GameFeel.death_burst(ctx, pos, mechanical)` | muerte (vía `DeathFxQueue.burst`, no directo): mecánico = 18 chispas + 5 de destello + `enemy_death`; carne = solo `enemy_death_flesh` | — |
 | `Settings.get_float("screen_shake")`, `get_bool("hit_stop")`, `reduce_flashes()`, `particle_scale()`, `get_bool("damage_numbers")` | opciones de accesibilidad y calidad | — |
 
 Retroceso y animación del arma: `core/art/weapon_motion.gd` por id de arma.
@@ -58,7 +58,10 @@ Retroceso y animación del arma: `core/art/weapon_motion.gd` por id de arma.
 
 ### "El enemigo no reacciona"
 - `_play_hit_flash()` ya existe en cada enemigo: ajustar color/duración ahí, no crear otro sistema.
-- `DamageFx` ya hace sangre/chispas (mecánicos: `MECHANICAL_SCRIPTS`), marcas por octavo de vida y trozos a 2/3 y 1/3.
+- `DamageFx` (`combat/damage_fx.gd`) hace sangre/chispas (mecánicos: `MECHANICAL_SCRIPTS`), trozos a 2/3 y 1/3 y **sangrado**: un `CPUParticles2D` por enemigo herido (cuadraditos rojos repartidos por el cuerpo) desde `BLEED_START` (0.8 de vida), con más cantidad y tamaño al bajar la vida (`_update_bleed`: 1.5–6 px → 6–11 px). Se apaga lejos de cámara y con `particle_scale() < 0.5`. Usa un cuadrado blanco de 4 px: sin textura la escala no se respeta.
+- Salpicaduras (`blood_fx.gd`, `spray` / `spray_sprite`): sprite de salpicadura **chico**, gotas que salen volando **grandes** (4–8 px), pedido del usuario. Las "marcas pintadas" en el cuerpo se descartaron (se veían enormes).
+- Muerte: la carne hace un golpe sordo (`enemy_death_flesh`) sin chispas; solo las máquinas conservan estallido (`GameFeel.death_burst(ctx, pos, mechanical)`; `health_component.gd` decide por `MECHANICAL_SCRIPTS` o el grupo `mechanical`). Un enemigo mecánico nuevo debe entrar a esa lista o grupo.
+- Fuego: una llamita por stack sobre el cuerpo, hasta 6 (`StatusReceiverComponent`: `MAX_VISIBLE_FLAMES`, `FLAME_SLOTS`); el cartel "xN" quedó oculto. Hielo conserva su cartel.
 - Retroceso por `HitPayload.knockback_force`; los enemigos con `knockback_immune` o jefes no se mueven (esperado).
 
 ### "Quiero un efecto nuevo" (explosión, habilidad, aura)

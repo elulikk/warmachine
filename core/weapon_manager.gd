@@ -15,7 +15,6 @@ signal reload_completed
 signal offhand_changed(weapon: WeaponData)
 
 const ChainLightning = preload("res://combat/chain_lightning.gd")
-const RELOAD_INDICATOR_SCRIPT: GDScript = preload("res://ui/reload_indicator.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
 const ShotFx = preload("res://combat/shot_fx.gd")
@@ -23,7 +22,10 @@ const FireVfx = preload("res://combat/fire_vfx.gd")
 const ReloadDebris = preload("res://combat/reload_debris.gd")
 const SettingsScript = preload("res://core/settings.gd")
 ## Segundos que tarda la reserva en recuperar un cargador completo del arma.
-const RESERVE_SECONDS_PER_MAGAZINE: float = 10.0
+## Las recargas duran esto por el `reload_time` de cada arma (más lentas que lo que dice el recurso).
+const RELOAD_TIME_MULT: float = 1.5
+## Segundos que tarda la reserva en recuperar un cargador completo del arma (era 10).
+const RESERVE_SECONDS_PER_MAGAZINE: float = 30.0
 
 ## Mano que maneja este nodo. El `WeaponManager` del jugador es la mano principal (clic izquierdo) y crea por código
 ## un segundo `WeaponManager` hijo, `offhand`, para la mano secundaria (clic derecho, acción `attack_secondary`).
@@ -141,7 +143,6 @@ func _ready() -> void:
 		return
 	player = owner as Player
 	GameFeel.sfx_prewarm(self)
-	_create_reload_indicator()
 	_ensure_weapons()
 	if not weapons.is_empty():
 		select_weapon(clampi(current_weapon_index, 0, weapons.size() - 1))
@@ -150,20 +151,6 @@ func _ready() -> void:
 		_update_weapon_visual()
 		weapon_changed.emit(null, -1)
 	_create_offhand_manager()
-
-
-## Crea la barra de recarga flotante sobre el jugador (hija del Player, diferida porque
-## el padre aún está montando sus hijos durante _ready). `y_offset` la sube para que las dos manos no se pisen.
-func _create_reload_indicator(y_offset: float = 0.0) -> void:
-	if player == null:
-		return
-	var indicator: Node2D = RELOAD_INDICATOR_SCRIPT.new() as Node2D
-	if indicator == null:
-		return
-	indicator.name = "ReloadIndicator" if hand == Hand.MAIN else "OffhandReloadIndicator"
-	indicator.call("setup", self)
-	indicator.set("offset_y", y_offset)
-	player.add_child.call_deferred(indicator)
 
 
 # ==============================================================================
@@ -188,7 +175,7 @@ func _create_offhand_manager() -> void:
 	add_child(off)
 
 
-## Mano secundaria: prepara muzzle propio, barra de recarga y sprite (oculto hasta que haya arma).
+## Mano secundaria: prepara muzzle propio y sprite (oculto hasta que haya arma).
 func _ready_offhand() -> void:
 	_offhand_sprite_name = "OffhandSprite"
 	if weapon_pivot != null:
@@ -196,7 +183,6 @@ func _ready_offhand() -> void:
 		marker.name = "OffhandMuzzle"
 		weapon_pivot.add_child(marker)
 		muzzle = marker
-	_create_reload_indicator(-9.0)
 	current_weapon = null
 	_update_weapon_visual()
 
@@ -476,10 +462,11 @@ func start_reload() -> void:
 		return
 	
 	is_reloading = true
-	reload_timer = current_weapon.reload_time
-	reload_started.emit(current_weapon.reload_time)
+	var reload_secs: float = current_weapon.reload_time * RELOAD_TIME_MULT
+	reload_timer = reload_secs
+	reload_started.emit(reload_secs)
 	GameFeel.sfx(self, &"reload_out", Vector2.INF, -4.0)
-	_play_reload_animation(current_weapon.reload_time)
+	_play_reload_animation(reload_secs)
 	_schedule_reload_debris(current_weapon, current_weapon.magazine_size - cur_ammo)
 	weapon_changed.emit(current_weapon, current_weapon_index)
 
@@ -884,7 +871,7 @@ func _impact_world_position() -> Vector2:
 		return Vector2.INF
 	var pose: Dictionary = ItemIconsScript.get_weapon_pose(current_weapon)
 	var grip: Vector2 = pose.get("grip", Vector2.ZERO) as Vector2
-	return _weapon_sprite.to_global((impact as Vector2) - grip)
+	return _weapon_sprite.to_global((impact as Vector2) * ItemIconsScript.held_ratio(current_weapon) - grip)
 
 
 ## Obtiene o genera la reserva de proyectiles en la escena actual.
@@ -1017,7 +1004,7 @@ func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 	# Arte HD (pose con "file"): filtro lineal; los íconos pixel art 16x16 conservan el filtro de vecino más cercano
 	_weapon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if pose.has("file") else CanvasItem.TEXTURE_FILTER_NEAREST
 	_weapon_sprite.offset = -grip
-	_weapon_sprite.scale = Vector2(scale_factor, scale_factor)
+	_weapon_sprite.scale = Vector2(scale_factor, -scale_factor if bool(pose.get("flip_v", false)) else scale_factor)
 	_sprite_rest_rotation = deg_to_rad(float(pose.get("rot_deg", 0.0)))
 	_sprite_rest_position = Vector2(HAND_OFFSET_X, 0.0)
 	# Cada arma se sostiene a su manera (ver weapon_motion.gd)
@@ -1251,7 +1238,7 @@ func _schedule_reload_debris(weapon: WeaponData, spent: int) -> void:
 	var drop: int = weapon.get_reload_drop()
 	if drop == WeaponData.ReloadDrop.NONE or SettingsScript.particle_scale() < ReloadDebris.MIN_DENSITY:
 		return
-	var delay: float = maxf(weapon.reload_time, 0.2) * float(RELOAD_DROP_TIMING.get(drop, 0.2))
+	var delay: float = maxf(weapon.reload_time * RELOAD_TIME_MULT, 0.2) * float(RELOAD_DROP_TIMING.get(drop, 0.2))
 	_debris_tween = create_tween()
 	_debris_tween.tween_interval(delay)
 	_debris_tween.tween_callback(_spawn_reload_debris.bind(weapon, drop, spent))

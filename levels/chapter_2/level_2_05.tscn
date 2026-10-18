@@ -107,39 +107,6 @@ offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.3, 0.45, 0.2, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.75, 1, 0.55, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 2 • VALLE ESMERALDA • SECTOR 2-5 — MOLINO ABANDONADO"
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.95, 1, 0.85, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Dos asaltos en los campos del molino. Recuperá vida entre oleada y oleada."
-
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 2300.0
-offset_top = 330.0
-offset_right = 2900.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.55, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "ASALTO AL MOLINO"
-
 [node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(3800.0, 470.0)
 collision_mask = 0
@@ -184,17 +151,6 @@ offset_right = 90.0
 offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.3, 0.45, 0.2, 1)
-
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 5600.0
-offset_top = 330.0
-offset_right = 6200.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.55, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "LA HORDA DE LOS CAMPOS"
 
 [node name="Zombie1" parent="." instance=ExtResource("zombie")]
 position = Vector2(900.0, 555.0)

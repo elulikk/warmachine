@@ -6,7 +6,6 @@ lo pone LevelSkin (tema del capítulo 1, con cambios por sector) y la decoració
 Suelo: cara superior en y=556. Enemigos en y=555. Armas sobre pedestal en y=512.
 Pozos de agua (P-3 y P-5): niveles sin `bedrock()`; los huecos entre suelos se ven como agua (city_decor) y caer
 devuelve al puesto de control.
-Cinemáticas: `L.cine(id, x, zona, ...)` coloca un disparador (core/cinematics/cinematic_library.gd tiene los textos).
 """
 import os
 
@@ -36,7 +35,6 @@ RES = {
     "hitman": ("PackedScene", "res://entities/enemies/city_hitman_smg.tscn"),
     "hitman_elite": ("PackedScene", "res://entities/enemies/city_hitman_elite.tscn"),
     "agent": ("PackedScene", "res://entities/enemies/time_agent.tscn"),
-    "cine": ("Script", "res://core/cinematics/cinematic_trigger.gd"),
     "the_box": ("Script", "res://levels/the_box.gd"),
     "w_knife": ("Resource", "res://data/weapons/combat_knife.tres"),
     "w_9mm": ("Resource", "res://data/weapons/pistol_9mm.tres"),
@@ -116,6 +114,8 @@ class Level:
 
     # ---------------------------------------------------------------- contenido
     def label(self, x, y, text, color=TIP, size=13, width=520):
+        # Sin textos flotantes en los niveles: el juego enseña jugando (carteles, tutorial y tips fuera)
+        return
         n = self.uid("Tip")
         self.env.append(
             '[node name="%s" type="Label" parent="Environment"]\noffset_left = %s\noffset_top = %s\noffset_right = %s\noffset_bottom = %s\n'
@@ -165,18 +165,6 @@ class Level:
             self.label(x - 300, 330, title, WARN, 16, 600)
         return n
 
-    def cine(self, cid, x, zone=0, after_arena=None, crystal=False):
-        """Disparador de cinemática (core/cinematics/cinematic_trigger.gd); la posición es el punto de referencia."""
-        self.used.add("cine")
-        text = ('[node name="%s" type="Node2D" parent="."]\nposition = Vector2(%s, 556)\nscript = ExtResource("cine")\ncinematic_id = "%s"\n'
-                % (self.uid("Cine"), fmt(float(x)), cid))
-        if zone:
-            text += "zone_width = %s\n" % fmt(float(zone))
-        if after_arena:
-            text += 'after_arena = NodePath("../%s")\n' % after_arena
-        if crystal:
-            text += "needs_crystal = true\n"
-        self.nodes.append(text)
 
     def box(self, x):
         """La Caja: cubo negro (grupo `the_box`; la cinemática del P-8 la abre)."""
@@ -282,7 +270,6 @@ def level_3():
     # Canales de agua: huecos de verdad, caer devuelve al puesto de control
     L.floor(0, 1700); L.floor(1840, 3600); L.floor(3740, 5800); L.floor(5940, 8000)
     L.title("LAS ALCANTARILLAS")
-    L.cine("p3_leak", 3300, zone=240)
     L.label(40, 470, "Canales de agua negra: si caés, volvés al último puesto de control.", WARN, 13, 640)
     L.enemies("rat", [900, 1200, 1500])
     L.plat(1770, 450, 160)
@@ -331,12 +318,9 @@ def level_5():
     L.plat(2670, 450, 160)
     L.enemies("thug", [3300]); L.enemies("gunman", [3700])
     L.checkpoint(4000)
-    L.cine("p5_helicopter", 4300, zone=240)
-    L.cine("p5_crystal", 0, crystal=True)
     L.plat(5270, 450, 160)
     L.arena(6400, "gunman", [6, 8], "thug", [1, 2], "LA CARGA DEL BARCO")
     L.checkpoint(7200)
-    L.cine("p5_stevedore", 8200, zone=300)
     L.enemies("gunman", [7600, 8000], guard=True)
     L.write(next_of(5))
 
@@ -370,7 +354,6 @@ def level_7():
     L.event = (0.25, "portal")
     L.music = "club"
     L.title("LA DISCOTECA")
-    L.cine("p7_boss", 1500, zone=300)
     L.label(40, 470, "Luces, láseres y música fuerte. El Sindicato lo tiene todo vigilado.")
     L.enemies("gunman", [1400, 1800]); L.enemies("thug", [2200])
     L.plat(2700, 460, 220); L.plat(3000, 390, 220)
@@ -394,9 +377,7 @@ def level_8():
     L.enemies("hitman", [1000, 1300])
     L.checkpoint(1700)
     L.box(2900)
-    L.cine("p8_box", 2900, zone=2000)
     L.arena(2900, "hitman", [4, 5, 6, 6, 7, 8], "bouncer", [0, 1, 1, 2, 2, 3], "OLEADAS DEL SINDICATO")
-    L.cine("p8_after", 2900, after_arena="Arena1")
     L.write(next_of(8))
 
 

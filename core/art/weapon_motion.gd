@@ -29,6 +29,7 @@ extends RefCounted
 const PROFILES: Dictionary = {
 	"combat_knife": {
 		"scale": 0.72,
+		"pose": {"flip_v": true}, # el arte tiene el filo (serrucho) arriba: se da vuelta para que corte hacia abajo
 		"hold": {"pos": Vector2(1.0, 3.0), "rot_deg": -14.0},
 		"swings": [
 			{ # Tajo diagonal rápido

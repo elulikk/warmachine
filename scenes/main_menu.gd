@@ -12,8 +12,14 @@ const LoadingTips = preload("res://ui/loading_tips.gd")
 
 const FIRST_SECTOR: String = "res://levels/chapter_1/level_1_01.tscn"
 const HUB_SCENE: String = "res://scenes/hub/base_camp.tscn"
+const FIRST_LEVEL_SCENE: String = "res://levels/chapter_1/level_1_01.tscn"
 const SANDBOX_SCENE: String = "res://core/test_level.tscn"
+const STRESS_SCENE: String = "res://scenes/hub/stress_room.tscn"
+const CINEMATIC_BENCH_SCENE: String = "res://scenes/hub/cinematic_bench.tscn"
 const MAX_NAME_LENGTH: int = 14
+const LevelSkinScript = preload("res://levels/level_skin.gd")
+## Fondo del menú cuando no hay partidas (o no se reconoce dónde estaba la última).
+const DEFAULT_BACKDROP: String = "res://assets/art/bg/city.jpg"
 
 enum SlotMode { NEW_GAME, LOAD_GAME }
 
@@ -94,7 +100,7 @@ func _build() -> void:
 	add_child(base)
 
 	_backdrop = TextureRect.new()
-	_backdrop.texture = ArtScript.tex("res://assets/art/bg/city.jpg")
+	_backdrop.texture = _menu_backdrop()
 	_backdrop.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_backdrop.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -137,7 +143,7 @@ func _build() -> void:
 	rule.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	column.add_child(rule)
 	var gap: Control = Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 26.0)
+	gap.custom_minimum_size = Vector2(0.0, 14.0)
 	column.add_child(gap)
 
 	_menu_box = VBoxContainer.new()
@@ -212,6 +218,12 @@ func _rebuild_menu_buttons() -> void:
 	var btn_sandbox: Button = _menu_button("BANCO DE PRUEBAS", 17)
 	btn_sandbox.pressed.connect(_on_sandbox_pressed)
 	_menu_box.add_child(btn_sandbox)
+	var btn_stress: Button = _menu_button("SALA DE ESTRÉS", 17)
+	btn_stress.pressed.connect(_open_test_scene.bind(STRESS_SCENE, "Sala de Estrés"))
+	_menu_box.add_child(btn_stress)
+	var btn_cine: Button = _menu_button("BANCO DE CINEMÁTICAS", 17)
+	btn_cine.pressed.connect(_open_test_scene.bind(CINEMATIC_BENCH_SCENE, "Banco de Cinemáticas"))
+	_menu_box.add_child(btn_cine)
 	var btn_quit: Button = _menu_button("SALIR", 17)
 	btn_quit.pressed.connect(func() -> void: get_tree().quit())
 	_menu_box.add_child(btn_quit)
@@ -351,7 +363,16 @@ func _start_new_game(slot_id: int, char_name: String) -> void:
 	# Partida nueva: directo al sector 1-01 (el campamento queda para las partidas guardadas)
 	print("[MainMenu] Personaje '%s' creado en Slot %d. Entrando al sector 1-01." % [char_name, slot_id])
 	GameFeel.sfx(self, &"gate_open")
-	GameManager.change_scene(FIRST_SECTOR)
+	GameManager.change_scene(FIRST_LEVEL_SCENE)
+
+
+## Salas de prueba sin partida (no guardan nada): Sala de Estrés y Banco de Cinemáticas.
+func _open_test_scene(path: String, title: String) -> void:
+	if _busy:
+		return
+	_busy = true
+	print("[MainMenu] Cargando %s: %s" % [title, path])
+	GameManager.change_scene(path)
 
 
 func _on_sandbox_pressed() -> void:
@@ -501,7 +522,8 @@ func _menu_button(text: String, font_size: int = 22) -> Button:
 	button.text = text
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.focus_mode = Control.FOCUS_ALL
-	button.custom_minimum_size = Vector2(0.0, 30.0 + font_size)
+	# Las opciones chicas (salas de prueba, salir) van más juntas para que entre la columna entera
+	button.custom_minimum_size = Vector2(0.0, (30.0 if font_size >= 20 else 22.0) + font_size)
 	button.add_theme_font_size_override("font_size", font_size)
 	button.add_theme_font_override("font", SteamSkin.title_font())
 	button.add_theme_color_override("font_color", SteamSkin.COLOR_TEXT)
@@ -632,6 +654,14 @@ func _on_resized() -> void:
 # ==============================================================================
 # Datos de guardado
 # ==============================================================================
+
+## Fondo del menú: el del mundo o sector donde estaba la partida más reciente; sin partidas, la ciudad.
+func _menu_backdrop() -> Texture2D:
+	var where: String = str(_latest_save().get("last_scene", ""))
+	var path: String = LevelSkinScript.backdrop_for_scene(where) if not where.is_empty() else ""
+	var tex: Texture2D = ArtScript.tex(path) if not path.is_empty() else null
+	return tex if tex != null else ArtScript.tex(DEFAULT_BACKDROP)
+
 
 ## Vista previa de la partida guardada más reciente, o {} si no hay ninguna.
 func _latest_save() -> Dictionary:

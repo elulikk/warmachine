@@ -13,6 +13,7 @@
 [ext_resource type="Resource" path="res://data/weapons/pistol_9mm.tres" id="w_9mm"]
 [ext_resource type="Resource" path="res://data/weapons/rust_revolver.tres" id="w_revolver"]
 [ext_resource type="PackedScene" path="res://entities/enemies/city_gunman.tscn" id="gunman"]
+[ext_resource type="PackedScene" path="res://entities/enemies/city_thief.tscn" id="thief"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="wpickup"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="zone"]
 
@@ -52,8 +53,10 @@ script = ExtResource("level")
 level_id = "1_01"
 level_title = "Sector 01 · La calle"
 chapter_number = 1
-next_level_path = "res://levels/chapter_1/level_1_02.tscn"
+next_level_path = "res://levels/chapter_1/level_1_03.tscn"
 base_music = &"nivel1"
+ammo_powerup_x_min = 1500.0
+ammo_powerup_x_max = 32500.0
 
 [node name="Background" type="CanvasLayer" parent="."]
 layer = -100
@@ -264,28 +267,6 @@ offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "EL PRESENTE • SECTOR P-1 — LA CALLE"
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Moverte [A/D]   Saltar [Espacio]"
-
 [node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(650.0, 547.0)
 collision_mask = 0
@@ -301,39 +282,6 @@ offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
 
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 450.0
-offset_top = 430.0
-offset_right = 970.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Cuchillo de Combate — atacá con [Click]"
-
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 1000.0
-offset_top = 450.0
-offset_right = 1520.0
-offset_bottom = 474.0
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Una rata. Probá el cuchillo."
-
-[node name="Tip5" type="Label" parent="Environment"]
-offset_left = 2500.0
-offset_top = 450.0
-offset_right = 3020.0
-offset_bottom = 474.0
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Cuidado: vienen de a varias."
-
 [node name="Pedestal2" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(5000.0, 547.0)
 collision_mask = 0
@@ -348,17 +296,6 @@ offset_right = 32.0
 offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
-
-[node name="Tip6" type="Label" parent="Environment"]
-offset_left = 4800.0
-offset_top = 430.0
-offset_right = 5320.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Revólver oxidado — el del asaltante. Disparar [Click]   Recargar [R]"
 
 [node name="WeaponPickup1" parent="." instance=ExtResource("wpickup")]
 position = Vector2(650.0, 512)
@@ -393,16 +330,19 @@ checkpoint_id = "checkpoint_4_01_b"
 [node name="Assaulter" parent="." instance=ExtResource("gunman")]
 position = Vector2(4600.0, 555.0)
 combat_music = &"combat"
+dropped_weapon = ExtResource("w_revolver")
 
-[node name="WeaponPickup2" parent="." instance=ExtResource("wpickup")]
-position = Vector2(5000.0, 512)
-weapon_data = ExtResource("w_revolver")
+[node name="Thief1" parent="." instance=ExtResource("thief")]
+position = Vector2(1600.0, 555.0)
 
 [node name="Rat7" parent="." instance=ExtResource("rat")]
 position = Vector2(6000.0, 555.0)
 
 [node name="Rat8" parent="." instance=ExtResource("rat")]
 position = Vector2(6150.0, 555.0)
+
+[node name="Thief2" parent="." instance=ExtResource("thief")]
+position = Vector2(6450.0, 555.0)
 
 [node name="Rat9" parent="." instance=ExtResource("rat")]
 position = Vector2(6900.0, 555.0)
@@ -422,6 +362,9 @@ position = Vector2(8100.0, 555.0)
 [node name="Checkpoint3" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(8800.0, 556)
 checkpoint_id = "checkpoint_4_01_c"
+
+[node name="Thief3" parent="." instance=ExtResource("thief")]
+position = Vector2(9100.0, 555.0)
 
 [node name="Gunman2" parent="." instance=ExtResource("gunman")]
 position = Vector2(10300.0, 555.0)
@@ -464,17 +407,6 @@ offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
 
-[node name="TipN1" type="Label" parent="Environment"]
-offset_left = 14000.0
-offset_top = 430.0
-offset_right = 14520.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Pistola 9mm — mejor que el revólver oxidado"
-
 [node name="Rat17" parent="." instance=ExtResource("rat")]
 position = Vector2(15000.0, 555.0)
 
@@ -483,6 +415,9 @@ position = Vector2(15150.0, 555.0)
 
 [node name="Rat19" parent="." instance=ExtResource("rat")]
 position = Vector2(15300.0, 555.0)
+
+[node name="Thief4" parent="." instance=ExtResource("thief")]
+position = Vector2(15600.0, 555.0)
 
 [node name="Rat20" parent="." instance=ExtResource("rat")]
 position = Vector2(15900.0, 555.0)

@@ -22,6 +22,13 @@ const SEPARATION: int = 6
 ## Hueco entre los 9 casilleros y el de la mano secundaria.
 const OFFHAND_GAP: float = 14.0
 const MESSAGE_SECONDS: float = 1.6
+## Barras de vida (arriba de los casilleros) y de experiencia (abajo): fondo negro con borde, relleno que se
+## vacía de derecha a izquierda, y adentro el valor en números y el porcentaje.
+const BAR_HEIGHT: float = 20.0
+const BAR_WIDTH: float = float(SLOT_COUNT) * SLOT_SIZE.x + float(SLOT_COUNT - 1) * SEPARATION
+const COLOR_HP: Color = Color(0.85, 0.12, 0.12, 1.0)
+const COLOR_EXP: Color = Color(1.0, 0.72, 0.2, 1.0)
+const COLOR_BAR_BORDER: Color = Color(0.75, 0.78, 0.85, 1.0)
 
 const COLOR_BORDER: Color = Color(0.3, 0.4, 0.55, 0.8)
 const COLOR_BORDER_EMPTY: Color = Color(0.2, 0.24, 0.3, 0.6)
@@ -45,6 +52,10 @@ var _known_weapons: Array[WeaponData] = []
 var _message_left: float = 0.0
 var _message_label: Label = null
 var _name_label: Label = null
+var _hp_bar: ProgressBar = null
+var _hp_label: Label = null
+var _exp_bar: ProgressBar = null
+var _exp_label: Label = null
 
 
 func _ready() -> void:
@@ -56,7 +67,7 @@ func _ready() -> void:
 	var total_width: float = (SLOT_COUNT + 1) * SLOT_SIZE.x + (SLOT_COUNT - 1) * SEPARATION + OFFHAND_GAP + SEPARATION
 	offset_left = -total_width * 0.5
 	offset_right = total_width * 0.5
-	offset_top = -(SLOT_SIZE.y + 64.0)
+	offset_top = -(SLOT_SIZE.y + 64.0 + BAR_HEIGHT * 2.0)
 	offset_bottom = -16.0
 
 	var column: VBoxContainer = VBoxContainer.new()
@@ -70,6 +81,11 @@ func _ready() -> void:
 	column.add_child(_message_label)
 	_name_label = _make_text_label(12, Color.WHITE, true)
 	column.add_child(_name_label)
+
+	# Barra de vida: pegada arriba de la fila de casilleros
+	_hp_bar = _make_bar(COLOR_HP)
+	_hp_label = _hp_bar.get_child(0) as Label
+	column.add_child(_hp_bar)
 
 	var row: HBoxContainer = HBoxContainer.new()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -99,6 +115,11 @@ func _ready() -> void:
 	off_slot.connect("right_clicked", _on_offhand_right_clicked)
 	row.add_child(off_slot)
 	_offhand_slot = off_slot
+
+	# Barra de experiencia: debajo de la fila de casilleros
+	_exp_bar = _make_bar(COLOR_EXP)
+	_exp_label = _exp_bar.get_child(0) as Label
+	column.add_child(_exp_bar)
 
 	_refresh()
 
@@ -510,6 +531,7 @@ func _refresh() -> void:
 		_sync_hand()
 		if not _layout_pending:
 			_player.hotbar_layout = _serialize_layout()
+	_refresh_bars()
 
 	var cm: ConsumableManagerScript = _consumable_manager()
 	for i in range(SLOT_COUNT):
@@ -547,6 +569,55 @@ func _refresh() -> void:
 
 	_refresh_offhand_slot()
 	_name_label.text = _selected_description()
+
+
+## Barra con fondo negro y borde, relleno de `fill_color` y un texto centrado encima (hijo 0).
+func _make_bar(fill_color: Color) -> ProgressBar:
+	var bar: ProgressBar = ProgressBar.new()
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(BAR_WIDTH, BAR_HEIGHT)
+	bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var bg: StyleBoxFlat = StyleBoxFlat.new()
+	bg.bg_color = Color.BLACK
+	bg.border_color = COLOR_BAR_BORDER
+	bg.set_border_width_all(2)
+	var fg: StyleBoxFlat = StyleBoxFlat.new()
+	fg.bg_color = fill_color
+	fg.border_color = Color(0.0, 0.0, 0.0, 0.0)
+	fg.set_border_width_all(2)
+	bar.add_theme_stylebox_override("background", bg)
+	bar.add_theme_stylebox_override("fill", fg)
+	var label: Label = _make_text_label(12, Color.WHITE, true)
+	label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bar.add_child(label)
+	return bar
+
+
+## Vida y experiencia del personaje: el relleno es actual / máximo y el texto "actual / máximo  (porcentaje)".
+func _refresh_bars() -> void:
+	var hc: HealthComponent = _player.health_component if _bound else null
+	var hp: float = 100.0
+	var hp_max: float = 100.0
+	if hc != null and hc.max_health > 0.0:
+		hp = hc.current_health
+		hp_max = hc.max_health
+	_set_bar(_hp_bar, _hp_label, hp, hp_max, true)
+	var stats: StatsManager = _player.stats_manager if _bound else null
+	var xp: float = 0.0
+	var xp_max: float = 100.0
+	if stats != null and stats.exp_to_next_level > 0.0:
+		xp = stats.current_exp
+		xp_max = stats.exp_to_next_level
+	_set_bar(_exp_bar, _exp_label, xp, xp_max, false)
+
+
+func _set_bar(bar: ProgressBar, label: Label, value: float, maximum: float, round_up: bool) -> void:
+	bar.max_value = maximum
+	bar.value = value
+	var shown: int = ceili(value) if round_up else floori(value)
+	label.text = "%d / %d  (%d%%)" % [shown, roundi(maximum), roundi(value / maximum * 100.0)]
 
 
 ## Pinta el casillero de la mano secundaria: arma elegida y, si no se puede usar ahora, por qué.
@@ -607,7 +678,9 @@ func _selected_description() -> String:
 	var res: Resource = _entry(_selected)
 	if res is WeaponData:
 		var weapon: WeaponData = res as WeaponData
-		return "%s  (%s)" % [weapon.weapon_name, _ammo_text(weapon)]
+		if _no_ammo(weapon):
+			return "%s  (∞)" % weapon.weapon_name
+		return "%s  (cargador %d/%d · total %d)" % [weapon.weapon_name, _player.weapon_manager.get_weapon_ammo(weapon), weapon.magazine_size, _total_ammo(weapon)]
 	if res is ConsumableDataScript:
 		var data: ConsumableDataScript = res as ConsumableDataScript
 		var cm: ConsumableManagerScript = _consumable_manager()
@@ -656,10 +729,21 @@ func _consumable_manager() -> ConsumableManagerScript:
 	return _player.consumable_manager if _player != null else null
 
 
+## Texto del casillero: balas en el cargador / balas totales (cargador + reserva).
 func _ammo_text(weapon: WeaponData) -> String:
-	if weapon.weapon_type == WeaponData.WeaponType.MELEE or weapon.magazine_size <= 0:
+	if _no_ammo(weapon):
 		return "∞"
-	return "%d/%d" % [_player.weapon_manager.get_weapon_ammo(weapon), weapon.magazine_size]
+	return "%d/%d" % [_player.weapon_manager.get_weapon_ammo(weapon), _total_ammo(weapon)]
+
+
+func _no_ammo(weapon: WeaponData) -> bool:
+	return weapon.weapon_type == WeaponData.WeaponType.MELEE or weapon.magazine_size <= 0
+
+
+## Balas totales del arma: lo que hay en el cargador más la reserva.
+func _total_ammo(weapon: WeaponData) -> int:
+	var wm: WeaponManager = _player.weapon_manager
+	return wm.get_weapon_ammo(weapon) + wm.get_reserve(weapon)
 
 
 func _clip(text: String, max_chars: int) -> String:

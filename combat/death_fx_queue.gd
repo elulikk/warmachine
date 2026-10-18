@@ -39,12 +39,12 @@ var _default_exp: Dictionary = {}
 # ==============================================================================
 
 ## Explosión de muerte (chispas, destello y sonido) de `GameFeel.death_burst`.
-static func burst(ctx: Node, pos: Vector2) -> void:
+static func burst(ctx: Node, pos: Vector2, mechanical: bool = true) -> void:
 	var queue: Node = _get_queue(ctx)
 	if queue == null:
-		GameFeel.death_burst(ctx, pos)
+		GameFeel.death_burst(ctx, pos, mechanical)
 		return
-	queue.call("_push_gore", {"kind": "burst", "pos": pos})
+	queue.call("_push_gore", {"kind": "burst", "pos": pos, "mechanical": mechanical})
 
 
 ## Lluvia de trozos, salpicaduras y charcos del final de `DamageFx`.
@@ -139,7 +139,7 @@ func _run_gore(entry: Dictionary) -> void:
 	var pos: Vector2 = entry["pos"]
 	match str(entry["kind"]):
 		"burst":
-			GameFeel.death_burst(self, pos)
+			GameFeel.death_burst(self, pos, bool(entry.get("mechanical", true)))
 		"gore":
 			var mechanical: bool = bool(entry["mechanical"])
 			var host: Node2D = _host()

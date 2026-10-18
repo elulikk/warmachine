@@ -20,6 +20,7 @@ python -I .claude/skills/open-game/open_game.py <destino>
 | "el campamento", "la base" | `base` |
 | "la sala de pruebas" | `test` |
 | "la sala de estrés" | `stress` |
+| "el banco de cinemáticas", "probar las cinemáticas" | `cine` |
 | "el menú" | `menu` |
 | otra escena | `res://ruta/escena.tscn` |
 

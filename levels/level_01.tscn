@@ -200,48 +200,6 @@ patch_margin_bottom = 4
 axis_stretch_horizontal = 1
 axis_stretch_vertical = 1
 
-[node name="TutorialTip1" type="PanelContainer" parent="Environment" unique_id=974732338]
-offset_left = 60.0
-offset_top = 460.0
-offset_right = 260.0
-offset_bottom = 488.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_tip")
-
-[node name="Label" type="Label" parent="Environment/TutorialTip1" unique_id=326012334]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
-text = "[A / D] Desplazarse sin armas"
-horizontal_alignment = 1
-
-[node name="TutorialTip2" type="PanelContainer" parent="Environment" unique_id=2064938122]
-offset_left = 530.0
-offset_top = 460.0
-offset_right = 710.0
-offset_bottom = 488.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_tip")
-
-[node name="Label" type="Label" parent="Environment/TutorialTip2" unique_id=2143545265]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
-text = "[Espacio / A] Saltar Obstáculo"
-horizontal_alignment = 1
-
-[node name="TutorialTip3" type="PanelContainer" parent="Environment" unique_id=1938674602]
-offset_left = 2380.0
-offset_top = 460.0
-offset_right = 2650.0
-offset_bottom = 488.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_tip")
-
-[node name="Label" type="Label" parent="Environment/TutorialTip3" unique_id=1922671292]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
-text = "[Click Izq] Revólver / [R] Recargar / [Q] Alternar"
-horizontal_alignment = 1
-
 [node name="KnifePickup" parent="." unique_id=200370422 instance=ExtResource("12_wpickup")]
 position = Vector2(360, 540)
 weapon_data = ExtResource("13_knife")

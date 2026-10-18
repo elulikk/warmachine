@@ -6,8 +6,8 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/bala_pistola.png" id="3_sprite"]
 
 [resource]
-projectile_sprite = ExtResource("3_sprite")
 script = ExtResource("1_script")
+projectile_sprite = ExtResource("3_sprite")
 weapon_name = "Revólver de Servicio"
 family = 2
 grip = 0

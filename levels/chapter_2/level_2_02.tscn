@@ -153,17 +153,6 @@ offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.3, 0.45, 0.2, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.75, 1, 0.55, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 2 • VALLE ESMERALDA • SECTOR 2-2 — SENDERO DEL ARQUERO"
-
 [node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(600.0, 547.0)
 collision_mask = 0
@@ -178,28 +167,6 @@ offset_right = 32.0
 offset_bottom = 9.0
 mouse_filter = 2
 color = Color(0.5, 0.45, 0.35, 1)
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 400.0
-offset_top = 430.0
-offset_right = 920.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(0.55, 1, 0.45, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Arco Largo — [Click] disparar, [R] recargar el carcaj"
-
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 900.0
-offset_top = 470.0
-offset_right = 1460.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.95, 1, 0.85, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Practicá con el espantapájaros: la flecha atraviesa a un enemigo"
 
 [node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(1700.0, 480.0)

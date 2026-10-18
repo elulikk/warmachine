@@ -111,28 +111,6 @@ offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "EL PRESENTE • SECTOR P-2 — LOS CALLEJONES"
-
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Escaleras de incendio y toldos: subí para ver el callejón desde arriba."
-
 [node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(1900.0, 480.0)
 collision_mask = 0
@@ -177,28 +155,6 @@ offset_right = 100.0
 offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
-
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 4100.0
-offset_top = 330.0
-offset_right = 4700.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "EMBOSCADA EN EL CALLEJÓN"
-
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 5400.0
-offset_top = 470.0
-offset_right = 5960.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Un matón: golpea fuerte y aguanta. Mantené la distancia."
 
 [node name="Rat1" parent="." instance=ExtResource("rat")]
 position = Vector2(1100.0, 555.0)

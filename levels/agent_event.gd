@@ -2,8 +2,6 @@ extends Node
 ## Evento de los Agentes del Tiempo: un helicóptero negro cruza con el reflector, se detiene y bajan 2 o 3 Agentes
 ## (o, en interiores, aparecen con un destello). Lo crea LevelBase si el nivel tiene `agent_event_chance` > 0
 ## y `agent_events_enabled`. Sin class_name: se carga por `preload`.
-##
-## El evento guionado del P-5 no usa este nodo (es una cinemática, ver core/cinematics/cinematic_library.gd).
 
 const CinemaScript = preload("res://core/cinematics/cinematic_player.gd")
 const AGENT_SCENE: String = "res://entities/enemies/time_agent.tscn"

@@ -51,6 +51,8 @@ var has_checkpoint: bool = false
 ## Último checkpoint alcanzado en un sector (ruta de la escena y posición). Al cargar la partida se vuelve ahí
 ## en vez de al campamento; se borra al terminar el sector o al pasar por el campamento.
 var resume_level_path: String = ""
+## Última escena de juego donde se guardó (un sector o el campamento). La usa el menú principal para el fondo.
+var last_scene: String = ""
 var resume_position: Vector2 = Vector2.ZERO
 ## Lo activa el menú al cargar un slot: el sector que se abre usa `resume_position` una sola vez.
 var resume_pending: bool = false
@@ -348,6 +350,7 @@ func save_to_disk() -> bool:
 		"world_numbering": WORLD_NUMBERING_VERSION,
 		"world_flags": world_flags,
 		"resume": {"level": resume_level_path, "x": resume_position.x, "y": resume_position.y},
+		"last_scene": _current_play_scene(),
 		"stats": {
 			"level": level_val,
 			"current_exp": exp_val,
@@ -432,6 +435,7 @@ func load_from_disk(slot_id: int) -> bool:
 		unlocked_levels.append(level_path)
 	
 	world_flags = data.get("world_flags", {})
+	last_scene = str(data.get("last_scene", ""))
 	resume_level_path = ""
 	resume_position = Vector2.ZERO
 	var raw_resume: Variant = data.get("resume", {})
@@ -597,6 +601,11 @@ func get_slot_preview(slot_id: int) -> Dictionary:
 	var char_n: String = str(dict.get("character_name", "OPERADOR"))
 	var timestamp: String = str(dict.get("timestamp", "Desconocido"))
 	var lvl: int = int(stats.get("level", 1))
+	# Dónde estaba: la última escena guardada; en partidas viejas, el nivel donde se retoma
+	var where: String = str(dict.get("last_scene", ""))
+	var resume: Variant = dict.get("resume", {})
+	if where.is_empty() and resume is Dictionary:
+		where = str((resume as Dictionary).get("level", ""))
 	var cns: int = int(stats.get("coins", 0))
 	
 	return {
@@ -606,8 +615,18 @@ func get_slot_preview(slot_id: int) -> Dictionary:
 		"level": lvl,
 		"coins": cns,
 		"timestamp": timestamp,
+		"last_scene": where,
 		"sectors": (dict.get("unlocked_levels", []) as Array).size()
 	}
+
+
+## Escena de juego actual si es un sector o el campamento; si no (salas de prueba, menú), la última conocida.
+func _current_play_scene() -> String:
+	var cur: Node = get_tree().current_scene
+	var path: String = cur.scene_file_path if cur != null else ""
+	if path.begins_with("res://levels/chapter_") or path.ends_with("base_camp.tscn"):
+		last_scene = path
+	return last_scene
 
 
 ## Elimina el archivo de guardado de un slot y reinicia variables si era el slot activo.

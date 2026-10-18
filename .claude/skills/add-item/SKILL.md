@@ -68,3 +68,7 @@ Copiar uno parecido (`data/items/laser_helmet.tres`, `data/items/throwables/boom
 - `allow_duplicates = false` en pedestales de ítems únicos; los drops de enemigos usan `true`.
 - Un arma a dos manos bloquea la mano 2; un escudo solo va en la mano 2 (`grip = SHIELD`).
 - Las armaduras (cascos de set, pecheras con set bonus) **se eliminaron**: no reintroducir sets sin pedido. El Casco Láser es un ítem de ranura `HEAD` con habilidad, no una armadura.
+
+## Política de arte
+
+No generar el arte desde el navegador (prohibido desde 2026-10-18): dar al usuario el nombre de archivo, el tamaño y un prompt para Flow, y usar arte provisorio mientras tanto. Leer y actualizar `.claude/skills/add-level/politicas.md`.

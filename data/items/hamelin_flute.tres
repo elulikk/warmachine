@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "hamelin_flute"
+item_name = "Flauta de Hamelin (Accesorio)"
+item_color = Color(0.55, 0.85, 0.5, 1)
+equip_slot = "ACCESSORY"
+elemental_infusion = ""
+tags = []
+modifiers = []
+grants_extra_jump = 0
+rarity = 3
+gold_value = 400
+description = "Flauta de hueso de la Rata Gigante. Las ratas que se acercan al portador dejan de atacarlo y pelean de su lado (hasta 8 a la vez)."

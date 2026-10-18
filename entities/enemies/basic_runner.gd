@@ -16,6 +16,8 @@ const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const CHASE_ACCEL: float = 900.0
+## Más abajo que esto (px) el enemigo cayó fuera del nivel.
+const OFFMAP_Y: float = 1100.0
 
 @export var entity_name: String = "Ladrón"
 ## Velocidad del salto sobre obstáculos (540 = ~150 px de alto; las ratas saltan menos).
@@ -30,6 +32,11 @@ const CHASE_ACCEL: float = 900.0
 @export var loot_table: LootTable
 @export var loot_drop_scene: PackedScene = preload("res://entities/items/loot_drop.tscn")
 @export var drop_rune_on_death: RuneData = null
+## Arma que deja SIEMPRE al morir (guion de un enemigo concreto, p. ej. el asaltante que tiene la primera de fuego
+## del nivel 1). Vacío = no deja ninguna; los demás de su tipo no la tienen.
+@export var dropped_weapon: WeaponData = null
+## Ítem (equipo, accesorio) que deja SIEMPRE al morir; pensado para jefes (la Rata Gigante deja la Flauta de Hamelin).
+@export var dropped_item: ItemData = null
 ## Tipo de arte de `EnemyArt` (ver enemy_art.gd): "runner", "zombie", "ghost", etc.
 @export var art_kind: String = "runner"
 ## Daño por contacto con el jugador.
@@ -48,6 +55,8 @@ var original_color: Color = Color(0.46, 0.16, 0.52, 1.0) # Violeta oscuro
 var _flash_tween: Tween = null
 var contact_cooldown: float = 0.0
 var is_aggroed: bool = false
+## true si dejó de existir sin morir (se volvió aliado, cayó al vacío): no deja cadáver ni botín (ver `EnemyArt`).
+var no_corpse: bool = false
 
 
 func _ready() -> void:
@@ -66,6 +75,10 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	delta = FarStepScript.delta_for(self, delta)
 	if delta <= 0.0:
+		return
+	# Caído a un charco o al vacío: se va sin cadáver ni botín (avisa con `died` para que las oleadas cuenten)
+	if global_position.y > OFFMAP_Y:
+		_vanish()
 		return
 	# 1. Aplicar gravedad vertical
 	if not is_on_floor():
@@ -233,11 +246,58 @@ func _deferred_death_routine() -> void:
 	GearLootScript.try_drop(self, loot_table)
 	_spawn_exp_orb()
 	_spawn_rune_drop()
+	_spawn_dropped_weapon()
+	_spawn_dropped_item()
 	var metrics_mgr: MetricsManager = MetricsManager.get_instance()
 	if metrics_mgr != null:
 		metrics_mgr.record_kill("BasicRunner")
 	died.emit()
 	queue_free()
+
+
+## Se va sin morir: sin botín, sin experiencia y sin cadáver. `died` avisa a las oleadas para que cuenten la baja.
+func _vanish() -> void:
+	if no_corpse:
+		return
+	no_corpse = true
+	visible = false
+	set_physics_process(false)
+	if hurtbox != null:
+		hurtbox.set_deferred("monitoring", false)
+		hurtbox.set_deferred("monitorable", false)
+	set_deferred("collision_layer", 0)
+	set_deferred("collision_mask", 0)
+	died.emit()
+	queue_free()
+
+
+## La Flauta de Hamelin (ver `HamelinFluteController`) convierte a las ratas cercanas en aliadas.
+func convert_to_ally() -> void:
+	_vanish()
+
+
+func _spawn_dropped_item() -> void:
+	if dropped_item == null or not is_inside_tree():
+		return
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	var pickup: PickupItem = (load("res://entities/items/pickup_item.tscn") as PackedScene).instantiate() as PickupItem
+	pickup.item_data = dropped_item
+	scene.add_child(pickup)
+	pickup.global_position = global_position + Vector2(0.0, -40.0)
+
+
+func _spawn_dropped_weapon() -> void:
+	if dropped_weapon == null or not is_inside_tree():
+		return
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	var pickup: WeaponPickup = (load("res://entities/items/weapon_pickup.tscn") as PackedScene).instantiate() as WeaponPickup
+	pickup.weapon_data = dropped_weapon
+	scene.add_child(pickup)
+	pickup.global_position = global_position + Vector2(0.0, -43.0)
 
 
 func _spawn_rune_drop() -> void:

@@ -6,6 +6,8 @@ La trama: quién es el protagonista, qué le pasa y en qué orden. Las reglas de
 
 > **REWORK TOTAL (decisión del usuario, 2026-10-17):** la historia de Gunther se reescribe entera. No gusta el inicio actual (prólogo del robo, paseo con monólogo, visor del callejón). Nueva dirección: **algo más simple**. Gunther está haciendo **un trabajo normal de investigador** y, de repente, se encuentra **persiguiendo a unos maleantes**; desde ahí la historia **se va armando sobre la marcha, "pim, pum, pam"**, con ritmo rápido y sin tanta explicación al principio. Todo lo de abajo es **material viejo a revisar**: se conserva solo lo que sirva (la Caja, los mundos, los antagonistas), y el inicio, el prólogo y el paseo del P-1 se reemplazan. Primer borrador del arranque en `ROADMAP.md` sección 1b, punto 6.
 
+> **PREMISA ACTUAL (dicha por el usuario, 2026-10-18):** Gunther es un detective al que **la ciudad manda a buscar algo relacionado con el Sindicato**. Mientras lo busca, va **matando a todos** en el camino: lo mandan a él precisamente porque **no tiene miedo de ensuciarse las manos** y hace lo que los demás no se animan a hacer. Antihéroe oscuro, sin más vueltas por ahora. Los detalles (qué busca, por qué lo mandan, el giro) quedan **(a definir)**.
+
 ## 1. Protagonista: Gunther
 
 - **Ex policía, hoy detective privado.** Sabe investigar, seguir pistas y pelear. Arranca con su **pistola 9 mm** equipada: es su arma de siempre.

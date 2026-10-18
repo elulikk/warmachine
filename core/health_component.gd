@@ -239,7 +239,9 @@ func _play_death_feedback() -> void:
 	if entity == null or entity.is_in_group(&"player") or entity.is_in_group(&"allies"):
 		return
 	# Encolado: si mueren muchos juntos se reparte en los cuadros siguientes (combat/death_fx_queue.gd)
-	DeathFxQueueScript.burst(self, entity.global_position + Vector2(0.0, -16.0))
+	var script_name: String = str((entity.get_script() as Script).get_global_name()) if entity.get_script() != null else ""
+	var mechanical: bool = ["SniperTurret", "TrainingTurret", "TrainingDummy"].has(script_name) or entity.is_in_group(&"mechanical")
+	DeathFxQueueScript.burst(self, entity.global_position + Vector2(0.0, -16.0), mechanical)
 	GameFeel.shake(self, 2.5, 0.12)
 
 

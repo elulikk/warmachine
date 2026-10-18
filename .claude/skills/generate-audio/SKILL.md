@@ -3,6 +3,8 @@ name: generate-audio
 description: Generar audio real para WARMACHINE desde el navegador — música de un nivel, mundo o situación con Google Flow Music, y efectos de sonido o ambiente con ElevenLabs — y conectarlo al juego (ost/*.ogg + Music.TRACKS + base_music; sonidos por Sfx, fire_stream/hit_stream o el ambiente de la ciudad). Usar cuando el usuario pida música o un tema para un nivel, un sonido o efecto de sonido real, ambiente sonoro, o reemplazar un sonido sintetizado.
 ---
 
+> **POLÍTICA VIGENTE (2026-10-18):** generar arte o audio desde el navegador por mi cuenta está **prohibido** (gasta mucha cuota; tampoco usar Claude in Chrome). En su lugar, dar al usuario los prompts y medidas para que él los genere. Detalle y registro de lo rehecho: `.claude/skills/add-level/politicas.md`. Este skill queda como referencia de cómo se hace cuando el usuario lo vuelva a pedir.
+
 # Música (Flow Music) y efectos (ElevenLabs)
 
 Navegador: leer el skill **`asset-browser`** antes del primer paso (Claude in Chrome en el Edge del usuario primero, el integrado después). Herramientas locales: ffmpeg en

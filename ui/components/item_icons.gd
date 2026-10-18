@@ -9,6 +9,7 @@ extends RefCounted
 
 const ArtScript = preload("res://core/art/art.gd")
 const WeaponArt = preload("res://core/art/weapon_art.gd")
+const WeaponHeldArt = preload("res://core/art/weapon_held_art.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
 
 ## Carpeta de íconos de arte (assets/art): items/<item_id>.png, consumables/<id>.png, runes/<rune_id>.png
@@ -17,7 +18,7 @@ const ART_ITEMS_DIR: String = "res://assets/art/items/"
 const ART_CONSUMABLES_DIR: String = "res://assets/art/consumables/"
 const ART_RUNES_DIR: String = "res://assets/art/runes/"
 ## Íconos de inventario simplificados (32 px, pixel art): icons/<id>.png con el id del arma o del ítem.
-## Tienen prioridad sobre el arte grande; el arma en mano sigue usando su PNG de assets/art/weapons.
+## Tienen prioridad sobre el arte grande; el arma en mano también los usa (ver weapon_held_art.gd).
 const ART_ICONS_DIR: String = "res://assets/art/icons/"
 
 const SIZE: int = 16
@@ -488,6 +489,15 @@ static func get_weapon_pose(weapon: WeaponData) -> Dictionary:
 		var override: Dictionary = WeaponMotion.profile_for(weapon).get("pose", {}) as Dictionary
 		var pose: Dictionary = art_data.merged(override, true) if not override.is_empty() else art_data.duplicate()
 		pose["two_hand"] = weapon.is_two_handed()
+		# En mano se dibuja el ícono (mismo marco que el arte grande, a escala `ratio`): se escalan los puntos
+		var ratio: float = held_ratio(weapon)
+		if ratio != 1.0:
+			for key: String in ["grip", "hand", "support", "size"]:
+				if pose.has(key):
+					var point: Vector2 = pose[key] as Vector2
+					pose[key] = point if point.x < 0.0 else point * ratio
+			pose["tip_x"] = float(pose.get("tip_x", 0.0)) * ratio
+			pose["scale"] = float(pose.get("scale", 1.0)) / ratio
 		_pose_cache[cache_key] = pose
 		return pose
 	var kind: String = _weapon_kind(weapon)
@@ -546,11 +556,27 @@ static func get_art_icon(res: Resource) -> Texture2D:
 	return get_hd_art(res)
 
 
-## Textura del arma para dibujarla en mano: siempre el arte grande (la pose y la escala están calculadas
-## para él), nunca el ícono simplificado de inventario. Cae al ícono normal si el arma no tiene arte grande.
+## Textura del arma para dibujarla en mano: el ícono de inventario puesto en el marco del arte grande
+## (weapon_held_art.gd); si no lo hay, el arte grande; y si tampoco, el ícono normal.
 static func get_held_texture(weapon: WeaponData) -> Texture2D:
+	if weapon != null:
+		var held: Dictionary = WeaponHeldArt.WEAPONS.get(_weapon_file_id(weapon), {}) as Dictionary
+		if not held.is_empty():
+			var held_tex: Texture2D = ArtScript.tex(str(held.get("file", "")))
+			if held_tex != null:
+				return held_tex
 	var hd: Texture2D = get_hd_art(weapon)
 	return hd if hd != null else get_icon_for(weapon)
+
+
+## Escala de la textura en mano respecto del arte grande (1 si se dibuja el arte grande).
+static func held_ratio(weapon: WeaponData) -> float:
+	if weapon == null:
+		return 1.0
+	var held: Dictionary = WeaponHeldArt.WEAPONS.get(_weapon_file_id(weapon), {}) as Dictionary
+	if held.is_empty() or ArtScript.tex(str(held.get("file", ""))) == null:
+		return 1.0
+	return float(held.get("ratio", 1.0))
 
 
 ## Textura para dibujar en un casillero. El arte grande se reduce de antemano con filtro de calidad

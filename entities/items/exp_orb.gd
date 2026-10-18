@@ -192,6 +192,7 @@ func _give_exp(player: Player) -> void:
 	remove_from_group(ORB_GROUP)
 	if player != null and player.stats_manager != null:
 		player.stats_manager.add_experience(exp_amount)
+		player.flash_exp_pickup()
 	# Los fundidos suenan más graves
 	GameFeel.sfx(self, &"exp", Vector2.INF, -8.0, randf_range(0.9, 1.3) * pow(0.8, float(merge_tier)))
 	queue_free()

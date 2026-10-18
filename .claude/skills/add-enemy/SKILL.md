@@ -1,6 +1,6 @@
 ---
 name: add-enemy
-description: Agregar un enemigo nuevo a WARMACHINE (variante de corredor, bruto, centinela o armado a distancia, o con comportamiento propio), con su arte generado en Google Flow, botín, registro en los generadores de niveles y prueba. Usar cuando el usuario pida un enemigo, mob, jefe, élite o variante nueva para un sector o mundo.
+description: Agregar un enemigo nuevo a WARMACHINE (variante de corredor, bruto, centinela o armado a distancia, o con comportamiento propio), con su arte (hojas de Flow que genera el usuario, animadas por cuadros), botín, registro en los generadores de niveles y prueba. Usar cuando el usuario pida un enemigo, mob, jefe, élite o variante nueva para un sector o mundo.
 ---
 
 # Agregar un enemigo
@@ -45,18 +45,15 @@ Reglas:
 - La vida se escala sola con la dificultad al aparecer (`Settings.enemy_health_mult()`); no la multipliques a mano.
 - Los índices de nodo (`index="0"`, `"2"`, `"4"`) son los de la escena base; si cambia la base, revisarlos.
 
-## Paso 2: arte (Google Flow → `MOBS`)
+## Paso 2: arte
 
-**Primero ver si sirve un `art_kind` existente** (`runner`, `brute`, `sentinel`, `thief`, `thug`, `gunman`, `bouncer`, `hitman_*`, `time_agent`): una variante de stats no necesita arte nuevo. Generar arte solo si el usuario lo pidió o el enemigo es visualmente distinto. En ese caso usar el skill **`google-flow`** (que a su vez usa `asset-browser`). Receta:
+**Primero ver si sirve un `art_kind` existente** (`runner`, `brute`, `sentinel`, `thief`, `thug`, `gunman`, `bouncer`, `hitman_*`, `time_agent`, `rat`): una variante de stats no necesita arte nuevo. Arte nuevo solo si el usuario lo pidió o el enemigo es visualmente distinto.
 
-1. Prompt: personaje de cuerpo entero, de lado, mirando a la derecha, fondo negro liso, estilo 2D de videojuego, sin sombra de suelo. Una hoja con varios enemigos del mismo mundo mantiene la coherencia.
-2. Descargar 1K a `art_source/worldN/` (p. ej. `e_<nombre>.jpg`).
-3. Agregarlo a `MOB_SRC` en `art_source/worldN/process.py` (`"<id>": ("<hoja>", <alto_en_juego_px>)`) y correr `python art_source/worldN/process.py`: recorta el fondo, voltea, escala a **3x** del alto en juego y escribe `assets/art/worldN/mob_<id>.png`. **Imprime la línea `MOBS`**.
-4. Pegar esa línea en `MOBS` de `core/art/armor_art.gd` (`size` = textura / 3, `foot` = punto de apoyo).
-5. Agregar `"<id>"` a `MOB_SPLIT` en `entities/enemies/enemy_art.gd`: `waist` (altura de la cintura, 0.60 corredor / 0.63 bruto), `overlap` 9, `scale`, `attack` (duración de la embestida), `lunge` (px), `lean` (rad), `step`. Copiar el de un enemigo parecido.
-6. `Godot --headless --path . --import` una vez.
+- **Política: no generar desde el navegador** (ver abajo). Dar al usuario nombres de archivo y prompts; mientras tanto, arte provisorio de otro `art_kind`, y anotarlo en el ROADMAP.
+- **Arte animado por cuadros** (caminar, ataque, golpe, muerte; camino actual, así está la rata): **`animacion.md`** (prompts de las 4 hojas, `process_anim.py`, `MOB_FRAMES`).
+- **Ilustración fija** (camino viejo, sin cuadros): imagen de cuerpo entero de lado en `art_source/worldN/` → entrada en `MOB_SRC` de `art_source/worldN/process.py` (3x el alto en juego; imprime la línea `MOBS`) → pegarla en `MOBS` de `core/art/armor_art.gd` → `MOB_SPLIT` en `enemy_art.gd` (copiar uno parecido) → `Godot --headless --path . --import`.
 
-Si Flow no está disponible: reusar el `art_kind` de otro enemigo (`runner`, `brute`, `sentinel`, `thief`…) y dejar anotado en el ROADMAP "arte pendiente". No inventar sprites.
+**Daño visible (automático, no requiere arte):** sangre en cada golpe, píxeles de sangre que brotan del cuerpo y crecen al bajar la vida, llamitas por stack de fuego (hasta 6) y golpe sordo al morir. Máquinas: chispas y estallido. Detalle y perillas: skill `game-feel`.
 
 ## Paso 3: botín
 
@@ -94,3 +91,7 @@ extends "res://entities/enemies/basic_runner.gd"
 1. `bash .claude/skills/smoke-test/scripts/smoke.sh res://levels/chapter_N/level_N_NN.tscn 120` con el enemigo colocado en el sector.
 2. Para matar por código: vida justa (`current_health + 1.0`), nunca 99999.
 3. Reportar qué quedó sin validar (balance, arte). No hacer commit ni tocar el ROADMAP salvo que se pida, y entonces una sola vez por tanda.
+
+## Política de arte
+
+No generar el arte desde el navegador (prohibido desde 2026-10-18): dar los prompts al usuario y usar arte provisorio mientras tanto. Leer y actualizar `.claude/skills/add-level/politicas.md`.

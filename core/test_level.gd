@@ -24,6 +24,7 @@ func _ready() -> void:
 	LevelSkinScript.apply(self, 0)
 	GameFeel.music_start_level(self)
 	if player != null:
+		player.invulnerable = true # en las pruebas no se muere
 		initial_spawn_position = player.global_position
 		if player.stats_manager != null:
 			player.stats_manager.coins = 999

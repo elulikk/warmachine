@@ -3,6 +3,8 @@ name: asset-browser
 description: Reglas comunes para generar assets en sitios web (Google Flow para imágenes y música, ElevenLabs para efectos de sonido) desde el navegador — qué navegador usar (Claude in Chrome en el Edge del usuario, si no el integrado), cómo conectarlo, descargas, y lo que ya se probó y falló. Lo leen google-flow y generate-audio antes del primer paso en el navegador; no se usa solo.
 ---
 
+> **POLÍTICA VIGENTE (2026-10-18):** generar arte o audio desde el navegador por mi cuenta está **prohibido** (gasta mucha cuota; tampoco usar Claude in Chrome). En su lugar, dar al usuario los prompts y medidas para que él los genere. Detalle y registro de lo rehecho: `.claude/skills/add-level/politicas.md`. Este skill queda como referencia de cómo se hace cuando el usuario lo vuelva a pedir.
+
 # Navegador para generar assets
 
 Lo usan `google-flow` (imágenes, video) y `generate-audio` (música en Flow Music, efectos en ElevenLabs). Leerlo **una vez por sesión**, antes del primer paso en el navegador; si ya se conectó el navegador en esta sesión, no repetir el procedimiento.

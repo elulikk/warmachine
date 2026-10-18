@@ -127,8 +127,8 @@ static func spray(host: Node, pos: Vector2, dir: Vector2, damage: float, mechani
 	var drop: Texture2D = drop_texture()
 	emitter.texture = drop
 	var drop_w: float = float(drop.get_width())
-	emitter.scale_amount_min = 2.6 / drop_w
-	emitter.scale_amount_max = 5.4 / drop_w
+	emitter.scale_amount_min = 4.0 / drop_w
+	emitter.scale_amount_max = 8.0 / drop_w
 	var ramp: Gradient = Gradient.new()
 	if mechanical:
 		# Chispas: disco generado (el arte de la gota es de sangre)
@@ -212,7 +212,7 @@ static func spray_sprite(host: Node, pos: Vector2, dir: Vector2, strength: float
 	# El arte nace en su punta (borde izquierdo) y apunta a la derecha: la punta queda en el impacto
 	sprite.centered = false
 	sprite.offset = Vector2(0.0, -tex.get_height() * 0.5)
-	var base_scale: float = clampf(0.3 + strength / 140.0, 0.3, 0.62)
+	var base_scale: float = clampf(0.1 + strength / 400.0, 0.1, 0.2)
 	sprite.scale = Vector2(base_scale, base_scale)
 	if randf() < 0.5:
 		sprite.flip_v = true

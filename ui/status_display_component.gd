@@ -121,12 +121,10 @@ func _update_fire_display(stacks: int) -> void:
 			return
 		_ensure_ui()
 	
-	if stacks > 0:
-		fire_badge.visible = true
-		if fire_label != null:
-			fire_label.text = "x%d" % stacks
-	else:
-		fire_badge.visible = false
+	# Los stacks de fuego se ven como llamitas en el cuerpo (StatusReceiverComponent): el cartel queda oculto
+	fire_badge.visible = false
+	if stacks > 0 and fire_label != null:
+		fire_label.text = "x%d" % stacks
 
 
 func _update_ice_display(is_frozen: bool) -> void:

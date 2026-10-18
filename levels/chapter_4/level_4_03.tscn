@@ -508,78 +508,6 @@ offset_right = 8200
 offset_bottom = 560
 color = Color(1, 0.45, 0.35, 1)
 
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 40
-offset_top = 380
-offset_right = 740
-offset_bottom = 410
-theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 4 • PERIFERIA SUBTERRÁNEA • SECTOR 1-3"
-
-[node name="TipPits" type="Label" parent="Environment"]
-offset_left = 720
-offset_top = 470
-offset_right = 1320
-offset_bottom = 494
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Fosos — saltá y mantené el salto para llegar más lejos"
-
-[node name="TipStones" type="Label" parent="Environment"]
-offset_left = 1900
-offset_top = 430
-offset_right = 2500
-offset_bottom = 454
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Si no llegás, apoyate en las piedras del medio"
-
-[node name="TipCorridor" type="Label" parent="Environment"]
-offset_left = 2400
-offset_top = 470
-offset_right = 3000
-offset_bottom = 494
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Pasillo — los ladrones vienen de a uno"
-
-[node name="TipArena1" type="Label" parent="Environment"]
-offset_left = 3860
-offset_top = 440
-offset_right = 4460
-offset_bottom = 464
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA — Subí a las plataformas: los ladrones no saltan"
-
-[node name="TipPits2" type="Label" parent="Environment"]
-offset_left = 5160
-offset_top = 470
-offset_right = 5760
-offset_bottom = 494
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Más fosos — saltá con cuidado"
-
-[node name="TipArena2" type="Label" parent="Environment"]
-offset_left = 6540
-offset_top = 440
-offset_right = 7240
-offset_bottom = 464
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA FINAL — Dos oleadas seguidas, aprovechá el descanso para recargar"
-
-[node name="TipReward" type="Label" parent="Environment"]
-offset_left = 8180
-offset_top = 440
-offset_right = 8880
-offset_bottom = 464
-theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
-theme_override_font_sizes/font_size = 13
-text = "Rifle Viejo: 8 balas, perfora un poco de armadura"
-
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
 
@@ -648,17 +576,6 @@ position = Vector2(4800, 555)
 [node name="Spawn5" type="Marker2D" parent="Arena1/WaveManager"]
 position = Vector2(4880, 555)
 
-[node name="StatusLabel" type="Label" parent="Arena1"]
-offset_left = 4130
-offset_top = 300.0
-offset_right = 4730
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
-
 [node name="CheckpointArena" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(5060, 556)
 checkpoint_id = "checkpoint_1_03_c"
@@ -717,17 +634,6 @@ position = Vector2(8050, 555)
 
 [node name="Spawn6" type="Marker2D" parent="Arena2/WaveManager"]
 position = Vector2(8130, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena2"]
-offset_left = 7200
-offset_top = 300.0
-offset_right = 7800
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="CarbinePickup" parent="." instance=ExtResource("10_wpickup")]
 position = Vector2(8450, 512)

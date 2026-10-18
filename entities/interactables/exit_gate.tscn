@@ -47,6 +47,7 @@ sprite_frames = SubResource("SpriteFrames_gate")
 animation = &"state"
 
 [node name="PromptLabel" type="Label" parent="Visuals"]
+visible = false
 offset_left = -80.0
 offset_top = -115.0
 offset_right = 80.0

@@ -384,69 +384,6 @@ offset_right = 8150
 offset_bottom = 560
 color = Color(1, 0.45, 0.35, 1)
 
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 60
-offset_top = 400
-offset_right = 650
-offset_bottom = 424
-theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 4 • PERIFERIA SUBTERRÁNEA • SECTOR 1-5"
-
-[node name="TipSentinel" type="Label" parent="Environment"]
-offset_left = 640
-offset_top = 440
-offset_right = 1460
-offset_bottom = 464
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Adelante: CENTINELA DE ESCUDO — 130 de escudo celeste que se recarga si pasan 3 s sin dañarlo"
-
-[node name="TipDuel" type="Label" parent="Environment"]
-offset_left = 1340
-offset_top = 380
-offset_right = 2040
-offset_bottom = 404
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA — No le des respiro: disparos seguidos rompen el escudo y después cae rápido"
-
-[node name="TipCorridor" type="Label" parent="Environment"]
-offset_left = 2850
-offset_top = 345
-offset_right = 3610
-offset_bottom = 369
-theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 13
-text = "Pasillo — un Centinela entre ladrones: recargá antes de entrar"
-
-[node name="TipArena2" type="Label" parent="Environment"]
-offset_left = 4440
-offset_top = 380
-offset_right = 5200
-offset_bottom = 404
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA — Los ladrones distraen; mantené el fuego sobre el Centinela"
-
-[node name="TipArena3" type="Label" parent="Environment"]
-offset_left = 6840
-offset_top = 380
-offset_right = 7540
-offset_bottom = 404
-theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 13
-text = "ARENA FINAL — Tres oleadas; en la última, dos Centinelas"
-
-[node name="TipReward" type="Label" parent="Environment"]
-offset_left = 8230
-offset_top = 440
-offset_right = 8870
-offset_bottom = 464
-theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
-theme_override_font_sizes/font_size = 13
-text = "Recompensa: Subfusil MP5 — automático, ideal contra escudos"
-
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
 
@@ -494,17 +431,6 @@ position = Vector2(2300, 555)
 
 [node name="Spawn2" type="Marker2D" parent="Arena1/WaveManager"]
 position = Vector2(2400, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena1"]
-offset_left = 1600
-offset_top = 300.0
-offset_right = 2200
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="CheckpointCorridor" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(2650, 556)
@@ -570,17 +496,6 @@ position = Vector2(5400, 555)
 [node name="Spawn4" type="Marker2D" parent="Arena2/WaveManager"]
 position = Vector2(5500, 555)
 
-[node name="StatusLabel" type="Label" parent="Arena2"]
-offset_left = 4700
-offset_top = 300.0
-offset_right = 5300
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
-
 [node name="CheckpointRune" parent="." instance=ExtResource("12_checkpoint")]
 position = Vector2(5750, 556)
 checkpoint_id = "checkpoint_1_05_d"
@@ -641,17 +556,6 @@ position = Vector2(8050, 555)
 
 [node name="Spawn6" type="Marker2D" parent="Arena3/WaveManager"]
 position = Vector2(8100, 555)
-
-[node name="StatusLabel" type="Label" parent="Arena3"]
-offset_left = 7175
-offset_top = 300.0
-offset_right = 7775
-offset_bottom = 330.0
-theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-horizontal_alignment = 1
 
 [node name="MP5Pickup" parent="." instance=ExtResource("10_wpickup")]
 position = Vector2(8450, 512)

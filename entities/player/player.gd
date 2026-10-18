@@ -39,12 +39,22 @@ const LowHealthFeedbackScript = preload("res://entities/player/low_health_feedba
 const MirrorReflectorScript = preload("res://entities/shield/mirror_reflector.gd")
 const EyeLaserScript = preload("res://entities/player/eye_laser.gd")
 const CloakControllerScript = preload("res://entities/player/cloak_controller.gd")
+const HamelinFluteScript = preload("res://entities/player/hamelin_flute_controller.gd")
 const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
 const DamageNumberScene = preload("res://combat/damage_number.tscn")
 var _level_up_aura: Node2D = null
+## Destello al juntar experiencia: brillo actual (0..XP_GLOW_CAP) y cuándo se calculó (ms).
+var _xp_glow: float = 0.0
+var _xp_glow_msec: int = 0
+var _xp_glow_tween: Tween = null
+var _xp_halo: Node2D = null
 ## Disposición de la barra de acceso rápido ({"w": índice en el arsenal} | {"c": consumable_id} | null por casillero).
 ## La mantiene ui/hotbar.gd y la guarda SaveManager.
 var hotbar_layout: Array = []
+## Chaleco antibalas con el que arranca el personaje: fracción del daño de proyectiles que no pasa (0.30 = -30%).
+var vest_projectile_reduction: float = 0.30
+## Inmortal (nivel de pruebas): no recibe daño.
+var invulnerable: bool = false
 
 
 ## Dirección hacia la que mira el personaje (1 = derecha, -1 = izquierda).
@@ -84,6 +94,8 @@ var can_dash: bool = false
 var has_eye_laser: bool = false
 ## Capa de Invisibilidad equipada y estado de invisibilidad (ver cloak_controller.gd). Los enemigos leen `is_invisible`.
 var has_cloak: bool = false
+## Flauta de Hamelin equipada: las ratas cercanas pasan a ser aliadas (ver hamelin_flute_controller.gd).
+var has_hamelin_flute: bool = false
 var is_invisible: bool = false
 var cloak_controller: Node = null
 var _dash_time_left: float = 0.0
@@ -184,6 +196,10 @@ func _ready() -> void:
 	cloak_controller = CloakControllerScript.new()
 	cloak_controller.name = "CloakController"
 	add_child(cloak_controller)
+
+	var hamelin_flute: Node = HamelinFluteScript.new()
+	hamelin_flute.name = "HamelinFluteController"
+	add_child(hamelin_flute)
 
 	# Escudo de energía: hoy el jugador no tiene escudo, así que no se ve hasta que tenga
 	var energy_shield: Node2D = EnergyShieldScript.new()
@@ -479,6 +495,8 @@ func consume_jump_buffer() -> void:
 
 ## Aplica daño directo sobre el jugador delegándolo en StatsManager y HealthComponent.
 func take_damage(amount: float) -> void:
+	if invulnerable:
+		return
 	if hurt_cooldown > 0.0:
 		return
 	hurt_cooldown = 0.6
@@ -581,6 +599,39 @@ func _on_level_gained(_new_level: int) -> void:
 		weapon_manager.refill_all_ammo()
 
 
+## Brillo extra del personaje al juntar experiencia (sobre `CharacterRig`, aparte del rojo de daño de Visuals).
+## Cada orbe suma menos cuanto más brilla ya y el brillo se apaga solo: con una lluvia de orbes queda un
+## resplandor parejo y suave en vez de un parpadeo constante.
+const XP_GLOW_CAP: float = 0.32
+const XP_GLOW_STEP: float = 0.16
+const XP_GLOW_FADE: float = 0.35
+const XP_GLOW_TINT: Color = Color(0.9, 0.85, 0.5, 0.0)
+
+
+func flash_exp_pickup() -> void:
+	var rig: CanvasItem = get_node_or_null("Visuals/CharacterRig") as CanvasItem
+	if rig == null:
+		rig = visuals
+	if rig == null:
+		return
+	var now: int = Time.get_ticks_msec()
+	var elapsed: float = float(now - _xp_glow_msec) / 1000.0
+	var current: float = _xp_glow * clampf(1.0 - elapsed / XP_GLOW_FADE, 0.0, 1.0)
+	_xp_glow = minf(XP_GLOW_CAP, current + XP_GLOW_STEP * (1.0 - current / XP_GLOW_CAP))
+	_xp_glow_msec = now
+	if _xp_glow_tween != null and _xp_glow_tween.is_valid():
+		_xp_glow_tween.kill()
+	rig.modulate = Color.WHITE + XP_GLOW_TINT * _xp_glow
+	_xp_glow_tween = create_tween()
+	_xp_glow_tween.tween_property(rig, "modulate", Color.WHITE, XP_GLOW_FADE).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	# Halo dorado aditivo: el tinte solo apenas se nota
+	if _xp_halo == null or not is_instance_valid(_xp_halo):
+		_xp_halo = (load("res://entities/player/xp_halo.gd") as GDScript).new() as Node2D
+		_xp_halo.name = "XpHalo"
+		add_child(_xp_halo)
+	_xp_halo.call("pulse")
+
+
 ## Muestra un aura radiante alrededor del personaje (estilo MU Online / WoW) al subir de nivel.
 ## Si ya hay un aura activa (subidas seguidas de nivel), la reinicia sin dejar nodos colgados.
 func play_level_up_aura() -> void:
@@ -604,7 +655,8 @@ func play_level_up_aura() -> void:
 func take_hit(payload: HitPayload) -> void:
 	if payload == null:
 		return
-	take_damage(payload.base_damage)
+	# Chaleco antibalas: reduce el daño de los proyectiles entrantes (el contacto no pasa por acá)
+	take_damage(payload.base_damage * (1.0 - clampf(vest_projectile_reduction, 0.0, 0.9)))
 	if payload.knockback_force > 0.0 and not knockback_immune:
 		velocity += payload.get_knockback_velocity() * 0.6
 

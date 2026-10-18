@@ -7,6 +7,10 @@ description: Agregar o rehacer un sector (nivel) de WARMACHINE con el generador 
 
 Leer `PROJECT_CONTEXT.md` secciones 6 y 10. Los niveles de los mundos 2, 3 y 4 **no se editan a mano**: los genera `art_source/world{2,3,4}/build_levels.py` (clase `Level`). El capítulo 4 sí son `.tscn` a mano. El capítulo 5 son 10 esqueletos vacíos (`levels/chapter_5/`): para armarlo, copiar el generador del mundo 1.
 
+## Políticas y registro (leer primero)
+
+Leer `politicas.md`: reglas vigentes (sin generar arte por mi cuenta, prompts para el usuario, orden mapas→historia) y el registro de sprites y cambios de diseño. **Al terminar un nivel, agregar ahí una línea** con lo que cambió, qué arte se rehízo y qué quedó pendiente. La plantilla de diseño es `LEVEL_DESIGN.md`.
+
 ## Paso 0: tema y diseño
 
 - Leer la descripción del sector en `PROJECT_CONTEXT.md` / `ROADMAP.md` / `story.md`. Si no tiene temática clara, **preguntar** antes de generar.
@@ -29,5 +33,5 @@ Leer solo el archivo del paso en que se está; no cargar los demás de entrada.
 - Un script nuevo (decoración, trigger) se carga por `preload`, no por `class_name`.
 - `LevelBase.gear_loot_tier` fija qué equipo cae en el sector (0 = nada).
 - Cambios de escena siempre con `GameManager.change_scene()`.
-- Un rework no está terminado sin el pase de `atmosfera.md`: el 1-01 es la referencia de cómo tiene que verse.
+- Un rework no está terminado sin el pase de `atmosfera.md`: el 1-01 es la referencia del proceso (el estilo noir es solo del mundo 1).
 - El sector 4-9/4-10 y el capítulo 5 son esqueletos: `is_implemented()` los marca pendientes en el selector hasta registrarlos.

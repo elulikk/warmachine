@@ -2,38 +2,61 @@
 
 [ext_resource type="PackedScene" path="res://entities/world/arena.tscn" id="arena"]
 [ext_resource type="Script" path="res://core/camera_follow.gd" id="camera"]
+[ext_resource type="PackedScene" path="res://entities/enemies/ceiling_rat.tscn" id="ceiling_rat"]
 [ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="checkpoint"]
-[ext_resource type="Script" path="res://core/cinematics/cinematic_trigger.gd" id="cine"]
 [ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="gate"]
+[ext_resource type="PackedScene" path="res://entities/enemies/giant_rat.tscn" id="giant_rat"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="hud"]
 [ext_resource type="Script" path="res://levels/level_base.gd" id="level"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="player"]
 [ext_resource type="Script" path="res://core/projectile_pool.gd" id="pool"]
 [ext_resource type="PackedScene" path="res://entities/enemies/city_rat.tscn" id="rat"]
 [ext_resource type="Script" path="res://core/managers/save_manager.gd" id="save"]
-[ext_resource type="PackedScene" path="res://entities/enemies/city_thief.tscn" id="thief"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="zone"]
-[ext_resource type="Script" path="res://entities/world/world_prop.gd" id="world_prop"]
 
 [sub_resource type="RectangleShape2D" id="Rect_40x800"]
 size = Vector2(40, 800)
 
-[sub_resource type="RectangleShape2D" id="Rect_1700x74"]
-size = Vector2(1700, 74)
+[sub_resource type="RectangleShape2D" id="Rect_16200x390"]
+size = Vector2(16200, 390)
 
-[sub_resource type="RectangleShape2D" id="Rect_1760x74"]
-size = Vector2(1760, 74)
+[sub_resource type="RectangleShape2D" id="Rect_2200x74"]
+size = Vector2(2200, 74)
 
-[sub_resource type="RectangleShape2D" id="Rect_2060x74"]
-size = Vector2(2060, 74)
+[sub_resource type="RectangleShape2D" id="Rect_1290x74"]
+size = Vector2(1290, 74)
+
+[sub_resource type="RectangleShape2D" id="Rect_1520x74"]
+size = Vector2(1520, 74)
+
+[sub_resource type="RectangleShape2D" id="Rect_1780x74"]
+size = Vector2(1780, 74)
+
+[sub_resource type="RectangleShape2D" id="Rect_1660x74"]
+size = Vector2(1660, 74)
+
+[sub_resource type="RectangleShape2D" id="Rect_1640x74"]
+size = Vector2(1640, 74)
+
+[sub_resource type="RectangleShape2D" id="Rect_2890x74"]
+size = Vector2(2890, 74)
+
+[sub_resource type="RectangleShape2D" id="Rect_110x20"]
+size = Vector2(110, 20)
+
+[sub_resource type="RectangleShape2D" id="Rect_100x20"]
+size = Vector2(100, 20)
 
 [sub_resource type="RectangleShape2D" id="Rect_160x20"]
 size = Vector2(160, 20)
 
-[node name="Level_4_03" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="Rect_120x50"]
+size = Vector2(120, 50)
+
+[node name="Level_1_03" type="Node2D"]
 script = ExtResource("level")
 level_id = "1_03"
-level_title = "Sector 03 · Las alcantarillas"
+level_title = "Las alcantarillas"
 chapter_number = 1
 next_level_path = "res://levels/chapter_1/level_1_04.tscn"
 
@@ -50,7 +73,6 @@ mouse_filter = 2
 color = Color(0.03, 0.04, 0.07, 1)
 
 [node name="Environment" type="Node2D" parent="."]
-
 [node name="LeftWall" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(-20.0, 240.0)
 collision_mask = 0
@@ -67,7 +89,7 @@ mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="RightWall" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(8020.0, 240.0)
+position = Vector2(16020.0, 240.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall"]
@@ -81,137 +103,224 @@ offset_bottom = 400.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
+[node name="Ceiling" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(8000.0, 95.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling"]
+shape = SubResource("Rect_16200x390")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling"]
+offset_left = -8100.0
+offset_top = -195.0
+offset_right = 8100.0
+offset_bottom = 195.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
 [node name="Floor1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(850.0, 593.0)
+position = Vector2(1100.0, 593.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor1"]
-shape = SubResource("Rect_1700x74")
+shape = SubResource("Rect_2200x74")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Floor1"]
-offset_left = -850.0
+offset_left = -1100.0
 offset_top = -37.0
-offset_right = 850.0
+offset_right = 1100.0
 offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="Floor2" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(2720.0, 593.0)
+position = Vector2(2955.0, 593.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor2"]
-shape = SubResource("Rect_1760x74")
+shape = SubResource("Rect_1290x74")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Floor2"]
-offset_left = -880.0
+offset_left = -645.0
 offset_top = -37.0
-offset_right = 880.0
+offset_right = 645.0
 offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="Floor3" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(4770.0, 593.0)
+position = Vector2(4640.0, 593.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor3"]
-shape = SubResource("Rect_2060x74")
+shape = SubResource("Rect_1520x74")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Floor3"]
-offset_left = -1030.0
+offset_left = -760.0
 offset_top = -37.0
-offset_right = 1030.0
+offset_right = 760.0
 offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="Floor4" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(6970.0, 593.0)
+position = Vector2(6410.0, 593.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor4"]
-shape = SubResource("Rect_2060x74")
+shape = SubResource("Rect_1780x74")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Floor4"]
-offset_left = -1030.0
+offset_left = -890.0
 offset_top = -37.0
-offset_right = 1030.0
+offset_right = 890.0
 offset_bottom = 37.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "EL PRESENTE • SECTOR P-3 — LAS ALCANTARILLAS"
+[node name="Floor5" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(8470.0, 593.0)
+collision_mask = 0
 
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 680.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 13
-text = "Canales de agua negra: si caés, volvés al último puesto de control."
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor5"]
+shape = SubResource("Rect_1660x74")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Floor5"]
+offset_left = -830.0
+offset_top = -37.0
+offset_right = 830.0
+offset_bottom = 37.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Floor6" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(10380.0, 593.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor6"]
+shape = SubResource("Rect_1640x74")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Floor6"]
+offset_left = -820.0
+offset_top = -37.0
+offset_right = 820.0
+offset_bottom = 37.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Floor7" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(12240.0, 593.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor7"]
+shape = SubResource("Rect_1520x74")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Floor7"]
+offset_left = -760.0
+offset_top = -37.0
+offset_right = 760.0
+offset_bottom = 37.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Floor8" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(14555.0, 593.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor8"]
+shape = SubResource("Rect_2890x74")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Floor8"]
+offset_left = -1445.0
+offset_top = -37.0
+offset_right = 1445.0
+offset_bottom = 37.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1770.0, 460.0)
+position = Vector2(3740.0, 510.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank1"]
-shape = SubResource("Rect_160x20")
+shape = SubResource("Rect_110x20")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Plank1"]
-offset_left = -80.0
+offset_left = -55.0
 offset_top = -10.0
-offset_right = 80.0
+offset_right = 55.0
 offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="Plank2" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(3670.0, 460.0)
+position = Vector2(7390.0, 510.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank2"]
-shape = SubResource("Rect_160x20")
+shape = SubResource("Rect_100x20")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Plank2"]
-offset_left = -80.0
+offset_left = -50.0
 offset_top = -10.0
-offset_right = 80.0
+offset_right = 50.0
 offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 4500.0
-offset_top = 330.0
-offset_right = 5100.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "LA PLAGA"
-
 [node name="Plank3" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(5870.0, 460.0)
+position = Vector2(7550.0, 450.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank3"]
-shape = SubResource("Rect_160x20")
+shape = SubResource("Rect_100x20")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Plank3"]
+offset_left = -50.0
+offset_top = -10.0
+offset_right = 50.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Plank4" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(9430.0, 500.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank4"]
+shape = SubResource("Rect_110x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Plank4"]
+offset_left = -55.0
+offset_top = -10.0
+offset_right = 55.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Plank5" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(11340.0, 510.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank5"]
+shape = SubResource("Rect_110x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Plank5"]
+offset_left = -55.0
+offset_top = -10.0
+offset_right = 55.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Plank6" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(4400.0, 440.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank6"]
+shape = SubResource("Rect_160x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Plank6"]
 offset_left = -80.0
 offset_top = -10.0
 offset_right = 80.0
@@ -219,87 +328,224 @@ offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Cine1" type="Node2D" parent="."]
-position = Vector2(3300.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p3_leak"
-zone_width = 240.0
+[node name="Plank7" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(4640.0, 440.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank7"]
+shape = SubResource("Rect_160x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Plank7"]
+offset_left = -80.0
+offset_top = -10.0
+offset_right = 80.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Plank8" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(8200.0, 440.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank8"]
+shape = SubResource("Rect_160x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Plank8"]
+offset_left = -80.0
+offset_top = -10.0
+offset_right = 80.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Plank9" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(10200.0, 440.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank9"]
+shape = SubResource("Rect_160x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Plank9"]
+offset_left = -80.0
+offset_top = -10.0
+offset_right = 80.0
+offset_bottom = 10.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Block1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(10600.0, 531.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Block1"]
+shape = SubResource("Rect_120x50")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Block1"]
+offset_left = -60.0
+offset_top = -25.0
+offset_right = 60.0
+offset_bottom = 25.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="Rat1" parent="." instance=ExtResource("rat")]
-position = Vector2(900.0, 555.0)
+position = Vector2(1000.0, 555.0)
 
 [node name="Rat2" parent="." instance=ExtResource("rat")]
-position = Vector2(1200.0, 555.0)
+position = Vector2(1400.0, 555.0)
 
 [node name="Rat3" parent="." instance=ExtResource("rat")]
-position = Vector2(1500.0, 555.0)
+position = Vector2(1800.0, 555.0)
+
+[node name="Ceiling_rat1" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(1500.0, 292.0)
+
+[node name="Ceiling_rat2" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(1900.0, 292.0)
 
 [node name="Rat4" parent="." instance=ExtResource("rat")]
-position = Vector2(2200.0, 555.0)
+position = Vector2(2700.0, 555.0)
 
 [node name="Rat5" parent="." instance=ExtResource("rat")]
-position = Vector2(2400.0, 555.0)
+position = Vector2(2850.0, 555.0)
 
 [node name="Rat6" parent="." instance=ExtResource("rat")]
-position = Vector2(2600.0, 555.0)
+position = Vector2(3000.0, 555.0)
 
 [node name="Rat7" parent="." instance=ExtResource("rat")]
-position = Vector2(2800.0, 555.0)
+position = Vector2(3150.0, 555.0)
 
-[node name="Thief1" parent="." instance=ExtResource("thief")]
-position = Vector2(3100.0, 555.0)
+[node name="Ceiling_rat3" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(2900.0, 292.0)
+
+[node name="Ceiling_rat4" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(3250.0, 292.0)
 
 [node name="Checkpoint1" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(3400.0, 556)
 checkpoint_id = "checkpoint_4_03_a"
 
+[node name="Rat8" parent="." instance=ExtResource("rat")]
+position = Vector2(4300.0, 555.0)
+
+[node name="Rat9" parent="." instance=ExtResource("rat")]
+position = Vector2(4450.0, 555.0)
+
+[node name="Rat10" parent="." instance=ExtResource("rat")]
+position = Vector2(4600.0, 555.0)
+
+[node name="Rat11" parent="." instance=ExtResource("rat")]
+position = Vector2(4750.0, 555.0)
+
+[node name="Rat12" parent="." instance=ExtResource("rat")]
+position = Vector2(5000.0, 555.0)
+
+[node name="Ceiling_rat5" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(4500.0, 292.0)
+
+[node name="Ceiling_rat6" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(4850.0, 292.0)
+
+[node name="Ceiling_rat7" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(5200.0, 292.0)
+
 [node name="Arena1" parent="." instance=ExtResource("arena")]
-position = Vector2(4800.0, 556)
+position = Vector2(6200.0, 556)
 
 [node name="WaveManager" parent="Arena1" index="2"]
 enemy_scene = ExtResource("rat")
 round_sizes = Array[int]([8, 10, 12])
 
 [node name="Checkpoint2" parent="." instance=ExtResource("checkpoint")]
-position = Vector2(5600.0, 556)
+position = Vector2(7000.0, 556)
 checkpoint_id = "checkpoint_4_03_b"
 
-[node name="Thief2" parent="." groups=["arena_enemies"] instance=ExtResource("thief")]
-position = Vector2(6500.0, 555.0)
+[node name="Rat13" parent="." instance=ExtResource("rat")]
+position = Vector2(8000.0, 555.0)
 
-[node name="Thief3" parent="." groups=["arena_enemies"] instance=ExtResource("thief")]
-position = Vector2(6900.0, 555.0)
+[node name="Rat14" parent="." instance=ExtResource("rat")]
+position = Vector2(8100.0, 555.0)
 
-[node name="Thief4" parent="." groups=["arena_enemies"] instance=ExtResource("thief")]
-position = Vector2(7300.0, 555.0)
+[node name="Rat15" parent="." instance=ExtResource("rat")]
+position = Vector2(8300.0, 555.0)
 
-[node name="Rat8" parent="." groups=["arena_enemies"] instance=ExtResource("rat")]
-position = Vector2(6700.0, 555.0)
+[node name="Rat16" parent="." instance=ExtResource("rat")]
+position = Vector2(8500.0, 555.0)
 
-[node name="Rat9" parent="." groups=["arena_enemies"] instance=ExtResource("rat")]
-position = Vector2(7100.0, 555.0)
+[node name="Rat17" parent="." instance=ExtResource("rat")]
+position = Vector2(8600.0, 555.0)
 
-[node name="Props" type="Node2D" parent="."]
+[node name="Rat18" parent="." instance=ExtResource("rat")]
+position = Vector2(8900.0, 555.0)
 
-[node name="Deco01" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(1921.1, 556.0)
-collision_mask = 0
-script = ExtResource("world_prop")
-hitbox_shrink = Vector2(0.06, 0.08)
-size = Vector2(81.4, 63.2)
-art_path = "res://assets/art/world1/trash_bags.png"
-stretch_art = true
-flip_art = true
+[node name="Ceiling_rat8" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(8200.0, 292.0)
 
-[node name="Deco02" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(6286.2, 556.0)
-collision_mask = 0
-script = ExtResource("world_prop")
-hitbox_shrink = Vector2(0.06, 0.08)
-size = Vector2(73.4, 57.0)
-art_path = "res://assets/art/world1/trash_bags.png"
-stretch_art = true
-flip_art = true
+[node name="Ceiling_rat9" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(8550.0, 292.0)
+
+[node name="Ceiling_rat10" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(8800.0, 292.0)
+
+[node name="Ceiling_rat11" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(9100.0, 292.0)
+
+[node name="Checkpoint3" parent="." instance=ExtResource("checkpoint")]
+position = Vector2(9800.0, 556)
+checkpoint_id = "checkpoint_4_03_c"
+
+[node name="Rat19" parent="." instance=ExtResource("rat")]
+position = Vector2(10000.0, 555.0)
+
+[node name="Rat20" parent="." instance=ExtResource("rat")]
+position = Vector2(10150.0, 555.0)
+
+[node name="Rat21" parent="." instance=ExtResource("rat")]
+position = Vector2(10300.0, 555.0)
+
+[node name="Rat22" parent="." instance=ExtResource("rat")]
+position = Vector2(10450.0, 555.0)
+
+[node name="Rat23" parent="." instance=ExtResource("rat")]
+position = Vector2(10700.0, 555.0)
+
+[node name="Rat24" parent="." instance=ExtResource("rat")]
+position = Vector2(10850.0, 555.0)
+
+[node name="Rat25" parent="." instance=ExtResource("rat")]
+position = Vector2(11000.0, 555.0)
+
+[node name="Ceiling_rat12" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(10100.0, 292.0)
+
+[node name="Ceiling_rat13" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(10400.0, 292.0)
+
+[node name="Ceiling_rat14" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(10750.0, 292.0)
+
+[node name="Ceiling_rat15" parent="." instance=ExtResource("ceiling_rat")]
+position = Vector2(10950.0, 292.0)
+
+[node name="Arena2" parent="." instance=ExtResource("arena")]
+position = Vector2(12100.0, 556)
+
+[node name="WaveManager" parent="Arena2" index="2"]
+enemy_scene = ExtResource("rat")
+round_sizes = Array[int]([10, 12, 14])
+
+[node name="Checkpoint4" parent="." instance=ExtResource("checkpoint")]
+position = Vector2(12700.0, 556)
+checkpoint_id = "checkpoint_4_03_d"
+
+[node name="Arena3" parent="." instance=ExtResource("arena")]
+position = Vector2(14200.0, 556)
+
+[node name="WaveManager" parent="Arena3" index="2"]
+enemy_scene = ExtResource("rat")
+round_sizes = Array[int]([6, 1])
+elite_scene = ExtResource("giant_rat")
+elite_per_round = Array[int]([0, 1])
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
@@ -312,14 +558,14 @@ position = Vector2(160, 510)
 zoom = Vector2(1.1, 1.1)
 limit_left = 0
 limit_top = 60
-limit_right = 8000
+limit_right = 16000
 limit_bottom = 700
 position_smoothing_enabled = true
 script = ExtResource("camera")
 target = NodePath("../Player")
 
 [node name="ExitGate" parent="." instance=ExtResource("gate")]
-position = Vector2(7750, 556)
+position = Vector2(15750, 556)
 
 [node name="HUD" parent="." instance=ExtResource("hud")]
 
