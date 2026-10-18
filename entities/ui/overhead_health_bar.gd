@@ -7,6 +7,8 @@ extends Node2D
 ## Es UN solo nodo que dibuja todo con `_draw` (antes eran ~9 Controls por enemigo: contenedores, barras y
 ## etiquetas con su propio layout). Solo se redibuja cuando cambia la vida, el escudo o la armadura.
 
+const SettingsScript = preload("res://core/settings.gd")
+
 @export var display_name: String = ""
 @export var show_overhead_ui: bool = true
 @export var hide_when_full: bool = false
@@ -26,6 +28,11 @@ const NAME_OUTLINE: int = 3
 const NAME_COLOR: Color = Color(0.95, 0.96, 1.0, 1.0)
 const NAME_OUTLINE_COLOR: Color = Color(0.0, 0.0, 0.0, 1.0)
 const BADGE_TEXT_COLOR: Color = Color(0.85, 0.9, 1.0, 1.0)
+
+## Opción de ajustes `enemy_health_bars`: si está apagada los enemigos nuevos no crean la barra.
+static func bars_enabled() -> bool:
+	return SettingsScript.get_bool("enemy_health_bars")
+
 
 var target_health_component: HealthComponent = null
 var _current_health: float = 0.0

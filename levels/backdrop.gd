@@ -19,6 +19,9 @@ var tone: Color = Color(0.5, 0.46, 0.48, 1.0)
 ## Capas de paralaje, de atrás hacia adelante: [{"texture": Texture2D, "depth": float}, ...].
 ## depth 0 = la capa no se mueve; 1 = se mueve como el dibujo de una imagen fija. Vacío = imagen fija.
 var layers: Array = []
+## Cuánto se sube todo el dibujo (fracción del alto de la pantalla). Lo que queda libre abajo lo tapa el suelo del
+## nivel; con más de ~0.15 se vería el color de base entre el fondo y el piso en los huecos entre edificios.
+var lift: float = 0.0
 
 ## Un TextureRect por capa (o uno solo con la imagen fija), y su profundidad.
 var _rects: Array[TextureRect] = []
@@ -66,7 +69,7 @@ func _place(view: Vector2, sway: Vector2) -> void:
 		var depth: float = _depths[i]
 		var excess: Vector2 = rect.size - view
 		var x: float = -excess.x * (0.5 + 0.5 * sway.x * depth)
-		var y: float = -excess.y * (ANCHOR_Y + SWAY_Y * sway.y * depth)
+		var y: float = -excess.y * (ANCHOR_Y + SWAY_Y * sway.y * depth) - view.y * lift
 		rect.position = Vector2(x, y)
 
 

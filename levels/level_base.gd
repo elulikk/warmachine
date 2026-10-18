@@ -8,11 +8,11 @@ const LevelSkinScript = preload("res://levels/level_skin.gd")
 const CityAmbienceScript = preload("res://levels/city_ambience.gd")
 ## Exteriores del presente (P-1, P-2, P-4, P-5, P-8). Los interiores (alcantarilla, hotel, discoteca) no
 ## llevan tráfico ni gente de la calle, y el 4-9 y 4-10 son otro contenido (Ciudadela Blindada).
-const CITY_EXTERIOR_IDS: Array[String] = ["4_01", "4_02", "4_04", "4_05", "4_08"]
+const CITY_EXTERIOR_IDS: Array[String] = ["1_01", "1_02", "1_04", "1_05", "1_08"]
 ## Prefijo del flag del slot que marca un arma garantizada ya entregada al personaje.
 const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 
-@export var level_id: String = "1_01"
+@export var level_id: String = "4_01"
 @export var level_title: String = "Sector 01"
 @export var chapter_number: int = 1
 ## Fondo pintado propio del nivel (archivo dentro de `assets/art/bg/`); vacío = el del capítulo.
@@ -54,6 +54,7 @@ var initial_spawn_position: Vector2 = Vector2(160, 545)
 
 
 func _ready() -> void:
+	_remove_pickup_pedestals()
 	LevelSkinScript.apply(self, chapter_number, backdrop_file)
 	GameFeel.music_start_level(self)
 	if base_music != &"explore" and FileAccess.file_exists("res://ost/%s.ogg" % String(base_music)):
@@ -95,12 +96,38 @@ func _ready() -> void:
 	if test_loadout_enabled:
 		_apply_test_loadout()
 	SaveManager.set_respawn_point(initial_spawn_position)
+	_apply_resume_point()
 
 	# Conectar ExitGate con el siguiente nivel si existe
 	if exit_gate != null and not next_level_path.is_empty():
 		exit_gate.set_meta("next_level_path", next_level_path)
 	
 	print("[%s] %s inicializado. Spawn: %s" % [level_id, level_title, initial_spawn_position])
+
+
+## Los pedestales de las armas del suelo frenaban al jugador: se quitan (el arma queda flotando donde estaba).
+## Antes del revestido para que `LevelSkin` no los vea.
+func _remove_pickup_pedestals() -> void:
+	var environment: Node = get_node_or_null("Environment")
+	if environment == null:
+		return
+	for child: Node in environment.get_children():
+		if child is StaticBody2D and child.name.begins_with("Pedestal"):
+			environment.remove_child(child)
+			child.queue_free()
+
+
+## Si la partida se cargó desde el menú con un checkpoint de este sector, el jugador aparece ahí (una sola vez).
+func _apply_resume_point() -> void:
+	var sm: SaveManager = SaveManager.get_instance()
+	if sm == null or not sm.resume_pending:
+		return
+	sm.resume_pending = false
+	if player == null or sm.resume_level_path != scene_file_path:
+		return
+	player.global_position = sm.resume_position
+	SaveManager.set_respawn_point(sm.resume_position)
+	print("[%s] Partida reanudada en el último checkpoint: %s" % [level_id, sm.resume_position])
 
 
 ## Agrega al arsenal las armas de `guaranteed_weapon_paths`, una sola vez por personaje.

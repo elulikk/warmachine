@@ -45,7 +45,7 @@ trap restore EXIT
 
 echo ">> Escena: $SCENE  (cuadros: $FRAMES, timeout: ${LIMIT}s)"
 cd "$PROJECT" || exit 2
-timeout "$LIMIT" "$GODOT" --path . "$SCENE" --quit-after "$FRAMES" > "$OUTLOG" 2>&1
+timeout "$LIMIT" "$GODOT" --audio-driver Dummy --path . "$SCENE" --quit-after "$FRAMES" > "$OUTLOG" 2>&1
 CODE=$?
 
 if [ "$CODE" -eq 124 ]; then

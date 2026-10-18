@@ -216,6 +216,7 @@ const ALIASES: Dictionary = {
 	"scythe": {"base": "iron_sword", "pose": {"support": Vector2(115.0, 59.0)}, "hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -14.0}},
 	"demon_sword": {"base": "iron_sword", "pose": {"support": Vector2(10.0, 36.0)}},
 	"abyss_axe": {"base": "heavy_hammer", "pose": {"support": Vector2(108.0, 58.0)}, "impact": Vector2(228.0, 58.0)},
+	"mjolnir": {"base": "heavy_hammer", "pose": {"support": Vector2(120.0, 72.0)}, "impact": Vector2(215.0, 72.0)},
 }
 
 static var _alias_cache: Dictionary = {}

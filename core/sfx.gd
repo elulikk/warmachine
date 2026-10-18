@@ -29,6 +29,7 @@ const MIN_INTERVAL_MSEC: Dictionary = {
 	&"shot_flame": 120,
 	&"fire_ignite": 260,
 	&"laser_beam": 80,
+	&"chain_lightning": 45,
 	&"shot_auto": 40,
 	&"exp": 45,
 	&"coin": 22,
@@ -772,6 +773,13 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_l(0.0, 0.1, 1500.0, 900.0, saw, 0.3, 1.2, 0.5, 0.0, 0.0, 3500.0),
 				_n(0.0, 0.08, 0.25, 1.4, 6000.0, 2500.0),
 			], 8, 1, 1.0)
+		&"chain_lightning":
+			# Chasquido eléctrico: crujido agudo con un golpe seco
+			return _render(0.22, [
+				_l(0.0, 0.18, 2400.0, 500.0, saw, 0.35, 1.3, 0.5, 0.0, 0.0, 4500.0),
+				_n(0.0, 0.16, 0.5, 1.6, 8000.0, 1500.0),
+				_s(0.0, 0.08, 140.0, 60.0, 0.5, 1.8),
+			], 7, 1, 1.2)
 		&"cloak_on":
 			# Tela que se abre / roce: soplido filtrado ascendente
 			return _render(0.35, [

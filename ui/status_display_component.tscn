@@ -1,50 +1,7 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://ui/status_display_component.gd" id="1_disp"]
-[ext_resource type="Texture2D" path="res://assets/art/status/status_fire.png" id="2_fire"]
-[ext_resource type="Texture2D" path="res://assets/art/status/status_freeze.png" id="3_freeze"]
 
 [node name="StatusDisplayComponent" type="Node2D"]
 position = Vector2(0, -44)
 script = ExtResource("1_disp")
-
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-custom_minimum_size = Vector2(60, 14)
-offset_left = -30.0
-offset_top = -7.0
-offset_right = 30.0
-offset_bottom = 7.0
-alignment = 1
-theme_override_constants/separation = 4
-
-[node name="FireBadge" type="HBoxContainer" parent="HBoxContainer"]
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="Icon" type="TextureRect" parent="HBoxContainer/FireBadge"]
-custom_minimum_size = Vector2(14, 14)
-layout_mode = 2
-texture = ExtResource("2_fire")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="HBoxContainer/FireBadge"]
-layout_mode = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 9
-text = "x1"
-vertical_alignment = 1
-
-[node name="IceBadge" type="HBoxContainer" parent="HBoxContainer"]
-visible = false
-layout_mode = 2
-theme_override_constants/separation = 2
-
-[node name="Icon" type="TextureRect" parent="HBoxContainer/IceBadge"]
-custom_minimum_size = Vector2(14, 14)
-layout_mode = 2
-texture = ExtResource("3_freeze")
-expand_mode = 1
-stretch_mode = 5

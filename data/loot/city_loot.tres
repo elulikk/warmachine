@@ -1,28 +1,21 @@
-[gd_resource type="Resource" script_class="LootTable" format=3]
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://dwphomcsvbdif"]
 
-[ext_resource type="Script" path="res://core/loot/loot_table.gd" id="1_table"]
-[ext_resource type="Script" path="res://core/loot/loot_entry.gd" id="2_entry"]
+[ext_resource type="Script" uid="uid://bxs4s2lacu8s2" path="res://core/loot/loot_table.gd" id="1_table"]
+[ext_resource type="Script" uid="uid://b8h3jx4b3lbev" path="res://core/loot/loot_entry.gd" id="2_entry"]
 
 [sub_resource type="Resource" id="Resource_0"]
 script = ExtResource("2_entry")
-item_type = "COIN"
-drop_chance = 1.0
-min_amount = 1
 max_amount = 3
 
 [sub_resource type="Resource" id="Resource_1"]
 script = ExtResource("2_entry")
 item_type = "AMMO"
 drop_chance = 0.45
-min_amount = 1
-max_amount = 1
 
 [sub_resource type="Resource" id="Resource_2"]
 script = ExtResource("2_entry")
 item_type = "HEALTH"
 drop_chance = 0.08
-min_amount = 1
-max_amount = 1
 
 [resource]
 script = ExtResource("1_table")

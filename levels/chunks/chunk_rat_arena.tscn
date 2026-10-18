@@ -1,0 +1,38 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/chunks/level_chunk.gd" id="chunk"]
+[ext_resource type="PackedScene" path="res://entities/enemies/city_rat.tscn" id="rat"]
+[ext_resource type="PackedScene" path="res://entities/world/arena.tscn" id="arena"]
+
+[sub_resource type="RectangleShape2D" id="R_1300x74"]
+size = Vector2(1300, 74)
+
+[node name="Chunk" type="Node2D"]
+script = ExtResource("chunk")
+width = 1300.0
+chunk_name = "ARENA DE RATAS"
+
+[node name="Geometry" type="Node2D" parent="."]
+
+[node name="Floor" type="StaticBody2D" parent="Geometry" groups=["world"]]
+position = Vector2(650.0, 593.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Floor"]
+shape = SubResource("R_1300x74")
+
+[node name="ColorRect" type="ColorRect" parent="Geometry/Floor"]
+offset_left = -650.0
+offset_top = -37.0
+offset_right = 650.0
+offset_bottom = 37.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Arena" parent="." instance=ExtResource("arena")]
+position = Vector2(650.0, 556)
+
+[node name="WaveManager" parent="Arena" index="2"]
+enemy_scene = ExtResource("rat")
+round_sizes = Array[int]([4, 6])
+

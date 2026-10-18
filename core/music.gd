@@ -27,6 +27,8 @@ const TRACKS: Dictionary = {
 	&"boss": {"path": "res://ost/boss.ogg", "loop": true, "db": 0.0},
 	# Discoteca del presente (4-7): el usuario pone el tema después; hasta entonces suena la exploración
 	&"club": {"path": "res://ost/club.ogg", "loop": true, "db": 0.0},
+	# Nivel 1-1 (Flow Music, "Monotonous Intro Style"). +1 dB para igualar la sonoridad de explore.ogg
+	&"nivel1": {"path": "res://ost/nivel1.ogg", "loop": true, "db": 1.0},
 	&"victory": {"path": "res://ost/victory.ogg", "loop": false, "db": 0.0},
 	&"death": {"path": "res://ost/death.ogg", "loop": false, "db": 0.0},
 }

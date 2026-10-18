@@ -101,6 +101,12 @@ signal runes_changed
 @export var creates_ground_shockwave: bool = false
 @export var shockwave_scene: PackedScene = null
 
+## Rayo en cadena (Mjolnir): al conectar el golpe melee, un rayo salta entre enemigos cercanos esta cantidad de
+## veces (0 = sin rayo). Cada salto hace `chain_lightning_damage_mult` x el daño del golpe y alcanza `chain_lightning_range` px.
+@export var chain_lightning_bounces: int = 0
+@export var chain_lightning_damage_mult: float = 0.5
+@export var chain_lightning_range: float = 260.0
+
 @export_group("Balística y Combate")
 ## Daño base que infligirá cada proyectil disparado.
 @export var damage: float = 20.0

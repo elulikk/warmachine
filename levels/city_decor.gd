@@ -28,9 +28,8 @@ const HANG_TOP: float = -40.0
 
 ## Por sector: lluvia, autos, relámpagos y objetos de suelo [nombre, peso, alto en juego (px)].
 const SECTORS: Dictionary = {
-	"1_01": {"rain": true, "cars": true, "props": [
-		["street_lamp", 3, 120.0], ["hydrant", 2, 42.0], ["mailbox", 2, 52.0], ["dumpster", 2, 50.0], ["traffic_light", 1, 118.0],
-		["bus_stop", 1, 100.0], ["phone_booth", 1, 120.0], ["trash_can", 3, 38.0]]},
+	# 1-01: calle limpia, sin objetos de suelo (tutorial del cuchillo y el asaltante)
+	"1_01": {"rain": true, "cars": true, "props": []},
 	"1_02": {"rain": true, "cars": false, "props": [
 		["fire_ladder", 1, 150.0], ["trash_bags", 3, 44.0], ["wet_boxes", 3, 48.0], ["steam_grate", 2, 60.0], ["rust_pipe", 1, 40.0],
 		["barrel", 2, 52.0], ["dumpster", 2, 50.0], ["street_lamp", 1, 120.0]]},

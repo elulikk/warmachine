@@ -48,11 +48,11 @@ static func burst(ctx: Node, pos: Vector2) -> void:
 
 
 ## Lluvia de trozos, salpicaduras y charcos del final de `DamageFx`.
-static func gore(ctx: Node, pos: Vector2, mechanical: bool) -> void:
+static func gore(ctx: Node, pos: Vector2, mechanical: bool, size_scale: float = 1.0, amount: float = 1.0) -> void:
 	var queue: Node = _get_queue(ctx)
 	if queue == null:
 		return
-	queue.call("_push_gore", {"kind": "gore", "pos": pos, "mechanical": mechanical})
+	queue.call("_push_gore", {"kind": "gore", "pos": pos, "mechanical": mechanical, "size": size_scale, "amount": amount})
 
 
 ## Una pieza de botín (`LootDrop`). `pos` es la posición del enemigo.
@@ -143,14 +143,17 @@ func _run_gore(entry: Dictionary) -> void:
 		"gore":
 			var mechanical: bool = bool(entry["mechanical"])
 			var host: Node2D = _host()
-			BloodFx.gibs(host, pos, 6, mechanical, 1.0)
-			BloodFx.spray(host, pos, Vector2.UP, 60.0, mechanical)
-			BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, mechanical)
-			BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, mechanical)
-			BloodFx.spray_sprite(host, pos, Vector2.UP, 90.0)
-			BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-30.0)), 70.0)
-			BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-150.0)), 70.0)
-			BloodFx.stains(host, pos, Vector2.ZERO, 6, 1.9, mechanical)
+			var size_scale: float = float(entry.get("size", 1.0))
+			var amount: float = float(entry.get("amount", 1.0))
+			BloodFx.gibs(host, pos, maxi(1, roundi(6.0 * amount)), mechanical, 1.0, size_scale)
+			BloodFx.spray(host, pos, Vector2.UP, 60.0 * amount, mechanical)
+			if amount >= 0.7:
+				BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, mechanical)
+				BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, mechanical)
+				BloodFx.spray_sprite(host, pos, Vector2.UP, 90.0)
+				BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-30.0)), 70.0)
+				BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-150.0)), 70.0)
+			BloodFx.stains(host, pos, Vector2.ZERO, maxi(1, roundi(6.0 * amount)), lerpf(0.9, 1.9, amount), mechanical)
 
 
 ## BloodFx necesita un Node2D en el árbol para ubicar el contenedor y el espacio de física.

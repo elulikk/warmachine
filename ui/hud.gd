@@ -313,7 +313,11 @@ func _on_ammo_changed(current: int, max_mag: int) -> void:
 			ammo_label.text = "RECARGANDO..."
 			ammo_label.modulate = Color(1.0, 0.4, 0.3, 1.0)
 		else:
-			ammo_label.text = "%d / %d" % [current, max_mag]
+			var reserve_text: String = ""
+			var player_node: Player = get_tree().get_first_node_in_group(&"player") as Player
+			if player_node != null and player_node.weapon_manager != null:
+				reserve_text = "  +%d" % player_node.weapon_manager.get_reserve(_current_bound_weapon)
+			ammo_label.text = "%d / %d%s" % [current, max_mag, reserve_text]
 			ammo_label.modulate = Color(1.0, 0.85, 0.3, 1.0)
 
 

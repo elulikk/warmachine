@@ -62,7 +62,7 @@ const MOB_SPLIT: Dictionary = {
 	"runner": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 7.0, "lean": 0.34, "step": 3.4},
 	"brute": {"waist": 0.63, "overlap": 9.0, "scale": 1.25, "attack": 0.58, "lunge": 8.0, "lean": 0.28, "step": 2.6},
 	"sentinel": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.42, "lunge": 9.0, "lean": 0.18, "step": 2.8},
-	# Mundo 4 (El Presente): una ilustración por enemigo (`MOBS` de armor_art.gd), misma marcha partida
+	# Mundo 1 (El Presente): una ilustración por enemigo (`MOBS` de armor_art.gd), misma marcha partida
 	"thief": {"waist": 0.60, "overlap": 9.0, "scale": 1.0, "attack": 0.30, "lunge": 7.0, "lean": 0.34, "step": 3.4},
 	"thug": {"waist": 0.63, "overlap": 9.0, "scale": 1.0, "attack": 0.58, "lunge": 8.0, "lean": 0.28, "step": 2.6},
 	"bouncer": {"waist": 0.63, "overlap": 9.0, "scale": 1.0, "attack": 0.58, "lunge": 8.0, "lean": 0.24, "step": 2.6},
@@ -136,7 +136,7 @@ func _ready() -> void:
 		"drone":
 			_build_drone()
 		_:
-			# Mobs sin caso propio (mundo 4: rata, ladrón, matón...): ilustración en `MOBS`
+			# Mobs sin caso propio (mundo 1: rata, ladrón, matón...): ilustración en `MOBS`
 			_build_mob(kind)
 
 

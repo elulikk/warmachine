@@ -576,6 +576,9 @@ func _on_stats_health_changed(cur: float, max_hp: float) -> void:
 
 func _on_level_gained(_new_level: int) -> void:
 	play_level_up_aura()
+	# Subir de nivel recarga todas las armas (la vida ya la restaura StatsManager)
+	if weapon_manager != null:
+		weapon_manager.refill_all_ammo()
 
 
 ## Muestra un aura radiante alrededor del personaje (estilo MU Online / WoW) al subir de nivel.

@@ -34,12 +34,14 @@ Leer `PROJECT_CONTEXT.md` secciones 15 y 16 (`perf_monitor.gd`, Sala de Estrés)
 ```bash
 for cap in 50 100 200; do
   for run in 1 2 3; do
-    BENCH_CAP=$cap "/c/GODOT/Godot_v4.7.2-stable_win64_console.exe" --path . res://_x.tscn --quit-after 100000 2>&1 | grep "^XT"
+    BENCH_CAP=$cap "/c/GODOT/Godot_v4.7.2-stable_win64_console.exe" --audio-driver Dummy --path . res://_x.tscn --quit-after 100000 2>&1 | grep "^XT"
   done
 done
 ```
 
 El script se cierra solo con `get_tree().quit()` al terminar los segundos; `--quit-after` grande es solo un tope. Usar `timeout 120` delante si se prefiere.
+
+**Plantilla verificada** el 2026-10-13: `BENCH_SECONDS=3 BENCH_CAP=30` → `XT fps_prom=391.4 fps_min=32.5 fps_p1=60.0` (RTX 3060 Ti). Compila y se cierra sola; no reprobarla. Las variables sin valor salen vacías en la línea `XT` (usa los defaults).
 
 ## Bisección con variables de entorno
 

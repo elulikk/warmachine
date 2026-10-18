@@ -257,6 +257,8 @@ func _build_video() -> Control:
 		func(v: float) -> void: _put("particles", v)))
 	_row(page, "Estilo del fuego y del ácido", _option(["Sprites (liviano)", "Partículas", "Shaders"] as Array[String],
 		SettingsScript.get_int("fire_style"), func(i: int) -> void: _put("fire_style", i)))
+	_row(page, "Barras de vida de enemigos (al empezar el sector)", _check(SettingsScript.get_bool("enemy_health_bars"),
+		func(on: bool) -> void: _put("enemy_health_bars", on)))
 	_row(page, "Enemigos lejanos como sprite", _check(SettingsScript.get_bool("enemy_lod"),
 		func(on: bool) -> void: _put("enemy_lod", on)))
 	for entry: Array in [["fx_vignette", "Viñeta"], ["fx_grain", "Grano de película"], ["fx_bloom", "Resplandor (bloom)"]]:

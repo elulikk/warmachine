@@ -7,6 +7,8 @@ description: Verificar que WARMACHINE compila y arranca una escena sin errores d
 
 El proyecto **no tiene tests** (regla del `PROJECT_CONTEXT.md`: no se escriben `test_*.gd`). La única verificación automática es lanzar una escena real unos cuadros y leer los errores. La jugabilidad la valida el usuario con `run.bat`.
 
+**Cuándo:** una vez al **final** de la tanda, con la escena que toca lo cambiado (y el campamento si tocaste algo global), no después de cada edición. Si falla, arreglar y volver a correr solo esa escena.
+
 ## Uso rápido
 
 ```bash
@@ -16,7 +18,7 @@ bash .claude/skills/smoke-test/scripts/smoke.sh <escena> [cuadros=90] [timeout_s
 Ejemplos:
 
 ```bash
-bash .claude/skills/smoke-test/scripts/smoke.sh res://levels/chapter_4/level_4_02.tscn
+bash .claude/skills/smoke-test/scripts/smoke.sh res://levels/chapter_1/level_1_02.tscn
 bash .claude/skills/smoke-test/scripts/smoke.sh res://scenes/hub/base_camp.tscn 120
 bash .claude/skills/smoke-test/scripts/smoke.sh res://core/test_level.tscn
 ```
@@ -24,7 +26,7 @@ bash .claude/skills/smoke-test/scripts/smoke.sh res://core/test_level.tscn
 El script, en este orden:
 
 1. **Respalda** `saves/` y `settings.cfg` en una carpeta temporal **nueva** (nunca reutiliza un respaldo viejo: el usuario juega entre medio y se le pisaría el progreso).
-2. Corre Godot con `timeout` (`C:\GODOT\Godot_v4.7.2-stable_win64_console.exe --path . <escena> --quit-after N`).
+2. Corre Godot con `timeout` (`C:\GODOT\Godot_v4.7.2-stable_win64_console.exe --audio-driver Dummy --path . <escena> --quit-after N`; siempre sin sonido).
 3. **Restaura** saves y settings, pase lo que pase (trap).
 4. Imprime solo `SCRIPT ERROR`, `ERROR:`, `Parse Error`, `Could not resolve class` (sin el ruido conocido) y termina con `RESULTADO: OK` o `RESULTADO: FALLÓ`.
 5. Avisa si quedó algún Godot abierto.
@@ -41,7 +43,7 @@ Qué escena elegir:
 ## Ver el resultado (cuadros)
 
 ```bash
-"/c/GODOT/Godot_v4.7.2-stable_win64_console.exe" --path . <escena> --write-movie "<scratchpad>/f.png" --fixed-fps 30 --quit-after 150
+"/c/GODOT/Godot_v4.7.2-stable_win64_console.exe" --audio-driver Dummy --path . <escena> --write-movie "<scratchpad>/f.png" --fixed-fps 30 --quit-after 150
 ```
 
 Mirar un cuadro (p. ej. `f00000120.png`) con Read. Respaldar los saves antes, igual que arriba.
@@ -72,6 +74,15 @@ Trucos de input real:
 - "2 resources still in use at exit" al salir de un nivel es previo (cachés estáticos de `Sfx`): no es un error nuevo.
 - Assets nuevos (webp/png/jpg) necesitan importarse una vez: `Godot --headless --path . --import`. En runtime cargarlos con `Art.tex(path)`.
 - **Los logs rotan:** cada lanzamiento pisa `logs/godot.log` (Godot guarda 5). Si el usuario pidió "revisá el log", leelo **antes** de correr nada. Ubicación: `C:\Users\Usuario\AppData\Roaming\Godot\app_userdata\WARMACHINE\logs\godot.log`; el run anterior es `godot<fecha>T<hora>.log`.
+
+## Ya probado: no repetir
+
+- **`smoke.sh` verificado** el 2026-10-13 con `level_1_01.tscn` (30 cuadros): `RESULTADO: OK`, saves restaurados. No hace falta reprobar el script; si falla, el problema está en la escena.
+- **Saves pisados (2026-10-11):** se perdieron ~280 monedas por restaurar un respaldo viejo. Por eso el script respalda cada vez; no copiar saves a mano.
+- **`--script` y `--check-only`** ya se probaron y no sirven en este proyecto (autoloads). No volver a intentarlo.
+- **Clic que no llega a `_unhandled_input`:** antes de tocar la lógica de armas, buscar un `Control` a pantalla completa con `mouse_filter = STOP` (pasó con el fondo de los niveles; `level_skin.gd::_install_backdrop` lo deja en IGNORE).
+- **Ediciones grandes:** los heredocs largos de Python en la herramienta Bash fallan con "unexpected EOF" (comillas, backticks, tildes). Escribir el `.py` con Write y correrlo; respetar CRLF/LF de cada archivo (`newline=''`).
+- **`Write` en una carpeta nueva** puede fallar sin mensaje: crear la carpeta antes con `mkdir -p`.
 
 ## Al terminar
 

@@ -14,6 +14,7 @@ signal reload_completed
 ## La mano secundaria cambió de arma (o quedó libre). Lo emite el administrador de la mano principal.
 signal offhand_changed(weapon: WeaponData)
 
+const ChainLightning = preload("res://combat/chain_lightning.gd")
 const RELOAD_INDICATOR_SCRIPT: GDScript = preload("res://ui/reload_indicator.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
@@ -21,6 +22,8 @@ const ShotFx = preload("res://combat/shot_fx.gd")
 const FireVfx = preload("res://combat/fire_vfx.gd")
 const ReloadDebris = preload("res://combat/reload_debris.gd")
 const SettingsScript = preload("res://core/settings.gd")
+## Segundos que tarda la reserva en recuperar un cargador completo del arma.
+const RESERVE_SECONDS_PER_MAGAZINE: float = 10.0
 
 ## Mano que maneja este nodo. El `WeaponManager` del jugador es la mano principal (clic izquierdo) y crea por código
 ## un segundo `WeaponManager` hijo, `offhand`, para la mano secundaria (clic derecho, acción `attack_secondary`).
@@ -84,6 +87,12 @@ var free_ammo_active: bool = false
 ## mientras esté activo no se dispara ni se recarga.
 var hand_locked: bool = false
 var weapon_magazines: Dictionary[WeaponData, int] = {}
+## Munición de reserva por arma (balas fuera del cargador). Las recargas la consumen y se rellena sola con el
+## tiempo (`RESERVE_SECONDS_PER_MAGAZINE`): es "infinita" pero con tope, así no se puede abusar del arma.
+var weapon_reserves: Dictionary[WeaponData, int] = {}
+var _reserve_progress: Dictionary[WeaponData, float] = {}
+## Tope de reserva = tantos cargadores completos del arma (más adelante se puede mejorar).
+var reserve_magazines: int = 6
 var player: Player = null
 var projectile_pool: ProjectilePool = null
 
@@ -172,6 +181,7 @@ func _create_offhand_manager() -> void:
 	off.player = player
 	off.weapon_pivot = weapon_pivot
 	off.weapon_magazines = weapon_magazines
+	off.weapon_reserves = weapon_reserves
 	off.infinite_ammo = infinite_ammo
 	off.free_ammo_active = free_ammo_active
 	offhand = off
@@ -343,6 +353,7 @@ func _process(delta: float) -> void:
 			finish_reload()
 	
 	if hand == Hand.MAIN:
+		_regen_reserves(delta)
 		_handle_debug_input()
 		_validate_offhand()
 	else:
@@ -393,6 +404,63 @@ func set_weapon_ammo(weapon: WeaponData, amount: int) -> void:
 		ammo_changed.emit(clamped_amount, max_mag)
 
 
+## Tope de la reserva de un arma con cargador (0 si no usa munición).
+func get_reserve_max(weapon: WeaponData) -> int:
+	if weapon == null or weapon.weapon_type == WeaponData.WeaponType.MELEE or weapon.magazine_size <= 0:
+		return 0
+	return weapon.magazine_size * reserve_magazines
+
+
+## Balas de reserva del arma (la primera vez arranca llena).
+func get_reserve(weapon: WeaponData) -> int:
+	if weapon == null:
+		return 0
+	if not weapon_reserves.has(weapon):
+		weapon_reserves[weapon] = get_reserve_max(weapon)
+	return weapon_reserves[weapon]
+
+
+func set_reserve(weapon: WeaponData, amount: int) -> void:
+	if weapon == null:
+		return
+	weapon_reserves[weapon] = clampi(amount, 0, get_reserve_max(weapon))
+	if weapon == current_weapon:
+		ammo_changed.emit(get_weapon_ammo(weapon), weapon.magazine_size)
+
+
+## Cargador y reserva de todas las armas al máximo (al subir de nivel).
+func refill_all_ammo() -> void:
+	for weapon: WeaponData in weapons:
+		if weapon == null or weapon.magazine_size <= 0 or weapon.weapon_type == WeaponData.WeaponType.MELEE:
+			continue
+		weapon_magazines[weapon] = weapon.magazine_size
+		weapon_reserves[weapon] = get_reserve_max(weapon)
+		_reserve_progress[weapon] = 0.0
+	if current_weapon != null and current_weapon.magazine_size > 0:
+		ammo_changed.emit(get_weapon_ammo(current_weapon), current_weapon.magazine_size)
+	if offhand != null and offhand.current_weapon != null:
+		offhand.ammo_changed.emit(get_weapon_ammo(offhand.current_weapon), offhand.current_weapon.magazine_size)
+
+
+## La reserva de cada arma sube sola con el tiempo hasta su tope.
+func _regen_reserves(delta: float) -> void:
+	for weapon: WeaponData in weapons:
+		var cap: int = get_reserve_max(weapon)
+		if cap <= 0:
+			continue
+		var reserve: int = get_reserve(weapon)
+		if reserve >= cap:
+			_reserve_progress[weapon] = 0.0
+			continue
+		var progress: float = float(_reserve_progress.get(weapon, 0.0)) + delta * float(weapon.magazine_size) / RESERVE_SECONDS_PER_MAGAZINE
+		var gained: int = int(progress)
+		_reserve_progress[weapon] = progress - float(gained)
+		if gained > 0:
+			weapon_reserves[weapon] = mini(cap, reserve + gained)
+			if weapon == current_weapon:
+				ammo_changed.emit(get_weapon_ammo(weapon), weapon.magazine_size)
+
+
 ## Inicia el proceso de recarga si el arma tiene cargador y no está llena.
 func start_reload() -> void:
 	if current_weapon == null or is_reloading or free_ammo_active:
@@ -402,6 +470,9 @@ func start_reload() -> void:
 	
 	var cur_ammo: int = get_weapon_ammo(current_weapon)
 	if cur_ammo >= current_weapon.magazine_size:
+		return
+	# Sin balas de reserva no hay recarga (infinite_ammo es el atajo de depuración)
+	if not infinite_ammo and get_reserve(current_weapon) <= 0:
 		return
 	
 	is_reloading = true
@@ -439,7 +510,11 @@ func finish_reload() -> void:
 	is_reloading = false
 	reload_timer = 0.0
 	if current_weapon != null and current_weapon.magazine_size > 0:
-		set_weapon_ammo(current_weapon, current_weapon.magazine_size)
+		var missing: int = current_weapon.magazine_size - get_weapon_ammo(current_weapon)
+		var taken: int = missing if infinite_ammo else mini(missing, get_reserve(current_weapon))
+		if not infinite_ammo:
+			weapon_reserves[current_weapon] = get_reserve(current_weapon) - taken
+		set_weapon_ammo(current_weapon, get_weapon_ammo(current_weapon) + taken)
 		reload_completed.emit()
 		GameFeel.sfx(self, &"reload_done", Vector2.INF, -3.0)
 		weapon_reloaded.emit(current_weapon)
@@ -714,6 +789,10 @@ func _melee_strike(visual_done: bool) -> void:
 		current_weapon.swing_duration,
 		aim_dir
 	)
+	# Rayo en cadena (Mjolnir): el primer enemigo golpeado del tajo lanza el rayo que rebota entre los cercanos
+	if current_weapon.chain_lightning_bounces > 0:
+		melee_instance.target_hit.connect(_on_chain_strike.bind(current_weapon, final_damage), CONNECT_ONE_SHOT)
+
 	GameFeel.sfx_weapon_swing(self, current_weapon)
 
 	# El arma en mano hace el tajo con su propia estela; el rectángulo blanco del hitbox se oculta
@@ -743,6 +822,14 @@ func _melee_strike(visual_done: bool) -> void:
 	if player != null and current_weapon.recoil_force > 0.0 and not player.knockback_immune:
 		player.velocity -= aim_dir * current_weapon.recoil_force
 	
+
+
+## Golpe melee conectado con un arma de rayo en cadena: dispara la cadena desde el enemigo alcanzado.
+func _on_chain_strike(target: Node, weapon: WeaponData, hit_damage: float) -> void:
+	if not (target is Node2D) or not is_instance_valid(target) or player == null:
+		return
+	ChainLightning.spawn(self, target as Node2D, player, hit_damage * weapon.chain_lightning_damage_mult,
+			weapon.chain_lightning_bounces, weapon.chain_lightning_range)
 
 
 ## Genera una onda de expansión física proyectada sobre el suelo más cercano.

@@ -665,7 +665,7 @@ static func _weapon_kind(weapon: WeaponData) -> String:
 			return "sword"
 		"katana":
 			return "katana"
-		"heavy_hammer", "abyss_axe":
+		"heavy_hammer", "abyss_axe", "mjolnir":
 			return "hammer"
 		"pistol", "pistol_9mm", "desert_eagle", "lava_pistol":
 			return "pistol"

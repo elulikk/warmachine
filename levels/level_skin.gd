@@ -89,7 +89,7 @@ const CHAPTER_THEMES: Dictionary = {
 		"sectors": {
 			# `backdrop` es la imagen fija (la base de Flow, de la que salieron las capas). `backdrop_layers` es el paralaje:
 			# [archivo en assets/art/bg/parallax/, profundidad], de atrás hacia adelante
-			"1_01": {"ground_strip": "city_floor_strip.png", "ground_fill": "city_floor_fill.png", "backdrop": "city_night_base.jpg", "backdrop_lift": 0.12, "backdrop_layers": [["city_parallax_sky.webp", 0.15],
+			"1_01": {"ground_strip_lift": 0.0, "ground_strip": "city_floor_strip.png", "ground_fill": "city_floor_fill.png", "backdrop": "city_night_base.jpg", "backdrop_lift": 0.12, "backdrop_layers": [["city_parallax_sky.webp", 0.15],
 				["city_parallax_far.webp", 0.35], ["city_parallax_mid.webp", 0.65], ["city_parallax_street.webp", 1.0]]},
 			"1_02": {"backdrop": "city_alley.jpg"},
 			"1_03": {"edge": "edge_sewer.png", "ground": "sewer_stone.png", "stone": "sewer_stone.png", "ground_tone": Color(0.8, 0.9, 0.85, 1.0),
@@ -312,6 +312,8 @@ static func _build_ground_strip(visual: Node2D, dir: String, extent: Vector2, th
 		return false
 	# Detrás del personaje (que siempre pisa por encima) y delante de los edificios del fondo (z -2)
 	visual.z_index = -1
+	# Suelo pintado visto de frente: la sangre se dibuja como mancha plana y no como charco que gotea por el borde
+	visual.get_parent().set_meta(&"flat_floor", true)
 	var fill_tex: Texture2D = ArtScript.tex(dir + str(theme.get("ground_fill", theme["ground"])))
 	# Lecho bajo otro suelo: solo asfalto liso, sin acera propia
 	if _has_solid_on_top(world_rect):
@@ -324,10 +326,14 @@ static func _build_ground_strip(visual: Node2D, dir: String, extent: Vector2, th
 	var open_below: bool = not _has_solid_below(world_rect)
 	# Con un lecho pegado debajo la franja se muestra entera (el lecho no dibuja acera)
 	var shown_h: float = strip_h if (open_below or _has_solid_touching_below(world_rect)) else minf(strip_h, extent.y + STRIP_TOP_PAD)
+	# La acera se sube `ground_strip_lift` px: el personaje pisa dentro de la acera y no sobre la franja oscura
+	# del borde de atrás (si no, la sangre y los trozos parecen caer sobre un resplandor y no sobre el piso)
+	var lift: float = float(theme.get("ground_strip_lift", 0.0))
+	shown_h = minf(strip_h, shown_h + lift)
 	var region: AtlasTexture = AtlasTexture.new()
 	region.atlas = strip
 	region.region = Rect2(0.0, 0.0, float(strip.get_width()), shown_h)
-	_tile_rect(visual, region, Vector2(extent.x, shown_h)).position = Vector2(0.0, -float(STRIP_TOP_PAD))
+	_tile_rect(visual, region, Vector2(extent.x, shown_h)).position = Vector2(0.0, -float(STRIP_TOP_PAD) - lift)
 	if open_below and fill_tex != null:
 		var fill: TextureRect = _tile_rect(visual, fill_tex, Vector2(extent.x, GROUND_FILL_DEPTH))
 		fill.position = Vector2(0.0, maxf(body_h, extent.y))

@@ -3,7 +3,7 @@ extends Area2D
 ## Orbe de experiencia soltado por enemigos al ser derrotados.
 ## Salta al aparecer, cae con gravedad hasta el piso (un rayo corto hacia abajo por cuadro mientras cae; quieto no
 ## consulta nada) y es atraído magnéticamente hacia el jugador, que lo junta por distancia.
-## Los quietos se funden de a 10 en uno más brillante (`core/loot/loot_combiner.gd`): azul, verde, dorado, violeta.
+## Los quietos se funden de a 3 en uno más brillante (`core/loot/loot_combiner.gd`): azul, verde, dorado, violeta.
 ## El área no monitorea: su máscara (capa 2) también detectaba a los enemigos y sumaba pares de colisión.
 
 const ArtScript = preload("res://core/art/art.gd")

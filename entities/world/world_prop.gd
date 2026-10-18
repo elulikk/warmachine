@@ -20,6 +20,13 @@ const ArtScript = preload("res://core/art/art.gd")
 		size = Vector2(maxf(value.x, 4.0), maxf(value.y, 4.0))
 		_refresh()
 
+## Cuánto se achica la colisión respecto del dibujo (fracción del ancho total y del alto): el arte tiene bordes
+## transparentes y, con la colisión completa, se pisa el aire al lado del objeto.
+@export var hitbox_shrink: Vector2 = Vector2(0.14, 0.07):
+	set(value):
+		hitbox_shrink = value
+		_refresh()
+
 ## Colisión invisible sobre el cuerpo: un cerco alto que no se puede saltar aunque el dibujo sea bajo.
 @export var extra_collision_top: float = 0.0:
 	set(value):
@@ -46,6 +53,11 @@ const ArtScript = preload("res://core/art/art.gd")
 	set(value):
 		stretch_art = value
 		_refresh()
+## Espejar el dibujo en horizontal (con stretch_art): así sale la variedad de los objetos de la ciudad.
+@export var flip_art: bool = false:
+	set(value):
+		flip_art = value
+		_refresh()
 ## Los PNG vienen al doble del tamaño de juego (como el resto de los props).
 @export var art_scale: float = 0.5:
 	set(value):
@@ -58,6 +70,12 @@ const ArtScript = preload("res://core/art/art.gd")
 		queue_redraw()
 
 const HITBOX_META: StringName = &"_prop_hitbox"
+## Cada tanto el objeto saca de adentro suyo a los cuerpos (enemigos, jugador) que hayan quedado superpuestos
+## (aparición dentro del objeto, empujones). Capa 2 = enemigos y jugador; capa 1 = mundo.
+const EJECT_PERIOD: float = 1.5
+const EJECT_BODY_MASK: int = 2
+const EJECT_SHRINK: float = 9.0
+const EJECT_MARGIN: float = 4.0
 
 
 func _ready() -> void:
@@ -65,6 +83,17 @@ func _ready() -> void:
 	if not Engine.is_editor_hint() and extra_collision_top <= 0.0:
 		add_to_group(&"hop_obstacle")
 	_refresh()
+	if not Engine.is_editor_hint():
+		var timer: Timer = Timer.new()
+		timer.wait_time = EJECT_PERIOD
+		timer.one_shot = false
+		timer.autostart = false
+		timer.timeout.connect(_eject_overlaps)
+		add_child(timer)
+		# Primera pasada tras unos cuadros de física (los enemigos recién nacidos aún no están en el espacio)
+		get_tree().create_timer(0.3 + randf() * 0.3).timeout.connect(func() -> void:
+			_eject_overlaps()
+			timer.start())
 
 
 func _refresh() -> void:
@@ -80,7 +109,9 @@ func _rebuild_hitboxes() -> void:
 		if child.has_meta(HITBOX_META):
 			remove_child(child)
 			child.queue_free()
-	var rects: Array[Rect2] = [Rect2(-size.x * 0.5, -size.y - extra_collision_top, size.x, size.y + extra_collision_top)]
+	var body_w: float = size.x * (1.0 - hitbox_shrink.x)
+	var body_h: float = size.y * (1.0 - hitbox_shrink.y)
+	var rects: Array[Rect2] = [Rect2(-body_w * 0.5, -body_h - extra_collision_top, body_w, body_h + extra_collision_top)]
 	rects.append_array(extra_hitboxes)
 	for rect: Rect2 in rects:
 		if rect.size.x <= 0.0 or rect.size.y <= 0.0:
@@ -93,6 +124,57 @@ func _rebuild_hitboxes() -> void:
 		node.position = rect.position + rect.size * 0.5
 		node.set_meta(HITBOX_META, true)
 		add_child(node)
+
+
+## Saca de adentro del objeto a los cuerpos superpuestos: los pone al costado más cercano que esté libre, o encima.
+func _eject_overlaps() -> void:
+	if not is_inside_tree() or get_world_2d() == null:
+		return
+	var space: PhysicsDirectSpaceState2D = get_world_2d().direct_space_state
+	var inner: RectangleShape2D = RectangleShape2D.new()
+	# Sobre la colisión real (ya achicada por `hitbox_shrink`), no sobre el dibujo: pegarse al costado o caminar encima no cuenta
+	var body_w: float = size.x * (1.0 - hitbox_shrink.x)
+	var body_h: float = size.y * (1.0 - hitbox_shrink.y)
+	inner.size = Vector2(maxf(body_w - EJECT_SHRINK * 2.0, 2.0), maxf(body_h - EJECT_SHRINK * 2.0, 2.0))
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	query.shape = inner
+	query.transform = Transform2D(0.0, global_position + Vector2(0.0, -body_h * 0.5))
+	query.collision_mask = EJECT_BODY_MASK
+	for hit: Dictionary in space.intersect_shape(query, 8):
+		var body: CharacterBody2D = hit.get("collider") as CharacterBody2D
+		if body != null:
+			_push_out(body, space)
+
+
+func _push_out(body: CharacterBody2D, space: PhysicsDirectSpaceState2D) -> void:
+	var shape_node: CollisionShape2D = body.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if shape_node == null or shape_node.shape == null:
+		return
+	var half: float = shape_node.shape.get_rect().size.x * 0.5 * absf(shape_node.global_scale.x)
+	var side: float = signf(body.global_position.x - global_position.x)
+	if side == 0.0:
+		side = 1.0
+	var reach: float = size.x * (1.0 - hitbox_shrink.x) * 0.5 + half + EJECT_MARGIN
+	var candidates: Array[Vector2] = [
+		Vector2(global_position.x + side * reach, body.global_position.y),
+		Vector2(global_position.x - side * reach, body.global_position.y),
+		Vector2(global_position.x, global_position.y - size.y * (1.0 - hitbox_shrink.y) - EJECT_MARGIN),
+	]
+	for spot: Vector2 in candidates:
+		if _spot_is_free(space, shape_node, body, spot):
+			body.global_position = spot
+			body.velocity = Vector2.ZERO
+			return
+
+
+## true si el cuerpo, puesto en `spot`, no toca el mundo (se levanta 3 px para ignorar el contacto con el piso).
+func _spot_is_free(space: PhysicsDirectSpaceState2D, shape_node: CollisionShape2D, body: CharacterBody2D, spot: Vector2) -> bool:
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	query.shape = shape_node.shape
+	var offset: Vector2 = shape_node.global_position - body.global_position
+	query.transform = Transform2D(0.0, spot + offset + Vector2(0.0, -3.0))
+	query.collision_mask = 1
+	return space.intersect_shape(query, 1).is_empty()
 
 
 func _resolve_texture() -> Texture2D:
@@ -117,7 +199,7 @@ func _rebuild_art() -> void:
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	var tex_size: Vector2 = tex.get_size()
 	if stretch_art:
-		sprite.scale = Vector2(size.x / tex_size.x, size.y / tex_size.y)
+		sprite.scale = Vector2((-1.0 if flip_art else 1.0) * size.x / tex_size.x, size.y / tex_size.y)
 		sprite.position = Vector2(0.0, -size.y * 0.5)
 	else:
 		sprite.scale = Vector2(art_scale, art_scale)

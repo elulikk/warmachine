@@ -31,6 +31,8 @@ func _ready() -> void:
 		if hud != null and player != null:
 			hud.setup_with_player(player)
 		
+		# En el campamento ya no hay sector a medias
+		SaveManager.clear_resume_point()
 		# Guardar estado consolidado luego de aplicar al jugador
 		sm.save_to_disk()
 		

@@ -112,7 +112,7 @@ var _sky_kind_option: OptionButton = null
 var _fx_style_option: OptionButton = null
 ## Valores originales de las opciones que se tocan en la sala (se restauran al salir)
 var _saved_settings: Dictionary = {}
-## Lluvia de la ciudad (Mundo 4): gotas que chocan con los sólidos, salpicaduras y relámpagos.
+## Lluvia de la ciudad (Mundo 1): gotas que chocan con los sólidos, salpicaduras y relámpagos.
 var city_rain_on: bool = false
 var _city_rain_button: CheckButton = null
 
@@ -151,6 +151,7 @@ func _ready() -> void:
 			hud.setup_with_player(player)
 		if player.weapon_manager != null:
 			player.weapon_manager.set_infinite_ammo(infinite_ammo)
+			_grant_test_weapons()
 		player.knockback_immune = god_mode
 	SaveManager.set_respawn_point(PLAYER_START)
 
@@ -171,6 +172,18 @@ func _ready() -> void:
 
 	_build_panel()
 	print("[StressRoom] Sala de Estrés lista. F4 muestra el panel. El progreso no se guarda acá adentro.")
+
+
+## Armas de prueba que la sala entrega si el jugador no las tiene (no se guardan: la sala no persiste).
+func _grant_test_weapons() -> void:
+	var wm: WeaponManager = player.weapon_manager
+	for path: String in ["res://data/weapons/mjolnir.tres"]:
+		var owned: bool = false
+		for w: WeaponData in wm.weapons:
+			if w != null and w.source_resource_path == path:
+				owned = true
+		if not owned and ResourceLoader.exists(path):
+			wm.add_weapon(load(path) as WeaponData, false)
 
 
 func _exit_tree() -> void:

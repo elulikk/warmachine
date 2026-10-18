@@ -1,47 +1,53 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://entities/world/arena.tscn" id="arena"]
-[ext_resource type="Script" path="res://core/camera_follow.gd" id="camera"]
-[ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="checkpoint"]
-[ext_resource type="Script" path="res://core/cinematics/cinematic_trigger.gd" id="cine"]
-[ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="gate"]
-[ext_resource type="PackedScene" path="res://entities/enemies/city_gunman.tscn" id="gunman"]
-[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="hud"]
-[ext_resource type="Script" path="res://levels/level_base.gd" id="level"]
-[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="player"]
-[ext_resource type="Script" path="res://core/projectile_pool.gd" id="pool"]
-[ext_resource type="Script" path="res://core/managers/save_manager.gd" id="save"]
-[ext_resource type="PackedScene" path="res://entities/enemies/city_thug.tscn" id="thug"]
-[ext_resource type="Resource" path="res://data/weapons/shotgun.tres" id="w_shotgun"]
-[ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="wpickup"]
-[ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="zone"]
-[ext_resource type="PackedScene" path="res://entities/world/props/crate_large.tscn" id="prop_large"]
-[ext_resource type="PackedScene" path="res://entities/world/props/crate_medium.tscn" id="prop_medium"]
+[ext_resource type="Script" path="res://levels/level_base.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://core/camera_follow.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://ui/hud.tscn" id="4_hud"]
+[ext_resource type="Script" path="res://core/projectile_pool.gd" id="5_pool"]
+[ext_resource type="Script" path="res://core/managers/save_manager.gd" id="6_save"]
+[ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="7_zone"]
+[ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="8_gate"]
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="9_runner"]
+[ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="10_wpickup"]
+[ext_resource type="Resource" path="res://data/weapons/mp5.tres" id="11_mp5"]
+[ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="12_checkpoint"]
+[ext_resource type="Script" path="res://core/arena_encounter.gd" id="13_arena"]
+[ext_resource type="Script" path="res://core/wave_manager.gd" id="14_wave"]
+[ext_resource type="PackedScene" path="res://entities/enemies/armored_brute.tscn" id="15_brute"]
 
-[sub_resource type="RectangleShape2D" id="Rect_40x800"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_9000x74"]
+size = Vector2(9000, 74)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_40x800"]
 size = Vector2(40, 800)
 
-[sub_resource type="RectangleShape2D" id="Rect_2600x74"]
-size = Vector2(2600, 74)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_180x20"]
+size = Vector2(180, 20)
 
-[sub_resource type="RectangleShape2D" id="Rect_2460x74"]
-size = Vector2(2460, 74)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1300x100"]
+size = Vector2(1300, 100)
 
-[sub_resource type="RectangleShape2D" id="Rect_3660x74"]
-size = Vector2(3660, 74)
-
-[sub_resource type="RectangleShape2D" id="Rect_64x18"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_64x18"]
 size = Vector2(64, 18)
 
-[sub_resource type="RectangleShape2D" id="Rect_160x20"]
-size = Vector2(160, 20)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1160x300"]
+size = Vector2(1160, 300)
 
-[node name="Level_4_05" type="Node2D"]
-script = ExtResource("level")
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_12x400"]
+size = Vector2(12, 400)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1310x300"]
+size = Vector2(1310, 300)
+
+[node name="Level_1_05" type="Node2D"]
+script = ExtResource("1_level")
 level_id = "4_05"
-level_title = "Sector 05 · El muelle"
+level_title = "Sector 05"
 chapter_number = 4
 next_level_path = "res://levels/chapter_4/level_4_06.tscn"
+gear_loot_tier = 2
+guaranteed_weapon_paths = Array[String](["res://data/weapons/combat_knife.tres", "res://data/weapons/rust_revolver.tres", "res://data/weapons/scrap_carbine.tres"])
 
 [node name="Background" type="CanvasLayer" parent="."]
 layer = -100
@@ -52,267 +58,629 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-color = Color(0.03, 0.04, 0.07, 1)
+color = Color(0.06, 0.08, 0.12, 1)
 
 [node name="Environment" type="Node2D" parent="."]
 
+[node name="FloorMain" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(4500, 593)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorMain"]
+shape = SubResource("RectangleShape2D_9000x74")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -4500.0
+offset_top = -37.0
+offset_right = 4500.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -4500.0
+offset_top = -37.0
+offset_right = 4500.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
+
 [node name="LeftWall" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(-20.0, 240.0)
+position = Vector2(-20, 240)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/LeftWall"]
-shape = SubResource("Rect_40x800")
+shape = SubResource("RectangleShape2D_40x800")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/LeftWall"]
 offset_left = -20.0
 offset_top = -400.0
 offset_right = 20.0
 offset_bottom = 400.0
-mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
+color = Color(0.1, 0.12, 0.17, 1)
 
 [node name="RightWall" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(9020.0, 240.0)
+position = Vector2(8980, 240)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall"]
-shape = SubResource("Rect_40x800")
+shape = SubResource("RectangleShape2D_40x800")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/RightWall"]
 offset_left = -20.0
 offset_top = -400.0
 offset_right = 20.0
 offset_bottom = 400.0
-mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
+color = Color(0.1, 0.12, 0.17, 1)
 
-[node name="Floor1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1300.0, 593.0)
+[node name="Arena1Plat1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1900, 470)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor1"]
-shape = SubResource("Rect_2600x74")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Arena1Plat1"]
+shape = SubResource("RectangleShape2D_180x20")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Floor1"]
-offset_left = -1300.0
-offset_top = -37.0
-offset_right = 1300.0
-offset_bottom = 37.0
-mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/Arena1Plat1"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
 
-[node name="Floor2" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(3970.0, 593.0)
+[node name="TopBorder" type="ColorRect" parent="Environment/Arena1Plat1"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="Ceiling1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(3450, 280)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor2"]
-shape = SubResource("Rect_2460x74")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling1"]
+shape = SubResource("RectangleShape2D_1300x100")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Floor2"]
-offset_left = -1230.0
-offset_top = -37.0
-offset_right = 1230.0
-offset_bottom = 37.0
-mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -650.0
+offset_top = -50.0
+offset_right = 650.0
+offset_bottom = 50.0
+color = Color(0.1, 0.12, 0.17, 1)
 
-[node name="Floor3" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(7170.0, 593.0)
+[node name="BottomBorder" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -650.0
+offset_top = 47.0
+offset_right = 650.0
+offset_bottom = 50.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="Arena2Plat1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(4750, 470)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Floor3"]
-shape = SubResource("Rect_3660x74")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Arena2Plat1"]
+shape = SubResource("RectangleShape2D_180x20")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Floor3"]
-offset_left = -1830.0
-offset_top = -37.0
-offset_right = 1830.0
-offset_bottom = 37.0
-mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/Arena2Plat1"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
 
-[node name="Tip1" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 380.0
-offset_right = 800.0
-offset_bottom = 404.0
-theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 14
-text = "EL PRESENTE • SECTOR P-5 — EL MUELLE"
+[node name="TopBorder" type="ColorRect" parent="Environment/Arena2Plat1"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
 
-[node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(700.0, 547.0)
+[node name="Arena2Plat2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5100, 430)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Pedestal1"]
-shape = SubResource("Rect_64x18")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Arena2Plat2"]
+shape = SubResource("RectangleShape2D_180x20")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Pedestal1"]
+[node name="ColorRect" type="ColorRect" parent="Environment/Arena2Plat2"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Arena2Plat2"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="Arena2Plat3" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5450, 470)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Arena2Plat3"]
+shape = SubResource("RectangleShape2D_180x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Arena2Plat3"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Arena2Plat3"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="RuneStepA" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5950, 480)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RuneStepA"]
+shape = SubResource("RectangleShape2D_180x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/RuneStepA"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/RuneStepA"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="RuneStepB" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(6150, 400)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RuneStepB"]
+shape = SubResource("RectangleShape2D_180x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/RuneStepB"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/RuneStepB"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="RuneLedge" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(6370, 320)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RuneLedge"]
+shape = SubResource("RectangleShape2D_180x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/RuneLedge"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/RuneLedge"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="Arena3Plat1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(7100, 470)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Arena3Plat1"]
+shape = SubResource("RectangleShape2D_180x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Arena3Plat1"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Arena3Plat1"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="Arena3Plat2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(7475, 430)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Arena3Plat2"]
+shape = SubResource("RectangleShape2D_180x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Arena3Plat2"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Arena3Plat2"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="Arena3Plat3" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(7850, 470)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Arena3Plat3"]
+shape = SubResource("RectangleShape2D_180x20")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Arena3Plat3"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = 10.0
+color = Color(0.18, 0.24, 0.35, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/Arena3Plat3"]
+offset_left = -90.0
+offset_top = -10.0
+offset_right = 90.0
+offset_bottom = -7.0
+color = Color(0.4, 0.7, 0.95, 1)
+
+[node name="PedestalReward" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(8450, 547)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalReward"]
+shape = SubResource("RectangleShape2D_64x18")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalReward"]
 offset_left = -32.0
 offset_top = -9.0
 offset_right = 32.0
 offset_bottom = 9.0
-mouse_filter = 2
-color = Color(0.5, 0.45, 0.35, 1)
+color = Color(0.25, 0.3, 0.42, 1)
 
-[node name="Tip2" type="Label" parent="Environment"]
-offset_left = 500.0
-offset_top = 430.0
-offset_right = 1020.0
-offset_bottom = 454.0
-theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalReward"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="ArenaMark1" type="ColorRect" parent="Environment"]
+offset_left = 1300
+offset_top = 556
+offset_right = 2500
+offset_bottom = 560
+color = Color(1, 0.45, 0.35, 1)
+
+[node name="ArenaMark2" type="ColorRect" parent="Environment"]
+offset_left = 4400
+offset_top = 556
+offset_right = 5600
+offset_bottom = 560
+color = Color(1, 0.45, 0.35, 1)
+
+[node name="ArenaMark3" type="ColorRect" parent="Environment"]
+offset_left = 6800
+offset_top = 556
+offset_right = 8150
+offset_bottom = 560
+color = Color(1, 0.45, 0.35, 1)
+
+[node name="SectorLabel" type="Label" parent="Environment"]
+offset_left = 60
+offset_top = 400
+offset_right = 650
+offset_bottom = 424
+theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
+theme_override_font_sizes/font_size = 14
+text = "CAPÍTULO 4 • PERIFERIA SUBTERRÁNEA • SECTOR 1-5"
+
+[node name="TipSentinel" type="Label" parent="Environment"]
+offset_left = 640
+offset_top = 440
+offset_right = 1460
+offset_bottom = 464
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
 theme_override_font_sizes/font_size = 13
-text = "Escopeta — perdigones a corta distancia; ideal contra matones"
+text = "Adelante: CENTINELA DE ESCUDO — 130 de escudo celeste que se recarga si pasan 3 s sin dañarlo"
 
-[node name="Tip3" type="Label" parent="Environment"]
-offset_left = 40.0
-offset_top = 470.0
-offset_right = 560.0
-offset_bottom = 494.0
-theme_override_colors/font_color = Color(0.85, 0.92, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
+[node name="TipDuel" type="Label" parent="Environment"]
+offset_left = 1340
+offset_top = 380
+offset_right = 2040
+offset_bottom = 404
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
 theme_override_font_sizes/font_size = 13
-text = "Contenedores apilados y agua negra entre los muelles."
+text = "ARENA — No le des respiro: disparos seguidos rompen el escudo y después cae rápido"
 
-[node name="Plank1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(2670.0, 460.0)
-collision_mask = 0
+[node name="TipCorridor" type="Label" parent="Environment"]
+offset_left = 2850
+offset_top = 345
+offset_right = 3610
+offset_bottom = 369
+theme_override_colors/font_color = Color(0.7, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 13
+text = "Pasillo — un Centinela entre ladrones: recargá antes de entrar"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank1"]
-shape = SubResource("Rect_160x20")
+[node name="TipArena2" type="Label" parent="Environment"]
+offset_left = 4440
+offset_top = 380
+offset_right = 5200
+offset_bottom = 404
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 13
+text = "ARENA — Los ladrones distraen; mantené el fuego sobre el Centinela"
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Plank1"]
-offset_left = -80.0
-offset_top = -10.0
-offset_right = 80.0
-offset_bottom = 10.0
-mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
+[node name="TipArena3" type="Label" parent="Environment"]
+offset_left = 6840
+offset_top = 380
+offset_right = 7540
+offset_bottom = 404
+theme_override_colors/font_color = Color(1, 0.45, 0.35, 1)
+theme_override_font_sizes/font_size = 13
+text = "ARENA FINAL — Tres oleadas; en la última, dos Centinelas"
 
-[node name="Plank2" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(5270.0, 460.0)
-collision_mask = 0
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Plank2"]
-shape = SubResource("Rect_160x20")
-
-[node name="ColorRect" type="ColorRect" parent="Environment/Plank2"]
-offset_left = -80.0
-offset_top = -10.0
-offset_right = 80.0
-offset_bottom = 10.0
-mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
-
-[node name="Tip4" type="Label" parent="Environment"]
-offset_left = 6100.0
-offset_top = 330.0
-offset_right = 6700.0
-offset_bottom = 354.0
-theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 16
-text = "LA CARGA DEL BARCO"
-
-[node name="Block1" parent="Environment" instance=ExtResource("prop_medium")]
-position = Vector2(1300, 556)
-size = Vector2(160, 70)
-
-[node name="Block2" parent="Environment" instance=ExtResource("prop_large")]
-position = Vector2(1700, 556)
-size = Vector2(160, 110)
-
-[node name="WeaponPickup1" parent="." instance=ExtResource("wpickup")]
-position = Vector2(700.0, 512)
-weapon_data = ExtResource("w_shotgun")
-
-[node name="Gunman1" parent="." instance=ExtResource("gunman")]
-position = Vector2(1500.0, 555.0)
-
-[node name="Gunman2" parent="." instance=ExtResource("gunman")]
-position = Vector2(2100.0, 555.0)
-
-[node name="Thug1" parent="." instance=ExtResource("thug")]
-position = Vector2(3300.0, 555.0)
-
-[node name="Gunman3" parent="." instance=ExtResource("gunman")]
-position = Vector2(3700.0, 555.0)
-
-[node name="Checkpoint1" parent="." instance=ExtResource("checkpoint")]
-position = Vector2(4000.0, 556)
-checkpoint_id = "checkpoint_4_05_a"
-
-[node name="Cine1" type="Node2D" parent="."]
-position = Vector2(4300.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p5_helicopter"
-zone_width = 240.0
-
-[node name="Cine2" type="Node2D" parent="."]
-position = Vector2(0.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p5_crystal"
-needs_crystal = true
-
-[node name="Arena1" parent="." instance=ExtResource("arena")]
-position = Vector2(6400.0, 556)
-
-[node name="WaveManager" parent="Arena1" index="2"]
-enemy_scene = ExtResource("gunman")
-round_sizes = Array[int]([6, 8])
-elite_scene = ExtResource("thug")
-elite_per_round = Array[int]([1, 2])
-
-[node name="Checkpoint2" parent="." instance=ExtResource("checkpoint")]
-position = Vector2(7200.0, 556)
-checkpoint_id = "checkpoint_4_05_b"
-
-[node name="Cine3" type="Node2D" parent="."]
-position = Vector2(8200.0, 556)
-script = ExtResource("cine")
-cinematic_id = "p5_stevedore"
-zone_width = 300.0
-
-[node name="Gunman4" parent="." groups=["arena_enemies"] instance=ExtResource("gunman")]
-position = Vector2(7600.0, 555.0)
-
-[node name="Gunman5" parent="." groups=["arena_enemies"] instance=ExtResource("gunman")]
-position = Vector2(8000.0, 555.0)
+[node name="TipReward" type="Label" parent="Environment"]
+offset_left = 8230
+offset_top = 440
+offset_right = 8870
+offset_bottom = 464
+theme_override_colors/font_color = Color(0.4, 0.95, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+text = "Recompensa: Subfusil MP5 — automático, ideal contra escudos"
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
 
-[node name="Player" parent="." instance=ExtResource("player")]
+[node name="CheckpointStart" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(560, 556)
+checkpoint_id = "checkpoint_1_05_a"
+
+[node name="Arena1" type="Area2D" parent="."]
+script = ExtResource("13_arena")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="Arena1"]
+position = Vector2(1900, 406)
+shape = SubResource("RectangleShape2D_1160x300")
+
+[node name="Barriers" type="Node2D" parent="Arena1"]
+
+[node name="BarrierLeft" type="StaticBody2D" parent="Arena1/Barriers"]
+position = Vector2(1300, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierLeft"]
+shape = SubResource("RectangleShape2D_12x400")
+
+[node name="BarrierRight" type="StaticBody2D" parent="Arena1/Barriers"]
+position = Vector2(2500, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierRight"]
+shape = SubResource("RectangleShape2D_12x400")
+
+[node name="WaveManager" type="Node" parent="Arena1"]
+script = ExtResource("14_wave")
+elite_scene = ExtResource("15_brute")
+elite_per_round = Array[int]([2])
+refill_interval = 0.6
+round_sizes = Array[int]([4])
+rest_between_rounds = 4
+auto_start = false
+aggro_on_spawn = true
+
+[node name="Spawn1" type="Marker2D" parent="Arena1/WaveManager"]
+position = Vector2(2300, 555)
+
+[node name="Spawn2" type="Marker2D" parent="Arena1/WaveManager"]
+position = Vector2(2400, 555)
+
+[node name="StatusLabel" type="Label" parent="Arena1"]
+offset_left = 1600
+offset_top = 300.0
+offset_right = 2200
+offset_bottom = 330.0
+theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="CheckpointCorridor" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(2650, 556)
+checkpoint_id = "checkpoint_1_05_b"
+
+[node name="Corridor1" parent="." instance=ExtResource("9_runner")]
+position = Vector2(3000, 555)
+
+[node name="Corridor2" parent="." instance=ExtResource("9_runner")]
+position = Vector2(3450, 555)
+
+[node name="Corridor3" parent="." instance=ExtResource("9_runner")]
+position = Vector2(3850, 555)
+
+[node name="CheckpointMid" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(4250, 556)
+checkpoint_id = "checkpoint_1_05_c"
+
+[node name="Arena2" type="Area2D" parent="."]
+script = ExtResource("13_arena")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="Arena2"]
+position = Vector2(5000, 406)
+shape = SubResource("RectangleShape2D_1160x300")
+
+[node name="Barriers" type="Node2D" parent="Arena2"]
+
+[node name="BarrierLeft" type="StaticBody2D" parent="Arena2/Barriers"]
+position = Vector2(4400, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierLeft"]
+shape = SubResource("RectangleShape2D_12x400")
+
+[node name="BarrierRight" type="StaticBody2D" parent="Arena2/Barriers"]
+position = Vector2(5600, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierRight"]
+shape = SubResource("RectangleShape2D_12x400")
+
+[node name="WaveManager" type="Node" parent="Arena2"]
+script = ExtResource("14_wave")
+elite_scene = ExtResource("15_brute")
+elite_per_round = Array[int]([2, 3])
+refill_interval = 0.6
+round_sizes = Array[int]([5, 6])
+rest_between_rounds = 5
+auto_start = false
+aggro_on_spawn = true
+
+[node name="Spawn1" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(5200, 555)
+
+[node name="Spawn2" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(5300, 555)
+
+[node name="Spawn3" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(5400, 555)
+
+[node name="Spawn4" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(5500, 555)
+
+[node name="StatusLabel" type="Label" parent="Arena2"]
+offset_left = 4700
+offset_top = 300.0
+offset_right = 5300
+offset_bottom = 330.0
+theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="CheckpointRune" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(5750, 556)
+checkpoint_id = "checkpoint_1_05_d"
+
+[node name="CheckpointFinal" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(6650, 556)
+checkpoint_id = "checkpoint_1_05_e"
+
+[node name="Arena3" type="Area2D" parent="."]
+script = ExtResource("13_arena")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="Arena3"]
+position = Vector2(7475, 406)
+shape = SubResource("RectangleShape2D_1310x300")
+
+[node name="Barriers" type="Node2D" parent="Arena3"]
+
+[node name="BarrierLeft" type="StaticBody2D" parent="Arena3/Barriers"]
+position = Vector2(6800, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierLeft"]
+shape = SubResource("RectangleShape2D_12x400")
+
+[node name="BarrierRight" type="StaticBody2D" parent="Arena3/Barriers"]
+position = Vector2(8150, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierRight"]
+shape = SubResource("RectangleShape2D_12x400")
+
+[node name="WaveManager" type="Node" parent="Arena3"]
+script = ExtResource("14_wave")
+elite_scene = ExtResource("15_brute")
+elite_per_round = Array[int]([2, 2, 3])
+refill_interval = 0.6
+round_sizes = Array[int]([6, 6, 8])
+rest_between_rounds = 5
+auto_start = false
+aggro_on_spawn = true
+
+[node name="Spawn1" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(7700, 555)
+
+[node name="Spawn2" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(7800, 555)
+
+[node name="Spawn3" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(7900, 555)
+
+[node name="Spawn4" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(8000, 555)
+
+[node name="Spawn5" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(8050, 555)
+
+[node name="Spawn6" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(8100, 555)
+
+[node name="StatusLabel" type="Label" parent="Arena3"]
+offset_left = 7175
+offset_top = 300.0
+offset_right = 7775
+offset_bottom = 330.0
+theme_override_colors/font_color = Color(1, 0.6, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+
+[node name="MP5Pickup" parent="." instance=ExtResource("10_wpickup")]
+position = Vector2(8450, 512)
+weapon_data = ExtResource("11_mp5")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(160, 545)
 
 [node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
 position = Vector2(160, 510)
 zoom = Vector2(1.1, 1.1)
 limit_left = 0
-limit_top = 60
-limit_right = 9000
+limit_top = 100
+limit_right = 8960
 limit_bottom = 700
 position_smoothing_enabled = true
-script = ExtResource("camera")
+script = ExtResource("3_camera")
 target = NodePath("../Player")
 
-[node name="ExitGate" parent="." instance=ExtResource("gate")]
-position = Vector2(8750, 556)
+[node name="ExitGate" parent="." instance=ExtResource("8_gate")]
+position = Vector2(8800, 556)
 
-[node name="HUD" parent="." instance=ExtResource("hud")]
+[node name="HUD" parent="." instance=ExtResource("4_hud")]
 
 [node name="ProjectilePool" type="Node" parent="." groups=["projectile_pool"]]
-script = ExtResource("pool")
+script = ExtResource("5_pool")
 
 [node name="SaveManager" type="Node" parent="." groups=["save_manager"]]
-script = ExtResource("save")
+script = ExtResource("6_save")
 
 [node name="ZoneModifierManager" type="Node" parent="." groups=["zone_modifier_manager"]]
-script = ExtResource("zone")
+script = ExtResource("7_zone")

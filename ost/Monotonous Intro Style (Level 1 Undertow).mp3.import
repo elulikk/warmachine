@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dihfs4rbf7m4"
+path="res://.godot/imported/Monotonous Intro Style (Level 1 Undertow).mp3-87c24cb1f034ba3781539efa9d75c3d8.mp3str"
+
+[deps]
+
+source_file="res://ost/Monotonous Intro Style (Level 1 Undertow).mp3"
+dest_files=["res://.godot/imported/Monotonous Intro Style (Level 1 Undertow).mp3-87c24cb1f034ba3781539efa9d75c3d8.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

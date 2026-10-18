@@ -5,7 +5,7 @@
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
 resource_local_to_scene = true
-size = Vector2(1020, 300)
+size = Vector2(80, 300)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_barrier"]
 size = Vector2(12, 400)

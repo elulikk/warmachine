@@ -7,7 +7,7 @@ Prompt para una sesión nueva de Claude Code. Es grande: **hacerlo por fases, un
 ## Contexto (leer antes de cualquier fase)
 
 - Leé `story.md` (secciones 1 a 5: Gunther, el Sindicato, los 8 sectores, diálogos), `lore.md` (la Caja, cristales, Agentes, enemigos del presente) y `ROADMAP.md` sección 3.
-- El **mundo del presente es el primero del juego**. La Periferia Subterránea (steampunk, Capítulo 1 actual) **no se toca**: queda tal cual, con sus voces y su jefe, y pasa a ser el primer destino de la Caja.
+- El **mundo del presente es el primero del juego**. La Periferia Subterránea (steampunk, Capítulo 4 actual) **no se toca**: queda tal cual, con sus voces y su jefe, y pasa a ser el primer destino de la Caja.
 - Mirá cómo se armaron el Valle Esmeralda y el Abismo Ígneo y repetí el mismo pipeline:
   - `art_source/world2/` y `art_source/world3/`: los `.jpg` de Google Flow, `process.py` (recorta y exporta) y `build_levels.py` (arma los `.tscn`).
   - `assets/art/world2/`, `assets/art/world3/`, `assets/art/bg/`.
@@ -25,13 +25,13 @@ Prompt para una sesión nueva de Claude Code. Es grande: **hacerlo por fases, un
 - **Enemigos:** ratas callejeras, ladrones, matones, asaltantes (con arma de fuego), patovicas, sicarios del Sindicato (élite) y Agentes del Tiempo (evento).
 - **Armas:** las modernas que ya existen en `data/weapons/`. **Gunther empieza con la `pistol_9mm` equipada.** Cuchillo (`combat_knife`) temprano; después revólver, escopeta, SMG/MP5, Desert Eagle como recompensas. No crear armas nuevas.
 - **Final (P-8):** sin jefe único. **Oleadas** cada vez más duras de lo peor del Sindicato protegiendo la Caja. Al vaciar la última oleada: cinemática de la Caja.
-- **La Caja:** cubo negro liso (estilo *Dark Matter*, 2024). Adentro, un pasillo negro infinito con puertas. Por ahora, al terminar el P-8 se encadena al `level_1_01` (Periferia Subterránea), que es "la primera puerta". El menú del pasillo **no** es parte de este trabajo.
+- **La Caja:** cubo negro liso (estilo *Dark Matter*, 2024). Adentro, un pasillo negro infinito con puertas. Por ahora, al terminar el P-8 se encadena al `level_4_01` (Periferia Subterránea), que es "la primera puerta". El menú del pasillo **no** es parte de este trabajo.
 
 ---
 
 ## Fase 1 — Arte con Google Flow
 
-Usar la skill `google-flow`. Crear un proyecto nuevo en Flow llamado **"Warmachine - Mundo Presente"**. Modo Agente, confirmación "Nunca", x1. Mandar los 4 pedidos de abajo **uno tras otro** y descargar todo al final, en 1K, a `art_source/world4/` (renombrar cada archivo con el nombre indicado).
+Usar la skill `google-flow`. Crear un proyecto nuevo en Flow llamado **"Warmachine - Mundo Presente"**. Modo Agente, confirmación "Nunca", x1. Mandar los 4 pedidos de abajo **uno tras otro** y descargar todo al final, en 1K, a `art_source/world1/` (renombrar cada archivo con el nombre indicado).
 
 Estilo común para todo: **ilustración 2D de videojuego, no pixel art**, noir moderno, paleta fría (azules, violetas, ámbar de faroles, toques de neón rosa y cian), bordes nítidos.
 
@@ -95,21 +95,21 @@ Genera 8 imágenes separadas para un videojuego 2D de plataformas, ilustración 
 8) "gunther_young" (1:1): Gunther 12 años más joven, de uniforme de policía, cuerpo entero, vista lateral, para el flashback.
 ```
 
-Después de descargar: copiar los `.jpg` a `art_source/world4/` con los nombres de arriba y escribir `art_source/world4/process.py` copiando el de `world3` (recorte de fondo negro con `cut_out`, cortes de las cuadrículas, salida a `assets/art/world4/`, fondos a `assets/art/bg/`, retratos a `assets/art/portraits/`). Si alguna imagen salió con fondo blanco, recortar igual por color de fondo.
+Después de descargar: copiar los `.jpg` a `art_source/world1/` con los nombres de arriba y escribir `art_source/world1/process.py` copiando el de `world3` (recorte de fondo negro con `cut_out`, cortes de las cuadrículas, salida a `assets/art/world1/`, fondos a `assets/art/bg/`, retratos a `assets/art/portraits/`). Si alguna imagen salió con fondo blanco, recortar igual por color de fondo.
 
 ---
 
 ## Fase 2 — Mundo en el registro y arranque de partida
 
-- Usar el hueco vacío del **capítulo 4** (`levels/chapter_4/`) para el presente, para no renumerar los capítulos 1 a 3 ni romper los saves. Nombre en `CHAPTER_NAMES`: **"EL PRESENTE"**, color frío.
+- Usar el hueco vacío del **capítulo 1** (`levels/chapter_1/`) para el presente, para no renumerar los capítulos 1 a 3 ni romper los saves. Nombre en `CHAPTER_NAMES`: **"EL PRESENTE"**, color frío.
 - `level_registry.gd` asume 10 niveles por capítulo (`LEVELS_PER_CHAPTER`). Agregar una cantidad por capítulo (por ejemplo, un diccionario con 8 para el presente) y que el último de cada capítulo sea el jefe/final. Cambio mínimo, sin reescribir el registro.
 - **Partida nueva:** que empiece en el P-1 (`save_manager.gd`: `unlocked_levels` por defecto y el reinicio). Los saves viejos conservan lo que ya tenían desbloqueado.
-- El final del P-8 encadena a `level_1_01` (Periferia Subterránea).
+- El final del P-8 encadena a `level_4_01` (Periferia Subterránea).
 - **Equipo inicial:** `pistol_9mm` equipada desde el principio.
 
 ## Fase 3 — Look del mundo
 
-- Tema en `level_skin.gd` para el capítulo 4 con las texturas de la Fase 1 (asfalto, ladrillo, alcantarilla, muelle, mármol, discoteca, azotea según el sector) y fondos por sector.
+- Tema en `level_skin.gd` para el capítulo 1 con las texturas de la Fase 1 (asfalto, ladrillo, alcantarilla, muelle, mármol, discoteca, azotea según el sector) y fondos por sector.
 - Decorador nuevo `levels/city_decor.gd` (como `hell_decor.gd`): faroles, hidrantes, contenedores, etc., según el sector.
 - **Lluvia:** partículas baratas (una sola `GPUParticles2D` o `CPUParticles2D` pegada a la cámara), salpicaduras chicas al tocar el piso solo si no cuesta FPS. Destellos de relámpago ocasionales en exteriores.
 - **Autos que pasan:** sprites de `cars` cruzando en una capa del fondo con los faros encendidos, cada tantos segundos, sin colisión.
@@ -130,7 +130,7 @@ Después de descargar: copiar los `.jpg` a `art_source/world4/` con los nombres 
 
 ## Fase 5 — Los 8 sectores
 
-Armar los niveles con un `build_levels.py` en `art_source/world4/`, como en los mundos 2 y 3.
+Armar los niveles con un `build_levels.py` en `art_source/world1/`, como en los mundos 2 y 3.
 
 | Sector | Lugar | Enemigos | Notas |
 |---|---|---|---|
@@ -155,7 +155,7 @@ Armar los niveles con un `build_levels.py` en `art_source/world4/`, como en los 
   4. P-5: el helicóptero, el primer cristal y el estibador.
   5. P-7: el jefe del Sindicato por los parlantes.
   6. P-8: la Caja antes de las oleadas y el Agente entrando después.
-  7. Dentro de la Caja: el pasillo (`bg_corridor`), el Agente cruza una puerta, Gunther lo sigue → carga `level_1_01`.
+  7. Dentro de la Caja: el pasillo (`bg_corridor`), el Agente cruza una puerta, Gunther lo sigue → carga `level_4_01`.
 - Los textos de los diálogos se toman tal cual de `story.md`; se pueden recortar si no entran en dos líneas de subtítulo.
 
 ## Fase 7 — Validación y cierre

@@ -16,5 +16,6 @@ static func try_hop(body: CharacterBody2D, dir: float) -> void:
 		var hit: KinematicCollision2D = body.get_slide_collision(i)
 		var other: Object = hit.get_collider()
 		if other is Node and (other as Node).is_in_group(GROUP) and hit.get_normal().x * dir < -0.5:
-			body.velocity.y = -HOP_SPEED
+			var speed: Variant = body.get("hop_speed")
+			body.velocity.y = -(float(speed) if speed != null else HOP_SPEED)
 			return

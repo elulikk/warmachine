@@ -4,6 +4,8 @@ La trama: quién es el protagonista, qué le pasa y en qué orden. Las reglas de
 
 ---
 
+> **REWORK TOTAL (decisión del usuario, 2026-10-17):** la historia de Gunther se reescribe entera. No gusta el inicio actual (prólogo del robo, paseo con monólogo, visor del callejón). Nueva dirección: **algo más simple**. Gunther está haciendo **un trabajo normal de investigador** y, de repente, se encuentra **persiguiendo a unos maleantes**; desde ahí la historia **se va armando sobre la marcha, "pim, pum, pam"**, con ritmo rápido y sin tanta explicación al principio. Todo lo de abajo es **material viejo a revisar**: se conserva solo lo que sirva (la Caja, los mundos, los antagonistas), y el inicio, el prólogo y el paseo del P-1 se reemplazan. Primer borrador del arranque en `ROADMAP.md` sección 1b, punto 6.
+
 ## 1. Protagonista: Gunther
 
 - **Ex policía, hoy detective privado.** Sabe investigar, seguir pistas y pelear. Arranca con su **pistola 9 mm** equipada: es su arma de siempre.
@@ -57,7 +59,7 @@ Ciudad moderna, siempre de noche y con lluvia. El mundo del presente es el **pri
 
 | Sector | Lugar | Enemigos | Momento de historia |
 |---|---|---|---|
-| P-1 | **La calle** (veredas, faroles, autos pasando) | Ratas, ladrones | Tutorial. El detonante: Gunther interrumpe el arresto y el Agente huye. |
+| P-1 | **La calle** (veredas, faroles, autos pasando) | Ratas, ladrones | Tutorial. Paseo con monólogo de Gunther que revela el pasado de a poco. Sin viajero ni arresto; solo un visor en el callejón. |
 | P-2 | **Los callejones** | Ratas, ladrones, matones | Persecución por los callejones; el Agente se le escapa por una alcantarilla. |
 | P-3 | **Las alcantarillas** | Ratas en masa, ladrones escondidos | Gunther encuentra la primera filtración: algo de otro mundo tirado en el agua. |
 | P-4 | **El barrio de casitas** | Ladrones, matones, asaltantes | Un vecino vio "a un tipo de negro" correr hacia el puerto. |
@@ -68,15 +70,23 @@ Ciudad moderna, siempre de noche y con lluvia. El mundo del presente es el **pri
 
 (Los nombres "P-1…P-8" son de trabajo; el código decide la numeración.)
 
-### P-1 — el detonante
+### P-1 — el paseo (monólogo mientras camina)
 
-Gunther está de guardia en un caso cualquiera, bajo un toldo, mirando una ventana. Abajo, en la boca de un callejón, un Agente de negro tiene a alguien contra la pared.
+Sin cinemática ni encuentros. Gunther camina por la calle bajo la lluvia y el control queda libre todo el tiempo. Cada vez que cruza un punto de la calle dispara una línea de voz en off, una sola vez por punto. Las líneas van de a poco revelando la historia; no explican nada de golpe.
 
-- **GUNTHER** *(pensando)*: Otra noche de lluvia, otro marido que no vuelve a casa.
-- **GUNTHER** *(pensando, al ver el visor del Agente)*: ...Ese equipo. Lo vi una sola vez en mi vida.
-- **GUNTHER:** ¡Eh! ¡Soltalo!
-- El Agente lo mira. Se congela un segundo y **huye**. El viajero aprovecha y desaparece por el otro lado.
-- **GUNTHER** *(pensando)*: Doce años esperando una pista. No se me va a escapar.
+- **GUNTHER** *(al arrancar, bajo el toldo)*: "Todavía recuerdo aquella noche despejada, con estrellas."
+- **GUNTHER** *(al pasar el primer farol)*: "Intenté escapar del pasado. Pero el pasado siempre tiene mejores armas."
+- **GUNTHER** *(al pasar un auto que frena en el charco)*: "Doce años y la lluvia sigue igual. Como si el cielo también se hubiera quedado esa noche."
+- **GUNTHER** *(al cruzar la esquina)*: "Dejá que hablo yo, me decía. Siempre se adelantaba. Y yo siempre lo dejaba."
+- **GUNTHER** *(al mirar su reflejo en un vidrio)*: "Dicen que uno no sale nunca del uniforme. Yo creo que es al revés: el uniforme nunca sale de uno."
+- **GUNTHER** *(al llegar a la boca de un callejón oscuro)*: "Otra noche de lluvia. Otro caso que no es un caso."
+- **GUNTHER** *(al ver, al fondo del callejón, un visor que brilla un segundo y se apaga)*: "...Ese equipo. Lo vi una sola vez en mi vida."
+- Fin del tramo: Gunther se queda mirando el callejón vacío. Corte, sin persecución.
+
+Notas:
+- El contraste "noche despejada con estrellas" (recuerdo) contra "siempre lluvia" (presente) es intencional: el juego empieza con el recuerdo y el presente lo tapa.
+- Las líneas se pueden leer como subtítulos, con voz en off o como monólogo; decidir cuál después.
+- Pendiente: el visor del callejón es lo único que queda del Agente en P-1. Si no se quiere ni eso, se borra y P-2 arranca directo en la persecución.
 
 ### P-3 — la filtración
 - **GUNTHER** *(levanta un objeto imposible del agua: una moneda de un país que no existe)*: Esto no lo fabricó nadie de acá.
@@ -149,7 +159,7 @@ Combinación propuesta: **1 + 3**, con la 2 de reserva para un giro más grande 
 Usan el motor de cinemáticas (`ROADMAP.md`, sección 3.6).
 
 1. Prólogo: el robo (flashback).
-2. P-1: el detonante.
+2. P-1: el paseo (líneas de voz en off, sin cinemática).
 3. P-5: el helicóptero y el primer cristal.
 4. P-7: el jefe del Sindicato en la discoteca.
 5. P-8: la Caja en la azotea.
@@ -163,6 +173,6 @@ Usan el motor de cinemáticas (`ROADMAP.md`, sección 3.6).
 
 - Nombres: compañero, viajero, Agente fugitivo, jefe del Sindicato, comprador, líder de los Agentes.
 - Elegir el giro (1, 2, 3 o combinación) y si el final es elegible.
-- Qué papel tiene el viajero que Gunther salvó.
+- Qué papel tiene el viajero que Gunther salvó (ya no aparece en P-1; decidir si vuelve después o se descarta).
 - A qué mundo lleva la primera puerta (propuesta: Periferia Subterránea).
 - Qué pista del caso hay en cada mundo.

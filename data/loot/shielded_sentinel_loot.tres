@@ -1,13 +1,12 @@
-[gd_resource type="Resource" script_class="LootTable" format=3]
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://devaue7ewey4h"]
 
-[ext_resource type="Script" path="res://core/loot/loot_table.gd" id="1_table"]
-[ext_resource type="Script" path="res://core/loot/loot_entry.gd" id="2_entry"]
-[ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="e1_w"]
-[ext_resource type="Resource" path="res://data/weapons/rust_revolver.tres" id="e2_w"]
-[ext_resource type="Resource" path="res://data/weapons/pistol_9mm.tres" id="e3_w"]
+[ext_resource type="Script" uid="uid://bxs4s2lacu8s2" path="res://core/loot/loot_table.gd" id="1_table"]
+[ext_resource type="Script" uid="uid://b8h3jx4b3lbev" path="res://core/loot/loot_entry.gd" id="2_entry"]
 [ext_resource type="Resource" path="res://data/weapons/scrap_carbine.tres" id="56_w"]
 [ext_resource type="Resource" path="res://data/weapons/pistol_9mm.tres" id="59_w"]
 [ext_resource type="Resource" path="res://data/weapons/colt_44.tres" id="60_w"]
+[ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="e1_w"]
+[ext_resource type="Resource" uid="uid://bflcpdhmxp2gu" path="res://data/weapons/rust_revolver.tres" id="e2_w"]
 
 [sub_resource type="Resource" id="Resource_coin"]
 script = ExtResource("2_entry")
@@ -18,7 +17,6 @@ max_amount = 7
 script = ExtResource("2_entry")
 item_type = "AMMO"
 drop_chance = 0.7
-min_amount = 1
 max_amount = 2
 
 [sub_resource type="Resource" id="Resource_health"]
@@ -31,4 +29,4 @@ script = ExtResource("1_table")
 entries = Array[ExtResource("2_entry")]([SubResource("Resource_coin"), SubResource("Resource_ammo"), SubResource("Resource_health")])
 gear_chance = 0.12
 gear_pool = Array[Resource]([ExtResource("56_w"), ExtResource("59_w"), ExtResource("60_w")])
-early_gear_pool = Array[Resource]([ExtResource("e1_w"), ExtResource("e2_w"), ExtResource("e3_w")])
+early_gear_pool = Array[Resource]([ExtResource("e1_w"), ExtResource("e2_w"), ExtResource("59_w")])

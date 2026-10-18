@@ -10,7 +10,9 @@ extends "res://entities/enemies/basic_runner.gd"
 ## Si el jugador se acerca más que esto, retrocede; si está más lejos que `keep_distance + 90`, avanza.
 @export var keep_distance: float = 200.0
 @export var projectile_speed: float = 560.0
-@export var muzzle_height: float = 34.0
+## Altura de la boca del arma sobre los pies (con el arte a 1.5x, la pistola queda a ~65 px) y cuánto sale hacia adelante.
+@export var muzzle_height: float = 65.0
+@export var muzzle_forward: float = 28.0
 @export var shot_tint: Color = Color(1.0, 0.75, 0.3, 1.0)
 
 var _fire_timer: float = 0.0
@@ -25,6 +27,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	delta = FarStepScript.delta_for(self, delta)
+	if delta <= 0.0:
+		return
 	if not is_on_floor():
 		velocity.y += gravity * delta
 	if target_player == null or not is_instance_valid(target_player):
@@ -44,6 +49,8 @@ func _physics_process(delta: float) -> void:
 			is_aggroed = false
 		elif dist <= maxf(aggro_range, shoot_range):
 			is_aggroed = true
+		elif is_aggroed and AggroLeash.should_drop(self, dist, maxf(aggro_range, shoot_range)):
+			is_aggroed = false
 		if is_aggroed:
 			_facing = signf(diff_x) if dist > 4.0 else _facing
 			if visuals != null:
@@ -89,7 +96,7 @@ func _update_fire(delta: float) -> void:
 func _shoot_one(spread: float, fixed_angle: float = 0.0, dmg_mult: float = 1.0) -> void:
 	if target_player == null or not is_instance_valid(target_player) or not is_inside_tree():
 		return
-	var origin: Vector2 = global_position + Vector2(_facing * 18.0, -muzzle_height)
+	var origin: Vector2 = global_position + Vector2(_facing * muzzle_forward, -muzzle_height)
 	var aim: Vector2 = (target_player.global_position + Vector2(0.0, -30.0)) - origin
 	var angle: float = aim.angle() + fixed_angle + randf_range(-spread, spread)
 	var dir: Vector2 = Vector2.RIGHT.rotated(angle)

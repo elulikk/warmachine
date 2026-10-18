@@ -6,5 +6,5 @@
 collision_mask = 0
 script = ExtResource("1_prop")
 size = Vector2(110, 115)
-art_path = "res://assets/art/world/props/crate_large.png"
+art_path = "res://assets/art/world4/props/crate_large.png"
 placeholder_color = Color(0.4, 0.28, 0.16, 1)

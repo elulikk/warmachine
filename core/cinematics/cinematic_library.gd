@@ -1,5 +1,5 @@
 extends RefCounted
-## Cinemáticas del presente (Mundo 4). Textos de `story.md`, secciones 4 y 5. Sin class_name: se usa por `preload`.
+## Cinemáticas del presente (Mundo 1). Textos de `story.md`, secciones 4 y 5. Sin class_name: se usa por `preload`.
 ## `steps(id, origin, level)` devuelve la lista de pasos que entiende `cinematic_player.gd`.
 ## `origin` es la posición del disparador (los actores y la cámara se ubican respecto de ahí).
 

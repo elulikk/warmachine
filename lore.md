@@ -67,7 +67,7 @@ Cada mundo tiene su propia Caja, sus enemigos, su botín y una cantidad de nivel
 | Mundo | Tier | Lore breve | Artefacto legendario |
 |---|---|---|---|
 | **Ciudad de Jano** (ciudad moderna, de noche, con lluvia; mundo 1) | 0 | La ciudad de Gunther. Su Caja está en la azotea del hotel del Sindicato. Al terminarla se entra a la Caja, que desbloquea todos los mundos. | — |
-| **Periferia Subterránea** (steampunk, hoy Capítulo 1) | 1 | Queda tal cual está, con sus voces y su jefe (Coloso del Núcleo). Mundo de Núcleo. | **(a definir)** |
+| **Periferia Subterránea** (steampunk, hoy Capítulo 4) | 1 | Queda tal cual está, con sus voces y su jefe (Coloso del Núcleo). Mundo de Núcleo. | **(a definir)** |
 | Valle Esmeralda (medieval fantástico, Capítulo 2) | 1 | Reino medieval con magia; el Rey Caído reina sobre ruinas. **(Stand-by)** | **(Stand-by)** |
 | Abismo Ígneo (Infierno, Capítulo 3) | 1 | Infierno clásico mezclado con el Hades griego. Ver sección 7. | **(Stand-by)** |
 | Saga de Asgard (nórdico) | 1 | Los Nueve Reinos, Jotunheim y los gigantes; Loki sabe más del pasillo de lo que dice. | Martillo de Thor (rayo que rebota entre enemigos) |

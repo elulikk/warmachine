@@ -15,7 +15,7 @@ Leer antes `PROJECT_CONTEXT.md` sección 6 (enemigos, oleadas, arenas). Valores 
 | Un bruto con armadura | instanciar `armored_brute.tscn` (`brute_name/health/armor/speed`) | `city_bouncer.tscn`, `city_thug.tscn` |
 | Un humano armado que mantiene distancia | instanciar `basic_runner.tscn` + `script = armed_enemy.gd` (`gun`: pistol/shotgun/smg) | `city_gunman.tscn`, `city_hitman_smg.tscn` |
 | Un centinela con escudo / torreta | instanciar `shielded_sentinel.tscn` / `sniper_turret.tscn` | — |
-| Un jefe | instanciar `brute_boss.tscn` (grupo `boss`, onda de choque, furia al 50 %) | `levels/chapter_1/level_1_10.tscn` |
+| Un jefe | instanciar `brute_boss.tscn` (grupo `boss`, onda de choque, furia al 50 %) | `levels/chapter_4/level_4_10.tscn` |
 | Un comportamiento nuevo (vuela, salta, invoca…) | script nuevo que hereda de `basic_runner.gd` **por ruta** | `armed_enemy.gd`, `ghost.gd` |
 
 Empezar siempre por una variante de escena (cero código). Script nuevo solo si el comportamiento no se puede lograr con exports.
@@ -47,7 +47,7 @@ Reglas:
 
 ## Paso 2: arte (Google Flow → `MOBS`)
 
-Usar el skill **`google-flow`** (navegador: Claude in Chrome en el Edge del usuario, ver ese skill). Receta:
+**Primero ver si sirve un `art_kind` existente** (`runner`, `brute`, `sentinel`, `thief`, `thug`, `gunman`, `bouncer`, `hitman_*`, `time_agent`): una variante de stats no necesita arte nuevo. Generar arte solo si el usuario lo pidió o el enemigo es visualmente distinto. En ese caso usar el skill **`google-flow`** (que a su vez usa `asset-browser`). Receta:
 
 1. Prompt: personaje de cuerpo entero, de lado, mirando a la derecha, fondo negro liso, estilo 2D de videojuego, sin sombra de suelo. Una hoja con varios enemigos del mismo mundo mantiene la coherencia.
 2. Descargar 1K a `art_source/worldN/` (p. ej. `e_<nombre>.jpg`).
@@ -79,7 +79,7 @@ extends "res://entities/enemies/basic_runner.gd"
 ## Paso 5: registrarlo en los niveles
 
 - Generadores: en `art_source/worldN/build_levels.py` agregar la clave al diccionario `RES` (`"<clave>": ("PackedScene", "res://entities/enemies/<escena>.tscn")`) y usarla con `L.enemies("<clave>", [x...])` o en `L.arena(x, "<clave>", [rondas], elite, [n_elite], título)`. Regenerar con `python art_source/worldN/build_levels.py`. Ver skill `add-level`.
-- Capítulo 1: se edita el `.tscn` a mano (instancia + `position`).
+- Capítulo 4: se edita el `.tscn` a mano (instancia + `position`).
 - Los que bloquean la salida llevan `groups=["arena_enemies"]` (`guard=True` en el generador).
 - Opcional: sumarlo a `scenes/hub/stress_room.gd` (`TYPE_NAMES`, `_scene_for`) y a `core/test_level.gd` para probarlo en masa.
 

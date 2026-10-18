@@ -1,5 +1,5 @@
 extends Node
-## Ambiente sonoro de la ciudad (capítulo 4, El Presente), en exteriores.
+## Ambiente sonoro de la ciudad (capítulo 1, El Presente), en exteriores.
 ## Dos capas, todas lejanas: loops de fondo (murmullo de gente, tráfico) y eventos sueltos que suenan
 ## cada tanto (un auto que pasa, un bocinazo, un gato, un ladrido).
 ## Sin class_name: lo crea LevelBase (`preload`). Si un archivo todavía no está en `assets/audio/ambiente/`,

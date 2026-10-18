@@ -5,6 +5,8 @@ extends EnemyBase
 ## Escudo de energía: elipse celeste que reacciona al daño absorbido (ver entities/shield/energy_shield.gd).
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
+const AggroLeash = preload("res://entities/enemies/aggro_leash.gd")
+const FarStepScript = preload("res://core/far_step.gd")
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
 const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
 const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
@@ -66,6 +68,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	delta = FarStepScript.delta_for(self, delta)
+	if delta <= 0.0:
+		return
 	if is_dead:
 		return
 	
@@ -83,6 +88,8 @@ func _physics_process(delta: float) -> void:
 			is_aggroed = false
 		elif dist <= aggro_range:
 			is_aggroed = true
+		elif is_aggroed and AggroLeash.should_drop(self, dist, aggro_range):
+			is_aggroed = false
 		
 		if is_aggroed:
 			var diff_x: float = target_player.global_position.x - global_position.x

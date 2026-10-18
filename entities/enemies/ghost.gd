@@ -13,6 +13,9 @@ var _hover_time: float = 0.0
 
 
 func _physics_process(delta: float) -> void:
+	delta = FarStepScript.delta_for(self, delta)
+	if delta <= 0.0:
+		return
 	_hover_time += delta
 	if target_player == null or not is_instance_valid(target_player):
 		target_player = get_tree().get_first_node_in_group(&"player") as Player
@@ -29,6 +32,8 @@ func _physics_process(delta: float) -> void:
 			is_aggroed = false
 		elif aim.length() <= aggro_range:
 			is_aggroed = true
+		elif is_aggroed and AggroLeash.should_drop(self, aim.length(), aggro_range):
+			is_aggroed = false
 		if is_aggroed and aim.length() > 18.0:
 			desired = aim.normalized() * effective_speed
 			desired.y += cos(_hover_time * hover_speed) * hover_amplitude * hover_speed

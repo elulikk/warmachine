@@ -149,7 +149,7 @@ func _spawn_one(use_elite: bool = false) -> bool:
 
 	var chosen_marker: Marker2D = spawn_points.pick_random()
 	var spawn_pos: Vector2 = _marker_world_position(chosen_marker)
-	var offscreen_x: float = _pick_offscreen_x() if spawn_offscreen else NAN
+	var offscreen_x: float = _pick_offscreen_x(spawn_pos.y) if spawn_offscreen else NAN
 	if is_nan(offscreen_x):
 		spawn_pos.x += randf_range(-spawn_jitter, spawn_jitter)
 	else:
@@ -164,23 +164,36 @@ func _spawn_one(use_elite: bool = false) -> bool:
 	return true
 
 
-## Coordenada X de un nacimiento justo fuera de la vista de la cámara, del lado que todavía cae dentro del nivel.
-## Retorna NAN si no hay cámara o ningún lado tiene lugar.
-func _pick_offscreen_x() -> float:
+## Coordenada X de un nacimiento justo fuera de la vista de la cámara, del lado que todavía cae dentro del nivel y
+## donde el cuerpo del enemigo cabe libre (sin un sólido de decoración encima). Retorna NAN si no hay lugar.
+func _pick_offscreen_x(spawn_y: float) -> float:
 	var camera: CameraFollow = get_tree().get_first_node_in_group(&"game_camera") as CameraFollow
 	if camera == null:
 		return NAN
 	var view: Vector2 = camera.get_horizontal_view()
 	var candidates: Array[float] = []
-	var left_x: float = view.x - offscreen_margin - randf_range(0.0, spawn_jitter)
-	var right_x: float = view.y + offscreen_margin + randf_range(0.0, spawn_jitter)
-	if left_x >= camera.limit_left + offscreen_margin:
-		candidates.append(left_x)
-	if right_x <= camera.limit_right - offscreen_margin:
-		candidates.append(right_x)
+	for attempt: int in 3:
+		var left_x: float = view.x - offscreen_margin - randf_range(0.0, spawn_jitter)
+		var right_x: float = view.y + offscreen_margin + randf_range(0.0, spawn_jitter)
+		if left_x >= camera.limit_left + offscreen_margin and _spawn_is_clear(left_x, spawn_y):
+			candidates.append(left_x)
+		if right_x <= camera.limit_right - offscreen_margin and _spawn_is_clear(right_x, spawn_y):
+			candidates.append(right_x)
 	if candidates.is_empty():
 		return NAN
 	return candidates.pick_random()
+
+
+## Cuerpo de un enemigo (24 x 18 px, como el de la rata) en esa posición sin chocar con nada del mundo.
+func _spawn_is_clear(x: float, y: float) -> bool:
+	var space: PhysicsDirectSpaceState2D = get_parent().get_world_2d().direct_space_state
+	var shape: RectangleShape2D = RectangleShape2D.new()
+	shape.size = Vector2(24.0, 18.0)
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.transform = Transform2D(0.0, Vector2(x, y - 9.0))
+	query.collision_mask = 1
+	return space.intersect_shape(query, 1).is_empty()
 
 
 ## Posición en el mundo de un marcador. El WaveManager es un `Node` (no `Node2D`), así que la cadena de
@@ -218,12 +231,15 @@ func _instantiate_enemy(scene: PackedScene, spawn_pos: Vector2) -> bool:
 		return false
 
 	var enemy: Node2D = enemy_instance as Node2D
-	enemy.global_position = spawn_pos
 	if "is_aggroed" in enemy:
 		enemy.set("is_aggroed", aggro_on_spawn)
+	# Los de oleada no sueltan al jugador por distancia (ver entities/enemies/aggro_leash.gd)
+	enemy.set_meta(&"no_leash", true)
 	enemy.connect(&"died", _on_enemy_died.bind(enemy))
 	alive_enemies.append(enemy)
 	_get_container().add_child(enemy)
+	# Después de agregarlo: la posición global solo es correcta con el nodo ya en el árbol del contenedor
+	enemy.global_position = spawn_pos
 	return true
 
 

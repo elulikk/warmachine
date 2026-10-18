@@ -6,10 +6,15 @@ extends Node2D
 
 @export var offset_y: float = -44.0
 
-@onready var hbox: HBoxContainer = $HBoxContainer
-@onready var fire_badge: HBoxContainer = $HBoxContainer/FireBadge
-@onready var fire_label: Label = $HBoxContainer/FireBadge/Label
-@onready var ice_badge: HBoxContainer = $HBoxContainer/IceBadge
+## El cartel se arma recién cuando hace falta (la escena trae el HBoxContainer, pero se descarta al nacer):
+## un enemigo que nunca se quema ni se congela se ahorra ~8 nodos y su pasada de layout.
+var hbox: HBoxContainer = null
+var fire_badge: HBoxContainer = null
+var fire_label: Label = null
+var ice_badge: HBoxContainer = null
+
+const FIRE_ICON: Texture2D = preload("res://assets/art/status/status_fire.png")
+const FREEZE_ICON: Texture2D = preload("res://assets/art/status/status_freeze.png")
 
 var status_receiver: StatusReceiverComponent = null
 
@@ -28,7 +33,54 @@ const ICON_PATHS: Dictionary = {
 
 func _ready() -> void:
 	position.y = offset_y
+	var scene_box: Node = get_node_or_null("HBoxContainer")
+	if scene_box != null:
+		remove_child(scene_box)
+		scene_box.free()
 	_find_status_receiver()
+
+
+## Arma el contenedor y las insignias de fuego y hielo la primera vez que se necesitan.
+func _ensure_ui() -> void:
+	if hbox != null:
+		return
+	hbox = HBoxContainer.new()
+	hbox.name = "HBoxContainer"
+	hbox.custom_minimum_size = Vector2(60, 14)
+	hbox.offset_left = -30.0
+	hbox.offset_top = -7.0
+	hbox.offset_right = 30.0
+	hbox.offset_bottom = 7.0
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 4)
+	add_child(hbox)
+	fire_badge = _make_badge("FireBadge", FIRE_ICON, true)
+	ice_badge = _make_badge("IceBadge", FREEZE_ICON, false)
+
+
+func _make_badge(badge_name: String, icon_tex: Texture2D, with_label: bool) -> HBoxContainer:
+	var badge: HBoxContainer = HBoxContainer.new()
+	badge.name = badge_name
+	badge.visible = false
+	badge.add_theme_constant_override("separation", 2)
+	var icon: TextureRect = TextureRect.new()
+	icon.name = "Icon"
+	icon.custom_minimum_size = Vector2(14, 14)
+	icon.texture = icon_tex
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	badge.add_child(icon)
+	if with_label:
+		fire_label = Label.new()
+		fire_label.name = "Label"
+		fire_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		fire_label.add_theme_constant_override("outline_size", 4)
+		fire_label.add_theme_font_size_override("font_size", 9)
+		fire_label.text = "x1"
+		fire_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		badge.add_child(fire_label)
+	hbox.add_child(badge)
+	return badge
 
 
 func _find_status_receiver() -> void:
@@ -65,7 +117,9 @@ func _process(_delta: float) -> void:
 
 func _update_fire_display(stacks: int) -> void:
 	if fire_badge == null:
-		return
+		if stacks <= 0:
+			return
+		_ensure_ui()
 	
 	if stacks > 0:
 		fire_badge.visible = true
@@ -77,7 +131,9 @@ func _update_fire_display(stacks: int) -> void:
 
 func _update_ice_display(is_frozen: bool) -> void:
 	if ice_badge == null:
-		return
+		if not is_frozen:
+			return
+		_ensure_ui()
 	ice_badge.visible = is_frozen
 
 
@@ -98,6 +154,7 @@ func register_custom_status(status_id: String, badge_color: Color, show_label: b
 	var key: String = status_id.to_upper()
 	if _custom_badges.has(key):
 		return _custom_badges[key]
+	_ensure_ui()
 	
 	var badge: HBoxContainer = HBoxContainer.new()
 	badge.name = "%sBadge" % status_id.capitalize()

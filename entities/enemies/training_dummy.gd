@@ -67,7 +67,8 @@ func _ready() -> void:
 	
 	if overhead_bar == null:
 		overhead_bar = get_node_or_null("OverheadHealthBar") as Node2D
-	if overhead_bar == null:
+	# Opción "Barras de vida de enemigos" apagada: no se crea el nodo (un nodo menos por enemigo)
+	if overhead_bar == null and OverheadHealthBar.bars_enabled():
 		var bar_scene: PackedScene = load("res://entities/ui/overhead_health_bar.tscn")
 		if bar_scene != null:
 			overhead_bar = bar_scene.instantiate() as Node2D

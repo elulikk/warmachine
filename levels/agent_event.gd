@@ -7,7 +7,7 @@ extends Node
 
 const CinemaScript = preload("res://core/cinematics/cinematic_player.gd")
 const AGENT_SCENE: String = "res://entities/enemies/time_agent.tscn"
-const HELI_TEXTURE: String = "res://assets/art/world4/helicopter.png"
+const HELI_TEXTURE: String = "res://assets/art/world1/helicopter.png"
 
 var style: String = "helicopter"
 var delay_min: float = 25.0

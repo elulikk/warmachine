@@ -31,7 +31,7 @@ const DAMAGE_PER_LEVEL: float = 0.03
 @export_group("Progresión")
 @export var level: int = 1
 @export var current_exp: float = 0.0
-@export var exp_to_next_level: float = 75.0
+@export var exp_to_next_level: float = 120.0
 
 var current_health: float = 100.0
 var coins: int = 0
@@ -175,7 +175,7 @@ func add_experience(amount: float) -> void:
 		current_health = get_max_health()
 
 		# Progresión geométrica de experiencia para la siguiente meta
-		exp_to_next_level = roundf(exp_to_next_level * 1.5)
+		exp_to_next_level = roundf(exp_to_next_level * 1.7)
 
 		GameFeel.sfx(self, &"levelup", Vector2.INF, -2.0)
 		leveled_up.emit(level)

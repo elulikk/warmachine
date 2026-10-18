@@ -4,6 +4,8 @@ extends CharacterBody2D
 ## Posee HealthComponent, Hurtbox, animación de parpadeo blanco (Hit Flash)
 ## y genera números de daño flotantes (DamageNumber) al recibir impactos.
 
+const AggroLeash = preload("res://entities/enemies/aggro_leash.gd")
+const FarStepScript = preload("res://core/far_step.gd")
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
 const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
 const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
@@ -16,6 +18,10 @@ const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
 const CHASE_ACCEL: float = 900.0
 
 @export var entity_name: String = "Ladrón"
+## Velocidad del salto sobre obstáculos (540 = ~150 px de alto; las ratas saltan menos).
+@export var hop_speed: float = 540.0
+## Cuánta sangre y cuántos trozos suelta al recibir golpes y morir (1.0 = normal; las ratas y los asaltantes, menos).
+@export_range(0.1, 1.5, 0.05) var gore_amount: float = 1.0
 @export var move_speed: float = 65.0
 @export var aggro_range: float = 280.0
 @export var gravity: float = 980.0
@@ -58,6 +64,9 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	delta = FarStepScript.delta_for(self, delta)
+	if delta <= 0.0:
+		return
 	# 1. Aplicar gravedad vertical
 	if not is_on_floor():
 		velocity.y += gravity * delta
@@ -77,6 +86,8 @@ func _physics_process(delta: float) -> void:
 			is_aggroed = false
 		elif dist <= aggro_range:
 			is_aggroed = true
+		elif is_aggroed and AggroLeash.should_drop(self, dist, aggro_range):
+			is_aggroed = false
 		
 		if is_aggroed:
 			var diff_x: float = target_player.global_position.x - global_position.x
@@ -124,7 +135,8 @@ func _ensure_components() -> void:
 	
 	if overhead_bar == null:
 		overhead_bar = get_node_or_null("OverheadHealthBar") as Node2D
-	if overhead_bar == null:
+	# Opción "Barras de vida de enemigos" apagada: no se crea el nodo (un nodo menos por enemigo)
+	if overhead_bar == null and OverheadHealthBar.bars_enabled():
 		var bar_scene: PackedScene = load("res://entities/ui/overhead_health_bar.tscn")
 		if bar_scene != null:
 			overhead_bar = bar_scene.instantiate() as Node2D

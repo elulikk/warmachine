@@ -86,10 +86,11 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 	var spot: Vector2 = _body_center() + Vector2(randf_range(-3.0, 3.0), randf_range(-0.3, 0.3) * _body_rect.size.y)
 	var strength: float = damage * (1.6 if is_critical else 1.0)
 
-	BloodFx.spray(_host, spot, dir, strength, _mechanical)
-	if not _mechanical:
-		BloodFx.spray_sprite(_host, spot, dir, strength)
-	BloodFx.stains(_host, spot, dir, 1 + int(strength / 14.0), clampf(0.8 + strength / 60.0, 0.8, 1.6), _mechanical)
+	var amount: float = _gore_amount()
+	BloodFx.spray(_host, spot, dir, strength * amount, _mechanical)
+	if not _mechanical and amount >= 0.7:
+		BloodFx.spray_sprite(_host, spot, dir, strength * amount)
+	BloodFx.stains(_host, spot, dir, maxi(1, roundi(float(1 + int(strength / 14.0)) * amount)), clampf(0.8 + strength / 60.0, 0.8, 1.6) * lerpf(0.7, 1.0, amount), _mechanical)
 
 	# Heridas visibles en el cuerpo: una por cada octavo de vida perdido
 	var wanted: int = int(floor((1.0 - ratio) * float(MAX_MARKS)))
@@ -100,8 +101,8 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 		added += 1
 
 	for threshold: float in THRESHOLDS:
-		if _last_ratio > threshold and ratio <= threshold:
-			BloodFx.gibs(_host, spot, 2, _mechanical, 0.8)
+		if _last_ratio > threshold and ratio <= threshold and amount >= 0.7:
+			BloodFx.gibs(_host, spot, 2, _mechanical, 0.8, _gore_scale())
 	_last_ratio = ratio
 
 
@@ -110,7 +111,18 @@ func _on_died() -> void:
 		return
 	# Explosión final (lluvia de trozos y tripas, salpicaduras y charcos): la arma la cola de muertes,
 	# repartida en los cuadros siguientes si mueren muchos juntos (combat/death_fx_queue.gd)
-	DeathFxQueueScript.gore(_host, _body_center(), _mechanical)
+	DeathFxQueueScript.gore(_host, _body_center(), _mechanical, _gore_scale(), _gore_amount())
+
+
+## Cantidad de sangre y trozos del enemigo (`gore_amount` de su escena; 1.0 si no la tiene).
+func _gore_amount() -> float:
+	var value: Variant = _host.get("gore_amount")
+	return clampf(float(value), 0.1, 1.5) if value != null else 1.0
+
+
+## Los bichos chicos (ratas) sueltan menos trozos y más chicos: 1.0 para un humano, menos según el alto del cuerpo.
+func _gore_scale() -> float:
+	return clampf(_body_rect.size.y / 44.0, 0.35, 1.0)
 
 
 ## Agrega una herida al cuerpo: salpicadura irregular o tajo.

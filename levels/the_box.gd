@@ -8,4 +8,4 @@ const ArtScript = preload("res://core/art/art.gd")
 func _ready() -> void:
 	add_to_group(&"the_box")
 	if texture == null:
-		texture = ArtScript.tex("res://assets/art/world4/box_closed.png")
+		texture = ArtScript.tex("res://assets/art/world1/box_closed.png")

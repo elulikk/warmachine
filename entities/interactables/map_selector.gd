@@ -277,7 +277,7 @@ func _render_levels_grid() -> void:
 		var is_unlocked: bool = true
 		if sm != null:
 			# Si SaveManager tiene lista de desbloqueados, lo indicamos visualmente
-			is_unlocked = sm.unlocked_levels.has(lvl_path) or (lvl_num == 1 and _current_chapter == 4)
+			is_unlocked = sm.unlocked_levels.has(lvl_path) or (lvl_num == 1 and _current_chapter == 1)
 		
 		var btn: Button = Button.new()
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL

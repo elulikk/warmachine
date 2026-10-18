@@ -17,19 +17,35 @@ Marcar y borrar cada punto al comprobarlo. Si algo falla, pasa a la sección 4 o
 - [ ] **Jefe del 1-10 (Coloso del Núcleo):** si 1200 de vida es mucho o poco, y si la franja roja de la onda de choque se lee a tiempo.
 - [ ] **Escudo de madera y Escudo espejo:** sensación del clic derecho mantenido, tamaño de la zona de reflejo, rebote contra plataformas reflectantes.
 - [ ] **Red arraigadora, Boomerang, Casco láser, Capa de invisibilidad:** que se compren, se usen desde la barra y se sientan bien (en especial el robo de la capa y el 70 dps del láser).
+- [ ] **Mjolnir (arma pesada legendaria):** rayo en cadena de 7 rebotes al conectar un golpe melee (`data/weapons/mjolnir.tres`, `combat/chain_lightning.gd`); probar balance (daño 140, rayo 50%), sensación y que el martillo en mano calce (agarre/escala en `weapon_art.gd`). Está en el Banco de Pruebas y en el comerciante.
 - [ ] **Invocaciones separadas (Fase J):** seis esqueletos en la Sala de Estrés; que 70 px de distancia sea buena.
 - [ ] **Opciones (segunda tanda):** cuenta regresiva de 15 s al cambiar resolución, selección de monitor, reasignación de mando, dificultades, accesibilidad, posprocesado por calidad.
 - [ ] **Animaciones de arma:** recarga propia por arma, ráfaga sostenida de las automáticas, tajo de espada y katana a dos manos, doble empuñe y casillero M2.
 - [ ] **Pulido visual:** aura de los objetos del piso, pose agachado, brazos abiertos al saltar, borde rojo y latido con poca vida, llama sobre enemigos que arden.
 - [ ] **Progresión:** con 15 de EXP por enemigo, en qué punto del 1-2 se llega al nivel 5; presión de enemigos con la vida subida (ladrón 70, bruto 250, centinela 70).
 - [ ] **Piezas de editor:** armar una arena y una plataforma desde `platform.tscn` / `arena.tscn`, y correr un nivel con F6 y el equipo de prueba activo.
-- [ ] **Props arrastrables (nivel 1):** `entities/world/props/` (cajas S/M/L, cerco, casa, caseta, **paredón** `wall.tscn`; script `world_prop.gd`). Los bloques `Block*`/`JumpBlock*` de los niveles ya son props placeholder (cajas) y 2_02, 2_08, 3_04, 3_08, 4_01 y 4_04 llevan un paredón de 520 px caminable por arriba (`WallStep` + `Wall`); PNG pendientes: `crate_*`, `wall`, etc. En el mundo 4 la decoración automática (`levels/city_decor.gd`, `SOLID_PROPS`) pone contenedores, tachos, buzones, bancas y cajas como sólidos escalonados (grupos de 1 a 3, alturas 48–115 px); los enemigos los saltan (`entities/enemies/obstacle_hop.gd`). Pendiente: lo mismo para `meadow_decor` / `hell_decor`. Generar con Flow los PNG en `assets/art/world/props/` con el nombre de la escena (`crate_small.png`, `house.png`...), probar saltos en `levels/chapter_1/props_playground.tscn` y ajustar tamaños/hitboxes.
-- [ ] **Capítulo 2 — Valle Esmeralda (hecho, sin verificar):** recorrer 2-1 a 2-10; saltos de los pozos reales del 2-4 y 2-7; balance de Arco Largo, Jabalina, Báculo de Fuego y de Hielo (`data/weapons/*.tres`); agarre en mano del arco y los báculos (`weapon_art.gd`); densidad de árboles/flores y cantidad de hojas (`levels/meadow_decor.gd`); jefe del 2-10. Al entrar al mundo 2 el jugador conserva su arsenal del mundo 1 (las armas medievales llegan por pedestal).
+- [ ] **Props arrastrables (nivel 1):** `entities/world/props/` (cajas S/M/L, cerco, casa, caseta, **paredón** `wall.tscn`; script `world_prop.gd`). Los bloques `Block*`/`JumpBlock*` de los niveles ya son props placeholder (cajas) y 2_02, 2_08, 3_04, 3_08, 4_01 y 4_04 llevan un paredón de 520 px caminable por arriba (`WallStep` + `Wall`); PNG pendientes: `crate_*`, `wall`, etc. En el mundo 1 la decoración automática (`levels/city_decor.gd`, `SOLID_PROPS`) pone contenedores, tachos, buzones, bancas y cajas como sólidos escalonados (grupos de 1 a 3, alturas 48–115 px); los enemigos los saltan (`entities/enemies/obstacle_hop.gd`). Pendiente: lo mismo para `meadow_decor` / `hell_decor`. Generar con Flow los PNG en `assets/art/world4/props/` con el nombre de la escena (`crate_small.png`, `house.png`...), probar saltos en `levels/chapter_4/props_playground.tscn` y ajustar tamaños/hitboxes.
+- [ ] **Capítulo 2 — Valle Esmeralda (hecho, sin verificar):** recorrer 2-1 a 2-10; saltos de los pozos reales del 2-4 y 2-7; balance de Arco Largo, Jabalina, Báculo de Fuego y de Hielo (`data/weapons/*.tres`); agarre en mano del arco y los báculos (`weapon_art.gd`); densidad de árboles/flores y cantidad de hojas (`levels/meadow_decor.gd`); jefe del 2-10. Al entrar al mundo 2 el jugador conserva su arsenal del mundo 4 (las armas medievales llegan por pedestal).
 - [ ] **Capítulo 3 — Abismo Ígneo (hecho, sin verificar):** recorrer 3-1 a 3-10; saltos de los pozos de lava del 3-3, 3-5 y 3-7; balance de Guadaña, Ballesta Infernal, Tridente Infernal, Báculo de Almas (3 rebotes), Cetro de Azufre (estallido `combat/throwables/sulfur_burst.tscn`), Espada Demoníaca y Hacha del Abismo (`data/weapons/*.tres`); agarre en mano de la ballesta, la guadaña y el hacha (`weapon_art.gd`, `ALIASES` en `weapon_motion.gd`); oscuridad de fondos y suelo (`CHAPTER_THEMES` en `level_skin.gd`); cantidad de brasas, cadenas y braseros (`levels/hell_decor.gd`); **lava que daña** (20 % de la vida + llama + rebote de 800 px/s al tocarla, `LAVA_DAMAGE_FRACTION` / `LAVA_BOUNCE`: que se pueda salir del pozo y no sea injusta); jefe del 3-10 (reusa `brute_boss`).
-- [ ] **Capítulo 4 — El Presente (hecho, sin verificar):** recorrer P-1 a P-8 con una partida nueva (arranca en el P-1 con la 9 mm, prólogo del robo y cuchillo en el piso). Revisar: legibilidad de lluvia y fondos (`CHAPTER_THEMES[4]` en `level_skin.gd`), escala de props de `city_decor.gd` (`SECTORS`), pozos de agua del P-3 y P-5, balance de ratas/ladrones/matones/asaltantes/patovicas/sicarios (`entities/enemies/city_*.tscn`, `armed_enemy.gd`), evento del helicóptero del P-5 y el portal de P-6/P-7, cristales de tiempo en el HUD, textos y tiempos de las 7 cinemáticas (`core/cinematics/cinematic_library.gd`), oleadas del P-8 y salida por la Caja a `level_1_01`. FPS con lluvia y muchos enemigos en la Sala de Estrés (F9).
+- [ ] **Capítulo 1 — El Presente (hecho, sin verificar):** recorrer P-1 a P-8 con una partida nueva (el P-1 se rehízo: arranca sin armas, cuchillo en el piso, ratas de a 1-2-3 a modo de tutorial y un asaltante esperando al final que deja la 9 mm; sin props ni obstáculos ni cinemáticas). Revisar: legibilidad de lluvia y fondos (`CHAPTER_THEMES[4]` en `level_skin.gd`), escala de props de `city_decor.gd` (`SECTORS`), pozos de agua del P-3 y P-5, balance de ratas/ladrones/matones/asaltantes/patovicas/sicarios (`entities/enemies/city_*.tscn`, `armed_enemy.gd`), evento del helicóptero del P-5 y el portal de P-6/P-7, cristales de tiempo en el HUD, textos y tiempos de las 7 cinemáticas (`core/cinematics/cinematic_library.gd`), oleadas del P-8 y salida por la Caja a `level_4_01`. FPS con lluvia y muchos enemigos en la Sala de Estrés (F9).
 - [ ] **Música de la discoteca:** poner `ost/club.ogg` (el 4-7 ya pide la pista `club`).
-- [ ] **Arte del presente por pulir:** el rig de Gunther (`art_source/world4/gunther_parts.jpg` está bajado pero no se usa; hoy sigue el rig actual), enemigos con una sola ilustración (sin ataque propio), toldo y escalera de incendio como plataformas (hoy chapa y madera lisas).
+- [ ] **Arte del presente por pulir:** el rig de Gunther (`art_source/world1/gunther_parts.jpg` está bajado pero no se usa; hoy sigue el rig actual), enemigos con una sola ilustración (sin ataque propio), toldo y escalera de incendio como plataformas (hoy chapa y madera lisas).
 - [ ] **Sonido:** `fire_ignite`, `net_deploy`, `laser_beam`, `cloak_on/off`, `heartbeat`.
+
+---
+
+## 1b. Nueva estructura del primer mundo (decisión del usuario, a pulir)
+
+**El mundo 1 pasa de 10 sectores a 3 niveles.** Todo es borrador: faltan ideas y pulido. Lo anotado:
+
+1. **Nivel 1 — La calle (el largo).** Es el que se está armando ahora (`level_1_01.tscn`, 34.000 px, ratas y asaltantes en tramos, checkpoints, obstáculos y plataformas). Acá van **la historia y las cinemáticas** (intro, el asaltante, el paseo de Gunther; ver `story.md` sección 4 y la idea de intro). Sirve de **plantilla** para armar el resto de los niveles: largo, tramos, props, checkpoints, arma inicial débil y reserva de munición.
+2. **Nivel 2 — Las alcantarillas.** Gunther entra a las alcantarillas. **Se van a rehacer más adelante** (hoy es el sector 1-03 de agua y piedra); por ahora solo se reserva el lugar.
+3. **Nivel 3 — La torre y los techos.** Sale de las alcantarillas a un edificio que hay que **subir derrotando enemigos y saltando entre techos de edificios**, hasta llegar al mapa final (jefe / la Caja). Es un nivel vertical de plataformas.
+4. **Pendiente por esto:** `build_levels.py`, `level_registry.gd` (10 sectores fijos por capítulo), `PROJECT_CONTEXT.md`, `story.md` (tabla de sectores P-1 a P-8) y los sectores 1-02 a 1-08 actuales (se reusan como cantera de ideas, arte y enemigos, o se descartan). Decidir qué pasa con los jefes y el guardado (`unlocked_levels`, `next_level_path` del 1-01, que hoy lleva al 1-02).
+5. **Ideas por definir:** cómo se lee la subida del edificio (pisos, ascensores, escaleras de incendio), qué enemigos nuevos aparecen arriba, y qué cuenta la cinemática de entrada a las alcantarillas.
+6. **Rework total de la historia de Gunther (a definir):** el inicio actual se descarta. Dirección: algo simple. Gunther investiga un **trabajo normal** (por ejemplo seguir a alguien por un caso menor o buscar a una persona desaparecida) y de golpe termina **persiguiendo a unos maleantes** por la calle; la trama se arma sobre la marcha y rápido. Borrador del arranque (para probar, no es definitivo): (a) 1 imagen y 1 línea de voz: Gunther en su rutina, lluvia, un caso aburrido; (b) algo se sale de lo normal: ve a los maleantes hacer algo que no debía ver; (c) lo ven, huyen, él los sigue: acá empieza el nivel y los asaltantes del camino son su gente; (d) las pistas aparecen al avanzar (cinemáticas cortas por checkpoint, no un prólogo largo). Pendiente: quiénes son los maleantes, qué llevan, y cómo esto se conecta con la Caja y las alcantarillas. Afecta: `story.md` (secciones 1, 4, 5 y 7), `lore.md` si menciona el pasado de Gunther, la idea de intro en video (hay que rehacerla), y las cinemáticas de `core/cinematics/` que ya existan.
+
+7. **Orden de trabajo (decisión del usuario):** primero mapas, combates y mecánicas; después historia y cinemáticas. Mientras tanto, los puntos de historia se dejan como **ganchos vacíos** (un `cine` con id y sin guion, ver `core/cinematics/cinematic_trigger.gd`) y los textos de pantalla quedan como carteles provisorios, para no rehacer nada cuando llegue la historia.
 
 ---
 
@@ -40,6 +56,7 @@ Marcar y borrar cada punto al comprobarlo. Si algo falla, pasa a la sección 4 o
 3. **Capítulo 3 (pendiente sobre lo armado):** enemigos demoníacos propios (hoy reusa los mismos cinco tipos) y un jefe propio para el Señor del Abismo; sonido de lava y braseros.
 4. **Capítulos 4 y 5** y el total de 50 niveles. Sin fecha.
 5. **Reintegrar mecánicas en stand-by** (ya existen en código, fuera de la campaña): jetpack, alas, vuelo mágico, gancho de anclaje, baliza de translocación, runas avanzadas, mercenarios y drones, contratos de zona. Decidir en qué capítulo entra cada una.
+6. **Tramos prearmados (a mano):** hecho el formato base en `levels/chunks/` (ver su README): escenas que se arrastran dentro de un sector y toman el tileset del mundo. Pendiente: más tramos (plataformas, interiores, azoteas), probarlos en un sector de verdad, y un generador que los una con semilla si hace falta.
 
 ---
 
@@ -49,7 +66,7 @@ Idea rectora del juego a largo plazo. Todavía es diseño, no hay nada armado. L
 
 ### 3.1 Estructura general
 
-1. **Mundo inicial — el presente:** ciudad moderna, de noche y con lluvia (8 sectores: calle, callejones, alcantarillas, barrio de casitas, muelle, hotel, discoteca, azotea). Es un mundo nuevo; plan de trabajo en `PROMPT_MUNDO_MODERNO.md`. La Periferia Subterránea (steampunk, Capítulo 1 actual) queda tal cual y pasa a ser un mundo tier 1.
+1. **Mundo inicial — el presente:** ciudad moderna, de noche y con lluvia (8 sectores: calle, callejones, alcantarillas, barrio de casitas, muelle, hotel, discoteca, azotea). Es un mundo nuevo; plan de trabajo en `PROMPT_MUNDO_MODERNO.md`. La Periferia Subterránea (steampunk, Capítulo 4 actual) queda tal cual y pasa a ser un mundo tier 1.
 2. **Final del presente:** sin jefe único; oleadas de lo peor del Sindicato protegiendo la Caja en la azotea.
 3. **La Caja:** la "Máquina" es una caja negra lisa (estilo *Dark Matter*, 2024). Por dentro es un pasillo negro infinito con puertas; cada puerta es un mundo. Es el momento más importante del juego para el personaje.
 4. **Apertura del multiverso:** la misma Caja existe en todos los mundos y lleva al mismo pasillo; desde ahí se vuelve o se salta a otro mundo. El pasillo reemplaza al selector de mapas.
@@ -82,7 +99,7 @@ Idea rectora del juego a largo plazo. Todavía es diseño, no hay nada armado. L
 - **Futuro (tier 2):** el año 3000 o 5000; armas e ítems súper tecnológicos, por ejemplo **teletransporte** (puede reusar la baliza de translocación en stand-by).
 - **Vía Láctea colonizada (tier 3 tentativo, a confirmar):** toda la galaxia está habitada y **cada planeta colonizado es un mundo propio**, con su estética, sus bichos, sus ítems para farmear y sus **tecnologías propias** que solo se consiguen ahí. Se avanza con misiones de un planeta a otro. Pensar si los planetas se eligen desde la Máquina como cualquier mundo o desde un mapa estelar que se abre al llegar a la galaxia, y si todos comparten el mismo tier.
 - **Medieval fantástico (tier 1):** el Valle Esmeralda del Capítulo 2 pasa a ser uno de estos mundos.
-- **Steampunk (tier 1):** la Periferia Subterránea (Capítulo 1 actual), sin cambios. Propuesta: es la primera puerta.
+- **Steampunk (tier 1):** la Periferia Subterránea (Capítulo 4 actual), sin cambios. Propuesta: es la primera puerta.
 - **Infierno (tier 1):** el Abismo Ígneo (Capítulo 3); lore en `lore.md`.
 - **Infierno (tier 1):** el Abismo Ígneo del Capítulo 3 pasa a ser uno de estos mundos.
 - **Páramo Radiactivo (tier a definir):** mundo devastado tipo *Fallout*; criaturas con un aura de radiactividad que daña al jugador si está cerca (implementación probable: un `Area2D` de daño por segundo alrededor del enemigo). Recompensa final: **Reactor portátil** (uso a definir). Lore en `lore.md`.
@@ -108,6 +125,18 @@ Para contar la historia hace falta un sistema de escenas que se arme con datos, 
 - **Dónde se usan primero:** el encuentro con la Máquina tras el jefe del presente, la primera aparición de los Agentes del Tiempo, la llegada a cada mundo y la presentación de cada jefe (Loki, Zeus, etc.).
 - **Técnico:** Godot ya trae `AnimationPlayer` y `Tween`; el motor puede ser un intérprete de pasos que los use, con la `Camera2D` del nivel y los rigs de personaje existentes (`character_rig.gd`). Bloquear el control del jugador y la IA de enemigos mientras corre.
 - **Pendiente de decidir:** si los textos pasan por `tr()` desde el inicio (traducción futura) y si habrá voces.
+- **Presets de acciones (pedido 2026-10-17):** las acciones vienen prearmadas y el motor solo las encadena — acercarse, apuntar/amenazar, disparar, arrodillarse, hablar, morir, arrojar un objeto, etc. — más pasos de cámara (enfocar a alguien, panear de un actor a otro, seguir un proyectil, cámara lenta) y de escena (iniciar música, hacer aparecer a alguien fuera de cámara). La idea es tener muchos presets para armar escenas fácil. Hoy existe un intérprete básico en `core/cinematics/` (`focus`, `spawn`, `say`, `move`, `par`, `shake`, `release`): crecer desde ahí.
+- **Primera escena a armar con eso — el asaltante del P-1** (hoy el asaltante solo espera y pelea normal, en `level_1_01.tscn`):
+  ```
+  CINEMATIC START / MUSICA START
+  CAMARA enfoca al personaje principal
+  fuera de cámara aparece el ASALTANTE; CAMARA panea hacia él
+  ASALTANTE dice "Dame la guita, amigo" + acción apuntar/amenazar
+  CAMARA vuelve al personaje principal
+  PERSONAJE arroja el cuchillo hacia el asaltante
+  CAMARA sigue al cuchillo, alternando cámara lenta y rápida, hasta que en cámara lenta impacta
+  ASALTANTE animación de muerte → muere
+  ```
 
 ### 3.7 Impacto en lo que ya existe
 
@@ -148,6 +177,7 @@ Para contar la historia hace falta un sistema de escenas que se arme con datos, 
 
 - **Reemplazar el 8-bit provisorio por sonido de calidad** (tarea aparte, no bloquea nada): crear o importar los efectos y asignarlos arma por arma con `fire_stream` / `hit_stream`, o con `Sfx.register_override()`.
 - Sin sonido a propósito: ambientes, pasos y voces.
+- **Música invocada:** la música de pelea ya no salta con cualquier enemigo. La invocan las arenas (`ArenaEncounter.combat_music`, por defecto `combat`) y los enemigos configurados (`EnemyBase.combat_music`; jefes → `boss` y élites → `elite` por defecto). Falta decidir qué enemigos/arenas de cada mundo llevan pista propia y, si se quiere, temas distintos por arena.
 
 ---
 

@@ -6,13 +6,18 @@ extends Node
 ## en celdas de `CELL_SIZE` px y, si en una celda y sus 8 vecinas hay `MERGE_COUNT` del mismo tipo y nivel quietos, los funde en
 ## uno del nivel siguiente que vale la suma (se sigue cobrando el mismo total). El nivel tope sigue
 ## fundiéndose en sí mismo, así la cantidad de objetos queda acotada aunque nadie junte nada.
+## Monedas y experiencia se funden de a 3 (cobre, plata, oro, platino); munición y vida siguen de a 10.
 ## No conoce las clases: les pide `can_merge()`, `merge_kind()`, `merge_tier`, `merge_value()`, `upgrade_merge()` y `absorb_into()`.
 ## Un solo combinador por escena, creado la primera vez que aparece botín (`ensure()`).
 
 const NODE_NAME: String = "LootCombiner"
 const CHECK_INTERVAL: float = 0.4
 const CELL_SIZE: float = 128.0
-const MERGE_COUNT: int = 10
+const DEFAULT_MERGE_COUNT: int = 10
+## Cuántos del mismo tipo y nivel hacen falta para fundirse, por `merge_kind()`.
+const MERGE_COUNTS: Dictionary = {"COIN": 3, "EXP": 3}
+## El mínimo de cualquier tipo: si hay menos botín que esto en el grupo, no hace falta mirar celdas.
+const MIN_MERGE_COUNT: int = 3
 const GROUPS: Array[StringName] = [&"loot_drops", &"exp_orbs"]
 
 var _timer: float = 0.0
@@ -41,7 +46,7 @@ func _physics_process(delta: float) -> void:
 
 func _combine_group(group: StringName) -> void:
 	var nodes: Array[Node] = get_tree().get_nodes_in_group(group)
-	if nodes.size() < MERGE_COUNT:
+	if nodes.size() < MIN_MERGE_COUNT:
 		return
 	var cells: Dictionary = {}
 	for node: Node in nodes:
@@ -63,6 +68,7 @@ func _combine_group(group: StringName) -> void:
 	for kind: String in cells.keys():
 		var by_cell: Dictionary = cells[kind]
 		var tier: int = int(kind.get_slice("|", 1))
+		var need: int = int(MERGE_COUNTS.get(kind.get_slice("|", 0), DEFAULT_MERGE_COUNT))
 		for cell: Vector2i in by_cell.keys():
 			var pool: Array = []
 			for dy: int in range(-1, 2):
@@ -73,9 +79,9 @@ func _combine_group(group: StringName) -> void:
 					for item: Node2D in by_cell[near]:
 						if not used.has(item.get_instance_id()):
 							pool.append(item)
-			while pool.size() >= MERGE_COUNT:
-				var batch: Array = pool.slice(0, MERGE_COUNT)
-				pool = pool.slice(MERGE_COUNT)
+			while pool.size() >= need:
+				var batch: Array = pool.slice(0, need)
+				pool = pool.slice(need)
 				for item: Node2D in batch:
 					used[item.get_instance_id()] = true
 				_merge(batch, tier)

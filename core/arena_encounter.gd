@@ -17,6 +17,8 @@ const WALL_LAYER: int = 32
 @export var wave_manager_path: NodePath = ^"WaveManager"
 @export var barriers_path: NodePath = ^"Barriers"
 @export var status_label_path: NodePath = ^"StatusLabel"
+## Pista de Music.TRACKS que la arena invoca mientras dura (vacío = sin cambio de música).
+@export var combat_music: StringName = &"combat"
 
 var _wave_manager: WaveManager = null
 var _status_label: Label = null
@@ -59,6 +61,7 @@ func _on_body_entered(body: Node2D) -> void:
 		return
 
 	_started = true
+	add_to_group(&"music_arenas")
 	_lock_camera()
 	_set_walls_active(true)
 	encounter_started.emit()
@@ -80,6 +83,7 @@ func _on_round_cleared(round_number: int) -> void:
 
 func _on_all_rounds_cleared() -> void:
 	_cleared = true
+	remove_from_group(&"music_arenas")
 	_set_walls_active(false)
 	_unlock_camera()
 	_set_status_text("¡ZONA DESPEJADA! El paso está libre.")
@@ -95,6 +99,7 @@ func _on_player_defeated() -> void:
 	if _wave_manager != null:
 		_wave_manager.stop_and_clear()
 	_started = false
+	remove_from_group(&"music_arenas")
 	_set_walls_active(false)
 	_unlock_camera()
 	_set_status_text("")

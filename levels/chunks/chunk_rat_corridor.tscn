@@ -1,0 +1,75 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/chunks/level_chunk.gd" id="chunk"]
+[ext_resource type="PackedScene" path="res://entities/enemies/city_rat.tscn" id="rat"]
+
+[sub_resource type="RectangleShape2D" id="R_90x60"]
+size = Vector2(90, 60)
+
+[sub_resource type="RectangleShape2D" id="R_1600x74"]
+size = Vector2(1600, 74)
+
+[node name="Chunk" type="Node2D"]
+script = ExtResource("chunk")
+width = 1600.0
+chunk_name = "PASILLO DE RATAS"
+
+[node name="Geometry" type="Node2D" parent="."]
+
+[node name="Floor" type="StaticBody2D" parent="Geometry" groups=["world"]]
+position = Vector2(800.0, 593.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Floor"]
+shape = SubResource("R_1600x74")
+
+[node name="ColorRect" type="ColorRect" parent="Geometry/Floor"]
+offset_left = -800.0
+offset_top = -37.0
+offset_right = 800.0
+offset_bottom = 37.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Crate1" type="StaticBody2D" parent="Geometry" groups=["world"]]
+position = Vector2(500.0, 526.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Crate1"]
+shape = SubResource("R_90x60")
+
+[node name="ColorRect" type="ColorRect" parent="Geometry/Crate1"]
+offset_left = -45.0
+offset_top = -30.0
+offset_right = 45.0
+offset_bottom = 30.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Crate2" type="StaticBody2D" parent="Geometry" groups=["world"]]
+position = Vector2(1100.0, 526.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Crate2"]
+shape = SubResource("R_90x60")
+
+[node name="ColorRect" type="ColorRect" parent="Geometry/Crate2"]
+offset_left = -45.0
+offset_top = -30.0
+offset_right = 45.0
+offset_bottom = 30.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Rat1" parent="." instance=ExtResource("rat")]
+position = Vector2(350.0, 555.0)
+
+[node name="Rat2" parent="." instance=ExtResource("rat")]
+position = Vector2(700.0, 555.0)
+
+[node name="Rat3" parent="." instance=ExtResource("rat")]
+position = Vector2(900.0, 555.0)
+
+[node name="Rat4" parent="." instance=ExtResource("rat")]
+position = Vector2(1350.0, 555.0)
+

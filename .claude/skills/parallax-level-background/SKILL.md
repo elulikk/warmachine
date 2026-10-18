@@ -7,7 +7,7 @@ description: Crear el fondo con paralaje de un nivel de WARMACHINE. Lee la temá
 
 Resultado: un nivel con cuatro capas de paralaje (`assets/art/bg/parallax/`) y, si la opción "Fondos de paralaje (capas)" está apagada, la **imagen base** de Flow como fondo fijo (`assets/art/bg/<nivel>_base.jpg`). La base es la imagen de la que salieron las capas: nunca se usa otra imagen de respaldo.
 
-Ejemplo ya hecho: sector 4-1 (`levels/chapter_4/level_4_01.tscn`), base `city_night_base.jpg`, capas `city_parallax_{sky,far,mid,street}.webp`.
+Ejemplo ya hecho: sector 4-1 (`levels/chapter_1/level_1_01.tscn`), base `city_night_base.jpg`, capas `city_parallax_{sky,far,mid,street}.webp`.
 
 ## Paso 1: temática del nivel
 
@@ -18,7 +18,7 @@ Ejemplo ya hecho: sector 4-1 (`levels/chapter_4/level_4_01.tscn`), base `city_ni
 
 ## Paso 2: imagen base en Google Flow
 
-Usar el skill `google-flow` para la interfaz (modo Agente, descargas 1K, navegación de la galería). **Navegador: intentar primero Claude in Chrome en el Edge de la PC del usuario** (`mcp__claude-in-chrome__*`, sesión de Google ya abierta); el navegador integrado es la alternativa. Detalle y qué hacer si no hay navegador conectado: sección "Qué navegador usar" de `google-flow`.
+Usar el skill `google-flow` para la interfaz (modo Agente, descargas 1K, navegación de la galería). **Navegador: intentar primero Claude in Chrome en el Edge de la PC del usuario** (`mcp__claude-in-chrome__*`, sesión de Google ya abierta); el navegador integrado es la alternativa. Detalle y qué hacer si no hay navegador conectado: skill `asset-browser`.
 
 - Proyecto: `https://flow.google.com/project/81d5950a-e725-4640-9f45-d9b4c4e0d455` (el de los fondos de la ciudad).
 - Ajustes del agente: confirmar "Nunca", imágenes x1, 16:9. Guardar.
@@ -71,7 +71,7 @@ En el sector del nivel dentro de `sectors` de su capítulo:
 - **Zoom:** los fondos por capas usan `LAYER_ZOOM` (1.1, en `level_skin.gd`); la imagen fija usa 1.3. Con 1.3 las capas de 1376 px se ven muy borrosas en 1920×1080. No subir el zoom de las capas para "llenar" la pantalla.
 - Las capas solo se usan si el fondo del nivel coincide con el `backdrop` del tema. Un nivel con fondo propio (`backdrop_file` de `LevelBase`) queda con imagen fija.
 - La opción global es `parallax_bg` (`core/settings.gd`, default `true`) y su checkbox está en Calidad gráfica (`ui/settings_window.gd`).
-- Para un capítulo nuevo, el tema debe tener `sectors` (ya existe para el capítulo 4).
+- Para un capítulo nuevo, el tema debe tener `sectors` (ya existe para el capítulo 1).
 
 ## Paso 6: verificar
 

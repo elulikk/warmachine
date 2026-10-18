@@ -237,6 +237,8 @@ func complete_level(stats: Dictionary) -> void:
 		if metrics_mgr != null:
 			metrics_mgr.record_contract_completed()
 	
+	# Sector terminado: el checkpoint de reanudación ya no sirve
+	SaveManager.clear_resume_point()
 	var sm: SaveManager = SaveManager.get_instance()
 	if sm != null:
 		sm.save_to_disk()

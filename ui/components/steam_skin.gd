@@ -22,6 +22,7 @@ const COLOR_COPPER: Color = Color(0.72, 0.43, 0.28, 1.0)
 
 static var _styles: Dictionary = {}
 static var _title_font: Font = null
+static var _arrow_down: Texture2D = null
 
 
 ## Marco de ventana (9-slice). Los márgenes de contenido dejan el interior libre de remaches.
@@ -243,6 +244,93 @@ static func _skin_button(button: Button) -> void:
 	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.5, 0.45, 1))
 	button.add_theme_color_override("font_outline_color", COLOR_OUTLINE)
 	button.add_theme_constant_override("outline_size", 2)
+	if button is OptionButton:
+		_skin_option_button(button as OptionButton)
+
+
+## Desplegables: el texto va en un recuadro hundido (como un campo de texto) y la flecha en un botón de
+## cobre aparte a la derecha. El botón es solo dibujo: el clic lo recibe el OptionButton entero.
+static func _skin_option_button(button: OptionButton) -> void:
+	if button.has_node(^"ArrowButton"):
+		return
+	const ARROW_W: float = 30.0
+	var empty: ImageTexture = ImageTexture.create_from_image(Image.create(1, 1, false, Image.FORMAT_RGBA8))
+	button.add_theme_icon_override("arrow", empty)
+	button.add_theme_constant_override("arrow_margin", 0)
+	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, 30.0)
+	var tints: Dictionary = {"normal": Color.WHITE, "hover": Color(1.15, 1.1, 1.05), "pressed": Color(0.8, 0.75, 0.7), "disabled": Color(0.6, 0.58, 0.56, 0.8)}
+	for state: String in tints:
+		# Marco de cobre por fuera, recuadro oscuro hundido por dentro
+		var box: StyleBoxFlat = StyleBoxFlat.new()
+		box.bg_color = Color(0.13, 0.085, 0.06) * (tints[state] as Color)
+		box.border_color = COLOR_COPPER * (tints[state] as Color)
+		box.set_border_width_all(3)
+		box.set_corner_radius_all(4)
+		box.shadow_color = Color(0, 0, 0, 0.4)
+		box.shadow_size = 2
+		box.content_margin_left = 12.0
+		box.content_margin_right = ARROW_W + 10.0
+		box.content_margin_top = 5.0
+		box.content_margin_bottom = 5.0
+		button.add_theme_stylebox_override(state, box)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+	var plate: Panel = Panel.new()
+	plate.name = "ArrowButton"
+	plate.set_meta(&"steam_skinned", true)
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var copper: StyleBoxFlat = StyleBoxFlat.new()
+	copper.bg_color = Color(0.48, 0.29, 0.17)
+	copper.border_color = Color(0.88, 0.62, 0.36)
+	copper.set_border_width_all(2)
+	copper.border_width_bottom = 3
+	copper.set_corner_radius_all(3)
+	copper.shadow_color = Color(0, 0, 0, 0.35)
+	copper.shadow_size = 2
+	plate.add_theme_stylebox_override("panel", copper)
+	button.add_child(plate)
+	plate.anchor_left = 1.0
+	plate.anchor_right = 1.0
+	plate.anchor_bottom = 1.0
+	plate.offset_left = -ARROW_W - 3.0
+	plate.offset_right = -3.0
+	plate.offset_top = 3.0
+	plate.offset_bottom = -3.0
+
+	var icon: TextureRect = TextureRect.new()
+	icon.texture = _down_arrow()
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.offset_left = 8.0
+	icon.offset_right = -8.0
+	icon.offset_top = 6.0
+	icon.offset_bottom = -6.0
+	plate.add_child(icon)
+	button.mouse_entered.connect(func() -> void: plate.modulate = Color(1.2, 1.12, 1.0))
+	button.mouse_exited.connect(func() -> void: plate.modulate = Color.WHITE)
+	button.button_down.connect(func() -> void: plate.modulate = Color(0.8, 0.75, 0.7))
+	button.button_up.connect(func() -> void: plate.modulate = Color.WHITE)
+
+
+## Triángulo dorado con contorno oscuro que apunta hacia abajo (la flecha del desplegable).
+static func _down_arrow() -> Texture2D:
+	if _arrow_down == null:
+		const W: int = 32
+		const H: int = 20
+		var img: Image = Image.create(W, H, false, Image.FORMAT_RGBA8)
+		for y: int in H:
+			for x: int in W:
+				# Distancia al borde del triángulo (base arriba, punta abajo), en píxeles
+				var half: float = (W * 0.5) * (1.0 - float(y) / H)
+				var d: float = minf(half - absf(x + 0.5 - W * 0.5), minf(float(y), float(H - y)))
+				if half - absf(x + 0.5 - W * 0.5) < 0.0:
+					continue
+				var col: Color = COLOR_OUTLINE if d < 2.0 or y < 2 else COLOR_GOLD.lerp(Color(0.85, 0.55, 0.25), float(y) / H)
+				img.set_pixel(x, y, col)
+		_arrow_down = ImageTexture.create_from_image(img)
+	return _arrow_down
 
 
 static func _skin_panel(panel: Control) -> void:

@@ -94,7 +94,7 @@ static func _hide_decor(visuals: Node, keep: Array[String]) -> void:
 
 ## Cartel de checkpoint por capítulo (mundo). Sin entrada: queda el poste de `terminal`.
 const CHECKPOINT_SIGNS: Dictionary = {
-	4: "res://assets/art/world4/checkpoint_sign.png",
+	1: "res://assets/art/world1/checkpoint_sign.png",
 }
 const LED_PATH: String = "res://assets/art/props/checkpoint_led.png"
 

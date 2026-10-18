@@ -153,7 +153,8 @@ static func spray(host: Node, pos: Vector2, dir: Vector2, damage: float, mechani
 
 ## Trozos de carne, tripas y huesos (o chatarra y resortes) que saltan y rebotan en el piso.
 ## `spread_up` abre el cono hacia arriba; `power` multiplica la velocidad de salida.
-static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power: float = 1.0) -> void:
+## `size_scale` < 1 (ratas y bichos chicos): menos trozos y más chicos, y sin tripas largas.
+static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power: float = 1.0, size_scale: float = 1.0) -> void:
 	var density: float = SettingsScript.particle_scale()
 	if density < MIN_DENSITY_FOR_PARTICLES:
 		return
@@ -161,7 +162,7 @@ static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power
 	if container == null:
 		return
 	var tree: SceneTree = host.get_tree()
-	var amount: int = maxi(1, roundi(float(count) * density))
+	var amount: int = maxi(1, roundi(float(count) * density * size_scale * size_scale))
 	var existing: Array[Node] = tree.get_nodes_in_group(GIB_GROUP)
 	for i in range(maxi(0, existing.size() + amount - GIB_LIMIT)):
 		existing[i].queue_free()
@@ -176,7 +177,7 @@ static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power
 		elif roll < GUT_CHANCE_CHUNK:
 			kind = "chunk"
 			texture = variant_tex("gore_chunk", 4)
-		elif roll < GUT_CHANCE_CHUNK + GUT_CHANCE:
+		elif roll < GUT_CHANCE_CHUNK + GUT_CHANCE and size_scale >= 0.8:
 			kind = "gut"
 			texture = variant_tex("gore_gut", 2)
 		else:
@@ -190,6 +191,8 @@ static func gibs(host: Node2D, pos: Vector2, count: int, mechanical: bool, power
 		container.add_child(gib)
 		gib.global_position = pos + Vector2(randf_range(-6.0, 6.0), randf_range(-8.0, 4.0))
 		gib.call("build", kind, texture)
+		if size_scale < 1.0:
+			gib.scale = Vector2.ONE * size_scale
 		var angle: float = deg_to_rad(-90.0 + randf_range(-72.0, 72.0))
 		gib.set("velocity", Vector2.from_angle(angle) * randf_range(130.0, 360.0) * power)
 		gib.set("spin", randf_range(-14.0, 14.0))
@@ -258,8 +261,9 @@ static func _place_stain(host: Node, hit: Dictionary, size_mult: float, mechanic
 	var width: float = randf_range(9.0, 24.0) * size_mult
 	var height: float = randf_range(2.4, 4.2) * clampf(size_mult, 0.7, 1.4)
 	var color: Color = OIL if mechanical else BLOOD_DARK
-	var pool_art: Texture2D = null if mechanical else _pool_texture()
-	var art: Texture2D = null if mechanical or pool_art != null else variant_tex("blood_stain", 3)
+	var flat_floor: bool = floor_body != null and floor_body.has_meta(&"flat_floor")
+	var pool_art: Texture2D = null if mechanical or flat_floor else _pool_texture()
+	var art: Texture2D = null if mechanical or pool_art != null or flat_floor else variant_tex("blood_stain", 3)
 	if pool_art != null:
 		# Mismo método que el charco de ácido (AcidPool): la mancha cuelga del borde del piso, se
 		# comprime en vertical y al aparecer se estira desde el impacto con un pequeño rebote.
@@ -283,11 +287,13 @@ static func _place_stain(host: Node, hit: Dictionary, size_mult: float, mechanic
 		sprite.scale = Vector2(factor * (-1.0 if randf() < 0.5 else 1.0), factor)
 		stain.add_child(sprite)
 	else:
+		if flat_floor:
+			height *= 1.8
 		stain.add_child(_ellipse(width, height, Color(color.r, color.g, color.b, 0.92)))
 		var center_color: Color = Color(0.2, 0.2, 0.22, 0.9) if mechanical else Color(color.r * 1.6, color.g * 1.4, color.b * 1.4, 0.9)
 		stain.add_child(_ellipse(width * 0.55, height * 0.6, center_color))
 	parent.add_child(stain)
-	stain.global_position = (hit["position"] as Vector2) + Vector2(0.0, 0.0 if pool_art != null else 1.5)
+	stain.global_position = (hit["position"] as Vector2) + Vector2(0.0, 0.0 if pool_art != null else (height * 0.5 + 1.0 if flat_floor else 1.5))
 
 	tree.create_timer(delay).timeout.connect(stain.set_visible.bind(true))
 	var fade: Tween = stain.create_tween()

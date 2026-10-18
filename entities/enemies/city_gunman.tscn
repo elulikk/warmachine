@@ -17,6 +17,7 @@ entity_name = "Asaltante"
 move_speed = 62.0
 aggro_range = 420.0
 art_kind = "gunman"
+gore_amount = 0.5
 gun = "pistol"
 shot_damage = 7.0
 fire_interval = 1.9

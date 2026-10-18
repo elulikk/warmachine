@@ -94,6 +94,7 @@ const DEFAULTS: Dictionary = {
 	"msaa": 2,
 	"particles": 1.0,
 	"fire_style": 0,  ## estilo de fuego y ácido: 0 = sprites (liviano), 1 = partículas, 2 = shaders
+	"enemy_health_bars": true,  ## barras de vida sobre los enemigos (apagadas ahorran un nodo por enemigo)
 	"enemy_lod": true,  ## enemigos lejanos del jugador se dibujan como un solo sprite en vez del esqueleto
 	"fx_vignette": true,
 	"fx_grain": true,

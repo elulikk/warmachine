@@ -39,9 +39,10 @@ Copiar uno parecido (`data/items/laser_helmet.tres`, `data/items/throwables/boom
 
 ## Paso 3: arte (Google Flow)
 
-Usar el skill **`google-flow`** (navegador: Claude in Chrome en el Edge del usuario).
+**Siempre generar el ícono del ítem en Google Flow** (skill **`google-flow`**, que usa `asset-browser`), sin esperar a que el usuario lo pida; solo se omite si ya existe `assets/art/items/<item_id>.png`. Un sonido real (en vez del sintetizado) va por **`generate-audio`**, solo si el usuario lo pide; si no, un caso nuevo en `Sfx._build()` alcanza.
 
-- **Ícono**: objeto centrado, fondo negro liso, brillo del color del ítem. Va a `assets/art/items/<item_id>.png` (consumibles `assets/art/consumables/`, runas `assets/art/runes/`). `ItemIcons` lo prefiere; si no existe cae a pixel art 16×16.
+- **Ícono (simplificado, legible en la UI)**: se ve a 32×32 en slots/inventario/tienda, así que el prompt debe pedir un **símbolo simple**: una sola silueta grande y reconocible, formas gruesas y bordes nítidos, 2–3 colores planos con un acento del color del ítem, sin detalle fino, sin texto, sin sombra de suelo, centrado y ocupando ~80% del cuadro, fondo negro liso, 1:1. Plantilla: `Genera una imagen de un ícono simplificado de <objeto>, silueta simple y gruesa, pocos colores planos, bordes nítidos, estilo 2D de videojuego, centrado, aislado sobre fondo negro liso, brillo sutil <color>, sin texto, sin sombra.` Si hay varios ítems en la tanda, una hoja o un mensaje de Agente con todos.
+- Pasarlo con `python art_source/flow_tools.py place <jpg> --kind item --id <item_id>` → `assets/art/items/<item_id>.png` (consumibles `assets/art/consumables/`, runas `assets/art/runes/`). **Revisar el resultado reducido a 32×32** (la hoja de contacto o abrir el PNG): si no se lee a ese tamaño, regenerar más simple. `ItemIcons` lo prefiere; si no existe cae a pixel art 16×16.
 - **Arma en mano**: PNG de lado apuntando a la derecha en `assets/art/weapons/<id>.png`. Los datos de agarre salen de `core/art/weapon_art.gd` (generado: copiar una entrada de un arma parecida y ajustar `grip`, `hand`, `support`, `tip_x`, `scale`) y el movimiento de `core/art/weapon_motion.gd` (`PROFILES` o `ALIASES` apuntando al perfil de otra arma). Ícono sin PNG: `ItemIcons.WEAPON_POSES` por tipo.
 - Importar: `Godot --headless --path . --import`; cargar con `Art.tex()`.
 - Sin Flow disponible: dejar el ítem funcionando con el ícono de reserva y anotar "ícono pendiente" en el ROADMAP.

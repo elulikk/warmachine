@@ -40,11 +40,20 @@ var stash_items: Array = []
 ## Estado persistido de cada comerciante (stock limitado y recompra), por `trader_id`.
 ## Lo escribe `TradeSession` (core/trade/trade_session.gd); una clave ausente significa estado inicial.
 var trade_state: Dictionary = {}
-var unlocked_levels: Array[String] = ["res://levels/chapter_4/level_4_01.tscn"]
+var unlocked_levels: Array[String] = ["res://levels/chapter_1/level_1_01.tscn"]
+## Versión de la numeración de mundos guardada en el archivo. 1 = Periferia era chapter_1 y Ciudad de Jano chapter_4;
+## desde la 2, Ciudad de Jano es chapter_1 (mundo 1) y la Periferia es chapter_4 (mundo 4). Ver `_migrate_world_path`.
+const WORLD_NUMBERING_VERSION: int = 2
 
 var world_flags: Dictionary = {}
 var last_checkpoint_position: Vector2 = Vector2.ZERO
 var has_checkpoint: bool = false
+## Último checkpoint alcanzado en un sector (ruta de la escena y posición). Al cargar la partida se vuelve ahí
+## en vez de al campamento; se borra al terminar el sector o al pasar por el campamento.
+var resume_level_path: String = ""
+var resume_position: Vector2 = Vector2.ZERO
+## Lo activa el menú al cargar un slot: el sector que se abre usa `resume_position` una sola vez.
+var resume_pending: bool = false
 
 
 func _enter_tree() -> void:
@@ -190,6 +199,20 @@ static func get_respawn_point(default_pos: Vector2 = Vector2.ZERO) -> Vector2:
 	return default_pos
 
 
+## Anota el checkpoint como punto de reanudación de la partida guardada (lo escribe CheckpointTerminal).
+static func set_resume_point(level_path: String, pos: Vector2) -> void:
+	if instance != null and not level_path.is_empty():
+		instance.resume_level_path = level_path
+		instance.resume_position = pos
+
+
+static func clear_resume_point() -> void:
+	if instance != null:
+		instance.resume_level_path = ""
+		instance.resume_position = Vector2.ZERO
+		instance.resume_pending = false
+
+
 static func has_respawn_point() -> bool:
 	if instance != null:
 		return instance.has_checkpoint
@@ -322,7 +345,9 @@ func save_to_disk() -> bool:
 		"character_name": character_name,
 		"timestamp": Time.get_datetime_string_from_system(false, true),
 		"unlocked_levels": unlocked_levels,
+		"world_numbering": WORLD_NUMBERING_VERSION,
 		"world_flags": world_flags,
+		"resume": {"level": resume_level_path, "x": resume_position.x, "y": resume_position.y},
 		"stats": {
 			"level": level_val,
 			"current_exp": exp_val,
@@ -357,6 +382,16 @@ func save_to_disk() -> bool:
 
 
 ## Carga y aplica los datos guardados de un slot específico.
+## Traduce una ruta de sector guardada con la numeración 1 (Ciudad de Jano era chapter_4 y la Periferia chapter_1)
+## a la numeración 2 (Ciudad de Jano es chapter_1 y la Periferia chapter_4).
+static func _migrate_world_path(path: String) -> String:
+	if path.begins_with("res://levels/chapter_1/level_1_"):
+		return path.replace("res://levels/chapter_1/level_1_", "res://levels/chapter_4/level_4_")
+	if path.begins_with("res://levels/chapter_4/level_4_"):
+		return path.replace("res://levels/chapter_4/level_4_", "res://levels/chapter_1/level_1_")
+	return path
+
+
 func load_from_disk(slot_id: int) -> bool:
 	_ensure_save_dir()
 	current_slot = clampi(slot_id, 1, MAX_SLOTS)
@@ -388,11 +423,24 @@ func load_from_disk(slot_id: int) -> bool:
 		character_name = "OPERADOR"
 	
 	unlocked_levels.clear()
-	var raw_unlocked: Array = data.get("unlocked_levels", ["res://levels/chapter_4/level_4_01.tscn"])
+	var raw_unlocked: Array = data.get("unlocked_levels", ["res://levels/chapter_1/level_1_01.tscn"])
+	var numbering: int = int(data.get("world_numbering", 1))
 	for ul in raw_unlocked:
-		unlocked_levels.append(str(ul))
+		var level_path: String = str(ul)
+		if numbering < WORLD_NUMBERING_VERSION:
+			level_path = _migrate_world_path(level_path)
+		unlocked_levels.append(level_path)
 	
 	world_flags = data.get("world_flags", {})
+	resume_level_path = ""
+	resume_position = Vector2.ZERO
+	var raw_resume: Variant = data.get("resume", {})
+	if typeof(raw_resume) == TYPE_DICTIONARY:
+		var resume_dict: Dictionary = raw_resume as Dictionary
+		resume_level_path = str(resume_dict.get("level", ""))
+		resume_position = Vector2(float(resume_dict.get("x", 0.0)), float(resume_dict.get("y", 0.0)))
+		if numbering < WORLD_NUMBERING_VERSION and not resume_level_path.is_empty():
+			resume_level_path = _migrate_world_path(resume_level_path)
 	
 	stash_items.clear()
 	var raw_stash: Array = data.get("stash_items", [])
@@ -452,7 +500,7 @@ func apply_data_to_player(player: Player, data: Dictionary) -> void:
 	if player.stats_manager != null and not stats.is_empty():
 		player.stats_manager.level = clampi(int(stats.get("level", 1)), 1, StatsManager.MAX_LEVEL)
 		player.stats_manager.current_exp = float(stats.get("current_exp", 0.0))
-		player.stats_manager.exp_to_next_level = float(stats.get("exp_to_next_level", 75.0))
+		player.stats_manager.exp_to_next_level = float(stats.get("exp_to_next_level", 120.0))
 		player.stats_manager.coins = int(stats.get("coins", 0))
 		player.stats_manager.time_crystals = int(stats.get("time_crystals", 0))
 		player.stats_manager.crystals_changed.emit(player.stats_manager.time_crystals)
@@ -557,7 +605,8 @@ func get_slot_preview(slot_id: int) -> Dictionary:
 		"name": char_n,
 		"level": lvl,
 		"coins": cns,
-		"timestamp": timestamp
+		"timestamp": timestamp,
+		"sectors": (dict.get("unlocked_levels", []) as Array).size()
 	}
 
 
@@ -585,12 +634,14 @@ func delete_slot(slot_id: int) -> bool:
 
 func _init_new_profile() -> void:
 	# Partida nueva: el juego arranca en Ciudad de Jano (sector 01). Los demás mundos se abren al entrar a la Caja.
-	unlocked_levels = ["res://levels/chapter_4/level_4_01.tscn"]
+	unlocked_levels = ["res://levels/chapter_1/level_1_01.tscn"]
 	stash_items.clear()
 	trade_state.clear()
 	world_flags.clear()
 	has_checkpoint = false
 	last_checkpoint_position = Vector2.ZERO
+	resume_level_path = ""
+	resume_position = Vector2.ZERO
 	var metrics_mgr: MetricsManager = MetricsManager.get_instance()
 	if metrics_mgr != null:
 		metrics_mgr.reset_metrics()

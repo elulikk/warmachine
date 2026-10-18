@@ -48,6 +48,7 @@
 [ext_resource type="Resource" path="res://data/items/throwables/acid_grenade.tres" id="43_acid"]
 [ext_resource type="Resource" path="res://data/items/throwables/gas_bomb.tres" id="44_gas"]
 [ext_resource type="Resource" path="res://data/weapons/heavy_hammer.tres" id="45_hammer"]
+[ext_resource type="Resource" path="res://data/weapons/mjolnir.tres" id="mjolnir_w"]
 [ext_resource type="Resource" path="res://data/weapons/katana.tres" id="46_katana"]
 [ext_resource type="Resource" path="res://data/items/grappling_hook.tres" id="47_hook_res"]
 [ext_resource type="Resource" path="res://data/items/teleport_beacon.tres" id="48_beacon_res"]
@@ -475,6 +476,10 @@ horizontal_alignment = 1
 [node name="HammerPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
 position = Vector2(1480, 560)
 weapon_data = ExtResource("45_hammer")
+
+[node name="MjolnirPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(1560, 560)
+weapon_data = ExtResource("mjolnir_w")
 
 [node name="KatanaPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
 position = Vector2(1650, 560)

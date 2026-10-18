@@ -8,6 +8,7 @@ const LEVELS_PER_CHAPTER: int = 10
 
 ## Niveles con contenido real. El resto son esqueletos vacíos y el selector los marca como pendientes.
 const IMPLEMENTED_LEVELS: Array[String] = [
+	# Mundo 1: Ciudad de Jano (ciudad moderna, 8 sectores)
 	"res://levels/chapter_1/level_1_01.tscn",
 	"res://levels/chapter_1/level_1_02.tscn",
 	"res://levels/chapter_1/level_1_03.tscn",
@@ -16,8 +17,6 @@ const IMPLEMENTED_LEVELS: Array[String] = [
 	"res://levels/chapter_1/level_1_06.tscn",
 	"res://levels/chapter_1/level_1_07.tscn",
 	"res://levels/chapter_1/level_1_08.tscn",
-	"res://levels/chapter_1/level_1_09.tscn",
-	"res://levels/chapter_1/level_1_10.tscn",
 	"res://levels/chapter_2/level_2_01.tscn",
 	"res://levels/chapter_2/level_2_02.tscn",
 	"res://levels/chapter_2/level_2_03.tscn",
@@ -38,7 +37,7 @@ const IMPLEMENTED_LEVELS: Array[String] = [
 	"res://levels/chapter_3/level_3_08.tscn",
 	"res://levels/chapter_3/level_3_09.tscn",
 	"res://levels/chapter_3/level_3_10.tscn",
-	# Capítulo 4: El Presente (ciudad moderna, 8 sectores)
+	# Mundo 4: Periferia Subterránea (steampunk, 10 sectores)
 	"res://levels/chapter_4/level_4_01.tscn",
 	"res://levels/chapter_4/level_4_02.tscn",
 	"res://levels/chapter_4/level_4_03.tscn",
@@ -46,16 +45,18 @@ const IMPLEMENTED_LEVELS: Array[String] = [
 	"res://levels/chapter_4/level_4_05.tscn",
 	"res://levels/chapter_4/level_4_06.tscn",
 	"res://levels/chapter_4/level_4_07.tscn",
-	"res://levels/chapter_4/level_4_08.tscn"
+	"res://levels/chapter_4/level_4_08.tscn",
+	"res://levels/chapter_4/level_4_09.tscn",
+	"res://levels/chapter_4/level_4_10.tscn"
 ]
 
 ## Cantidad de niveles por capítulo cuando no es LEVELS_PER_CHAPTER. El último de cada capítulo es el jefe o el final.
-const LEVEL_COUNTS: Dictionary = {4: 8}
+const LEVEL_COUNTS: Dictionary = {1: 8}
 ## La Caja: campamento y pasillo de puertas. Es el destino del último sector de cada mundo y el hub de la campaña.
 const HUB_PATH: String = "res://scenes/hub/base_camp.tscn"
 ## Destino del último nivel de un mundo: siempre la Caja (los mundos ya no encadenan entre sí).
 const CHAPTER_EXIT: Dictionary = {1: HUB_PATH, 2: HUB_PATH, 3: HUB_PATH, 4: HUB_PATH, 5: HUB_PATH}
-## Nombres de los sectores de Ciudad de Jano (capítulo 4). Los demás sectores solo llevan el número.
+## Nombres de los sectores de Ciudad de Jano (capítulo 1). Los demás sectores solo llevan el número.
 const JANO_SECTOR_NAMES: Dictionary = {
 	1: "La calle", 2: "Los callejones", 3: "Las alcantarillas", 4: "El barrio de casitas",
 	5: "El muelle", 6: "El hotel", 7: "La discoteca", 8: "La azotea"
@@ -63,18 +64,18 @@ const JANO_SECTOR_NAMES: Dictionary = {
 
 ## Nombres visibles de los mundos. Sin número: el orden no importa, todos se abren desde la Caja.
 static var CHAPTER_NAMES: Dictionary = {
-	1: "PERIFERIA SUBTERRÁNEA",
+	1: "CIUDAD DE JANO",
 	2: "VALLE ESMERALDA",
 	3: "ABISMO ÍGNEO",
-	4: "CIUDAD DE JANO",
+	4: "PERIFERIA SUBTERRÁNEA",
 	5: "NÚCLEO DEL REACTOR"
 }
 
 static var CHAPTER_COLORS: Dictionary = {
-	1: Color(0.2, 0.65, 0.85, 1.0), # Azul metálico frío
+	1: Color(0.5, 0.65, 1.0, 1.0), # Azul frío de ciudad nocturna
 	2: Color(0.45, 0.85, 0.35, 1.0), # Verde pradera medieval
 	3: Color(1.0, 0.38, 0.12, 1.0), # Rojo fuego infernal
-	4: Color(0.5, 0.65, 1.0, 1.0), # Azul frío de ciudad nocturna
+	4: Color(0.2, 0.65, 0.85, 1.0), # Azul metálico frío
 	5: Color(0.75, 0.35, 0.95, 1.0) # Púrpura plasma reactor
 }
 

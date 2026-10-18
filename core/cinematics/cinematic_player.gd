@@ -10,7 +10,7 @@ extends CanvasLayer
 ##   flash {s}                     destello blanco
 ##   bg {file}                     fondo pintado a pantalla completa (assets/art/bg/); "" lo quita
 ##   show {id, file, x, y, h}      sprite en pantalla (x, y en fracción; h = alto en fracción); hide {id}
-##   spawn {id, file, pos, h, flip?}  sprite en el mundo (assets/art/world4/); move {id, to, s} lo desplaza
+##   spawn {id, file, pos, h, flip?}  sprite en el mundo (assets/art/world1/); move {id, to, s} lo desplaza
 ##   remove {id}                   quita un actor
 ##   focus {pos | id, zoom, s}     la cámara se acerca a un punto o actor (id "player" = jugador); release {s} la suelta
 ##   shake {amp, s}                sacudida de cámara
@@ -27,7 +27,7 @@ signal finished
 const ArtScript = preload("res://core/art/art.gd")
 
 const BAR_HEIGHT: float = 64.0
-const WORLD_DIR: String = "res://assets/art/world4/"
+const WORLD_DIR: String = "res://assets/art/world1/"
 const BG_DIR: String = "res://assets/art/bg/"
 const PORTRAIT_DIR: String = "res://assets/art/portraits/"
 const PORTRAITS: Dictionary = {

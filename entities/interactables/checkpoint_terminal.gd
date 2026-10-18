@@ -57,6 +57,14 @@ func _register_checkpoint() -> void:
 	if test_level != null:
 		test_level.initial_spawn_position = respawn_pos
 
+	# Al cargar la partida se vuelve a este checkpoint (solo en sectores de campaña, no en salas de prueba)
+	var scene: Node = get_tree().current_scene
+	if scene != null and scene.scene_file_path.begins_with("res://levels/chapter_"):
+		SaveManager.set_resume_point(scene.scene_file_path, respawn_pos)
+		var sm: SaveManager = SaveManager.get_instance()
+		if sm != null:
+			sm.save_to_disk()
+
 	# 2. Encender luz en verde y persistir flag
 	_set_status(true, true)
 	checkpoint_activated.emit(checkpoint_id)
