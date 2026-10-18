@@ -50,6 +50,9 @@ const FILL_SKIP_GAP: float = 900.0
 ##   platform        tablón de las plataformas delgadas (NinePatch con `platform_margins` [izq, der, arriba, abajo])
 ##   backdrop_tone   oscurecimiento del fondo; `backdrop_tones` lo pisa por archivo (fondos muy cargados)
 ##   decor           script con `decorate(level, solids)` (decoración y partículas; solo dibujo)
+##   grade           (opcional) gradación de color de pantalla: gamma, contrast, saturation, shadows, highlights
+##                   (ver `set_grade` en `core/post_fx.gd`)
+##   player_glow     (opcional) halo aditivo detrás del jugador (Color; el alfa es la intensidad) para que se lea en lo oscuro
 const CHAPTER_THEMES: Dictionary = {
 	# Mundo 2 (Valle Esmeralda, medieval): tierra con borde de césped, muros de piedra, tablones de madera y cielo abierto
 	2: {
@@ -89,7 +92,11 @@ const CHAPTER_THEMES: Dictionary = {
 		"sectors": {
 			# `backdrop` es la imagen fija (la base de Flow, de la que salieron las capas). `backdrop_layers` es el paralaje:
 			# [archivo en assets/art/bg/parallax/, profundidad], de atrás hacia adelante
-			"1_01": {"ground_strip_lift": 0.0, "ground_strip": "city_floor_strip.png", "ground_fill": "city_floor_fill.png", "backdrop": "city_night_base.jpg", "backdrop_lift": 0.12, "backdrop_layers": [["city_parallax_sky.webp", 0.15],
+			# Noir: medios hundidos y fríos, luces cálidas (faroles con cono de luz en `city_decor.gd`)
+			"1_01": {"grade": {"gamma": 1.2, "contrast": 1.08, "saturation": 0.85,
+					"shadows": Color(0.8, 0.88, 1.12), "highlights": Color(1.1, 1.0, 0.86)},
+				"player_glow": Color(1.0, 0.85, 0.65, 0.4),
+				"ground_strip_lift": 0.0, "ground_strip": "city_floor_strip.png", "ground_fill": "city_floor_fill.png", "backdrop": "city_night_base.jpg", "backdrop_lift": 0.12, "backdrop_layers": [["city_parallax_sky.webp", 0.15],
 				["city_parallax_far.webp", 0.35], ["city_parallax_mid.webp", 0.65], ["city_parallax_street.webp", 1.0]]},
 			"1_02": {"backdrop": "city_alley.jpg"},
 			"1_03": {"edge": "edge_sewer.png", "ground": "sewer_stone.png", "stone": "sewer_stone.png", "ground_tone": Color(0.8, 0.9, 0.85, 1.0),
@@ -142,6 +149,7 @@ static func apply(level: Node, chapter: int = 1, backdrop_file: String = "") -> 
 		if decor != null:
 			(decor as GDScript).call("decorate", level, _solid_rects)
 	_install_backdrop(level, chapter, backdrop_file)
+	_apply_lighting(level)
 
 
 ## Rectángulos sólidos del último nivel revestido (los usa la decoración).
@@ -450,6 +458,48 @@ static func _install_backdrop(level: Node, chapter: int, backdrop_file: String =
 		backdrop.set("zoom", LAYER_ZOOM)
 		backdrop.set("lift", float(_theme.get("backdrop_lift", 0.0)))
 	layer.add_child(backdrop)
+
+
+## Gradación de color del sector (posprocesado) y halo del jugador. Sin `grade` se apaga la del nivel anterior.
+static func _apply_lighting(level: Node) -> void:
+	if not level.is_inside_tree():
+		return
+	# Diferido: al abrir un nivel directo (F6) el anfitrión del posprocesado todavía no está en el árbol
+	_send_grade.call_deferred(level, _theme.get("grade", {}) as Dictionary)
+	var player: Node2D = level.get_node_or_null("Player") as Node2D
+	if player == null or not _theme.has("player_glow") or player.has_node("AmbientGlow"):
+		return
+	var tint: Color = _theme["player_glow"] as Color
+	var gradient: Gradient = Gradient.new()
+	gradient.set_color(0, Color(1, 1, 1, 1))
+	gradient.set_color(1, Color(1, 1, 1, 0))
+	var tex: GradientTexture2D = GradientTexture2D.new()
+	tex.gradient = gradient
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	tex.width = 128
+	tex.height = 128
+	var glow: Sprite2D = Sprite2D.new()
+	glow.name = "AmbientGlow"
+	glow.texture = tex
+	glow.modulate = tint
+	glow.scale = Vector2(4.5, 4.5)
+	glow.position = Vector2(0.0, -30.0)
+	var mat: CanvasItemMaterial = CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	glow.material = mat
+	player.add_child(glow)
+	# Primer hijo: se dibuja antes que el cuerpo (ilumina la pared y el fondo a su alrededor, no lo lava a él)
+	player.move_child(glow, 0)
+
+
+static func _send_grade(level: Node, grade: Dictionary) -> void:
+	if not is_instance_valid(level) or not level.is_inside_tree():
+		return
+	var post_fx: Node = level.get_tree().root.get_node_or_null("SettingsHost/PostFx")
+	if post_fx != null:
+		post_fx.call("set_grade", grade, level)
 
 
 ## Capas de paralaje del tema: [archivo dentro de `assets/art/bg/parallax/`, profundidad]. Omite las que no carguen.

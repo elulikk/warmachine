@@ -25,3 +25,5 @@ desktop.ini
 art_source/flow_log.jsonl
 art_source/_inbox/
 art_source/**/_cut/
+
+override.cfg

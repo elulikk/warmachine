@@ -28,8 +28,8 @@ const HANG_TOP: float = -40.0
 
 ## Por sector: lluvia, autos, relámpagos y objetos de suelo [nombre, peso, alto en juego (px)].
 const SECTORS: Dictionary = {
-	# 1-01: calle limpia, sin objetos de suelo (tutorial del cuchillo y el asaltante)
-	"1_01": {"rain": true, "cars": true, "props": []},
+	# 1-01: calle limpia, sin objetos de suelo (tutorial del cuchillo y el asaltante); solo faroles con cono de luz
+	"1_01": {"rain": true, "cars": true, "props": [], "lamps": 640.0},
 	"1_02": {"rain": true, "cars": false, "props": [
 		["fire_ladder", 1, 150.0], ["trash_bags", 3, 44.0], ["wet_boxes", 3, 48.0], ["steam_grate", 2, 60.0], ["rust_pipe", 1, 40.0],
 		["barrel", 2, 52.0], ["dumpster", 2, 50.0], ["street_lamp", 1, 120.0]]},
@@ -75,6 +75,12 @@ const AVOID_RADIUS: float = 170.0
 ## Franja libre de objetos a cada lado del centro de una arena (antes y después del encuentro).
 const ARENA_CLEAR: float = 900.0
 const CAR_FILES: Array[String] = ["car_sedan", "car_taxi", "car_pickup", "car_police"]
+## Faroles con cono de luz (`lamps` en SECTORS = separación media en px): alto en juego, ancho del cono en el suelo,
+## color de la luz y cada cuántos faroles uno anda mal y parpadea.
+const LAMP_HEIGHT: float = 150.0
+const LAMP_CONE_WIDTH: float = 260.0
+const LAMP_LIGHT: Color = Color(1.0, 0.74, 0.38, 1.0)
+const LAMP_BROKEN_EVERY: int = 4
 const CLUB_COLORS: Array[Color] = [
 	Color(1.0, 0.2, 0.6, 0.16), Color(0.2, 0.9, 1.0, 0.16), Color(0.6, 0.3, 1.0, 0.18), Color(1.0, 0.8, 0.2, 0.12),
 ]
@@ -126,6 +132,8 @@ static func decorate(level: Node, solids: Array[Rect2]) -> void:
 
 	if cfg.has("hang"):
 		_place_hanging(back, str(cfg["hang"]), level_end, rng)
+	if cfg.has("lamps"):
+		_add_street_lamps(back, front, solids, float(cfg["lamps"]), rng)
 	if bool(cfg.get("water", false)):
 		_add_water_pits(back, solids, rng)
 	if bool(cfg.get("club", false)):
@@ -338,6 +346,94 @@ static func _avoid_points(level: Node) -> Array[float]:
 			continue
 		points.append(node.position.x)
 	return points
+
+
+## Faroles a lo largo del suelo (sin colisión, detrás del jugador): poste, brillo en la cabeza, cono de luz hasta
+## el piso y charco de luz. Uno de cada LAMP_BROKEN_EVERY parpadea (quieto con "reducir destellos").
+static func _add_street_lamps(parent: Node2D, front: Node2D, solids: Array[Rect2], spacing: float, rng: RandomNumberGenerator) -> void:
+	var tex: Texture2D = ArtScript.tex(DIR + "street_lamp.png")
+	if tex == null:
+		return
+	var s: float = LAMP_HEIGHT / float(tex.get_height())
+	var count: int = 0
+	for rect: Rect2 in solids:
+		if rect.size.x < MIN_GROUND_WIDTH or rect.size.y <= THIN_MAX_HEIGHT:
+			continue
+		var x: float = rect.position.x + rng.randf_range(200.0, spacing)
+		while x < rect.end.x - 120.0:
+			if not _covered_top(rect, solids, x) and _free_above(rect, solids, x, LAMP_HEIGHT + 20.0):
+				_place_lamp(parent, front, tex, s, Vector2(x, rect.position.y), count % LAMP_BROKEN_EVERY == LAMP_BROKEN_EVERY - 1, rng)
+				count += 1
+			x += spacing * rng.randf_range(0.8, 1.2)
+
+
+static func _place_lamp(parent: Node2D, front: Node2D, tex: Texture2D, s: float, base: Vector2, broken: bool, rng: RandomNumberGenerator) -> void:
+	var lamp: Node2D = Node2D.new()
+	lamp.position = base
+	parent.add_child(lamp)
+	var pole: Sprite2D = Sprite2D.new()
+	pole.texture = tex
+	pole.centered = false
+	pole.scale = Vector2(s, s)
+	pole.offset = Vector2(-tex.get_width() * 0.5, -tex.get_height() + 4.0 / s)
+	lamp.add_child(pole)
+
+	# Todo lo que es luz va en un nodo aparte, así el parpadeo lo apaga entero
+	var light: Node2D = Node2D.new()
+	var add: CanvasItemMaterial = CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	light.material = add
+	lamp.add_child(light)
+	var head_y: float = -LAMP_HEIGHT * 0.9
+	var cone: Polygon2D = Polygon2D.new()
+	cone.use_parent_material = true
+	var top_w: float = 10.0
+	var bottom_w: float = LAMP_CONE_WIDTH * 0.5
+	cone.polygon = PackedVector2Array([
+		Vector2(-top_w, head_y), Vector2(top_w, head_y), Vector2(bottom_w, 0.0), Vector2(-bottom_w, 0.0)])
+	var hot: Color = Color(LAMP_LIGHT, 0.34)
+	var cold: Color = Color(LAMP_LIGHT, 0.0)
+	cone.vertex_colors = PackedColorArray([hot, hot, cold, cold])
+	light.add_child(cone)
+	var head: Sprite2D = Sprite2D.new()
+	head.texture = _get_glow_texture()
+	head.use_parent_material = true
+	head.position = Vector2(0.0, head_y)
+	head.scale = Vector2(1.6, 1.6)
+	head.modulate = Color(LAMP_LIGHT, 0.85)
+	light.add_child(head)
+	# El charco va delante del piso (si no, el borde del suelo lo tapa); parpadea junto con el resto
+	var pool_holder: Node2D = Node2D.new()
+	pool_holder.position = base
+	pool_holder.material = add
+	front.add_child(pool_holder)
+	var pool: Sprite2D = Sprite2D.new()
+	pool.texture = _get_glow_texture()
+	pool.use_parent_material = true
+	pool.position = Vector2(0.0, 2.0)
+	pool.scale = Vector2(LAMP_CONE_WIDTH / 40.0, 0.7)
+	pool.modulate = Color(LAMP_LIGHT, 0.35)
+	pool_holder.add_child(pool)
+
+	if broken and not SettingsScript.reduce_flashes() and light.is_inside_tree():
+		_schedule_flicker(light, pool_holder, rng.randf_range(1.5, 5.0))
+
+
+## Farol que anda mal: cada tanto se corta dos o tres veces seguidas y vuelve.
+static func _schedule_flicker(light: Node2D, pool: Node2D, wait: float) -> void:
+	_after(light, wait, func() -> void:
+		if not is_instance_valid(light) or not light.is_inside_tree() or not is_instance_valid(pool):
+			return
+		var tw: Tween = light.create_tween()
+		for i: int in randi_range(2, 4):
+			var dim: float = randf_range(0.0, 0.25)
+			tw.tween_property(light, "modulate:a", dim, 0.04)
+			tw.parallel().tween_property(pool, "modulate:a", dim, 0.04)
+			tw.tween_interval(randf_range(0.03, 0.12))
+			tw.tween_property(light, "modulate:a", 1.0, 0.04)
+			tw.parallel().tween_property(pool, "modulate:a", 1.0, 0.04)
+			tw.tween_interval(randf_range(0.05, 0.2))
+		tw.tween_callback(func() -> void: _schedule_flicker(light, pool, randf_range(2.0, 7.0))))
 
 
 ## Lámparas del techo (araña de cristal del hotel, bola de espejos de la discoteca).

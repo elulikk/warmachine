@@ -242,55 +242,61 @@ position = Vector2(6800.0, 555.0)
 [node name="Props" type="Node2D" parent="."]
 
 [node name="Deco01" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(452.3, 556.0)
+position = Vector2(455.4, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(74.4, 62.5)
+hitbox_shrink = Vector2(0.06, 0.08)
+size = Vector2(80.5, 62.5)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
 
 [node name="Deco02" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(538.6, 556.0)
+position = Vector2(543.9, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(86.9, 79.8)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(85.3, 79.8)
 art_path = "res://assets/art/world1/wet_boxes.png"
 stretch_art = true
 flip_art = true
 
 [node name="Deco03" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(775.8, 556.0)
+position = Vector2(791.0, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(111.2, 90.0)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(141.6, 90.0)
 art_path = "res://assets/art/world1/dumpster.png"
 stretch_art = true
 flip_art = false
 
 [node name="Deco04" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(1662.5, 556.0)
+position = Vector2(1665.9, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(81.1, 68.2)
+hitbox_shrink = Vector2(0.06, 0.08)
+size = Vector2(87.9, 68.2)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
 
 [node name="Deco05" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(5752.6, 556.0)
+position = Vector2(5755.2, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(62.4, 52.5)
+hitbox_shrink = Vector2(0.06, 0.08)
+size = Vector2(67.6, 52.5)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
 
 [node name="Deco06" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(6591.4, 556.0)
+position = Vector2(6593.2, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(40.9, 66.1)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(44.5, 66.1)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true

@@ -13,8 +13,10 @@ if [ -z "$SCENE" ]; then
 fi
 
 PROJECT="$(cd "$(dirname "$0")/../../../.." && pwd)"
-GODOT="/c/GODOT/Godot_v4.7.2-stable_win64_console.exe"
-[ -f "$GODOT" ] || GODOT="/c/GODOT/Godot_v4.7.2-stable_win64.exe"
+# El ejecutable SIN consola: el _console.exe abre una ventana de consola en primer plano cuando se lanza desde
+# un proceso sin consola (como Claude Code) y le corta al usuario lo que esté mirando. La salida igual se captura.
+GODOT="/c/GODOT/Godot_v4.7.2-stable_win64.exe"
+[ -f "$GODOT" ] || GODOT="/c/GODOT/Godot_v4.7.2-stable_win64_console.exe"
 if [ ! -f "$GODOT" ]; then
 	echo "No se encontró Godot en C:\\GODOT"
 	exit 2
@@ -41,10 +43,11 @@ restore() {
 		cp "$BACKUP/settings.cfg" "$USERDATA/settings.cfg"
 	fi
 }
-trap restore EXIT
+trap 'restore; quiet_restore' EXIT
 
 echo ">> Escena: $SCENE  (cuadros: $FRAMES, timeout: ${LIMIT}s)"
 cd "$PROJECT" || exit 2
+source "$PROJECT/.claude/skills/smoke-test/scripts/quiet.sh"
 timeout "$LIMIT" "$GODOT" --audio-driver Dummy --path . "$SCENE" --quit-after "$FRAMES" > "$OUTLOG" 2>&1
 CODE=$?
 

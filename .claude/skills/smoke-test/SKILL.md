@@ -26,7 +26,7 @@ bash .claude/skills/smoke-test/scripts/smoke.sh res://core/test_level.tscn
 El script, en este orden:
 
 1. **Respalda** `saves/` y `settings.cfg` en una carpeta temporal **nueva** (nunca reutiliza un respaldo viejo: el usuario juega entre medio y se le pisaría el progreso).
-2. Corre Godot con `timeout` (`C:\GODOT\Godot_v4.7.2-stable_win64_console.exe --audio-driver Dummy --path . <escena> --quit-after N`; siempre sin sonido).
+2. Corre Godot con `timeout` (`C:\GODOT\Godot_v4.7.2-stable_win64.exe --audio-driver Dummy --path . <escena> --quit-after N`; siempre sin sonido).
 3. **Restaura** saves y settings, pase lo que pase (trap).
 4. Imprime solo `SCRIPT ERROR`, `ERROR:`, `Parse Error`, `Could not resolve class` (sin el ruido conocido) y termina con `RESULTADO: OK` o `RESULTADO: FALLÓ`.
 5. Avisa si quedó algún Godot abierto.
@@ -43,7 +43,8 @@ Qué escena elegir:
 ## Ver el resultado (cuadros)
 
 ```bash
-"/c/GODOT/Godot_v4.7.2-stable_win64_console.exe" --audio-driver Dummy --path . <escena> --write-movie "<scratchpad>/f.png" --fixed-fps 30 --quit-after 150
+source .claude/skills/smoke-test/scripts/quiet.sh  # ventana fuera de pantalla y sin foco; quiet_restore al terminar
+"/c/GODOT/Godot_v4.7.2-stable_win64.exe" --audio-driver Dummy --path . <escena> --write-movie "<scratchpad>/f.png" --fixed-fps 30 --quit-after 150
 ```
 
 Mirar un cuadro (p. ej. `f00000120.png`) con Read. Respaldar los saves antes, igual que arriba.

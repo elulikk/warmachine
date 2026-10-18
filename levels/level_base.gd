@@ -6,6 +6,7 @@ extends Node2D
 
 const LevelSkinScript = preload("res://levels/level_skin.gd")
 const CityAmbienceScript = preload("res://levels/city_ambience.gd")
+const AmbushDirectorScript = preload("res://levels/ambush_director.gd")
 ## Exteriores del presente (P-1, P-2, P-4, P-5, P-8). Los interiores (alcantarilla, hotel, discoteca) no
 ## llevan tráfico ni gente de la calle, y el 4-9 y 4-10 son otro contenido (Ciudadela Blindada).
 const CITY_EXTERIOR_IDS: Array[String] = ["1_01", "1_02", "1_04", "1_05", "1_08"]
@@ -61,6 +62,9 @@ func _ready() -> void:
 		GameFeel.music_set_base(self, base_music)
 	if CITY_EXTERIOR_IDS.has(level_id):
 		add_child(CityAmbienceScript.new() as Node)
+	# Mundo 1: los enemigos sueltos salen de tachos, alcantarillas y de atrás de los edificios
+	if chapter_number == 1:
+		add_child(AmbushDirectorScript.new() as Node)
 	if spawn_point != null:
 		initial_spawn_position = spawn_point.global_position
 	elif player != null:

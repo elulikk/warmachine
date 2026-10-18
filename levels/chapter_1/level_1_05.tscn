@@ -290,46 +290,51 @@ position = Vector2(8000.0, 555.0)
 [node name="Props" type="Node2D" parent="."]
 
 [node name="Deco01" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(1272.2, 556.0)
+position = Vector2(1274.0, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(42.5, 68.3)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(46.0, 68.3)
 art_path = "res://assets/art/world1/oil_barrel.png"
 stretch_art = true
 flip_art = false
 
 [node name="Deco02" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(2905.9, 556.0)
+position = Vector2(2895.9, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(110.0, 90.0)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(90.0, 90.0)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = true
 
 [node name="Deco03" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(3023.4, 556.0)
+position = Vector2(2993.4, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(109.6, 89.7)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(89.7, 89.7)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = true
 
 [node name="Deco04" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(4785.7, 556.0)
+position = Vector2(4775.7, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(110.0, 90.0)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(90.0, 90.0)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = false
 
 [node name="Deco05" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(4866.1, 556.0)
+position = Vector2(4847.9, 556.0)
 collision_mask = 0
 script = ExtResource("world_prop")
-size = Vector2(46.7, 74.9)
+hitbox_shrink = Vector2(0.04, 0.02)
+size = Vector2(50.4, 74.9)
 art_path = "res://assets/art/world1/oil_barrel.png"
 stretch_art = true
 flip_art = false

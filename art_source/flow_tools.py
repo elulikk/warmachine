@@ -7,7 +7,7 @@ Subcomandos (python art_source/flow_tools.py <cmd> ...):
       30 por defecto) con un nombre limpio y legible: <prefix><n>_<título>.jpg. No borra nada de Downloads.
       Imprime una línea por archivo: tamaño, fondo detectado (black/white) y destino.
 
-  split SRC [--out DIR] [--name N] [--bg auto|black|white] [--min-area 0.002] [--gap 6] [--size H] [--line PX] [--holes] [--glow]
+  split SRC [--out DIR] [--name N] [--bg auto|black|white|green] [--min-area 0.002] [--gap 6] [--size H] [--line PX] [--holes] [--glow]
       Recorta el fondo liso de SRC y separa cada objeto de la hoja en un PNG con alfa (<name>_01.png ...),
       ordenados por filas y de izquierda a derecha. --size H escala cada pieza a alto H (Lanczos).
       --line PX quita las rayas separadoras de cuadrícula que Flow a veces dibuja entre celdas (4 por defecto).
@@ -61,11 +61,14 @@ def log(event, **data):
 
 
 def detect_bg(rgb):
-    """'black' o 'white' según el promedio de las cuatro esquinas (parches de 8 px)."""
+    """'green' (croma), 'black' o 'white' según el promedio de las cuatro esquinas (parches de 8 px)."""
     h, w = rgb.shape[:2]
     k = 8
     patches = [rgb[:k, :k], rgb[:k, w - k:], rgb[h - k:, :k], rgb[h - k:, w - k:]]
-    return "white" if float(np.mean([p.mean() for p in patches])) > 127 else "black"
+    mean = np.mean([p.reshape(-1, 3).mean(axis=0) for p in patches], axis=0)
+    if mean[1] > 120 and mean[1] > mean[0] * 1.6 and mean[1] > mean[2] * 1.6:
+        return "green"
+    return "white" if float(mean.mean()) > 127 else "black"
 
 
 def cut_out(rgb, bg="black", thresh=28.0, glow=False, holes=False):
@@ -75,13 +78,21 @@ def cut_out(rgb, bg="black", thresh=28.0, glow=False, holes=False):
         alpha = np.clip((rgb.max(axis=2) - 10.0) / 120.0, 0.0, 1.0)
         color = np.clip(rgb / np.maximum(alpha[..., None], 0.05), 0, 255)
         return np.dstack([color, alpha * 255.0]).astype(np.uint8)
-    is_bg = rgb.max(axis=2) < thresh if bg == "black" else rgb.min(axis=2) > 255.0 - thresh
+    if bg == "green":
+        # Croma: verde dominante sobre rojo y azul (tolera el degradé y la compresión de Flow)
+        is_bg = (rgb[..., 1] > 90.0) & (rgb[..., 1] > rgb[..., 0] * 1.35 + 20.0) & (rgb[..., 1] > rgb[..., 2] * 1.35 + 20.0)
+    else:
+        is_bg = rgb.max(axis=2) < thresh if bg == "black" else rgb.min(axis=2) > 255.0 - thresh
     labels, _ = ndimage.label(is_bg)
     border = set(np.unique(np.concatenate([labels[0], labels[-1], labels[:, 0], labels[:, -1]])))
     border.discard(0)
     background = is_bg if holes else np.isin(labels, list(border))
     alpha = ndimage.binary_erosion(~background, iterations=1).astype(np.float32)
     alpha = ndimage.gaussian_filter(alpha, 0.8)
+    if bg == "green":
+        # Despill: el borde no puede quedar más verde que el mayor de rojo y azul
+        band = ndimage.binary_dilation(background, iterations=3)
+        rgb[..., 1] = np.where(band, np.minimum(rgb[..., 1], np.maximum(rgb[..., 0], rgb[..., 2]) * 1.08), rgb[..., 1])
     return np.clip(np.dstack([rgb, alpha * 255.0]), 0, 255).astype(np.uint8)
 
 
@@ -299,7 +310,7 @@ def main():
     s.add_argument("src")
     s.add_argument("--out")
     s.add_argument("--name")
-    s.add_argument("--bg", default="auto", choices=["auto", "black", "white"])
+    s.add_argument("--bg", default="auto", choices=["auto", "black", "white", "green"])
     s.add_argument("--min-area", type=float, default=0.002)
     s.add_argument("--gap", type=int, default=6)
     s.add_argument("--size", type=int, default=0)
@@ -316,7 +327,7 @@ def main():
     pl.add_argument("--game-h", dest="game_h", type=int, default=0)
     pl.add_argument("--width", type=int, default=0)
     pl.add_argument("--flip", action="store_true")
-    pl.add_argument("--bg", default="auto", choices=["auto", "black", "white"])
+    pl.add_argument("--bg", default="auto", choices=["auto", "black", "white", "green"])
     pl.add_argument("--line", type=int, default=4)
     pl.add_argument("--gap", type=int, default=6)
     pl.add_argument("--holes", action="store_true")

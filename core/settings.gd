@@ -275,6 +275,10 @@ static func screen_labels() -> Array[String]:
 static func _apply_display(ctx: Node) -> void:
 	if DisplayServer.get_name() == "headless":
 		return
+	# Lanzamientos de prueba (smoke-test): la ventana queda como la deja override.cfg, chica, fuera de pantalla y sin foco
+	if OS.get_environment("WARMACHINE_QUIET") == "1":
+		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
+		return
 	var mode: int = get_int("display_mode")
 	var window: Window = ctx.get_window() if ctx != null and ctx.is_inside_tree() else null
 	var screen: int = target_screen()
