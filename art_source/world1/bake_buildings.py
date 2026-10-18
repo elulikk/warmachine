@@ -69,7 +69,7 @@ def plan(level_name, segments, art):
             w = art[name][0] * SCALE
             if x + w > x1:
                 break
-            placed.append({"name": name, "x": x + w / 2.0, "y": top + SINK, "flip": rng.random() < 0.5})
+            placed.append({"name": name, "x": x + w / 2.0, "y": top + SINK, "flip": False})  # sin espejar: los carteles quedarían al revés
             last = name
             x += w + (rng.uniform(*ALLEY) if rng.random() < ALLEY_CHANCE else rng.uniform(*GAP))
     return placed
