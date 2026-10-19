@@ -6,3 +6,4 @@
 [node name="BruteBoss" instance=ExtResource("1_brute")]
 script = ExtResource("2_boss")
 entity_name = "Coloso del Núcleo"
+enemy_level = 12

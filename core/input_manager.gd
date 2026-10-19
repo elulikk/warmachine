@@ -73,6 +73,11 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_BACK) # Select / Back
 	])
 
+	# Destrabar: Ctrl+U saca al personaje de un atasco (ver Player.try_unstuck)
+	var unstuck_event: InputEventKey = _create_key_event(KEY_U)
+	unstuck_event.ctrl_pressed = true
+	_configure_action("unstuck", 0.2, [unstuck_event])
+
 	_configure_action("reload", 0.2, [
 		_create_key_event(KEY_R),
 		_create_joy_button_event(JOY_BUTTON_X) # X (Xbox) / Cuadrado (PS)

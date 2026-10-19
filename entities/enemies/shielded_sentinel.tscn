@@ -12,7 +12,8 @@ size = Vector2(28, 48)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
 size = Vector2(32, 48)
 
-[node name="ShieldedSentinel" type="CharacterBody2D" groups=["enemies"]]
+[node name="ShieldedSentinel" type="CharacterBody2D" groups=["enemies"]
+enemy_level = 5]
 collision_layer = 2
 collision_mask = 1
 script = ExtResource("1_sentinel")

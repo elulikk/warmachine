@@ -11,3 +11,4 @@ brute_health = 320.0
 brute_armor = 35.0
 brute_speed = 46.0
 contact_damage = 24.0
+enemy_level = 5

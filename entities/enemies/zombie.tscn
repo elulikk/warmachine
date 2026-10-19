@@ -14,6 +14,7 @@ move_speed = 48.0
 aggro_range = 340.0
 art_kind = "zombie"
 contact_damage = 16.0
+enemy_level = 3
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(0, -30)

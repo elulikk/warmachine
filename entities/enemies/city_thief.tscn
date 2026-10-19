@@ -16,6 +16,7 @@ move_speed = 110.0
 aggro_range = 320.0
 art_kind = "thief"
 contact_damage = 10.0
+enemy_level = 2
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(0, -23)

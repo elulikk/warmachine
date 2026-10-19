@@ -101,7 +101,7 @@ const CHAPTER_THEMES: Dictionary = {
 			"1_02": {"backdrop": "city_alley.jpg"},
 			"1_03": {"edge": "edge_sewer.png", "ground": "sewer_stone.png", "stone": "sewer_stone.png", "ground_tone": Color(0.8, 0.9, 0.85, 1.0),
 				"fill_tone": Color(0.32, 0.4, 0.38, 1.0), "backdrop": "city_sewer.jpg"},
-			"1_04": {"platform": "plat_wood.png", "platform_margins": [6, 6, 4, 4], "backdrop": "city_houses.jpg"},
+			"1_04": {"edge": "edge_roof.png", "ground": "roof_gravel.png", "fill_tone": Color(0.32, 0.32, 0.4, 1.0), "backdrop": "city_rooftop.jpg"},
 			"1_05": {"edge": "edge_dock.png", "ground": "dock_planks.png", "ground_tone": Color(0.8, 0.85, 0.95, 1.0), "fill_tone": Color(0.3, 0.34, 0.42, 1.0),
 				"backdrop": "city_dock.jpg"},
 			"1_06": {"edge": "edge_marble.png", "ground": "marble.png", "stone": "marble.png", "ground_tone": Color(0.85, 0.82, 0.95, 1.0),

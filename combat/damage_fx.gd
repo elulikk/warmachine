@@ -66,7 +66,10 @@ func _update_bleed(delta: float) -> void:
 	if _bleed == null:
 		_bleed = _make_bleed_emitter()
 		_host.add_child(_bleed)
-	_bleed.amount_ratio = lerpf(0.2, 1.0, level)
+	# CPUParticles2D no tiene amount_ratio: cambiar `amount` reinicia la emisión, así que solo si cambia de verdad
+	var bleed_count: int = maxi(3, roundi(12.0 * lerpf(0.2, 1.0, level)))
+	if _bleed.amount != bleed_count:
+		_bleed.amount = bleed_count
 	# Mientras menos vida, más grandes
 	_bleed.scale_amount_min = lerpf(1.5, 6.0, level) / float(BLEED_TEX_PX)
 	_bleed.scale_amount_max = lerpf(2.5, 11.0, level) / float(BLEED_TEX_PX)

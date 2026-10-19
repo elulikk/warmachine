@@ -17,6 +17,7 @@ move_speed = 62.0
 aggro_range = 420.0
 art_kind = "ghost"
 contact_damage = 10.0
+enemy_level = 4
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(0, -34)

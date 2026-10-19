@@ -6,3 +6,4 @@
 [node name="CeilingRat" instance=ExtResource("1_rat")]
 script = ExtResource("2_ceiling")
 entity_name = "Rata de techo"
+enemy_level = 1

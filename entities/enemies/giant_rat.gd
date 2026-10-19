@@ -31,7 +31,7 @@ func _ready() -> void:
 	if overhead_bar != null:
 		overhead_bar.set("vertical_offset_y", -150.0)
 		if overhead_bar.has_method("setup") and health_component != null:
-			overhead_bar.call("setup", health_component, entity_name)
+			overhead_bar.call("setup", health_component, EnemyLevelScript.display_name(self))
 	var display: Node2D = get_node_or_null("StatusDisplayComponent") as Node2D
 	if display != null:
 		display.position.y = -130.0

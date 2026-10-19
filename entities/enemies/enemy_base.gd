@@ -5,12 +5,16 @@ extends CharacterBody2D
 ## gestionar puntos de vida, aplicar fuerzas de retroceso (knockback)
 ## y procesar estados alterados a través de StatusReceiverComponent.
 
+const EnemyLevelScript = preload("res://entities/enemies/enemy_level.gd")
+
 signal health_changed(current_health: float, max_health: float)
 signal hit_received(payload: HitPayload)
 signal died
 
 @export_group("Identificación y UI")
 @export var entity_name: String = "Enemigo"
+## Nivel del enemigo (jerarquía; con 4 niveles o más por debajo del jugador no da experiencia). Ver `enemy_level.gd`.
+@export var enemy_level: int = 1
 
 @export_group("Estadísticas")
 @export var max_health: float = 50.0
@@ -61,7 +65,7 @@ func _ensure_overhead_bar() -> void:
 	if overhead_bar != null and overhead_bar.has_method("setup"):
 		var hc: HealthComponent = get_node_or_null("HealthComponent") as HealthComponent
 		if hc != null:
-			overhead_bar.call("setup", hc, entity_name)
+			overhead_bar.call("setup", hc, EnemyLevelScript.display_name(self))
 
 
 func _ensure_status_receiver() -> void:
@@ -153,7 +157,7 @@ func _deferred_die() -> void:
 
 
 func _spawn_exp() -> void:
-	if not is_inside_tree():
+	if not is_inside_tree() or not EnemyLevelScript.gives_exp(self):
 		return
 	var tree: SceneTree = get_tree()
 	if tree == null:

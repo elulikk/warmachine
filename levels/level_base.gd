@@ -15,6 +15,8 @@ const CITY_EXTERIOR_IDS: Array[String] = ["1_01", "1_02", "1_04", "1_05", "1_08"
 const SEWER_IDS: Array[String] = ["1_03"]
 ## Prefijo del flag del slot que marca un arma garantizada ya entregada al personaje.
 const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
+## Desvío de nivel de enemigo por capítulo (el 1 es la base; los demás mundos suben).
+const CHAPTER_ENEMY_LEVEL_OFFSET: Dictionary = {1: 0, 2: 6, 3: 8, 4: 4, 5: 12}
 
 @export var level_id: String = "4_01"
 @export var level_title: String = "Sector 01"
@@ -25,6 +27,14 @@ const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 ## Pista base del nivel cuando no es la de exploración (si el .ogg todavía no existe, queda la de exploración).
 @export var base_music: StringName = &"explore"
 @export var abyss_threshold: float = 950.0
+## Niveles con una parte alta y otra baja (la torre y los techos): a la derecha de `abyss_after_x` el vacío empieza en
+## `abyss_threshold_after` en vez de `abyss_threshold`. -1 = apagado.
+@export var abyss_after_x: float = -1.0
+@export var abyss_threshold_after: float = 950.0
+
+## Niveles que se suman al `enemy_level` de los enemigos de este nivel de juego (los mundos 2 a 5 reusan los enemigos del
+## mundo 1). -1 = el predeterminado del capítulo (`CHAPTER_ENEMY_LEVEL_OFFSET`). Ver `entities/enemies/enemy_level.gd`.
+@export var enemy_level_offset: int = -1
 
 ## Evento de los Agentes del Tiempo (helicóptero o destello): probabilidad por nivel de que ocurra (0 = nunca).
 ## `agent_events_enabled` lo apaga por nivel sin tocar la probabilidad. `agent_event_style`: "helicopter" o "portal".
@@ -60,9 +70,32 @@ const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 
 var initial_spawn_position: Vector2 = Vector2(160, 545)
 
+const ONE_WAY_MAX_HEIGHT: float = 40.0
+const ONE_WAY_MIN_WIDTH: float = 40.0
+
+## Plataformas de un solo sentido (estándar run and gun): los cuerpos delgados de `Environment` (tablones, escaleras,
+## toldos) se atraviesan saltando desde abajo y sostienen al jugador desde arriba. Los tiros no las usan: siguen
+## chocando como siempre (son Area2D y no respetan el sentido único).
+func _make_thin_platforms_one_way() -> void:
+	var env: Node = get_node_or_null("Environment")
+	if env == null:
+		return
+	for body: Node in env.get_children():
+		if not (body is StaticBody2D):
+			continue
+		for child: Node in body.get_children():
+			var cs: CollisionShape2D = child as CollisionShape2D
+			if cs == null or cs.disabled:
+				continue
+			var rect: RectangleShape2D = cs.shape as RectangleShape2D
+			if rect != null and rect.size.y <= ONE_WAY_MAX_HEIGHT and rect.size.x >= ONE_WAY_MIN_WIDTH:
+				cs.one_way_collision = true
+				cs.one_way_collision_margin = 8.0
+
 
 func _ready() -> void:
 	_remove_pickup_pedestals()
+	_make_thin_platforms_one_way()
 	LevelSkinScript.apply(self, chapter_number, backdrop_file)
 	GameFeel.music_start_level(self)
 	if base_music != &"explore" and FileAccess.file_exists("res://ost/%s.ogg" % String(base_music)):
@@ -225,7 +258,12 @@ func _player_has_weapon(path: String) -> bool:
 
 
 func _physics_process(_delta: float) -> void:
-	if player != null and player.global_position.y > abyss_threshold:
+	if player == null:
+		return
+	var limit: float = abyss_threshold
+	if abyss_after_x >= 0.0 and player.global_position.x > abyss_after_x:
+		limit = abyss_threshold_after
+	if player.global_position.y > limit:
 		_on_player_fell_into_abyss()
 
 
@@ -236,6 +274,12 @@ func _on_player_fell_into_abyss() -> void:
 		gm.on_player_died(player)
 	else:
 		respawn_player()
+
+
+func get_enemy_level_offset() -> int:
+	if enemy_level_offset >= 0:
+		return enemy_level_offset
+	return int(CHAPTER_ENEMY_LEVEL_OFFSET.get(chapter_number, 0))
 
 
 func respawn_player() -> void:

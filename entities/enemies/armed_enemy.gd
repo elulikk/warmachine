@@ -22,6 +22,7 @@ var _facing: float = 1.0
 
 
 func _ready() -> void:
+	melee_enabled = false # solo dispara; tocarlo no lastima
 	super._ready()
 	_fire_timer = randf_range(0.4, fire_interval)
 

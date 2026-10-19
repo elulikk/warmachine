@@ -22,6 +22,7 @@ shot_damage = 9.0
 fire_interval = 2.4
 shoot_range = 380
 keep_distance = 170
+enemy_level = 8
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(0, -26)

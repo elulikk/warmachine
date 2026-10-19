@@ -24,6 +24,7 @@ shoot_range = 520
 keep_distance = 240
 shot_tint = Color(0.55, 0.9, 1, 1)
 projectile_speed = 700.0
+enemy_level = 7
 
 [node name="CollisionShape2D" parent="." index="0"]
 position = Vector2(0, -26)

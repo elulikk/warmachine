@@ -12,12 +12,16 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 GODOT = r"C:\GODOT\Godot_v4.7.2-stable_win64_console.exe"
 JSON_PATH = os.path.join(ROOT, "art_source", "world1", "decor_props.json")
 SCRIPT = "res://art_source/world1/bake_decor_props.gd"
 WORLD_PROP_EXT = '[ext_resource type="Script" path="res://entities/world/world_prop.gd" id="world_prop"]'
+# Obstáculos rompibles y su vida (los sprites de daño salen de bake_prop_damage.py)
+BREAKABLE_HEALTH = {"barrel": 60, "oil_barrel": 70, "crates": 90, "wet_boxes": 70, "trash_can": 45,
+                    "trash_bags": 40, "mailbox": 55}
 PROPS_BLOCK = re.compile(r'\[node name="Props".*?(?=\[node name="SpawnPoint")', re.S)
 
 
@@ -33,8 +37,10 @@ def build_props_block(plan):
             'art_path = "res://assets/art/world1/%s.png"' % p["name"],
             "stretch_art = true",
             "flip_art = %s" % ("true" if p["flip"] else "false"),
-            "",
         ]
+        if p["name"] in BREAKABLE_HEALTH:
+            lines += ["destructible = true", "max_health = %.1f" % BREAKABLE_HEALTH[p["name"]]]
+        lines.append("")
     return "\n".join(lines) + "\n"
 
 
@@ -54,7 +60,35 @@ def bake_level(path, plan):
         f.write(text)
 
 
+def patch_destructibles(path):
+    """Marca como rompibles los obstáculos ya horneados sin tocar posiciones ni tamaños (idempotente)."""
+    with open(path, encoding="utf-8", newline="") as f:
+        text = f.read()
+    crlf = "\r\n" in text
+    text = text.replace("\r\n", "\n")
+    pattern = re.compile(r'(art_path = "res://assets/art/world1/(\w+)\.png"\n(?:stretch_art = \w+\n)?(?:flip_art = \w+\n)?)(?!destructible)')
+
+    def add(m):
+        name = m.group(2)
+        if name not in BREAKABLE_HEALTH:
+            return m.group(0)
+        return m.group(1) + "destructible = true\nmax_health = %.1f\n" % BREAKABLE_HEALTH[name]
+
+    text = pattern.sub(add, text)
+    if crlf:
+        text = text.replace("\n", "\r\n")
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+    return text.count("destructible = true")
+
+
 def main():
+    if "--patch-only" in sys.argv:
+        for name in sorted(os.listdir(os.path.join(ROOT, "levels", "chapter_1"))):
+            if name.endswith(".tscn"):
+                full = os.path.join(ROOT, "levels", "chapter_1", name)
+                print(name, patch_destructibles(full), "rompibles")
+        return
     subprocess.run([GODOT, "--headless", "--path", ROOT, "-s", SCRIPT], check=True)
     with open(JSON_PATH, encoding="utf-8") as f:
         data = json.load(f)

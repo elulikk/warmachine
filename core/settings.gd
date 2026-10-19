@@ -78,6 +78,7 @@ const REMAPPABLE: Dictionary = {
 	"toggle_inventory": "Inventario",
 	"toggle_stats_window": "Estadísticas",
 	"toggle_help": "Ayuda",
+	"unstuck": "Destrabar personaje",
 }
 
 ## Casilleros de reasignación por acción.

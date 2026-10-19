@@ -9,6 +9,8 @@ const FarStepScript = preload("res://core/far_step.gd")
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
 const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
 const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
+const MeleeAttackScript = preload("res://entities/enemies/melee_attack.gd")
+const EnemyLevelScript = preload("res://entities/enemies/enemy_level.gd")
 signal died
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
@@ -20,6 +22,8 @@ const CHASE_ACCEL: float = 900.0
 const OFFMAP_Y: float = 1100.0
 
 @export var entity_name: String = "Ladrón"
+## Nivel del enemigo (jerarquía; con 4 niveles o más por debajo del jugador no da experiencia). Ver `enemy_level.gd`.
+@export var enemy_level: int = 1
 ## Velocidad del salto sobre obstáculos (540 = ~150 px de alto; las ratas saltan menos).
 @export var hop_speed: float = 540.0
 ## Cuánta sangre y cuántos trozos suelta al recibir golpes y morir (1.0 = normal; las ratas y los asaltantes, menos).
@@ -39,8 +43,13 @@ const OFFMAP_Y: float = 1100.0
 @export var dropped_item: ItemData = null
 ## Tipo de arte de `EnemyArt` (ver enemy_art.gd): "runner", "zombie", "ghost", etc.
 @export var art_kind: String = "runner"
-## Daño por contacto con el jugador.
+## Daño del golpe cuerpo a cuerpo (ver `MeleeAttack`: se aplica al final del aviso, no por tocar al jugador).
 @export var contact_damage: float = 12.0
+## false = no tiene ataque cuerpo a cuerpo (los armados a distancia solo disparan).
+@export var melee_enabled: bool = true
+## Lo lee el jugador: tocar a este enemigo no lastima.
+var no_touch_damage: bool = true
+var _melee: Node = null
 
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var visual_rect: ColorRect = get_node_or_null("Visuals/ColorRect") as ColorRect
@@ -63,6 +72,8 @@ func _ready() -> void:
 	var art: Node2D = EnemyArtScript.attach(self, art_kind)
 	_ensure_components()
 	MobScaleScript.apply(self, art)
+	if melee_enabled:
+		_melee = MeleeAttackScript.attach(self, art_kind)
 	if visual_rect != null:
 		original_color = visual_rect.color
 	
@@ -104,7 +115,10 @@ func _physics_process(delta: float) -> void:
 		
 		if is_aggroed:
 			var diff_x: float = target_player.global_position.x - global_position.x
-			if absf(diff_x) > 12.0:
+			if _melee != null and _melee.call("is_busy"):
+				# Armando el golpe: quieto y de frente al jugador
+				velocity.x = move_toward(velocity.x, 0.0, 900.0 * delta)
+			elif absf(diff_x) > 12.0:
 				var move_dir: float = signf(diff_x)
 				velocity.x = move_toward(velocity.x, move_dir * effective_speed, CHASE_ACCEL * delta)
 				if visuals != null:
@@ -121,18 +135,6 @@ func _physics_process(delta: float) -> void:
 	
 	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
-	
-	# Daño por contacto si colisiona con el cuerpo del jugador (inhibido si el enemigo está aturdido)
-	var is_currently_stunned: bool = status_receiver != null and status_receiver.is_stunned
-	if contact_cooldown <= 0.0 and not is_currently_stunned:
-		for i in get_slide_collision_count():
-			var col: KinematicCollision2D = get_slide_collision(i)
-			var collider: Object = col.get_collider()
-			if collider is Player:
-				var player_ref: Player = collider as Player
-				player_ref.take_damage(contact_damage)
-				contact_cooldown = 0.8
-				break
 
 
 func _ensure_components() -> void:
@@ -157,7 +159,7 @@ func _ensure_components() -> void:
 			overhead_bar.set("vertical_offset_y", -58.0)
 			add_child(overhead_bar)
 	if overhead_bar != null and health_component != null and overhead_bar.has_method("setup"):
-		overhead_bar.call("setup", health_component, entity_name)
+		overhead_bar.call("setup", health_component, EnemyLevelScript.display_name(self))
 
 
 ## Punto de entrada para impactos de combate.
@@ -345,7 +347,7 @@ func _spawn_loot() -> void:
 
 
 func _spawn_exp_orb() -> void:
-	if exp_orb_scene == null or not is_inside_tree():
+	if exp_orb_scene == null or not is_inside_tree() or not EnemyLevelScript.gives_exp(self):
 		return
 	var tree: SceneTree = get_tree()
 	if tree == null:

@@ -117,6 +117,7 @@ var _hurtbox_shape: RectangleShape2D = null
 var _hurtbox_shape_node: CollisionShape2D = null
 
 var hurt_cooldown: float = 0.0
+var _unstuck_cooldown: float = 0.0
 ## Empujón al tocar a un enemigo: el jugador pierde el control horizontal unos instantes (ver is_knocked_back).
 const CONTACT_KNOCK_SPEED: float = 260.0
 const CONTACT_KNOCK_UP: float = -120.0
@@ -317,6 +318,9 @@ func _set_crouching(value: bool) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_unstuck_cooldown = maxf(0.0, _unstuck_cooldown - delta)
+	if Input.is_action_just_pressed("unstuck"):
+		try_unstuck()
 	_update_crouch()
 	_update_dash(delta)
 	if hurt_cooldown > 0.0:
@@ -341,6 +345,8 @@ func _physics_process(delta: float) -> void:
 	if hurtbox != null and hurt_cooldown <= 0.0 and phase_timer <= 0.0:
 		for body in hurtbox.get_overlapping_bodies():
 			if body == self:
+				continue
+			if body.get("no_touch_damage") == true:
 				continue
 			if body.is_in_group(&"enemies") or body is BasicRunner:
 				var dmg: float = 12.0
@@ -563,6 +569,42 @@ func _handle_player_death() -> void:
 		gm.call("on_player_died", self)
 
 
+const UNSTUCK_STEP: float = 6.0
+const UNSTUCK_MAX_RISE: float = 720.0
+const UNSTUCK_COOLDOWN: float = 1.0
+const UNSTUCK_POP_SPEED: float = 520.0
+
+
+## Destrabar (Ctrl+U): si el personaje quedó metido en geometría o un prop mal ubicado, lo escupe hacia arriba hasta el
+## primer hueco libre; si ya está en espacio libre pero atascado, le da un impulso hacia arriba. Si no hay hueco
+## arriba, lo devuelve al punto de inicio del sector.
+func try_unstuck() -> void:
+	if _unstuck_cooldown > 0.0 or (health_component != null and health_component.is_dead):
+		return
+	_unstuck_cooldown = UNSTUCK_COOLDOWN
+	var base: Transform2D = global_transform
+	if not test_move(base, Vector2.ZERO, null, 0.08, true):
+		global_position.y -= 4.0
+	else:
+		var found: bool = false
+		var steps: int = int(UNSTUCK_MAX_RISE / UNSTUCK_STEP)
+		for i in range(1, steps + 1):
+			var candidate: Transform2D = base.translated(Vector2(0.0, -UNSTUCK_STEP * i))
+			if not test_move(candidate, Vector2.ZERO, null, 0.08, true):
+				global_position = candidate.origin + Vector2(0.0, -UNSTUCK_STEP)
+				found = true
+				break
+		if not found:
+			var level: Node = get_tree().current_scene
+			var spawn: Variant = level.get("initial_spawn_position") if level != null else null
+			if spawn is Vector2:
+				global_position = spawn
+	velocity = Vector2(0.0, -UNSTUCK_POP_SPEED)
+	reset_jumps()
+	GameFeel.sfx(self, &"jump", Vector2.INF, -3.0)
+
+
+
 ## Restaura la vitalidad y reubica al jugador en la posición de reaparición indicada.
 func respawn(spawn_pos: Vector2) -> void:
 	global_position = spawn_pos
@@ -670,6 +712,8 @@ func _on_hurtbox_body_entered(body: Node2D) -> void:
 	if body == self:
 		return
 	if phase_timer > 0.0:
+		return
+	if body.get("no_touch_damage") == true:
 		return
 	if body.is_in_group(&"enemies") or body is BasicRunner:
 		var dmg: float = 12.0

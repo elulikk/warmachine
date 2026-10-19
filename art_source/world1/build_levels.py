@@ -383,5 +383,6 @@ def level_8():
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
-    for fn in (level_1, level_2, level_3, level_4, level_5, level_6, level_7, level_8):
+    # level_1 pisa el 1-01 hecho a mano; level_3 y level_4 ya no se generan acá: el 1-03 es build_sewer.py y el 1-04 build_tower.py
+    for fn in (level_1, level_2, level_5, level_6, level_7, level_8):
         fn()

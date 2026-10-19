@@ -206,6 +206,8 @@ size = Vector2(80.5, 62.5)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 40.0
 
 [node name="Deco02" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(543.9, 556.0)
@@ -216,6 +218,8 @@ size = Vector2(85.3, 79.8)
 art_path = "res://assets/art/world1/wet_boxes.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 70.0
 
 [node name="Deco03" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(791.0, 556.0)
@@ -236,6 +240,8 @@ size = Vector2(87.9, 68.2)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 40.0
 
 [node name="Deco05" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(5755.2, 556.0)
@@ -246,6 +252,8 @@ size = Vector2(67.6, 52.5)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 40.0
 
 [node name="Deco06" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(6593.2, 556.0)
@@ -256,6 +264,8 @@ size = Vector2(44.5, 66.1)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 60.0
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)

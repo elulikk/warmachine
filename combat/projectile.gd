@@ -149,6 +149,9 @@ func _handle_collision(target: Node) -> void:
 	# 1. Comprobar si impactó con geometría sólida del mundo (pared/piso/techo)
 	if target is StaticBody2D or target is TileMap or target.is_in_group("world"):
 		GameFeel.sfx(self, &"hit_world", global_position, -10.0)
+		# Obstáculos rompibles (cajas, barriles): los tiros del jugador y los aliados los dañan
+		if not is_hostile and payload != null and target.has_method("take_hit"):
+			target.take_hit(payload)
 		var normal: Vector2 = _get_bounce_normal()
 		if target.is_in_group(&"reflective"):
 			# Superficie reflejante: rebota siempre, con la mitad del daño (no gasta rebotes de runa)

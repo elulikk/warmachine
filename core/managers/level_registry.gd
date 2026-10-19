@@ -58,7 +58,7 @@ const HUB_PATH: String = "res://scenes/hub/base_camp.tscn"
 const CHAPTER_EXIT: Dictionary = {1: HUB_PATH, 2: HUB_PATH, 3: HUB_PATH, 4: HUB_PATH, 5: HUB_PATH}
 ## Nombres de los sectores de Ciudad de Jano (capítulo 1). Los demás sectores solo llevan el número.
 const JANO_SECTOR_NAMES: Dictionary = {
-	1: "La calle", 2: "Los callejones", 3: "Las alcantarillas", 4: "El barrio de casitas",
+	1: "La calle", 2: "Los callejones", 3: "Las alcantarillas", 4: "La torre y los techos",
 	5: "El muelle", 6: "El hotel", 7: "La discoteca", 8: "La azotea"
 }
 

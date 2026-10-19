@@ -86,6 +86,8 @@ var _split: Dictionary = {}
 var _walk_phase: float = 0.0
 var _walk_amount: float = 0.0
 var _attack_t: float = 99.0
+## Duración de la animación de ataque en curso (s); la fija `play_attack_for` (el golpe cae al 55 %). -1 = la de siempre.
+var _attack_dur: float = -1.0
 var _last_cooldown: float = 0.0
 var _rig: Node2D = null
 var _skin: String = ""
@@ -328,8 +330,8 @@ func _animate_frames(delta: float) -> void:
 	var frame: Texture2D = _fr_walk[0]
 	if _fr_hit_t < 0.16 and not _fr_hit.is_empty():
 		frame = _fr_hit[0 if _fr_hit_t < 0.08 else mini(1, _fr_hit.size() - 1)]
-	elif _attack_t < 0.4:
-		frame = _fr_attack[mini(int(_attack_t / 0.4 * float(_fr_attack.size())), _fr_attack.size() - 1)]
+	elif _attack_t < _attack_len(0.4):
+		frame = _fr_attack[mini(int(_attack_t / _attack_len(0.4) * float(_fr_attack.size())), _fr_attack.size() - 1)]
 	elif not on_floor:
 		frame = _fr_attack[mini(2, _fr_attack.size() - 1)]
 	elif speed > 12.0:
@@ -546,6 +548,19 @@ static func _bake_snapshot(skin: String, tree: SceneTree) -> void:
 		_snaps[skin] = ImageTexture.create_from_image(image)
 
 
+## Arranca la animación de ataque con una duración propia: `MeleeAttack` la ajusta al aviso para que el golpe caiga
+## en el cuadro de mayor extensión (cuadros dibujados) o en el pico de la embestida (ilustraciones partidas).
+func play_attack_for(duration: float) -> void:
+	_attack_t = 0.0
+	_attack_dur = duration
+	if _rig != null and _rig.has_method("play_attack"):
+		_rig.call("play_attack")
+
+
+func _attack_len(default_len: float) -> float:
+	return _attack_dur if _attack_dur > 0.0 else default_len
+
+
 ## El enemigo ataca cuando su tiempo de espera por contacto salta de golpe (golpe efectivo sobre el jugador).
 func _detect_attack() -> void:
 	if _host == null:
@@ -556,6 +571,7 @@ func _detect_attack() -> void:
 	var cooldown: float = float(cooldown_value)
 	if cooldown > _last_cooldown + 0.3:
 		_attack_t = 0.0
+		_attack_dur = -1.0
 		if _rig != null and _rig.has_method("play_attack"):
 			_rig.call("play_attack")
 	_last_cooldown = cooldown
@@ -604,7 +620,7 @@ func _sway_mob(delta: float) -> void:
 	_upper.scale = Vector2(MOB_TEX_SCALE, MOB_TEX_SCALE)
 
 	# Embestida: se echa hacia atrás, se lanza hacia adelante y vuelve
-	var duration: float = maxf(float(_split.get("attack", 0.3)), 0.05)
+	var duration: float = maxf(_attack_len(float(_split.get("attack", 0.3))), 0.05)
 	if _attack_t < duration:
 		var u: float = _attack_t / duration
 		var lunge: float = float(_split.get("lunge", 6.0))

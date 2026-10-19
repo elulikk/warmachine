@@ -7,6 +7,7 @@ extends Node
 const SettingsScript = preload("res://core/settings.gd")
 const SceneLoaderScript = preload("res://core/scene_loader.gd")
 const ErrorLoggerScript = preload("res://core/error_logger.gd")
+const CrosshairCursorScript = preload("res://core/crosshair_cursor.gd")
 const PerfMonitorScript = preload("res://core/debug/perf_monitor.gd")
 
 enum GameState { PLAYING, GAME_OVER, VICTORY }
@@ -47,6 +48,7 @@ func _ready() -> void:
 	instance = self
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	ErrorLoggerScript.install()
+	CrosshairCursorScript.install()
 	_setup_overlay_ui()
 	_scene_loader = SceneLoaderScript.new() as CanvasLayer
 	_scene_loader.name = "SceneLoader"

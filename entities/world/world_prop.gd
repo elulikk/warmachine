@@ -69,7 +69,36 @@ const ArtScript = preload("res://core/art/art.gd")
 		placeholder_color = value
 		queue_redraw()
 
+@export_group("Destruible")
+## Se rompe a tiros, tajos y explosiones. Muestra `<arte>_dmg1.png` bajo el 66% de vida y `<arte>_dmg2.png` bajo el 33%
+## (los genera art_source/world1/bake_prop_damage.py); sin esos archivos se oscurece. Al romperse desaparece y puede
+## soltar botín (mucho más raro que el de un enemigo).
+@export var destructible: bool = false
+@export var max_health: float = 60.0
+## Multiplica todas las probabilidades de botín de abajo (0 = no suelta nada).
+@export_range(0.0, 10.0) var loot_chance_mult: float = 1.0
+## Probabilidad (por prop roto) de cada premio. Se tira un solo dado: como mucho cae uno.
+@export_range(0.0, 1.0) var loot_coin_chance: float = 0.07
+@export_range(0.0, 1.0) var loot_exp_chance: float = 0.04
+@export_range(0.0, 1.0) var loot_ammo_chance: float = 0.025
+@export_range(0.0, 1.0) var loot_health_chance: float = 0.012
+## Powerup de munición (rellena todas las armas): el más raro.
+@export_range(0.0, 1.0) var loot_powerup_chance: float = 0.005
+
 const HITBOX_META: StringName = &"_prop_hitbox"
+const DEBRIS_PIECES: int = 9
+const DEBRIS_SECONDS: float = 0.9
+const STAGE_RATIOS: Array[float] = [0.66, 0.33]
+const LootDropScene: PackedScene = preload("res://entities/items/loot_drop.tscn")
+const ExpOrbScene: PackedScene = preload("res://entities/items/exp_orb.tscn")
+const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
+const AmmoPowerupScript = preload("res://entities/items/ammo_powerup.gd")
+
+var _health: float = 0.0
+var _stage: int = 0
+var _broken: bool = false
+var _stage_textures: Array[Texture2D] = []
+var _hit_tween: Tween = null
 ## Cada tanto el objeto saca de adentro suyo a los cuerpos (enemigos, jugador) que hayan quedado superpuestos
 ## (aparición dentro del objeto, empujones). Capa 2 = enemigos y jugador; capa 1 = mundo.
 const EJECT_PERIOD: float = 1.5
@@ -82,6 +111,9 @@ func _ready() -> void:
 	# Los enemigos terrestres saltan los obstáculos bajos (un cerco alto no se puede saltar)
 	if not Engine.is_editor_hint() and extra_collision_top <= 0.0:
 		add_to_group(&"hop_obstacle")
+	_health = max_health
+	if destructible and not Engine.is_editor_hint():
+		add_to_group(&"destructible")
 	_refresh()
 	if not Engine.is_editor_hint():
 		var timer: Timer = Timer.new()
@@ -205,6 +237,167 @@ func _rebuild_art() -> void:
 		sprite.scale = Vector2(art_scale, art_scale)
 		sprite.position = Vector2(0.0, -tex_size.y * art_scale * 0.5)
 	add_child(sprite)
+	_load_stage_textures()
+	_apply_stage(sprite)
+
+
+# ==============================================================================
+# Destrucción
+# ==============================================================================
+
+## Texturas de daño junto al arte (`barrel.png` -> `barrel_dmg1.png`, `barrel_dmg2.png`); las que falten quedan en null.
+func _load_stage_textures() -> void:
+	_stage_textures.clear()
+	if not destructible or texture != null or art_path.is_empty() or Engine.is_editor_hint():
+		return
+	for i: int in range(1, STAGE_RATIOS.size() + 1):
+		_stage_textures.append(ArtScript.tex("%s_dmg%d.png" % [art_path.get_basename(), i]))
+
+
+## Pone el dibujo del estadio actual. Sin textura de daño, oscurece el dibujo en su lugar.
+func _apply_stage(sprite: Sprite2D) -> void:
+	if sprite == null or _stage <= 0:
+		return
+	var tex: Texture2D = _stage_textures[_stage - 1] if _stage - 1 < _stage_textures.size() else null
+	if tex != null:
+		sprite.texture = tex
+	sprite.modulate = _rest_modulate()
+
+
+## Receptor de daño: lo llaman los proyectiles, el tajo y las explosiones. Los enemigos no lo rompen.
+func take_hit(payload: HitPayload) -> void:
+	if not destructible or _broken or payload == null or payload.base_damage <= 0.0:
+		return
+	_health -= payload.base_damage
+	var sprite: Sprite2D = get_node_or_null("Art") as Sprite2D
+	var new_stage: int = 0
+	for ratio: float in STAGE_RATIOS:
+		if _health <= max_health * ratio:
+			new_stage += 1
+	GameFeel.sfx(self, &"hit_world", global_position, -4.0, randf_range(0.75, 0.95))
+	if _health <= 0.0:
+		_break(payload)
+		return
+	if new_stage > _stage:
+		_stage = new_stage
+		_apply_stage(sprite)
+		_spawn_debris(3, payload, 0.5)
+	_hit_feedback(sprite, payload)
+
+
+## Destello blanco y sacudida corta del dibujo en cada golpe.
+func _hit_feedback(sprite: Sprite2D, payload: HitPayload) -> void:
+	if sprite == null:
+		return
+	if _hit_tween != null and _hit_tween.is_valid():
+		_hit_tween.kill()
+	var dir: float = signf(payload.knockback_direction.x)
+	sprite.modulate = Color(2.2, 2.2, 2.2, 1.0)
+	sprite.position.x = dir * 4.0
+	_hit_tween = create_tween().set_parallel(true)
+	_hit_tween.tween_property(sprite, "modulate", _rest_modulate(), 0.12)
+	_hit_tween.tween_property(sprite, "position:x", 0.0, 0.12).set_trans(Tween.TRANS_BACK)
+
+
+## Tono del dibujo en reposo: blanco, o más oscuro por estadio si no hay textura de daño.
+func _rest_modulate() -> Color:
+	if _stage <= 0 or (_stage - 1 < _stage_textures.size() and _stage_textures[_stage - 1] != null):
+		return Color.WHITE
+	var shade: float = 1.0 - 0.22 * float(_stage)
+	return Color(shade, shade, shade, 1.0)
+
+
+func _break(payload: HitPayload) -> void:
+	_broken = true
+	remove_from_group(&"hop_obstacle")
+	remove_from_group(&"destructible")
+	collision_layer = 0
+	for child: Node in get_children():
+		if child is CollisionShape2D:
+			(child as CollisionShape2D).set_deferred("disabled", true)
+	GameFeel.sfx(self, &"hit_world", global_position, 0.0, 0.6)
+	GameFeel.shake(self, 4.0, 0.14)
+	_spawn_debris(DEBRIS_PIECES, payload, 1.0)
+	_spawn_loot()
+	var art: Node = get_node_or_null("Art")
+	if art != null:
+		art.queue_free()
+	queue_free()
+
+
+## Trozos del propio dibujo que salen despedidos y caen (un solo tween para todos).
+func _spawn_debris(count: int, payload: HitPayload, power: float) -> void:
+	var art_node: Sprite2D = get_node_or_null("Art") as Sprite2D
+	var tex: Texture2D = art_node.texture if art_node != null else _resolve_texture()
+	var container: Node = get_tree().current_scene
+	if tex == null or container == null:
+		return
+	var tex_size: Vector2 = tex.get_size()
+	var scale_xy: Vector2 = Vector2(size.x / tex_size.x, size.y / tex_size.y) if stretch_art else Vector2(art_scale, art_scale)
+	var pieces: Array[Dictionary] = []
+	var root: Node2D = Node2D.new()
+	root.global_position = global_position
+	root.z_index = 5
+	container.add_child(root)
+	var push: float = signf(payload.knockback_direction.x) if payload != null else 0.0
+	for i: int in count:
+		var cell: Vector2 = tex_size * Vector2(randf_range(0.1, 0.8), randf_range(0.1, 0.8))
+		var region: Rect2 = Rect2(cell, tex_size * Vector2(randf_range(0.14, 0.24), randf_range(0.12, 0.22)))
+		var atlas: AtlasTexture = AtlasTexture.new()
+		atlas.atlas = tex
+		atlas.region = region
+		var piece: Sprite2D = Sprite2D.new()
+		piece.texture = atlas
+		piece.scale = scale_xy
+		piece.position = (region.get_center() - tex_size * 0.5) * scale_xy + Vector2(0.0, -size.y * 0.5)
+		root.add_child(piece)
+		pieces.append({
+			"node": piece,
+			"start": piece.position,
+			"vel": Vector2(randf_range(-150.0, 150.0) + push * 120.0, randf_range(-330.0, -120.0)) * power,
+			"spin": randf_range(-9.0, 9.0),
+		})
+	var tween: Tween = root.create_tween()
+	tween.tween_method(_step_debris.bind(pieces), 0.0, 1.0, DEBRIS_SECONDS)
+	tween.tween_callback(root.queue_free)
+
+
+func _step_debris(t: float, pieces: Array[Dictionary]) -> void:
+	var elapsed: float = t * DEBRIS_SECONDS
+	for p: Dictionary in pieces:
+		var node: Sprite2D = p["node"] as Sprite2D
+		if not is_instance_valid(node):
+			continue
+		var vel: Vector2 = p["vel"] as Vector2
+		node.position = (p["start"] as Vector2) + vel * elapsed + Vector2(0.0, 450.0 * elapsed * elapsed)
+		node.rotation = float(p["spin"]) * elapsed
+		node.modulate.a = clampf((1.0 - t) * 2.2, 0.0, 1.0)
+
+
+## Un solo dado: moneda, experiencia, munición, vida o powerup (todos raros). Aparece sobre el prop.
+func _spawn_loot() -> void:
+	var roll: float = randf()
+	var origin: Vector2 = global_position + Vector2(0.0, -size.y * 0.5)
+	var chances: Array = [
+		["POWERUP", loot_powerup_chance], ["HEALTH", loot_health_chance], ["AMMO", loot_ammo_chance],
+		["EXP", loot_exp_chance], ["COIN", loot_coin_chance]]
+	for entry: Array in chances:
+		roll -= float(entry[1]) * loot_chance_mult
+		if roll > 0.0:
+			continue
+		match str(entry[0]):
+			"POWERUP":
+				var powerup: Area2D = AmmoPowerupScript.new() as Area2D
+				powerup.position = origin
+				get_tree().current_scene.add_child.call_deferred(powerup)
+			"EXP":
+				DeathFxQueueScript.exp_orb(self, ExpOrbScene, -1.0, origin - Vector2(0.0, -16.0))
+			"COIN":
+				for i: int in randi_range(1, 2):
+					DeathFxQueueScript.loot(self, LootDropScene, "COIN", 1, origin - Vector2(0.0, -16.0))
+			_:
+				DeathFxQueueScript.loot(self, LootDropScene, str(entry[0]), 1, origin - Vector2(0.0, -16.0))
+		return
 
 
 func _draw() -> void:

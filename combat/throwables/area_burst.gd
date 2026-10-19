@@ -81,6 +81,11 @@ func _apply_effects() -> void:
 		if not is_instance_valid(target):
 			continue
 		ThrowableUtil.deliver_hit(target, _build_payload(target))
+	# Obstáculos rompibles dentro del radio (la explosión llega hasta su borde)
+	for prop: Node in get_tree().get_nodes_in_group(&"destructible"):
+		var body: Node2D = prop as Node2D
+		if body != null and body.global_position.distance_to(global_position) <= radius + 50.0:
+			body.take_hit(_build_payload(body))
 
 
 func _build_payload(target: Node2D) -> HitPayload:

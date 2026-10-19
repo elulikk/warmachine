@@ -10,6 +10,7 @@ const FarStepScript = preload("res://core/far_step.gd")
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
 const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
 const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
+const MeleeAttackScript = preload("res://entities/enemies/melee_attack.gd")
 const CHASE_ACCEL: float = 900.0
 
 ## Tipo de arte de `EnemyArt` (ver enemy_art.gd): "brute", "thug", "bouncer"...
@@ -33,6 +34,9 @@ var original_color: Color = Color(0.35, 0.38, 0.44, 1.0)
 var _flash_tween: Tween = null
 var contact_cooldown: float = 0.0
 var is_aggroed: bool = false
+## Lo lee el jugador: tocar a este enemigo no lastima (golpea con `MeleeAttack`).
+var no_touch_damage: bool = true
+var _melee: Node = null
 
 
 func _ready() -> void:
@@ -44,6 +48,7 @@ func _ready() -> void:
 	if overhead_bar != null:
 		overhead_bar.set("vertical_offset_y", -80.0)
 	MobScaleScript.apply(self, art)
+	_melee = MeleeAttackScript.attach(self, art_kind)
 	
 	if visual_rect != null:
 		original_color = visual_rect.color
@@ -57,7 +62,7 @@ func _ready() -> void:
 		if not health_component.died.is_connected(die):
 			health_component.died.connect(die)
 		if overhead_bar != null and overhead_bar.has_method("setup"):
-			overhead_bar.call("setup", health_component, entity_name)
+			overhead_bar.call("setup", health_component, EnemyLevelScript.display_name(self))
 	
 	target_player = get_tree().get_first_node_in_group(&"player") as Player
 
@@ -88,7 +93,9 @@ func _physics_process(delta: float) -> void:
 		
 		if is_aggroed:
 			var diff_x: float = target_player.global_position.x - global_position.x
-			if absf(diff_x) > 16.0:
+			if _melee != null and _melee.call("is_busy"):
+				velocity.x = move_toward(velocity.x, 0.0, 900.0 * delta)
+			elif absf(diff_x) > 16.0:
 				var move_dir: float = signf(diff_x)
 				velocity.x = move_toward(velocity.x, move_dir * effective_speed, CHASE_ACCEL * delta)
 				if visuals != null:
@@ -105,20 +112,6 @@ func _physics_process(delta: float) -> void:
 	
 	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
-	
-	# Ataque melee contundente por contacto físico
-	if contact_cooldown <= 0.0:
-		for i in get_slide_collision_count():
-			var col: KinematicCollision2D = get_slide_collision(i)
-			var collider: Object = col.get_collider()
-			if collider is Player:
-				var player_ref: Player = collider as Player
-				player_ref.take_damage(contact_damage)
-				contact_cooldown = 1.0
-				# Retroceso ligero al jugador
-				var push_dir: Vector2 = (player_ref.global_position - global_position).normalized()
-				player_ref.velocity += push_dir * 180.0
-				break
 
 
 func take_hit(payload: HitPayload) -> void:

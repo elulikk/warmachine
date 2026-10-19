@@ -26,6 +26,9 @@ var target_player: Player = null
 var original_color: Color = Color(0.2, 0.45, 0.75, 1.0)
 var _flash_tween: Tween = null
 var contact_cooldown: float = 0.0
+## Lo lee el jugador: tocar a este enemigo no lastima (golpea con `MeleeAttack`).
+var no_touch_damage: bool = true
+var _melee: Node = null
 var is_aggroed: bool = false
 
 
@@ -36,6 +39,7 @@ func _ready() -> void:
 	move_speed = 70.0
 	super._ready()
 	MobScaleScript.apply(self, art)
+	_melee = (load("res://entities/enemies/melee_attack.gd") as GDScript).call("attach", self, "sentinel") as Node
 	
 	if visual_rect != null:
 		original_color = visual_rect.color
@@ -56,7 +60,7 @@ func _ready() -> void:
 		if not health_component.died.is_connected(die):
 			health_component.died.connect(die)
 		if overhead_bar != null and overhead_bar.has_method("setup"):
-			overhead_bar.call("setup", health_component, entity_name)
+			overhead_bar.call("setup", health_component, EnemyLevelScript.display_name(self))
 	
 	if visuals != null and health_component != null:
 		var energy_shield: Node2D = EnergyShieldScript.new()
@@ -93,7 +97,9 @@ func _physics_process(delta: float) -> void:
 		
 		if is_aggroed:
 			var diff_x: float = target_player.global_position.x - global_position.x
-			if absf(diff_x) > 14.0:
+			if _melee != null and _melee.call("is_busy"):
+				velocity.x = move_toward(velocity.x, 0.0, 900.0 * delta)
+			elif absf(diff_x) > 14.0:
 				var move_dir: float = signf(diff_x)
 				velocity.x = move_toward(velocity.x, move_dir * effective_speed, CHASE_ACCEL * delta)
 				if visuals != null:
@@ -110,16 +116,6 @@ func _physics_process(delta: float) -> void:
 	
 	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
-	
-	if contact_cooldown <= 0.0:
-		for i in get_slide_collision_count():
-			var col: KinematicCollision2D = get_slide_collision(i)
-			var collider: Object = col.get_collider()
-			if collider is Player:
-				var player_ref: Player = collider as Player
-				player_ref.take_damage(contact_damage)
-				contact_cooldown = 0.8
-				break
 
 
 func _on_damage_taken(amount: float, is_critical: bool, damage_type: String) -> void:

@@ -48,7 +48,7 @@ Plantilla de diseño sacada del sector 1-01 (la calle, `levels/chapter_1/level_1
 
 ## 7. Pendiente de diseño
 
-- Nivel 2 (alcantarillas) y nivel 3 (torre y techos): ver `ROADMAP.md` sección 1b.
-- Arenas y tramos con plataformas entre techos para el nivel 3.
+- Nivel 2 (alcantarillas) y nivel 3 (torre y techos): ver `ROADMAP.md` sección 1b (puntos 8 y 9).
+- Niveles verticales: pisos cada 400 px con hueco de 330 y tablas de una vía como escaleras; arenas solo donde el suelo sigue ±600 px del centro (los enemigos nacen fuera de cámara).
 - Enemigos nuevos para la subida del edificio.
 - Cinemáticas y carteles definitivos (después de la historia).

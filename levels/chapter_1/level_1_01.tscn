@@ -16,6 +16,8 @@
 [ext_resource type="PackedScene" path="res://entities/enemies/city_thief.tscn" id="thief"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="wpickup"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="zone"]
+[ext_resource type="PackedScene" path="res://entities/world/arena.tscn" id="arena"]
+[ext_resource type="PackedScene" path="res://entities/enemies/city_thug.tscn" id="thug"]
 
 [ext_resource type="Script" path="res://entities/world/world_prop.gd" id="world_prop"]
 [ext_resource type="Texture2D" path="res://assets/art/world1/buildings/bld_01.png" id="bld_01"]
@@ -459,12 +461,6 @@ position = Vector2(20300.0, 555.0)
 [node name="Rat29" parent="." instance=ExtResource("rat")]
 position = Vector2(20450.0, 555.0)
 
-[node name="Gunman7" parent="." instance=ExtResource("gunman")]
-position = Vector2(21500.0, 555.0)
-
-[node name="Gunman8" parent="." instance=ExtResource("gunman")]
-position = Vector2(21900.0, 555.0)
-
 [node name="Rat30" parent="." instance=ExtResource("rat")]
 position = Vector2(23000.0, 555.0)
 
@@ -508,18 +504,6 @@ position = Vector2(27500.0, 555.0)
 [node name="Gunman12" parent="." instance=ExtResource("gunman")]
 position = Vector2(27900.0, 555.0)
 
-[node name="Gunman13" parent="." instance=ExtResource("gunman")]
-position = Vector2(28300.0, 555.0)
-
-[node name="Rat39" parent="." instance=ExtResource("rat")]
-position = Vector2(29000.0, 555.0)
-
-[node name="Rat40" parent="." instance=ExtResource("rat")]
-position = Vector2(29150.0, 555.0)
-
-[node name="Rat41" parent="." instance=ExtResource("rat")]
-position = Vector2(29300.0, 555.0)
-
 [node name="Rat42" parent="." instance=ExtResource("rat")]
 position = Vector2(29450.0, 555.0)
 
@@ -541,18 +525,6 @@ position = Vector2(30900.0, 555.0)
 [node name="Checkpoint7" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(31300.0, 556)
 checkpoint_id = "checkpoint_4_01_g"
-
-[node name="Gunman17" parent="." instance=ExtResource("gunman")]
-position = Vector2(32300.0, 555.0)
-
-[node name="Gunman18" parent="." instance=ExtResource("gunman")]
-position = Vector2(32700.0, 555.0)
-
-[node name="Rat45" parent="." instance=ExtResource("rat")]
-position = Vector2(33000.0, 555.0)
-
-[node name="Rat46" parent="." instance=ExtResource("rat")]
-position = Vector2(33150.0, 555.0)
 
 [node name="Buildings" type="Node2D" parent="."]
 z_index = -2
@@ -1398,6 +1370,8 @@ size = Vector2(52.4, 71.3)
 art_path = "res://assets/art/world1/trash_can.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 45.0
 
 [node name="Deco06" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(6336.2, 556.0)
@@ -1418,6 +1392,8 @@ size = Vector2(50.7, 75.3)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 60.0
 
 [node name="Deco08" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(9341.2, 556.0)
@@ -1428,6 +1404,8 @@ size = Vector2(46.4, 69.0)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 60.0
 
 [node name="Deco09" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(10898.2, 556.0)
@@ -1438,6 +1416,8 @@ size = Vector2(71.3, 55.3)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 40.0
 
 [node name="Deco10" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(11029.8, 556.0)
@@ -1458,6 +1438,8 @@ size = Vector2(49.2, 73.1)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 60.0
 
 [node name="Deco13" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(12613.1, 556.0)
@@ -1468,6 +1450,8 @@ size = Vector2(45.2, 67.2)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 60.0
 
 [node name="Deco14" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(13398.8, 556.0)
@@ -1478,6 +1462,8 @@ size = Vector2(44.8, 61.0)
 art_path = "res://assets/art/world1/trash_can.png"
 stretch_art = true
 flip_art = false
+destructible = true
+max_health = 45.0
 
 [node name="Deco15" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(13451.4, 556.0)
@@ -1488,6 +1474,8 @@ size = Vector2(48.5, 72.1)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = false
+destructible = true
+max_health = 60.0
 
 [node name="Deco16" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(13534.5, 556.0)
@@ -1498,6 +1486,8 @@ size = Vector2(105.7, 105.7)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = false
+destructible = true
+max_health = 90.0
 
 [node name="Deco17" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(15753.1, 556.0)
@@ -1508,6 +1498,8 @@ size = Vector2(71.4, 55.4)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 40.0
 
 [node name="Deco22" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(19681.5, 556.0)
@@ -1529,36 +1521,6 @@ art_path = "res://assets/art/world1/dumpster.png"
 stretch_art = true
 flip_art = false
 
-[node name="Deco26" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(22087.4, 556.0)
-collision_mask = 0
-script = ExtResource("world_prop")
-hitbox_shrink = Vector2(0.04, 0.02)
-size = Vector2(50.7, 69.0)
-art_path = "res://assets/art/world1/trash_can.png"
-stretch_art = true
-flip_art = true
-
-[node name="Deco27" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(22162.8, 556.0)
-collision_mask = 0
-script = ExtResource("world_prop")
-hitbox_shrink = Vector2(0.04, 0.02)
-size = Vector2(87.9, 82.2)
-art_path = "res://assets/art/world1/wet_boxes.png"
-stretch_art = true
-flip_art = true
-
-[node name="Deco28" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(22303.8, 556.0)
-collision_mask = 0
-script = ExtResource("world_prop")
-hitbox_shrink = Vector2(0.04, 0.02)
-size = Vector2(182.3, 115.9)
-art_path = "res://assets/art/world1/dumpster.png"
-stretch_art = true
-flip_art = false
-
 [node name="Deco33" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(25494.8, 556.0)
 collision_mask = 0
@@ -1568,6 +1530,8 @@ size = Vector2(46.1, 68.5)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 60.0
 
 [node name="Deco34" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(25550.4, 556.0)
@@ -1578,6 +1542,8 @@ size = Vector2(53.0, 78.7)
 art_path = "res://assets/art/world1/barrel.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 60.0
 
 [node name="Deco36" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(27261.9, 556.0)
@@ -1588,26 +1554,8 @@ size = Vector2(83.4, 64.7)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
-
-[node name="Deco38" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(28672.1, 556.0)
-collision_mask = 0
-script = ExtResource("world_prop")
-hitbox_shrink = Vector2(0.06, 0.08)
-size = Vector2(78.7, 61.1)
-art_path = "res://assets/art/world1/trash_bags.png"
-stretch_art = true
-flip_art = false
-
-[node name="Deco39" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
-position = Vector2(28769.7, 556.0)
-collision_mask = 0
-script = ExtResource("world_prop")
-hitbox_shrink = Vector2(0.04, 0.02)
-size = Vector2(104.5, 104.5)
-art_path = "res://assets/art/world1/crates.png"
-stretch_art = true
-flip_art = false
+destructible = true
+max_health = 40.0
 
 [node name="Deco41" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(30237.8, 556.0)
@@ -1618,6 +1566,8 @@ size = Vector2(86.4, 86.4)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 90.0
 
 [node name="Deco42" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(31766.3, 556.0)
@@ -1628,6 +1578,8 @@ size = Vector2(81.8, 63.5)
 art_path = "res://assets/art/world1/trash_bags.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 40.0
 
 [node name="Deco43" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(31865.4, 556.0)
@@ -1638,6 +1590,46 @@ size = Vector2(104.3, 104.3)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = false
+destructible = true
+max_health = 90.0
+
+[node name="Thug1" parent="." instance=ExtResource("thug")]
+position = Vector2(19700.0, 555.0)
+
+[node name="Arena1" parent="." instance=ExtResource("arena")]
+position = Vector2(22000.0, 556.0)
+
+[node name="WaveManager" parent="Arena1" index="2"]
+enemy_scene = ExtResource("thief")
+round_sizes = Array[int]([4, 6])
+elite_scene = ExtResource("thug")
+elite_per_round = Array[int]([0, 1])
+
+[node name="Arena2" parent="." instance=ExtResource("arena")]
+position = Vector2(28800.0, 556.0)
+
+[node name="WaveManager" parent="Arena2" index="2"]
+enemy_scene = ExtResource("thief")
+round_sizes = Array[int]([5, 7])
+elite_scene = ExtResource("thug")
+elite_per_round = Array[int]([1, 2])
+
+[node name="Arena3" parent="." instance=ExtResource("arena")]
+position = Vector2(32800.0, 556.0)
+
+[node name="WaveManager" parent="Arena3" index="2"]
+enemy_scene = ExtResource("rat")
+round_sizes = Array[int]([8, 10, 12])
+elite_scene = ExtResource("thug")
+elite_per_round = Array[int]([0, 1, 2])
+
+[node name="Checkpoint8" parent="." instance=ExtResource("checkpoint")]
+position = Vector2(21100.0, 556)
+checkpoint_id = "checkpoint_4_01_h"
+
+[node name="Checkpoint9" parent="." instance=ExtResource("checkpoint")]
+position = Vector2(28000.0, 556)
+checkpoint_id = "checkpoint_4_01_i"
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)

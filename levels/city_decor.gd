@@ -36,9 +36,10 @@ const SECTORS: Dictionary = {
 	"1_03": {"rain": false, "cars": false, "water": true, "props": [
 		["rust_pipe", 2, 40.0], ["valve", 2, 40.0], ["sewer_grate", 1, 50.0], ["puddle", 3, 14.0], ["barrel", 2, 52.0],
 		["iron_ladder", 1, 120.0], ["steam_grate", 1, 60.0], ["trash_bags", 1, 40.0]]},
-	"1_04": {"rain": true, "cars": true, "props": [
-		["white_fence", 4, 55.0], ["flower_pot", 3, 36.0], ["bicycle", 2, 50.0], ["house_mailbox", 2, 44.0],
-		["street_lamp", 2, 120.0], ["trash_can", 2, 38.0]]},
+	# 1-04: la torre y los techos. Props de azotea solo sobre los techos exteriores (`prop_max_y`); sin lluvia (cae desde y = -20)
+	"1_04": {"rain": false, "cars": false, "prop_max_y": -990.0, "props": [
+		["water_tank", 1, 150.0], ["antenna", 2, 150.0], ["vent_chimney", 2, 100.0], ["roof_sign", 1, 90.0],
+		["safety_rail", 3, 36.0], ["vent_duct", 2, 50.0]]},
 	"1_05": {"rain": true, "cars": false, "water": true, "props": [
 		["bollard", 3, 36.0], ["buoy", 2, 48.0], ["crates", 3, 60.0], ["oil_barrel", 3, 50.0], ["rope_coil", 2, 24.0],
 		["dock_lamp", 2, 110.0]]},
@@ -120,9 +121,10 @@ static func decorate(level: Node, solids: Array[Rect2]) -> void:
 	_prop_spans = _baked_spans(level)
 
 	var level_end: float = 0.0
+	var max_y: float = float(cfg.get("prop_max_y", INF))
 	for rect: Rect2 in solids:
 		level_end = maxf(level_end, rect.end.x)
-		if rect.size.x < MIN_GROUND_WIDTH or rect.size.y <= THIN_MAX_HEIGHT:
+		if rect.size.x < MIN_GROUND_WIDTH or rect.size.y <= THIN_MAX_HEIGHT or rect.position.y > max_y:
 			continue
 		var x: float = rect.position.x + rng.randf_range(40.0, 140.0)
 		while x < rect.end.x - 30.0:

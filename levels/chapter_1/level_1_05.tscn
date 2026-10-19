@@ -235,6 +235,8 @@ size = Vector2(46.0, 68.3)
 art_path = "res://assets/art/world1/oil_barrel.png"
 stretch_art = true
 flip_art = false
+destructible = true
+max_health = 70.0
 
 [node name="Deco02" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(2895.9, 556.0)
@@ -245,6 +247,8 @@ size = Vector2(90.0, 90.0)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 90.0
 
 [node name="Deco03" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(2993.4, 556.0)
@@ -255,6 +259,8 @@ size = Vector2(89.7, 89.7)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = true
+destructible = true
+max_health = 90.0
 
 [node name="Deco04" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(4775.7, 556.0)
@@ -265,6 +271,8 @@ size = Vector2(90.0, 90.0)
 art_path = "res://assets/art/world1/crates.png"
 stretch_art = true
 flip_art = false
+destructible = true
+max_health = 90.0
 
 [node name="Deco05" type="StaticBody2D" parent="Props" groups=["world", "decor_prop"]]
 position = Vector2(4847.9, 556.0)
@@ -275,6 +283,8 @@ size = Vector2(50.4, 74.9)
 art_path = "res://assets/art/world1/oil_barrel.png"
 stretch_art = true
 flip_art = false
+destructible = true
+max_health = 70.0
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
