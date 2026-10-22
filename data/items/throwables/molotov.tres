@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://combat/throwables/molotov.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "molotov"
+item_name = "Cóctel Molotov"
+item_color = Color(0.95, 0.5, 0.15, 1)
+equip_slot = "TACTICAL"
+throwable_scene = ExtResource("2_scene")
+tags = Array[String](["THROWABLE"])
+modifiers = Array[Dictionary]([])
+grants_extra_jump = 0
+rarity = 0
+gold_value = 20
+description = "Botella de aguardiente con un trapo encendido. Se rompe al tocar el piso o a un enemigo: llamarada que quema y una alfombra de fuego que dura unos segundos."

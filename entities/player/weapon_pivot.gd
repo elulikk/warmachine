@@ -44,6 +44,12 @@ func _update_aim() -> void:
 	if _has_fixed_aim():
 		aim_dir = Vector2(1.0 if aim_dir.x >= 0.0 else -1.0, 0.0)
 	
+	# Cuerpo a tierra: casi horizontal, del lado del cursor
+	if player != null and player.is_prone:
+		var side: float = 1.0 if aim_dir.x >= 0.0 else -1.0
+		var lift: float = clampf(atan2(aim_dir.y, absf(aim_dir.x)), -Player.PRONE_AIM_LIMIT, Player.PRONE_AIM_LIMIT)
+		aim_dir = Vector2(cos(lift) * side, sin(lift))
+
 	# Aplicar rotación continua
 	rotation = aim_dir.angle()
 	

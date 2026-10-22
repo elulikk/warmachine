@@ -55,20 +55,21 @@ const PROFILES: Dictionary = {
 		]
 	},
 	"iron_sword": {
+		"scale": 1.15,
 		"pose": {"support": Vector2(14.0, 48.7)},
-		"hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -8.0},
+		"hold": {"pos": Vector2(5.0, 1.0), "rot_deg": -8.0},
 		"swings": [
 			{ # Tajo amplio descendente con cuerpo y brazos acompañando
 				"length": 2.4, "hit_delay": 0.02,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-8.0, -6.0), "rot": -72.0},
-					{"t": 0.36, "pos": Vector2(13.0, 5.0), "rot": 68.0, "ease": "out"},
-					{"t": 0.52, "pos": Vector2(14.0, 6.0), "rot": 78.0},
+					{"t": 0.0, "pos": Vector2(-12.0, -8.0), "rot": -105.0},
+					{"t": 0.36, "pos": Vector2(17.0, 7.0), "rot": 100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, 8.0), "rot": 112.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [
 					{"t": 0.0, "lean": -7.0, "x": -2.5},
-					{"t": 0.36, "lean": 12.0, "x": 5.0},
+					{"t": 0.36, "lean": 12.0, "x": 7.5},
 					{"t": 0.58, "lean": 6.0, "x": 2.0},
 					{"t": 1.0, "lean": 0.0, "x": 0.0}
 				]
@@ -76,14 +77,14 @@ const PROFILES: Dictionary = {
 			{ # Tajo amplio de revés con giro del torso
 				"length": 2.4, "hit_delay": 0.02,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-6.0, 7.0), "rot": 68.0},
-					{"t": 0.36, "pos": Vector2(13.0, -5.0), "rot": -68.0, "ease": "out"},
-					{"t": 0.52, "pos": Vector2(14.0, -6.0), "rot": -78.0},
+					{"t": 0.0, "pos": Vector2(-10.0, 9.0), "rot": 100.0},
+					{"t": 0.36, "pos": Vector2(17.0, -7.0), "rot": -100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, -8.0), "rot": -112.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [
 					{"t": 0.0, "lean": 6.0, "x": -2.0},
-					{"t": 0.36, "lean": -10.0, "x": 4.5},
+					{"t": 0.36, "lean": -10.0, "x": 7.0},
 					{"t": 0.58, "lean": -5.0, "x": 1.8},
 					{"t": 1.0, "lean": 0.0, "x": 0.0}
 				]
@@ -91,20 +92,21 @@ const PROFILES: Dictionary = {
 		]
 	},
 	"frostmourne": {
+		"scale": 1.15,
 		"pose": {"support": Vector2(14.0, 48.7)},
-		"hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -8.0},
+		"hold": {"pos": Vector2(5.0, 1.0), "rot_deg": -8.0},
 		"swings": [
 			{ # Tajo amplio descendente con cuerpo y brazos acompañando
 				"length": 2.4, "hit_delay": 0.02,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-8.0, -6.0), "rot": -72.0},
-					{"t": 0.36, "pos": Vector2(13.0, 5.0), "rot": 68.0, "ease": "out"},
-					{"t": 0.52, "pos": Vector2(14.0, 6.0), "rot": 78.0},
+					{"t": 0.0, "pos": Vector2(-12.0, -8.0), "rot": -105.0},
+					{"t": 0.36, "pos": Vector2(17.0, 7.0), "rot": 100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, 8.0), "rot": 112.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [
 					{"t": 0.0, "lean": -7.0, "x": -2.5},
-					{"t": 0.36, "lean": 12.0, "x": 5.0},
+					{"t": 0.36, "lean": 12.0, "x": 7.5},
 					{"t": 0.58, "lean": 6.0, "x": 2.0},
 					{"t": 1.0, "lean": 0.0, "x": 0.0}
 				]
@@ -112,14 +114,14 @@ const PROFILES: Dictionary = {
 			{ # Tajo amplio de revés con giro del torso
 				"length": 2.4, "hit_delay": 0.02,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-6.0, 7.0), "rot": 68.0},
-					{"t": 0.36, "pos": Vector2(13.0, -5.0), "rot": -68.0, "ease": "out"},
-					{"t": 0.52, "pos": Vector2(14.0, -6.0), "rot": -78.0},
+					{"t": 0.0, "pos": Vector2(-10.0, 9.0), "rot": 100.0},
+					{"t": 0.36, "pos": Vector2(17.0, -7.0), "rot": -100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, -8.0), "rot": -112.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [
 					{"t": 0.0, "lean": 6.0, "x": -2.0},
-					{"t": 0.36, "lean": -10.0, "x": 4.5},
+					{"t": 0.36, "lean": -10.0, "x": 7.0},
 					{"t": 0.58, "lean": -5.0, "x": 1.8},
 					{"t": 1.0, "lean": 0.0, "x": 0.0}
 				]
@@ -127,15 +129,16 @@ const PROFILES: Dictionary = {
 		]
 	},
 	"katana": {
+		"scale": 1.15,
 		"pose": {"support": Vector2(16.0, 26.1)},
-		"hold": {"pos": Vector2(0.0, 2.0), "rot_deg": -16.0},
+		"hold": {"pos": Vector2(5.0, 2.0), "rot_deg": -16.0},
 		"swings": [
 			{ # Tajo descendente desde arriba y atrás, con la embestida
 				"length": 3.2, "hit_delay": 0.0,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-8.0, -5.0), "rot": -75.0},
-					{"t": 0.26, "pos": Vector2(11.0, 3.0), "rot": 62.0, "ease": "out"},
-					{"t": 0.45, "pos": Vector2(13.0, 6.0), "rot": 88.0},
+					{"t": 0.0, "pos": Vector2(-12.0, -7.0), "rot": -105.0},
+					{"t": 0.26, "pos": Vector2(16.0, 5.0), "rot": 95.0, "ease": "out"},
+					{"t": 0.45, "pos": Vector2(18.0, 8.0), "rot": 115.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [{"t": 0.0, "lean": -5.0, "x": -2.0}, {"t": 0.26, "lean": 11.0, "x": 5.0}, {"t": 1.0, "lean": 0.0, "x": 0.0}]
@@ -143,9 +146,9 @@ const PROFILES: Dictionary = {
 			{ # Tajo ascendente de vuelta
 				"length": 3.2, "hit_delay": 0.0,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-4.0, 7.0), "rot": 62.0},
-					{"t": 0.26, "pos": Vector2(11.0, -5.0), "rot": -66.0, "ease": "out"},
-					{"t": 0.45, "pos": Vector2(13.0, -7.0), "rot": -88.0},
+					{"t": 0.0, "pos": Vector2(-8.0, 9.0), "rot": 95.0},
+					{"t": 0.26, "pos": Vector2(16.0, -7.0), "rot": -98.0, "ease": "out"},
+					{"t": 0.45, "pos": Vector2(18.0, -9.0), "rot": -115.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [{"t": 0.0, "lean": 3.0, "x": -1.0}, {"t": 0.26, "lean": 9.0, "x": 5.0}, {"t": 1.0, "lean": 0.0, "x": 0.0}]
@@ -215,8 +218,27 @@ const PROFILES: Dictionary = {
 ## (normalmente `pose` e `impact`, que van en px de la textura propia).
 const ALIASES: Dictionary = {
 	"scythe": {"base": "iron_sword", "pose": {"support": Vector2(115.0, 59.0)}, "hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -14.0}},
+	"mangual": {"base": "iron_sword", "impact": Vector2(203.0, 46.0)},
 	"demon_sword": {"base": "iron_sword", "pose": {"support": Vector2(10.0, 36.0)}},
 	"abyss_axe": {"base": "heavy_hammer", "pose": {"support": Vector2(108.0, 58.0)}, "impact": Vector2(228.0, 58.0)},
+	"nail_bat": {"base": "heavy_hammer", "pose": {"support": Vector2(84.0, 32.0)}, "impact": Vector2(215.0, 32.0)},
+	"thompson": {"base": "smg"},
+	"sawed_off": {"base": "shotgun"},
+	"flare_gun": {"base": "pistol"},
+	"nail_gun": {"base": "pistol"},
+	"pipe_wrench": {"base": "iron_sword", "impact": Vector2(232.0, 45.0)},
+	"extinguisher": {"base": "fuel_flamethrower"},
+	"bazooka": {"base": "heavy_sniper"},
+	"bazooka_guided": {"base": "heavy_sniper"},
+	"dart_venom": {"base": "pistol"},
+	"dart_charm": {"base": "pistol"},
+	"taser": {"base": "pistol"},
+	"poseidon_trident": {"base": "heavy_hammer", "pose": {"support": Vector2(160.0, 31.5)}, "impact": Vector2(250.0, 31.5)},
+	"leviathan_axe": {"base": "javelin"},
+	"excalibur": {"base": "iron_sword", "impact": Vector2(240.0, 27.0)},
+	"gungnir": {"base": "javelin"},
+	"zeus_bolt": {"base": "javelin"},
+	"monkey_staff": {"base": "heavy_hammer", "pose": {"support": Vector2(150.0, 12.0)}, "impact": Vector2(250.0, 12.0)},
 	"mjolnir": {"base": "heavy_hammer", "pose": {"support": Vector2(120.0, 72.0)}, "impact": Vector2(215.0, 72.0)},
 }
 
@@ -236,6 +258,8 @@ const RELOADS: Dictionary = {
 	"revolver": {"style": "cylinder"},
 	"colt_44": {"style": "cylinder"},
 	"shotgun": {"style": "shells", "count": 4},
+	"sawed_off": {"style": "shells", "count": 2},
+	"flare_gun": {"style": "shells", "count": 1},
 	"heavy_sniper": {"style": "bolt"},
 	"ak47": {"style": "mag_rifle"},
 	"m4": {"style": "mag_rifle"},
@@ -244,6 +268,10 @@ const RELOADS: Dictionary = {
 	"mp5": {"style": "mag_rifle"},
 	"plasma_flamethrower": {"style": "canister"},
 	"fuel_flamethrower": {"style": "canister"},
+	"extinguisher": {"style": "canister"},
+	"bazooka": {"style": "shells", "count": 1},
+	"bazooka_guided": {"style": "shells", "count": 1},
+	"taser": {"style": "shells", "count": 1},
 	"corrosive_blaster": {"style": "canister"},
 	"fire_staff": {"style": "canister"},
 	"ice_staff": {"style": "canister"},
@@ -257,11 +285,14 @@ const RELOADS: Dictionary = {
 ## (para M4, SMG y MP5) sale de `SUSTAINED_CLIMB` en weapon_manager.gd.
 const PATTERNS: Dictionary = {
 	"smg": {"window": 0.16, "climb_step": 0.9, "max_climb": 7.0, "sway": 1.4, "recover": 0.22},
+	"thompson": {"window": 0.2, "climb_step": 1.1, "max_climb": 9.0, "sway": 1.8, "recover": 0.26},
 	"mp5": {"window": 0.17, "climb_step": 0.8, "max_climb": 6.0, "sway": 1.2, "recover": 0.22},
 	"ak47": {"window": 0.2, "climb_step": 1.6, "max_climb": 11.0, "sway": 2.2, "recover": 0.3},
 	"m4": {"window": 0.19, "climb_step": 1.1, "max_climb": 8.0, "sway": 1.0, "recover": 0.26},
 	"plasma_flamethrower": {"window": 0.12, "climb_step": 0.3, "max_climb": 3.0, "sway": 2.6, "recover": 0.2},
 	"fuel_flamethrower": {"window": 0.12, "climb_step": 0.3, "max_climb": 3.0, "sway": 2.6, "recover": 0.2},
+	"extinguisher": {"window": 0.14, "climb_step": 0.2, "max_climb": 2.0, "sway": 2.0, "recover": 0.2},
+	"nail_gun": {"window": 0.2, "climb_step": 0.6, "max_climb": 4.0, "sway": 0.8, "recover": 0.2},
 }
 
 

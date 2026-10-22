@@ -80,6 +80,10 @@ extends "res://entities/enemies/basic_runner.gd"
 - Los que bloquean la salida llevan `groups=["arena_enemies"]` (`guard=True` en el generador).
 - Opcional: sumarlo a `scenes/hub/stress_room.gd` (`TYPE_NAMES`, `_scene_for`) y a `core/test_level.gd` para probarlo en masa.
 
+### Códice
+
+Agregar una línea en `ENEMIES` de `core/codex/codex.gd` con `name` = `entity_name` exacto, `kind` (el `art_kind`, para el retrato), `world`, `boss` si es jefe y un `lore` corto (1–2 frases, voz de Gunther, con una pista de cómo pelearlo). El descubrimiento al matarlo es automático (EnemyBase / BasicRunner).
+
 ## Reglas de diseño (preferencias del usuario)
 
 - **Ciclo de progresión:** primero crece la cantidad de un tipo (`round_sizes`) y solo cuando ya son muchos entra uno nuevo, **de a uno por sector y en cantidad baja**. Después el ciclo se repite.

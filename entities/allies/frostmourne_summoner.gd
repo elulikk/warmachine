@@ -8,6 +8,8 @@ extends Node
 const FROSTMOURNE_PATH: String = "res://data/weapons/frostmourne.tres"
 const SKELETON_SCENE: PackedScene = preload("res://entities/allies/frostmourne_skeleton.tscn")
 const MAX_SKELETONS: int = 5
+## Segundos que dura cada esqueleto invocado.
+const SKELETON_LIFETIME: float = 25.0
 ## Fracción de la vida máxima BASE que quita cada esqueleto vivo (suma lineal).
 const PENALTY_FRACTION: float = 0.05
 
@@ -96,6 +98,7 @@ func _summon_at(pos: Vector2) -> void:
 		return
 	var skeleton: Node = SKELETON_SCENE.instantiate()
 	skeleton.set(&"is_hired", true)
+	skeleton.call_deferred(&"set_lifetime", SKELETON_LIFETIME)
 	_alive.append(skeleton)
 	skeleton.connect(&"tree_exited", _on_skeleton_gone.bind(skeleton))
 	_change_penalty(-penalty_per_skeleton())

@@ -18,13 +18,29 @@ const SHAPES: Array[int] = [
 ]
 
 
+static var _cross: Image = null
+static var _invisible: Image = null
+
+
 static func install() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
 	# Image directa (no ImageTexture): evita una textura de GPU sin liberar al cerrar
-	var img := _build_image()
+	_cross = _build_image()
+	set_hidden(false)
+
+
+## Jugando, la mira del juego (ui/aim_reticle.gd) reemplaza al cursor: con `hidden` el del sistema queda invisible;
+## sin `hidden` vuelve la crucecita chica para menús y ventanas.
+static func set_hidden(hidden: bool) -> void:
+	if DisplayServer.get_name() == "headless" or _cross == null:
+		return
+	if hidden and _invisible == null:
+		_invisible = Image.create(2, 2, false, Image.FORMAT_RGBA8)
+	var img: Image = _invisible if hidden else _cross
+	var spot: Vector2 = Vector2.ZERO if hidden else Vector2(CENTER, CENTER)
 	for shape in SHAPES:
-		Input.set_custom_mouse_cursor(img, shape, Vector2(CENTER, CENTER))
+		Input.set_custom_mouse_cursor(img, shape, spot)
 
 
 static func _build_image() -> Image:

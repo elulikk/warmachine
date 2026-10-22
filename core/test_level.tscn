@@ -50,6 +50,36 @@
 [ext_resource type="Resource" path="res://data/weapons/heavy_hammer.tres" id="45_hammer"]
 [ext_resource type="Resource" path="res://data/weapons/mjolnir.tres" id="mjolnir_w"]
 [ext_resource type="Resource" path="res://data/weapons/katana.tres" id="46_katana"]
+[ext_resource type="Resource" path="res://data/weapons/mangual.tres" id="mangual_w"]
+[ext_resource type="Resource" path="res://data/weapons/nail_bat.tres" id="noir_bat"]
+[ext_resource type="Resource" path="res://data/weapons/sawed_off.tres" id="noir_sawed"]
+[ext_resource type="Resource" path="res://data/weapons/flare_gun.tres" id="noir_flare"]
+[ext_resource type="Resource" path="res://data/weapons/thompson.tres" id="noir_thompson"]
+[ext_resource type="Resource" path="res://data/weapons/nail_gun.tres" id="noir_nailgun"]
+[ext_resource type="Resource" path="res://data/weapons/pipe_wrench.tres" id="noir_wrench"]
+[ext_resource type="Resource" path="res://data/weapons/extinguisher.tres" id="noir_extinguisher"]
+[ext_resource type="Resource" path="res://data/weapons/bazooka.tres" id="arm_bazooka"]
+[ext_resource type="Resource" path="res://data/weapons/bazooka_guided.tres" id="arm_bazooka_g"]
+[ext_resource type="Resource" path="res://data/weapons/dart_venom.tres" id="arm_dart_venom"]
+[ext_resource type="Resource" path="res://data/weapons/dart_charm.tres" id="arm_dart_charm"]
+[ext_resource type="Resource" path="res://data/weapons/taser.tres" id="arm_taser"]
+[ext_resource type="Resource" path="res://data/items/throwables/cluster_bomb.tres" id="arm_cluster"]
+[ext_resource type="Resource" path="res://data/items/throwables/c4.tres" id="arm_c4"]
+[ext_resource type="Resource" path="res://data/items/iron_helmet.tres" id="iron_helmet"]
+[ext_resource type="Resource" path="res://data/items/iron_chest.tres" id="iron_chest"]
+[ext_resource type="Resource" path="res://data/items/iron_gauntlets.tres" id="iron_gauntlets"]
+[ext_resource type="Resource" path="res://data/items/iron_boots.tres" id="iron_boots"]
+[ext_resource type="Resource" path="res://data/items/arc_reactor.tres" id="arc_reactor"]
+[ext_resource type="Resource" path="res://data/weapons/poseidon_trident.tres" id="myth_trident"]
+[ext_resource type="Resource" path="res://data/weapons/zeus_bolt.tres" id="myth_zeus"]
+[ext_resource type="Resource" path="res://data/weapons/leviathan_axe.tres" id="myth_axe"]
+[ext_resource type="Resource" path="res://data/weapons/gungnir.tres" id="myth_gungnir"]
+[ext_resource type="Resource" path="res://data/weapons/excalibur.tres" id="myth_excalibur"]
+[ext_resource type="Resource" path="res://data/weapons/monkey_staff.tres" id="myth_staff"]
+[ext_resource type="Resource" path="res://data/items/trench_coat.tres" id="noir_coat"]
+[ext_resource type="Resource" path="res://data/items/fedora.tres" id="noir_fedora"]
+[ext_resource type="Resource" path="res://data/items/brass_knuckles.tres" id="noir_knuckles"]
+[ext_resource type="Resource" path="res://data/items/throwables/molotov.tres" id="noir_molotov"]
 [ext_resource type="Resource" path="res://data/items/grappling_hook.tres" id="47_hook_res"]
 [ext_resource type="Resource" path="res://data/items/teleport_beacon.tres" id="48_beacon_res"]
 [ext_resource type="Script" path="res://core/moving_platform.gd" id="49_moving_plat"]
@@ -416,9 +446,9 @@ color = Color(0.9, 0.8, 0.4, 1)
 
 [node name="HubBanner" type="Label" parent="HubStation"]
 offset_left = 300.0
-offset_top = 460.0
+offset_top = 405.0
 offset_right = 950.0
-offset_bottom = 490.0
+offset_bottom = 435.0
 theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
 theme_override_font_sizes/font_size = 18
 text = "★ HUB PRINCIPAL — BASE DE OPERACIONES Y EQUIPO ★"
@@ -484,6 +514,86 @@ weapon_data = ExtResource("mjolnir_w")
 [node name="KatanaPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
 position = Vector2(1650, 560)
 weapon_data = ExtResource("46_katana")
+
+[node name="MangualPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(1740, 560)
+weapon_data = ExtResource("mangual_w")
+
+[node name="NailBatPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(1820, 560)
+weapon_data = ExtResource("noir_bat")
+
+[node name="FlareGunPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(2010, 560)
+weapon_data = ExtResource("noir_flare")
+
+[node name="SawedOffPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(2230, 560)
+weapon_data = ExtResource("noir_sawed")
+
+[node name="ThompsonPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(2420, 560)
+weapon_data = ExtResource("noir_thompson")
+
+[node name="NailGunPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(2500, 560)
+weapon_data = ExtResource("noir_nailgun")
+
+[node name="WrenchPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(2580, 560)
+weapon_data = ExtResource("noir_wrench")
+
+[node name="ExtinguisherPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(2660, 560)
+weapon_data = ExtResource("noir_extinguisher")
+
+[node name="BazookaPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(960, 560)
+weapon_data = ExtResource("arm_bazooka")
+
+[node name="BazookaGuidedPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(1040, 560)
+weapon_data = ExtResource("arm_bazooka_g")
+
+[node name="DartVenomPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(1230, 560)
+weapon_data = ExtResource("arm_dart_venom")
+
+[node name="DartCharmPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(1310, 560)
+weapon_data = ExtResource("arm_dart_charm")
+
+[node name="TaserPickup" parent="MeleeZone" instance=ExtResource("24_wpickup")]
+position = Vector2(1390, 560)
+weapon_data = ExtResource("arm_taser")
+
+[node name="ClusterPedestal" parent="." instance=ExtResource("40_pedestal")]
+position = Vector2(5060, 575)
+item_data = ExtResource("arm_cluster")
+
+[node name="C4Pedestal" parent="." instance=ExtResource("40_pedestal")]
+position = Vector2(5140, 575)
+item_data = ExtResource("arm_c4")
+
+[node name="IronHelmetPedestal" parent="." instance=ExtResource("40_pedestal")]
+position = Vector2(-300, 348)
+item_data = ExtResource("iron_helmet")
+
+[node name="IronChestPedestal" parent="." instance=ExtResource("40_pedestal")]
+position = Vector2(-200, 348)
+item_data = ExtResource("iron_chest")
+
+[node name="IronGauntletsPedestal" parent="." instance=ExtResource("40_pedestal")]
+position = Vector2(50, 348)
+item_data = ExtResource("iron_gauntlets")
+
+[node name="IronBootsPedestal" parent="." instance=ExtResource("40_pedestal")]
+position = Vector2(150, 348)
+item_data = ExtResource("iron_boots")
+
+[node name="ArcReactorPedestal" parent="." instance=ExtResource("40_pedestal")]
+position = Vector2(250, 348)
+item_data = ExtResource("arc_reactor")
 
 [node name="StunTestDummy" parent="MeleeZone" instance=ExtResource("4_dummy")]
 position = Vector2(1900, 575)
@@ -589,6 +699,22 @@ item_data = ExtResource("63_laser")
 [node name="CloakPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
 position = Vector2(4040, 575)
 item_data = ExtResource("64_cloak")
+
+[node name="MolotovPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(3460, 575)
+item_data = ExtResource("noir_molotov")
+
+[node name="TrenchCoatPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(3590, 575)
+item_data = ExtResource("noir_coat")
+
+[node name="FedoraPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(3720, 575)
+item_data = ExtResource("noir_fedora")
+
+[node name="KnucklesPedestal" parent="DemolitionZone" instance=ExtResource("40_pedestal")]
+position = Vector2(3810, 575)
+item_data = ExtResource("noir_knuckles")
 
 [node name="GasDummy1" parent="DemolitionZone" instance=ExtResource("4_dummy")]
 position = Vector2(3420, 575)
@@ -750,6 +876,8 @@ theme_override_colors/font_color = Color(0.4, 0.95, 0.8, 1)
 theme_override_font_sizes/font_size = 13
 text = "• HABITACIONES:
   - Hub Central (x:350): Spawn, Herrero y Baúl de Almacenamiento
+  - Invocadores (x:-230 a 250): [E] sobre el pod invoca un enemigo del mundo 1; "Limpiar" en x:960
+  - Pods (x:420 a 585): Vida, Munición, Granadas y Placa de daño (pararse encima)
   - Ascensor Principal (x:1150): Conecta Hub, Piso Superior y Terraza Alta
   - Torre Oeste (x:-200 a 850): Sprint, Wall Jump y Terraza de Jetpack/Gancho
   - Armería Melee (x:1450 a 2400): Martillo (Stun), Katana (Dash) y Dummies
@@ -790,3 +918,27 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 theme_override_font_sizes/font_size = 13
 text = "[F1] Municion Infinita: DESACTIVADA"
+
+[node name="PoseidonTridentPickup" parent="." instance=ExtResource("24_wpickup")]
+position = Vector2(-120, 540)
+weapon_data = ExtResource("myth_trident")
+
+[node name="ZeusBoltPickup" parent="." instance=ExtResource("24_wpickup")]
+position = Vector2(-40, 540)
+weapon_data = ExtResource("myth_zeus")
+
+[node name="LeviathanAxePickup" parent="." instance=ExtResource("24_wpickup")]
+position = Vector2(40, 540)
+weapon_data = ExtResource("myth_axe")
+
+[node name="GungnirPickup" parent="." instance=ExtResource("24_wpickup")]
+position = Vector2(120, 540)
+weapon_data = ExtResource("myth_gungnir")
+
+[node name="ExcaliburPickup" parent="." instance=ExtResource("24_wpickup")]
+position = Vector2(200, 540)
+weapon_data = ExtResource("myth_excalibur")
+
+[node name="MonkeyStaffPickup" parent="." instance=ExtResource("24_wpickup")]
+position = Vector2(280, 540)
+weapon_data = ExtResource("myth_staff")

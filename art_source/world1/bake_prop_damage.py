@@ -17,7 +17,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 DIR = os.path.join(ROOT, "assets", "art", "world1")
 
 # Debe coincidir con los obstáculos que marca bake_decor_props.py como rompibles.
-BREAKABLE = ["barrel", "oil_barrel", "crates", "wet_boxes", "trash_can", "trash_bags", "mailbox"]
+BREAKABLE = ["sewer_barrel", "sewer_crates", "sewer_sacks", "sewer_bricks", "barrel", "oil_barrel", "crates", "wet_boxes", "trash_can", "trash_bags", "mailbox"]
 
 
 def alpha_of(img):

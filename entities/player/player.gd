@@ -41,6 +41,10 @@ const EyeLaserScript = preload("res://entities/player/eye_laser.gd")
 const CloakControllerScript = preload("res://entities/player/cloak_controller.gd")
 const HamelinFluteScript = preload("res://entities/player/hamelin_flute_controller.gd")
 const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
+const JetpackFxScript = preload("res://entities/player/jetpack_fx.gd")
+## Capa de dibujo del jugador. Las piezas del esqueleto van de -3 (mochila) a +3 (mano): con base 4 todo el personaje
+## queda delante del decorado del nivel (edificios, fondos y terreno en -1/0) sin cambiar su orden interno.
+const PLAYER_Z: int = 4
 const DamageNumberScene = preload("res://combat/damage_number.tscn")
 var _level_up_aura: Node2D = null
 ## Destello al juntar experiencia: brillo actual (0..XP_GLOW_CAP) y cuándo se calculó (ms).
@@ -81,6 +85,10 @@ var has_jetpack: bool = false
 var is_using_jetpack: bool = false
 var jetpack_fuel: float = 100.0
 @export var max_jetpack_fuel: float = 100.0
+## Combustible por segundo con el jetpack encendido. Los sectores a cielo abierto bajan `jetpack_drain_mult` para
+## poder subir muy alto (ver LevelBase.OPEN_SKY_TOP).
+const JETPACK_DRAIN: float = 45.0
+var jetpack_drain_mult: float = 1.0
 var has_wings: bool = false
 var max_flaps: int = 5
 var current_flaps: int = 0
@@ -92,6 +100,8 @@ const DASH_COOLDOWN: float = 0.7
 var can_dash: bool = false
 ## Casco Láser equipado: habilita la acción `eye_laser` (ver eye_laser.gd).
 var has_eye_laser: bool = false
+## Pechera de Hierro: el rayo sale del pecho y es azul (unirrayo) en vez de los ojos.
+var laser_from_chest: bool = false
 ## Capa de Invisibilidad equipada y estado de invisibilidad (ver cloak_controller.gd). Los enemigos leen `is_invisible`.
 var has_cloak: bool = false
 ## Flauta de Hamelin equipada: las ratas cercanas pasan a ser aliadas (ver hamelin_flute_controller.gd).
@@ -102,19 +112,47 @@ var _dash_time_left: float = 0.0
 var _dash_cooldown_left: float = 0.0
 var _dash_dir: float = 1.0
 var _air_dash_used: bool = false
+## Llama del jetpack (la apagan los estados al aterrizar); el resto del fuego vive en `_jetpack_fx`.
 var jetpack_particles: CPUParticles2D = null
+var _jetpack_fx: Node2D = null
 var dash_trail: CPUParticles2D = null
 
-## Agachado: hitbox y hurtbox más bajas, el cuerpo baja y se camina más lento. Siempre disponible (sin ítem).
+## Tres posturas con tres alturas de disparo claras (pivote del arma, px sobre los pies):
+##   de pie            64 px de alto, el arma a la altura del hombro (la de la escena, -54)
+##   agachado          rodilla en tierra (tecla abajo mantenida): 40 px, el arma a la altura del pecho
+##   cuerpo a tierra   doble toque de abajo o la acción `prone`: 18 px, el arma pegada al piso
+## Los tiros enemigos apuntan al centro del cuerpo en la postura actual (get_body_center): cambiar de postura
+## esquiva los que ya vienen en vuelo. Siempre disponible (sin ítem).
 const STAND_HEIGHT: float = 64.0
 const CROUCH_HEIGHT: float = 40.0
+const PRONE_HEIGHT: float = 18.0
+const CROUCH_PIVOT_Y: float = -35.0
+const PRONE_PIVOT_Y: float = -10.0
+## Cuerpo a tierra el arma va adelante de la cabeza (px hacia donde mira).
+const PRONE_PIVOT_X: float = 32.0
+## Cuerpo a tierra se puede apuntar poco hacia arriba o abajo (rad desde la horizontal).
+const PRONE_AIM_LIMIT: float = 0.38
 const CROUCH_SPEED_MULT: float = 0.5
+const PRONE_SPEED_MULT: float = 0.3
+## Ancho de la hurtbox acostado (el cuerpo queda horizontal).
+const PRONE_HURT_WIDTH: float = 66.0
+## Ventana del doble toque de abajo para tirarse cuerpo a tierra (s).
+const PRONE_DOUBLE_TAP: float = 0.28
 ## Velocidad vertical ascendente (px/s) por debajo de la cual, agachado en el suelo, se descarta (retroceso de armas).
 const CROUCH_HOP_CANCEL: float = -150.0
+enum Stance { STAND, CROUCH, PRONE }
+var stance: int = Stance.STAND
+## Agachado (rodilla en tierra). Cuerpo a tierra es `is_prone`; las dos son excluyentes.
 var is_crouching: bool = false
+var is_prone: bool = false
 var _stand_pivot_y: float = -54.0
+var _stand_radius: float = 18.0
+var _stand_hurt_width: float = 36.0
 var _hurtbox_shape: RectangleShape2D = null
 var _hurtbox_shape_node: CollisionShape2D = null
+var _down_tap_t: float = 99.0
+## Cuadro físico en el que el salto se usó para levantarse (no salta en ese mismo cuadro).
+var _jump_eaten_frame: int = -1
 
 var hurt_cooldown: float = 0.0
 var _unstuck_cooldown: float = 0.0
@@ -212,32 +250,23 @@ func _ready() -> void:
 
 
 func _setup_jetpack_particles() -> void:
-	jetpack_particles = CPUParticles2D.new()
-	jetpack_particles.name = "JetpackParticles"
-	jetpack_particles.emitting = false
-	jetpack_particles.amount = 36
-	jetpack_particles.lifetime = 0.35
-	jetpack_particles.speed_scale = 1.2
-	jetpack_particles.direction = Vector2(-0.15, 1.0).normalized()
-	jetpack_particles.spread = 22.0
-	jetpack_particles.gravity = Vector2(0, 160)
-	jetpack_particles.initial_velocity_min = 100.0
-	jetpack_particles.initial_velocity_max = 190.0
-	jetpack_particles.scale_amount_min = 2.5
-	jetpack_particles.scale_amount_max = 5.5
-	jetpack_particles.z_index = 1
-	jetpack_particles.z_as_relative = true
-	
-	var grad: Gradient = Gradient.new()
-	grad.set_color(0, Color(1.0, 1.0, 0.7, 1.0))       # Núcleo blanco-amarillo incandescente
-	grad.add_point(0.25, Color(1.0, 0.55, 0.1, 0.95))   # Llamarada propulsora naranja
-	grad.add_point(0.6, Color(0.85, 0.2, 0.05, 0.7))    # Rescoldo rojizo
-	grad.add_point(0.85, Color(0.35, 0.35, 0.35, 0.4))  # Humo denso
-	grad.set_color(1, Color(0.2, 0.2, 0.2, 0.0))       # Humo disipado
-	jetpack_particles.color_ramp = grad
-	
-	jetpack_particles.position = Vector2(-5, -24)
-	add_child(jetpack_particles)
+	z_index = PLAYER_Z
+	_jetpack_fx = JetpackFxScript.new() as Node2D
+	_jetpack_fx.name = "JetpackFX"
+	add_child(_jetpack_fx)
+	jetpack_particles = _jetpack_fx.get("flame") as CPUParticles2D
+	_mount_jetpack_fx.call_deferred()
+
+
+## Cuelga el fuego de la boca de la mochila del esqueleto (se inclina y gira con él). Sin esqueleto queda en el jugador.
+func _mount_jetpack_fx() -> void:
+	var rig: Node = get_node_or_null("Visuals/CharacterRig")
+	var mount: Node2D = rig.call("jet_mount") as Node2D if rig != null and rig.has_method("jet_mount") else null
+	if mount != null and _jetpack_fx.get_parent() != mount:
+		_jetpack_fx.reparent(mount, false)
+		_jetpack_fx.position = Vector2.ZERO
+	elif mount == null:
+		_jetpack_fx.position = Vector2(-5, -24)
 
 
 ## Estela del dash: partículas que quedan fijas en el mundo (local_coords = false) en el camino recorrido.
@@ -276,45 +305,117 @@ func _setup_crouch() -> void:
 		_stand_pivot_y = weapon_pivot.position.y
 	if collision_shape != null and collision_shape.shape is CapsuleShape2D:
 		collision_shape.shape = collision_shape.shape.duplicate()
+		_stand_radius = (collision_shape.shape as CapsuleShape2D).radius
 	if hurtbox != null:
 		_hurtbox_shape_node = hurtbox.get_node_or_null("CollisionShape2D") as CollisionShape2D
 		if _hurtbox_shape_node != null and _hurtbox_shape_node.shape is RectangleShape2D:
 			_hurtbox_shape = (_hurtbox_shape_node.shape as RectangleShape2D).duplicate() as RectangleShape2D
 			_hurtbox_shape_node.shape = _hurtbox_shape
+			_stand_hurt_width = _hurtbox_shape.size.x
 
 
-## Agacharse con la tecla abajo (solo en el suelo). Se levanta al soltar, pero solo si hay espacio encima.
+## Posturas: mantener abajo agacha (rodilla en tierra) y al soltar se levanta; doble toque de abajo (o `prone`)
+## tira cuerpo a tierra, que se mantiene sin apretar nada. Arriba, salto o `prone` de nuevo levantan.
+## Solo en el suelo, y solo se sube de postura si hay lugar encima.
 func _update_crouch() -> void:
+	_down_tap_t += get_physics_process_delta_time()
 	# El retroceso del arma empuja hacia arriba si se apunta hacia abajo: agachado en el suelo no despega
-	if is_crouching and is_on_floor() and velocity.y < 0.0 and velocity.y > CROUCH_HOP_CANCEL:
+	if stance != Stance.STAND and is_on_floor() and velocity.y < 0.0 and velocity.y > CROUCH_HOP_CANCEL:
 		velocity.y = 0.0
 	# Se mantiene agachado un instante (coyote) tras perder el suelo, para no "ponerse de pie" con un rebote
-	var grounded: bool = is_on_floor() or (is_crouching and coyote_timer > 0.0 and velocity.y > CROUCH_HOP_CANCEL)
-	var wants_crouch: bool = Input.is_action_pressed("move_down") and grounded and not has_magic_flight
-	if is_crouching:
-		if not wants_crouch and _has_headroom():
-			_set_crouching(false)
-	elif wants_crouch:
-		_set_crouching(true)
+	var grounded: bool = is_on_floor() or (stance != Stance.STAND and coyote_timer > 0.0 and velocity.y > CROUCH_HOP_CANCEL)
+	var can_lower: bool = grounded and not has_magic_flight
+	var down_held: bool = Input.is_action_pressed("move_down")
+	var down_tap: bool = Input.is_action_just_pressed("move_down")
+	var prone_key: bool = InputMap.has_action(&"prone") and Input.is_action_just_pressed(&"prone")
+	var double_tap: bool = down_tap and _down_tap_t < PRONE_DOUBLE_TAP
+	if down_tap:
+		_down_tap_t = 0.0
+
+	if stance == Stance.PRONE:
+		var jump_tap: bool = Input.is_action_just_pressed("jump")
+		var get_up: bool = prone_key or jump_tap or Input.is_action_just_pressed("move_up") or not can_lower
+		if get_up:
+			if jump_tap:
+				_jump_eaten_frame = Engine.get_physics_frames()
+			if down_held and can_lower and _fits_height(CROUCH_HEIGHT):
+				_set_stance(Stance.CROUCH)
+			elif _fits_height(STAND_HEIGHT):
+				_set_stance(Stance.STAND)
+			elif _fits_height(CROUCH_HEIGHT):
+				_set_stance(Stance.CROUCH)
+		return
+
+	if can_lower and (prone_key or double_tap):
+		_set_stance(Stance.PRONE)
+		_down_tap_t = 99.0
+		return
+	if stance == Stance.CROUCH:
+		if not (down_held and can_lower) and _fits_height(STAND_HEIGHT):
+			_set_stance(Stance.STAND)
+	elif down_held and can_lower:
+		_set_stance(Stance.CROUCH)
+
+
+## true si la cápsula de pie (ancho completo) entra con esa altura donde está el jugador, sin chocar con nada.
+func _fits_height(height: float) -> bool:
+	if stance == Stance.STAND:
+		return true
+	var shape: CapsuleShape2D = CapsuleShape2D.new()
+	shape.radius = _stand_radius
+	shape.height = maxf(height, _stand_radius * 2.0)
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.transform = Transform2D(0.0, global_position + Vector2(0.0, -shape.height * 0.5 - 1.0))
+	query.collision_mask = collision_mask
+	query.exclude = [get_rid()]
+	return get_world_2d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 
 ## true si hay lugar para volver a la altura de pie sin chocar con el techo.
 func _has_headroom() -> bool:
-	return not test_move(global_transform, Vector2(0.0, -(STAND_HEIGHT - CROUCH_HEIGHT)))
+	return _fits_height(STAND_HEIGHT)
 
 
+## Agacharse / levantarse (lo usa respawn).
 func _set_crouching(value: bool) -> void:
-	is_crouching = value
-	var height: float = CROUCH_HEIGHT if value else STAND_HEIGHT
+	_set_stance(Stance.CROUCH if value else Stance.STAND)
+
+
+func _set_stance(value: int) -> void:
+	stance = value
+	is_crouching = value == Stance.CROUCH
+	is_prone = value == Stance.PRONE
+	var height: float = STAND_HEIGHT
+	var pivot_y: float = _stand_pivot_y
+	match value:
+		Stance.CROUCH:
+			height = CROUCH_HEIGHT
+			pivot_y = CROUCH_PIVOT_Y
+		Stance.PRONE:
+			height = PRONE_HEIGHT
+			pivot_y = PRONE_PIVOT_Y
 	var capsule: CapsuleShape2D = collision_shape.shape as CapsuleShape2D
 	if capsule != null:
+		# Acostado la cápsula se angosta para que los tiros pasen por encima
+		capsule.radius = minf(_stand_radius, height * 0.5)
 		capsule.height = height
 	collision_shape.position.y = -height * 0.5
 	if _hurtbox_shape != null:
-		_hurtbox_shape.size.y = height
+		_hurtbox_shape.size = Vector2(PRONE_HURT_WIDTH if is_prone else _stand_hurt_width, height)
 		_hurtbox_shape_node.position.y = -height * 0.5
 	if weapon_pivot != null:
-		weapon_pivot.position.y = _stand_pivot_y + (STAND_HEIGHT - CROUCH_HEIGHT) * (0.75 if value else 0.0)
+		weapon_pivot.position = Vector2(PRONE_PIVOT_X * float(facing_direction) if is_prone else 0.0, pivot_y)
+
+
+## Centro del cuerpo en la postura actual: ahí apuntan los enemigos.
+func get_body_center() -> Vector2:
+	var height: float = STAND_HEIGHT
+	if is_crouching:
+		height = CROUCH_HEIGHT
+	elif is_prone:
+		height = PRONE_HEIGHT
+	return global_position + Vector2(0.0, -height * 0.5)
 
 
 func _physics_process(delta: float) -> void:
@@ -335,11 +436,8 @@ func _physics_process(delta: float) -> void:
 		current_flaps = max_flaps
 		is_using_jetpack = false
 	
-	if jetpack_particles != null:
-		jetpack_particles.emitting = is_using_jetpack
-		if is_using_jetpack:
-			var back_x: float = -5.0 if facing_direction > 0 else 5.0
-			jetpack_particles.position = Vector2(back_x, -24)
+	if _jetpack_fx != null:
+		_jetpack_fx.call("set_active", is_using_jetpack)
 	
 	# Verificación continua de daño por contacto con enemigos superpuestos en la hurtbox
 	if hurtbox != null and hurt_cooldown <= 0.0 and phase_timer <= 0.0:
@@ -373,7 +471,7 @@ func _update_dash(delta: float) -> void:
 		dash_trail.emitting = is_dashing()
 	if is_on_floor():
 		_air_dash_used = false
-	if not can_dash or _dash_cooldown_left > 0.0 or is_crouching or has_magic_flight:
+	if not can_dash or _dash_cooldown_left > 0.0 or stance != Stance.STAND or has_magic_flight:
 		return
 	if not InputMap.has_action(&"dash") or not Input.is_action_just_pressed(&"dash"):
 		return
@@ -430,6 +528,8 @@ func get_current_move_speed() -> float:
 	var speed: float = movement_data.move_speed if movement_data != null else 240.0
 	if stats_manager != null:
 		speed = stats_manager.get_move_speed()
+	if is_prone:
+		return speed * PRONE_SPEED_MULT
 	return speed * (CROUCH_SPEED_MULT if is_crouching else 1.0)
 
 
@@ -514,10 +614,10 @@ func take_damage(amount: float) -> void:
 	amount *= float((load("res://core/settings.gd") as GDScript).call("enemy_damage_mult"))
 	if _is_shield_blocking():
 		amount *= SHIELD_BLOCK_MULT
-	# Mitigación por armadura: 100 / (100 + armadura), igual que HealthComponent.
+	# Armadura: cada punto resta 1 de daño por golpe (con piso; ver StatsManager.reduce_damage_by_armor).
 	var final_amount: float = amount
 	if stats_manager != null:
-		final_amount = amount * 100.0 / (100.0 + stats_manager.get_armor())
+		final_amount = stats_manager.reduce_damage_by_armor(amount)
 		stats_manager.take_damage(final_amount)
 	if health_component != null:
 		health_component.current_health = stats_manager.current_health if stats_manager != null else maxf(0.0, health_component.current_health - final_amount)
@@ -610,8 +710,8 @@ func respawn(spawn_pos: Vector2) -> void:
 	global_position = spawn_pos
 	velocity = Vector2.ZERO
 	hurt_cooldown = 0.0
-	if is_crouching:
-		_set_crouching(false)
+	if stance != Stance.STAND:
+		_set_stance(Stance.STAND)
 	if stats_manager != null:
 		stats_manager.current_health = stats_manager.get_max_health()
 		stats_manager.health_changed.emit(stats_manager.current_health, stats_manager.get_max_health())
@@ -785,6 +885,9 @@ func consume_coyote_time() -> void:
 
 ## Actualiza la orientación del sprite y dirección de apuntado.
 func update_facing_direction(direction_sign: float) -> void:
+	# Cuerpo a tierra el pivote del arma va adelante de la cabeza, del lado al que mira
+	if is_prone and weapon_pivot != null and direction_sign != 0.0:
+		weapon_pivot.position.x = PRONE_PIVOT_X * signf(direction_sign)
 	if direction_sign > 0.0:
 		facing_direction = 1
 		if anim_sprite != null:
@@ -793,9 +896,6 @@ func update_facing_direction(direction_sign: float) -> void:
 			visuals.scale.x = 1.0
 		elif sprite != null and "flip_h" in sprite:
 			sprite.flip_h = false
-		if jetpack_particles != null:
-			jetpack_particles.position = Vector2(-14, -20)
-			jetpack_particles.direction = Vector2(-0.2, 1.0).normalized()
 	elif direction_sign < 0.0:
 		facing_direction = -1
 		if anim_sprite != null:
@@ -804,9 +904,6 @@ func update_facing_direction(direction_sign: float) -> void:
 			visuals.scale.x = -1.0
 		elif sprite != null and "flip_h" in sprite:
 			sprite.flip_h = true
-		if jetpack_particles != null:
-			jetpack_particles.position = Vector2(14, -20)
-			jetpack_particles.direction = Vector2(0.2, 1.0).normalized()
 
 
 ## Cicla las animaciones del AnimatedSprite2D según el movimiento horizontal y estado
@@ -856,7 +953,10 @@ func get_vertical_input() -> float:
 
 
 ## Detecta si se acaba de presionar el botón de salto (estrictamente acción 'jump': Espacio / Botón A).
+## Cuerpo a tierra el salto solo levanta (no salta en el mismo cuadro).
 func is_jump_just_pressed() -> bool:
+	if is_prone or _jump_eaten_frame == Engine.get_physics_frames():
+		return false
 	return Input.is_action_just_pressed("jump")
 
 

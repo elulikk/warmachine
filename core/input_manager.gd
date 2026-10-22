@@ -62,6 +62,11 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_B) # B (Xbox) / Círculo (PS)
 	])
 
+	# Cuerpo a tierra (alternar). También con doble toque de abajo (ver Player._update_crouch).
+	_configure_action("prone", 0.2, [
+		_create_key_event(KEY_ALT)
+	])
+
 	# Rayo láser del Casco Láser (mantener) y Capa de Invisibilidad (alternar): solo con el ítem equipado.
 	_configure_action("eye_laser", 0.2, [
 		_create_key_event(KEY_P),
@@ -71,6 +76,11 @@ static func setup_inputs() -> void:
 	_configure_action("cloak", 0.2, [
 		_create_key_event(KEY_PERIOD),
 		_create_joy_button_event(JOY_BUTTON_BACK) # Select / Back
+	])
+
+	# Canto de la plaga de la Flauta de Hamelin (solo con la flauta equipada)
+	_configure_action("flute_song", 0.2, [
+		_create_key_event(KEY_J)
 	])
 
 	# Destrabar: Ctrl+U saca al personaje de un atasco (ver Player.try_unstuck)
@@ -177,6 +187,11 @@ static func setup_inputs() -> void:
 	_configure_action("toggle_stats_window", 0.2, [
 		_create_key_event(KEY_C),
 		_create_joy_button_event(JOY_BUTTON_BACK) # Back / Select en Gamepad
+	])
+
+	# 9b. Códice de enemigos y armas ([O]); ver ui/windows/codex_window.gd
+	_configure_action("toggle_codex", 0.2, [
+		_create_key_event(KEY_O)
 	])
 
 	# 10. Arrojadizos Tácticos ([G], clic central de la ruedita, gatillo izquierdo). Mantener para apuntar

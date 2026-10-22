@@ -1,5 +1,6 @@
 extends RefCounted
-## Aspecto steampunk de la interfaz (texturas de `assets/art/ui/`, extraídas de las hojas de UI).
+## Aspecto de la interfaz: estilos armados con las texturas y colores del tema activo
+## (`ui/framework/ui_theme.gd`, valores en `ui/themes/steam_theme.tres`). Cambiar gráficos = cambiar el tema.
 ## Sin class_name a propósito: se carga por `preload` (ver DraggableWindow, ItemSlot y HUD).
 ##
 ## - Fábrica de estilos: `window_style()`, `slot_style()`, `inset_style()`, `button_style()`, `parchment_style()`.
@@ -9,16 +10,20 @@ extends RefCounted
 
 const ArtScript = preload("res://core/art/art.gd")
 
-const UI_DIR: String = "res://assets/art/ui/"
+const UiThemeScript = preload("res://ui/framework/ui_theme.gd")
 
-const COLOR_TEXT: Color = Color(0.96, 0.88, 0.70, 1.0)
-const COLOR_TEXT_DIM: Color = Color(0.74, 0.64, 0.50, 1.0)
-const COLOR_GOLD: Color = Color(1.0, 0.82, 0.36, 1.0)
-const COLOR_TITLE: Color = Color(0.98, 0.86, 0.60, 1.0)
-const COLOR_OUTLINE: Color = Color(0.10, 0.06, 0.04, 1.0)
-const COLOR_PARCHMENT_TEXT: Color = Color(0.20, 0.12, 0.06, 1.0)
-const COLOR_WOOD: Color = Color(0.23, 0.16, 0.13, 1.0)
-const COLOR_COPPER: Color = Color(0.72, 0.43, 0.28, 1.0)
+## Carpeta de texturas del tema activo (se mantiene por compatibilidad; las texturas se piden con `UiThemeScript.current().texture()`).
+static var UI_DIR: String = UiThemeScript.current().texture_dir
+
+## Colores: vienen del tema activo (`ui/themes/steam_theme.tres`). Mismos nombres que las constantes viejas.
+static var COLOR_TEXT: Color = UiThemeScript.current().text
+static var COLOR_TEXT_DIM: Color = UiThemeScript.current().text_dim
+static var COLOR_GOLD: Color = UiThemeScript.current().gold
+static var COLOR_TITLE: Color = UiThemeScript.current().title
+static var COLOR_OUTLINE: Color = UiThemeScript.current().outline
+static var COLOR_PARCHMENT_TEXT: Color = UiThemeScript.current().parchment_text
+static var COLOR_WOOD: Color = UiThemeScript.current().wood
+static var COLOR_COPPER: Color = UiThemeScript.current().copper
 
 static var _styles: Dictionary = {}
 static var _title_font: Font = null
@@ -143,7 +148,7 @@ static func close_style(state: String = "normal") -> StyleBox:
 	var key: String = "close_" + state
 	if _styles.has(key):
 		return _styles[key] as StyleBox
-	var tex: Texture2D = ArtScript.tex(UI_DIR + "close_btn.png")
+	var tex: Texture2D = UiThemeScript.current().texture("close_btn.png")
 	var result: StyleBox
 	if tex == null:
 		result = _flat_fallback(Color(0.6, 0.15, 0.15, 1.0), Color(0.9, 0.5, 0.3, 1.0), 1, 3)
@@ -163,12 +168,24 @@ static func close_style(state: String = "normal") -> StyleBox:
 ## Fuente de títulos: serif con peso (Windows), con respaldo de la fuente por defecto.
 static func title_font() -> Font:
 	if _title_font == null:
-		var system: SystemFont = SystemFont.new()
-		system.font_names = PackedStringArray(["Georgia", "Cambria", "Palatino Linotype", "Book Antiqua", "Times New Roman", "Serif"])
-		system.font_weight = 700
-		system.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
-		_title_font = system
+		_title_font = UiThemeScript.current().get_title_font()
 	return _title_font
+
+
+## Vuelve a leer el tema activo (después de `UiTheme.use(...)`): colores y estilos cacheados.
+static func reload_theme() -> void:
+	var theme: Resource = UiThemeScript.current()
+	UI_DIR = theme.texture_dir
+	COLOR_TEXT = theme.text
+	COLOR_TEXT_DIM = theme.text_dim
+	COLOR_GOLD = theme.gold
+	COLOR_TITLE = theme.title
+	COLOR_OUTLINE = theme.outline
+	COLOR_PARCHMENT_TEXT = theme.parchment_text
+	COLOR_WOOD = theme.wood
+	COLOR_COPPER = theme.copper
+	_styles.clear()
+	_title_font = null
 
 
 # ==============================================================================
@@ -416,7 +433,7 @@ static func _separator() -> StyleBox:
 # ==============================================================================
 
 static func _texture_box(file: String, margins: Vector4, content: Vector4, fallback: StyleBox) -> StyleBox:
-	var tex: Texture2D = ArtScript.tex(UI_DIR + file)
+	var tex: Texture2D = UiThemeScript.current().texture(file)
 	if tex == null:
 		return fallback
 	var box: StyleBoxTexture = StyleBoxTexture.new()

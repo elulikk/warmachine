@@ -14,4 +14,4 @@ modifiers = []
 grants_extra_jump = 0
 rarity = 3
 gold_value = 400
-description = "Flauta de hueso de la Rata Gigante. Las ratas que se acercan al portador dejan de atacarlo y pelean de su lado (hasta 8 a la vez)."
+description = "Flauta de hueso de la Rata Gigante. Las ratas que se acercan al portador dejan de atacarlo y pelean de su lado (hasta 8 a la vez). J: canto de la plaga, hechiza a las ratas de lejos, renueva a las aliadas y llama ratas del suelo si hay menos de 3 (recarga 20 s)."

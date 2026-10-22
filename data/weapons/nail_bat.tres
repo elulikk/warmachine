@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/nail_bat.tres"
+weapon_name = "Bate con Clavos"
+family = 12
+grip = 1
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 150.0
+swing_duration = 0.22
+crit_multiplier = 1.6
+melee_hitbox_scale = 1.1
+melee_reach = 8.0
+damage = 42.0
+fire_rate = 1.7
+knockback_force = 560.0
+recoil_force = 0.0
+projectile_speed = 0.0
+armor_penetration = 0.1
+magazine_size = 0
+reload_time = 0.0
+pellets_per_shot = 1
+innate_status_effects = []
+max_sockets = 2
+socketed_runes = []
+rarity = 0
+gold_value = 60
+description = "Un bate de barrio con clavos de techo. A dos manos, arco ancho y mucho empuje: manda a volar a ratas y ladrones."

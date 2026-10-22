@@ -1,20 +1,21 @@
 extends Node2D
-## Sala de Estrés: arena del campamento con un generador infinito de enemigos para medir el rendimiento.
+## Sala de Estrés: arena larga del campamento con un generador infinito de enemigos para medir el rendimiento.
 ## Sin class_name a propósito (ver class-name-cache-gotcha). Se entra por la puerta del Campamento Base.
 ##
-## - Panel de control (F4): tipo de enemigo (o mezcla), lotes de 1 a 200, generador continuo con ritmo y tope
-##   de vivos, cuántos se instancian por cuadro, fuego automático contra los enemigos (carga de proyectiles,
-##   impactos, sangre y muertes sin tener que disparar), congelar enemigos (separa el costo de dibujo del de
-##   IA y física), botín sí/no, inmortalidad (sin retroceso de armas ni empujones) y munición infinita, matar / herir / borrar, limpiar escombros.
+## - Cinta de opciones (F4 la oculta, doble clic en una pestaña la contrae): `ui/debug/ribbon.gd` es el widget genérico y
+##   `scenes/hub/stress_room_ui.gd` declara su contenido (pestañas Enemigos, Aparición, Jugador, Efectos, Arena,
+##   Diagnóstico y Atajos). Esta sala solo expone el estado y los métodos públicos que esos controles llaman:
+##   `set_*`, `queue_batch`, `kill_all`, `hurt_all`, `remove_all_silently`, `clear_debris`, `teleport_to`...
+##   Los controles se sincronizan con `ribbon.set_value(id, valor)` cuando el estado cambia por otro camino.
 ## - `PerfMonitor` (core/debug/perf_monitor.gd) siempre activo: panel arriba a la derecha y registro en
 ##   `user://logs/rendimiento/sala_<fecha>.csv/.txt`. Acá se anotan los pedidos, los cambios de opciones y
 ##   cuánto tarda instanciar cada tanda; el monitor agrega picos, censo de nodos y resumen al salir.
+## - La cinta ocupa el borde de arriba: la sala corre el HUD y la cámara para que no queden tapados (`_on_ribbon_layout`).
 ## - Nada de lo que pasa adentro se guarda: `SaveManager.saving_suspended` mientras la sala existe; al volver,
 ##   el campamento recarga el slot del disco.
 ##
-## Atajos: F4 panel · F5 generador continuo · F6 congelar · F7 limpiar escombros · F8 censo de nodos · F9 lluvia del cielo ·
-## F11 cambia lo que cae (ácido, granadas, fuego, balas...) · F10 lluvia de la ciudad ·
-## N/Z/V/B/M lote de corredor/zombi/fantasma/bruto/centinela · K matar todos · L curar · Supr borrar sin efectos.
+## Teclas fijas (las de la cinta están en su pestaña Atajos): N/Z/V/B/M lote de corredor/zombi/fantasma/bruto/centinela ·
+## K matar todos · L curar.
 
 const LevelSkinScript = preload("res://levels/level_skin.gd")
 const PerfMonitorScript = preload("res://core/debug/perf_monitor.gd")
@@ -22,6 +23,8 @@ const SettingsScript = preload("res://core/settings.gd")
 const FX_STYLES: Array[String] = ["Sprites (como está)", "Partículas", "Shaders"]
 const CityDecorScript = preload("res://levels/city_decor.gd")
 const SceneDoorScene: PackedScene = preload("res://entities/interactables/scene_door.tscn")
+const RibbonScript = preload("res://ui/debug/ribbon.gd")
+const StressRoomUi = preload("res://scenes/hub/stress_room_ui.gd")
 
 const RUNNER_SCENE: PackedScene = preload("res://entities/enemies/basic_runner.tscn")
 const ZOMBIE_SCENE: PackedScene = preload("res://entities/enemies/zombie.tscn")
@@ -72,15 +75,42 @@ const SKY_RAIN_RATES: Array[float] = [2.0, 5.0, 10.0, 20.0, 40.0, 80.0, 160.0]
 const SKY_RAIN_HALF_WIDTH: float = 720.0
 const SKY_RAIN_HEIGHT: float = -140.0
 
-# Arena
+# Arena (el doble de larga que antes: seis zonas de unos mil píxeles)
 const ARENA_LEFT: float = 0.0
-const ARENA_RIGHT: float = 3200.0
+const ARENA_RIGHT: float = 6400.0
 const FLOOR_TOP: float = 536.0
 const SPAWN_MARGIN: float = 90.0
 ## No aparecen enemigos más cerca del jugador que esto.
 const SPAWN_MIN_DISTANCE: float = 220.0
-const PLAYER_START: Vector2 = Vector2(1600.0, 520.0)
+const PLAYER_START: Vector2 = Vector2(900.0, 520.0)
 const DOOR_X: float = 140.0
+## Zonas con nombre: la pestaña Arena arma un botón de teletransporte por cada una y la regla las rotula.
+const ZONES: Array[Dictionary] = [
+	{"name": "Puerta", "x": 300.0},
+	{"name": "Plaza", "x": 1400.0},
+	{"name": "Avenida", "x": 2700.0},
+	{"name": "Cruce", "x": 3900.0},
+	{"name": "Mercado", "x": 5100.0},
+	{"name": "Extremo", "x": 6150.0},
+]
+## Plataformas bajas y altas (centros en x), cajas del piso y marcas de la regla.
+const LOW_PLATFORMS: Array[float] = [700.0, 1500.0, 2300.0, 3100.0, 3900.0, 4700.0, 5500.0]
+const HIGH_PLATFORMS: Array[float] = [1100.0, 1900.0, 2700.0, 3500.0, 4300.0, 5100.0, 5900.0]
+const CRATES: Array[float] = [2000.0, 3600.0, 5000.0]
+const RULER_STEP: float = 400.0
+
+## Dónde nacen los enemigos.
+const SPAWN_ZONES: Array[String] = [
+	"Toda la arena", "Alrededor del jugador", "Lejos del jugador (fuera de pantalla)", "Extremo izquierdo", "Extremo derecho",
+]
+const ZONE_NEAR: int = 1
+const ZONE_FAR: int = 2
+const ZONE_LEFT: int = 3
+const ZONE_RIGHT: int = 4
+const NEAR_RADIUS: float = 900.0
+## Más que medio ancho de pantalla: nacen fuera de la vista.
+const FAR_MIN_DISTANCE: float = 760.0
+const EDGE_WIDTH: float = 1000.0
 
 const AUTO_FIRE_DAMAGE: float = 14.0
 const AUTO_FIRE_SPEED: float = 760.0
@@ -111,36 +141,37 @@ var infinite_ammo: bool = true
 var sky_rain_on: bool = false
 var sky_rain_rate: float = 10.0
 var sky_kind: int = SKY_ACID
+var spawn_zone: int = 0
+var ruler_on: bool = true
 var _sky_accum: float = 0.0
-var _sky_thrown: int = 0
-var _sky_rain_button: CheckButton = null
-var _sky_kind_option: OptionButton = null
-var _fx_style_option: OptionButton = null
+var sky_thrown: int = 0
 ## Valores originales de las opciones que se tocan en la sala (se restauran al salir)
 var _saved_settings: Dictionary = {}
 ## Lluvia de la ciudad (Mundo 1): gotas que chocan con los sólidos, salpicaduras y relámpagos.
 var city_rain_on: bool = false
-var _city_rain_button: CheckButton = null
 
 var _queue: Array[int] = []
 var _spawn_accum: float = 0.0
 var _fire_accum: float = 0.0
-var _spawned_total: int = 0
-var _last_spawn_ms: float = 0.0
-var _last_spawn_count: int = 0
+var spawned_total: int = 0
+var last_spawn_ms: float = 0.0
+var last_spawn_count: int = 0
 
+var ribbon: RibbonScript = null
 var _ui_layer: CanvasLayer = null
-var _panel: PanelContainer = null
-var _status_label: Label = null
-var _spawner_button: Button = null
-var _freeze_button: Button = null
-var _status_timer: float = 0.0
+var _ruler: Node2D = null
+## Alto de la cinta que ya se descontó del HUD y la cámara.
+var _ribbon_reserved: float = 0.0
 
 
 func _ready() -> void:
 	# Antes que nada: lo que pase acá no se guarda (ni al cerrar la ventana ni al volver por el menú de pausa)
 	SaveManager.saving_suspended = true
 	_build_arena()
+	var camera: Camera2D = get_node_or_null("Camera2D") as Camera2D
+	if camera != null:
+		camera.limit_left = int(ARENA_LEFT - 80.0)
+		camera.limit_right = int(ARENA_RIGHT + 80.0)
 	LevelSkinScript.apply(self, 0)
 	GameFeel.music_start_level(self)
 	get_tree().paused = false
@@ -176,8 +207,8 @@ func _ready() -> void:
 	add_child(monitor)
 	_log("Entrada a la Sala de Estrés. Opciones: %s" % _context_text())
 
-	_build_panel()
-	print("[StressRoom] Sala de Estrés lista. F4 muestra el panel. El progreso no se guarda acá adentro.")
+	_build_ribbon()
+	print("[StressRoom] Sala de Estrés lista. F4 muestra u oculta la cinta. El progreso no se guarda acá adentro.")
 
 
 ## Armas de prueba que la sala entrega si el jugador no las tiene (no se guardan: la sala no persiste).
@@ -235,54 +266,22 @@ func _physics_process(delta: float) -> void:
 			_auto_fire_shot()
 
 
-func _process(delta: float) -> void:
-	_status_timer += delta
-	if _status_timer >= 0.25:
-		_status_timer = 0.0
-		_update_status()
-
-
+## Teclas fijas del Input Map. Las demás (F4-F11, Supr) las despacha la cinta (ver `Ribbon.bind_key`).
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("debug_spawn_runner"):
-		_queue_batch(0)
+		queue_batch(0)
 	elif event.is_action_pressed("debug_spawn_zombie"):
-		_queue_batch(1)
+		queue_batch(1)
 	elif event.is_action_pressed("debug_spawn_ghost"):
-		_queue_batch(2)
+		queue_batch(2)
 	elif event.is_action_pressed("debug_spawn_brute"):
-		_queue_batch(3)
+		queue_batch(3)
 	elif event.is_action_pressed("debug_spawn_sentinel"):
-		_queue_batch(4)
+		queue_batch(4)
 	elif event.is_action_pressed("debug_kill_all"):
 		kill_all()
 	elif event.is_action_pressed("debug_heal"):
-		if player != null and player.stats_manager != null:
-			player.stats_manager.heal(player.stats_manager.get_max_health())
-	elif event is InputEventKey and event.pressed and not event.is_echo():
-		var key_event: InputEventKey = event as InputEventKey
-		var key: Key = key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
-		match key:
-			KEY_F4:
-				_panel.visible = not _panel.visible
-			KEY_F5:
-				_set_spawner(not spawner_on)
-			KEY_F6:
-				_set_frozen(not frozen)
-			KEY_F7:
-				clear_debris()
-			KEY_F8:
-				monitor.call("log_census")
-			KEY_F9:
-				set_sky_rain(not sky_rain_on)
-			KEY_F11:
-				set_sky_kind((sky_kind + 1) % SKY_KINDS.size())
-			KEY_F10:
-				set_city_rain(not city_rain_on)
-			KEY_DELETE:
-				remove_all_silently()
-			_:
-				return
-		get_viewport().set_input_as_handled()
+		heal_player()
 
 
 # ==============================================================================
@@ -298,14 +297,18 @@ func _build_arena() -> void:
 	_add_block(environment, "MainFloor", Rect2(ARENA_LEFT - 40.0, FLOOR_TOP, width + 80.0, 48.0))
 	_add_block(environment, "LeftWall", Rect2(ARENA_LEFT - 80.0, -500.0, 80.0, 1084.0))
 	_add_block(environment, "RightWall", Rect2(ARENA_RIGHT, -500.0, 80.0, 1084.0))
-	# Plataformas para ver cómo se reparten y saltan cuando hay muchos
-	for x: float in [700.0, 1600.0, 2500.0]:
+	# Plataformas y cajas para ver cómo se reparten, saltan y se trancan cuando hay muchos
+	for x: float in LOW_PLATFORMS:
 		_add_block(environment, "Platform", Rect2(x - 130.0, 410.0, 260.0, 16.0))
-	for x: float in [1150.0, 2050.0]:
+	for x: float in HIGH_PLATFORMS:
 		_add_block(environment, "HighPlatform", Rect2(x - 100.0, 290.0, 200.0, 16.0))
+	for x: float in CRATES:
+		_add_block(environment, "Crate", Rect2(x - 45.0, FLOOR_TOP - 70.0, 90.0, 70.0))
+
+	_build_ruler(environment)
 
 	var tip: Label = Label.new()
-	tip.text = "SALA DE ESTRÉS  ·  F4 panel  ·  F5 generador  ·  F6 congelar  ·  F7 limpiar  ·  F8 censo  ·  N Z V B M lote  ·  K matar todos"
+	tip.text = "SALA DE ESTRÉS  ·  F4 cinta de opciones  ·  N Z V B M lote  ·  K matar todos  ·  L curar"
 	tip.position = Vector2(PLAYER_START.x - 420.0, 170.0)
 	tip.size = Vector2(840.0, 20.0)
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -314,6 +317,40 @@ func _build_arena() -> void:
 	tip.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, 1.0))
 	tip.add_theme_constant_override("outline_size", 4)
 	environment.add_child(tip)
+
+
+## Regla de distancia: una marca cada `RULER_STEP` px con su coordenada, y el nombre de cada zona arriba.
+func _build_ruler(environment: Node2D) -> void:
+	_ruler = Node2D.new()
+	_ruler.name = "Ruler"
+	_ruler.visible = ruler_on
+	environment.add_child(_ruler)
+	var x: float = 0.0
+	while x <= ARENA_RIGHT:
+		var tick: ColorRect = ColorRect.new()
+		tick.color = Color(1.0, 0.75, 0.45, 0.35)
+		tick.position = Vector2(x - 1.0, FLOOR_TOP - 18.0)
+		tick.size = Vector2(2.0, 18.0)
+		_ruler.add_child(tick)
+		_ruler.add_child(_ruler_label(str(int(x)), Vector2(x - 40.0, FLOOR_TOP + 12.0), Vector2(80.0, 16.0), 11, 0.6))
+		x += RULER_STEP
+	for zone: Dictionary in ZONES:
+		_ruler.add_child(_ruler_label("ZONA  ·  %s" % str(zone["name"]).to_upper(),
+				Vector2(float(zone["x"]) - 200.0, 215.0), Vector2(400.0, 28.0), 20, 0.5))
+
+
+func _ruler_label(text: String, position_in: Vector2, size_in: Vector2, font_size: int, alpha: float) -> Label:
+	var label: Label = Label.new()
+	label.text = text
+	label.position = position_in
+	label.size = size_in
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color(1.0, 0.75, 0.45, alpha))
+	label.add_theme_color_override("font_outline_color", Color(0.05, 0.03, 0.02, alpha))
+	label.add_theme_constant_override("outline_size", 3)
+	return label
 
 
 ## Bloque sólido al estilo de los niveles (StaticBody2D + ColorRect + TopBorder) para que LevelSkin lo revista.
@@ -347,7 +384,7 @@ func _add_block(parent: Node2D, block_name: String, rect: Rect2) -> void:
 # Generación de enemigos
 # ==============================================================================
 
-func _queue_batch(type_idx: int) -> void:
+func queue_batch(type_idx: int) -> void:
 	for i: int in range(batch_size):
 		_queue.append(_pick_type(type_idx))
 	_log("Pedido: %d x %s" % [batch_size, TYPE_NAMES[type_idx]])
@@ -388,10 +425,10 @@ func _process_queue() -> void:
 	for i: int in range(count):
 		_spawn_one(_queue[i])
 	_queue = _queue.slice(count)
-	_last_spawn_ms = float(Time.get_ticks_usec() - started) / 1000.0
-	_last_spawn_count = count
-	if _last_spawn_ms >= SLOW_SPAWN_LOG_MS:
-		_log("Instanciar %d enemigos en un cuadro tardó %.1f ms (%.2f ms c/u)" % [count, _last_spawn_ms, _last_spawn_ms / float(count)])
+	last_spawn_ms = float(Time.get_ticks_usec() - started) / 1000.0
+	last_spawn_count = count
+	if last_spawn_ms >= SLOW_SPAWN_LOG_MS:
+		_log("Instanciar %d enemigos en un cuadro tardó %.1f ms (%.2f ms c/u)" % [count, last_spawn_ms, last_spawn_ms / float(count)])
 
 
 func _spawn_one(type_idx: int) -> void:
@@ -412,23 +449,67 @@ func _spawn_one(type_idx: int) -> void:
 		enemy.set("is_aggroed", true)
 	if frozen:
 		enemy.process_mode = Node.PROCESS_MODE_DISABLED
-	_spawned_total += 1
+	spawned_total += 1
 
 
 func _spawn_position(flying: bool) -> Vector2:
+	var y: float = randf_range(220.0, 470.0) if flying else FLOOR_TOP - randf_range(24.0, 60.0)
+	return Vector2(_spawn_x(), y)
+
+
+## Coordenada x de un enemigo nuevo según la zona elegida, siempre lejos de la cara del jugador.
+func _spawn_x() -> float:
 	var player_x: float = player.global_position.x if player != null else PLAYER_START.x
+	var low: float = ARENA_LEFT + SPAWN_MARGIN
+	var high: float = ARENA_RIGHT - SPAWN_MARGIN
+	match spawn_zone:
+		ZONE_NEAR:
+			low = maxf(low, player_x - NEAR_RADIUS)
+			high = minf(high, player_x + NEAR_RADIUS)
+		ZONE_LEFT:
+			low = DOOR_X + 160.0
+			high = low + EDGE_WIDTH
+		ZONE_RIGHT:
+			low = high - EDGE_WIDTH
+	var min_distance: float = FAR_MIN_DISTANCE if spawn_zone == ZONE_FAR else SPAWN_MIN_DISTANCE
 	var x: float = player_x
 	for attempt: int in range(8):
-		x = randf_range(ARENA_LEFT + SPAWN_MARGIN, ARENA_RIGHT - SPAWN_MARGIN)
-		if absf(x - player_x) >= SPAWN_MIN_DISTANCE:
+		x = randf_range(low, high)
+		if absf(x - player_x) >= min_distance:
 			break
-	var y: float = randf_range(220.0, 470.0) if flying else FLOOR_TOP - randf_range(24.0, 60.0)
-	return Vector2(x, y)
+	return x
 
 
 # ==============================================================================
 # Acciones
 # ==============================================================================
+
+func heal_player() -> void:
+	if player != null and player.stats_manager != null:
+		player.stats_manager.heal(player.stats_manager.get_max_health())
+
+
+func queue_size() -> int:
+	return _queue.size()
+
+
+func leave_room() -> void:
+	GameManager.change_scene(CAMP_SCENE)
+
+
+## Lleva al jugador a una x de la arena (la cámara salta con él, sin recorrer el camino suavizada).
+func teleport_to(x: float) -> void:
+	if player == null:
+		return
+	player.global_position = Vector2(clampf(x, ARENA_LEFT + 60.0, ARENA_RIGHT - 60.0), FLOOR_TOP - 40.0)
+	if "velocity" in player:
+		player.set("velocity", Vector2.ZERO)
+	var camera: Camera2D = get_tree().get_first_node_in_group(&"game_camera") as Camera2D
+	if camera != null:
+		camera.global_position = player.global_position
+		camera.reset_smoothing()
+	_log("Teletransporte a x %d" % int(player.global_position.x))
+
 
 ## Mata a todos con daño real (muerte, sangre, gibs, botín y orbes): el peor caso de un cuadro.
 func kill_all() -> void:
@@ -500,19 +581,97 @@ func _auto_fire_shot() -> void:
 	pool.get_projectile(origin, dir, HitPayload.new(AUTO_FIRE_DAMAGE, 90.0, dir, player), AUTO_FIRE_SPEED)
 
 
-func _set_spawner(on: bool) -> void:
+func set_spawner(on: bool) -> void:
 	spawner_on = on
 	_spawn_accum = 0.0
-	if _spawner_button != null:
-		_spawner_button.set_pressed_no_signal(on)
+	_sync("spawner", on)
 	_log("Generador continuo %s (%.0f/s, tope %d, %s)" % ["ENCENDIDO" if on else "apagado", spawn_rate, alive_cap, TYPE_NAMES[enemy_type]])
+
+
+func set_enemy_type(index: int) -> void:
+	enemy_type = clampi(index, 0, TYPE_NAMES.size() - 1)
+	_sync("type", enemy_type)
+	_log("Tipo: %s" % TYPE_NAMES[enemy_type])
+
+
+func set_batch_size(count: int) -> void:
+	batch_size = maxi(count, 1)
+	_sync("batch", BATCH_SIZES.find(batch_size))
+
+
+func set_spawn_rate(rate: float) -> void:
+	spawn_rate = rate
+	_sync("rate", RATES.find(rate))
+	_log("Ritmo del generador: %.0f/s" % spawn_rate)
+
+
+func set_alive_cap(cap: int) -> void:
+	alive_cap = cap
+	_sync("cap", CAPS.find(cap))
+	_log("Tope de vivos: %d" % alive_cap)
+
+
+func set_per_frame(count: int) -> void:
+	per_frame = count
+	_sync("per_frame", PER_FRAME.find(count))
+	_log("Instanciar: %s" % ("todos de golpe" if count <= 0 else "%d por cuadro" % count))
+
+
+func set_spawn_zone(index: int) -> void:
+	spawn_zone = clampi(index, 0, SPAWN_ZONES.size() - 1)
+	_sync("zone", spawn_zone)
+	_log("Zona de aparición: %s" % SPAWN_ZONES[spawn_zone])
+
+
+func set_aggro(on: bool) -> void:
+	aggro_on_spawn = on
+	_sync("aggro", on)
+
+
+func set_loot(on: bool) -> void:
+	loot_enabled = on
+	_sync("loot", on)
+	_log("Botín %s (para los que aparezcan desde ahora)" % ("activado" if on else "desactivado"))
+
+
+func set_god_mode(on: bool) -> void:
+	god_mode = on
+	if player != null:
+		player.knockback_immune = on
+	_sync("god", on)
+
+
+func set_infinite_ammo(on: bool) -> void:
+	infinite_ammo = on
+	if player != null and player.weapon_manager != null:
+		player.weapon_manager.set_infinite_ammo(on)
+	_sync("ammo", on)
+
+
+func set_auto_fire_rate(rate: float) -> void:
+	auto_fire_rate = rate
+	_fire_accum = 0.0
+	_sync("fire", AUTO_FIRE_RATES.find(rate))
+	_log("Fuego automático: %s" % ("apagado" if rate <= 0.0 else "%.0f tiros / s" % rate))
+
+
+func set_sky_rain_rate(rate: float) -> void:
+	sky_rain_rate = rate
+	_sync("sky_rate", SKY_RAIN_RATES.find(rate))
+	_log("Lluvia del cielo: %.0f/s" % sky_rain_rate)
+
+
+func set_ruler(on: bool) -> void:
+	ruler_on = on
+	if _ruler != null:
+		_ruler.visible = on
+	_sync("ruler", on)
 
 
 func set_sky_rain(on: bool) -> void:
 	sky_rain_on = on
 	_sky_accum = 0.0
-	if _sky_rain_button != null:
-		_sky_rain_button.set_pressed_no_signal(on)
+	_sync("sky_rain", on)
 	_log("Lluvia del cielo %s (%s, %.0f/s)" % ["ENCENDIDA" if on else "apagada", SKY_KINDS[sky_kind], sky_rain_rate])
 
 
@@ -520,8 +679,7 @@ func set_sky_rain(on: bool) -> void:
 func set_fx_style(index: int) -> void:
 	_remember_setting("fire_style")
 	SettingsScript.values["fire_style"] = clampi(index, 0, FX_STYLES.size() - 1)
-	if _fx_style_option != null:
-		_fx_style_option.select(int(SettingsScript.values["fire_style"]))
+	_sync("fx_style", int(SettingsScript.values["fire_style"]))
 	_log("Estilo de fuego y ácido: %s" % FX_STYLES[int(SettingsScript.values["fire_style"])])
 
 
@@ -529,7 +687,16 @@ func set_fx_style(index: int) -> void:
 func set_enemy_lod(on: bool) -> void:
 	_remember_setting("enemy_lod")
 	SettingsScript.values["enemy_lod"] = on
+	_sync("lod", on)
 	_log("Enemigos lejanos como sprite: %s" % ("sí" if on else "no"))
+
+
+func fx_style_index() -> int:
+	return SettingsScript.get_int("fire_style")
+
+
+func enemy_lod_on() -> bool:
+	return SettingsScript.get_bool("enemy_lod")
 
 
 func _remember_setting(key: String) -> void:
@@ -539,9 +706,12 @@ func _remember_setting(key: String) -> void:
 
 func set_sky_kind(index: int) -> void:
 	sky_kind = clampi(index, 0, SKY_KINDS.size() - 1)
-	if _sky_kind_option != null:
-		_sky_kind_option.select(sky_kind)
+	_sync("sky_kind", sky_kind)
 	_log("Lluvia del cielo: %s" % SKY_KINDS[sky_kind])
+
+
+func next_sky_kind() -> void:
+	set_sky_kind((sky_kind + 1) % SKY_KINDS.size())
 
 
 ## Enciende o apaga la lluvia de la ciudad con los sólidos de la arena (misma rutina que usan los sectores 4-x).
@@ -564,8 +734,7 @@ func set_city_rain(on: bool) -> void:
 						var size: Vector2 = (shape_node.shape as RectangleShape2D).size
 						solids.append(Rect2((body as StaticBody2D).position - size * 0.5, size))
 		CityDecorScript.add_rain(self, solids)
-	if _city_rain_button != null:
-		_city_rain_button.set_pressed_no_signal(on)
+	_sync("city_rain", on)
 	_log("Lluvia de la ciudad %s" % ("ENCENDIDA" if on else "apagada"))
 
 
@@ -606,7 +775,7 @@ func _sky_drop() -> void:
 			add_child(grenade)
 			grenade.call("launch", Vector2(x, SKY_RAIN_HEIGHT),
 					Vector2(randf_range(-70.0, 70.0), randf_range(0.0, 140.0)), thrown_player)
-	_sky_thrown += 1
+	sky_thrown += 1
 
 
 func _sky_x() -> float:
@@ -616,13 +785,18 @@ func _sky_x() -> float:
 	return randf_range(min_x, max_x)
 
 
-func _set_frozen(on: bool) -> void:
+func set_frozen(on: bool) -> void:
 	frozen = on
 	for node: Node in get_tree().get_nodes_in_group(&"enemies"):
 		node.process_mode = Node.PROCESS_MODE_DISABLED if on else Node.PROCESS_MODE_INHERIT
-	if _freeze_button != null:
-		_freeze_button.set_pressed_no_signal(on)
+	_sync("freeze", on)
 	_log("Enemigos %s" % ("CONGELADOS (sin IA ni física: solo costo de dibujo)" if on else "descongelados"))
+
+
+## Refleja en la cinta un estado que cambió (sin disparar la señal del control).
+func _sync(id: String, value: Variant) -> void:
+	if ribbon != null:
+		ribbon.set_value(id, value)
 
 
 func _log(text: String) -> void:
@@ -634,9 +808,10 @@ func _context_text() -> String:
 	var parts: PackedStringArray = PackedStringArray()
 	parts.append("generador %s %.0f/s tope %d" % ["ON" if spawner_on else "off", spawn_rate, alive_cap])
 	parts.append("tipo %s" % TYPE_NAMES[enemy_type])
+	parts.append("zona %s" % SPAWN_ZONES[spawn_zone])
 	parts.append("cola %d" % _queue.size())
 	parts.append("x cuadro %s" % ("todos" if per_frame <= 0 else str(per_frame)))
-	parts.append("último lote %d en %.1f ms" % [_last_spawn_count, _last_spawn_ms])
+	parts.append("último lote %d en %.1f ms" % [last_spawn_count, last_spawn_ms])
 	parts.append("fuego auto %.0f/s" % auto_fire_rate)
 	var death_queue: Node = get_node_or_null("DeathFxQueue")
 	if death_queue != null:
@@ -649,193 +824,38 @@ func _context_text() -> String:
 
 
 # ==============================================================================
-# Panel de control
+# Cinta de opciones
 # ==============================================================================
 
-func _build_panel() -> void:
+func _build_ribbon() -> void:
 	_ui_layer = CanvasLayer.new()
 	_ui_layer.layer = 110
 	add_child(_ui_layer)
-
-	_panel = PanelContainer.new()
-	_panel.position = Vector2(16.0, 110.0)
-	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.05, 0.04, 0.88)
-	style.border_color = Color(0.85, 0.5, 0.25, 0.85)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(4)
-	style.set_content_margin_all(8.0)
-	_panel.add_theme_stylebox_override("panel", style)
-	_ui_layer.add_child(_panel)
-
-	var box: VBoxContainer = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 5)
-	_panel.add_child(box)
-
-	var title: Label = _label("SALA DE ESTRÉS  ·  F4 oculta", 13, Color(1.0, 0.75, 0.4, 1.0))
-	box.add_child(title)
-
-	var type_labels: Array[String] = TYPE_NAMES.duplicate()
-	box.add_child(_option_row("Tipo", type_labels, TYPE_MIX, func(i: int) -> void:
-		enemy_type = i
-		_log("Tipo: %s" % TYPE_NAMES[i])))
-
-	var batch_labels: Array[String] = []
-	for n: int in BATCH_SIZES:
-		batch_labels.append(str(n))
-	box.add_child(_option_row("Lote", batch_labels, BATCH_SIZES.find(batch_size), func(i: int) -> void:
-		batch_size = BATCH_SIZES[i]))
-
-	var spawn_row: HBoxContainer = HBoxContainer.new()
-	spawn_row.add_child(_button("Generar lote", func() -> void: _queue_batch(enemy_type)))
-	spawn_row.add_child(_button("Matar todos (K)", kill_all))
-	box.add_child(spawn_row)
-
-	box.add_child(_separator())
-	_spawner_button = _toggle("Generador continuo (F5)", spawner_on, func(on: bool) -> void: _set_spawner(on))
-	box.add_child(_spawner_button)
-
-	var rate_labels: Array[String] = []
-	for r: float in RATES:
-		rate_labels.append("%.0f / s" % r)
-	box.add_child(_option_row("Ritmo", rate_labels, RATES.find(spawn_rate), func(i: int) -> void:
-		spawn_rate = RATES[i]
-		_log("Ritmo del generador: %.0f/s" % spawn_rate)))
-
-	var cap_labels: Array[String] = []
-	for c: int in CAPS:
-		cap_labels.append("%d vivos" % c)
-	box.add_child(_option_row("Tope", cap_labels, CAPS.find(alive_cap), func(i: int) -> void:
-		alive_cap = CAPS[i]
-		_log("Tope de vivos: %d" % alive_cap)))
-
-	var per_frame_labels: Array[String] = []
-	for p: int in PER_FRAME:
-		per_frame_labels.append("todos de golpe" if p <= 0 else "%d por cuadro" % p)
-	box.add_child(_option_row("Instanciar", per_frame_labels, PER_FRAME.find(per_frame), func(i: int) -> void:
-		per_frame = PER_FRAME[i]
-		_log("Instanciar: %s" % per_frame_labels[i])))
-
-	var fire_labels: Array[String] = []
-	for f: float in AUTO_FIRE_RATES:
-		fire_labels.append("apagado" if f <= 0.0 else "%.0f tiros / s" % f)
-	box.add_child(_option_row("Fuego auto", fire_labels, 0, func(i: int) -> void:
-		auto_fire_rate = AUTO_FIRE_RATES[i]
-		_fire_accum = 0.0
-		_log("Fuego automático: %s" % fire_labels[i])))
-
-	box.add_child(_separator())
-	_sky_rain_button = _toggle("Lluvia del cielo (F9)", sky_rain_on, func(on: bool) -> void: set_sky_rain(on))
-	box.add_child(_sky_rain_button)
-	var kind_row: HBoxContainer = _option_row("Cae", SKY_KINDS, sky_kind, func(i: int) -> void: set_sky_kind(i))
-	_sky_kind_option = kind_row.get_child(1) as OptionButton
-	box.add_child(kind_row)
-	var rain_labels: Array[String] = []
-	for r: float in SKY_RAIN_RATES:
-		rain_labels.append("%.0f / s" % r)
-	box.add_child(_option_row("Ritmo", rain_labels, SKY_RAIN_RATES.find(sky_rain_rate), func(i: int) -> void:
-		sky_rain_rate = SKY_RAIN_RATES[i]
-		_log("Lluvia del cielo: %.0f/s" % sky_rain_rate)))
-
-	box.add_child(_separator())
-	var style_row: HBoxContainer = _option_row("Estilo", FX_STYLES, SettingsScript.get_int("fire_style"),
-			func(i: int) -> void: set_fx_style(i))
-	_fx_style_option = style_row.get_child(1) as OptionButton
-	box.add_child(style_row)
-	box.add_child(_toggle("Enemigos lejanos como sprite", SettingsScript.get_bool("enemy_lod"),
-			func(on: bool) -> void: set_enemy_lod(on)))
-	_city_rain_button = _toggle("Lluvia de la ciudad (F10)", city_rain_on, func(on: bool) -> void: set_city_rain(on))
-	box.add_child(_city_rain_button)
-	_freeze_button = _toggle("Congelar enemigos (F6)", frozen, func(on: bool) -> void: _set_frozen(on))
-	box.add_child(_freeze_button)
-	box.add_child(_toggle("Aggro al aparecer", aggro_on_spawn, func(on: bool) -> void: aggro_on_spawn = on))
-	box.add_child(_toggle("Botín y orbes", loot_enabled, func(on: bool) -> void:
-		loot_enabled = on
-		_log("Botín %s (para los que aparezcan desde ahora)" % ("activado" if on else "desactivado"))))
-	box.add_child(_toggle("Inmortal (sin empujones)", god_mode, func(on: bool) -> void:
-		god_mode = on
-		if player != null:
-			player.knockback_immune = on))
-	box.add_child(_toggle("Munición infinita", infinite_ammo, func(on: bool) -> void:
-		infinite_ammo = on
-		if player != null and player.weapon_manager != null:
-			player.weapon_manager.set_infinite_ammo(on)))
-
-	box.add_child(_separator())
-	var action_row: HBoxContainer = HBoxContainer.new()
-	action_row.add_child(_button("Herir a todos", hurt_all))
-	action_row.add_child(_button("Borrar (Supr)", remove_all_silently))
-	box.add_child(action_row)
-	var clean_row: HBoxContainer = HBoxContainer.new()
-	clean_row.add_child(_button("Limpiar escombros (F7)", clear_debris))
-	clean_row.add_child(_button("Censo (F8)", func() -> void: monitor.call("log_census")))
-	box.add_child(clean_row)
-	var log_row: HBoxContainer = HBoxContainer.new()
-	log_row.add_child(_button("Abrir carpeta de logs", func() -> void: monitor.call("open_log_folder")))
-	log_row.add_child(_button("Volver", func() -> void: GameManager.change_scene(CAMP_SCENE)))
-	box.add_child(log_row)
-
-	_status_label = _label("", 11, Color(0.85, 0.85, 0.8, 1.0))
-	box.add_child(_status_label)
-	_update_status()
+	# El contador de FPS del juego ocupa la esquina de arriba a la izquierda: el título arranca después
+	ribbon = RibbonScript.new("Sala de Estrés", 84.0)
+	_ui_layer.add_child(ribbon)
+	StressRoomUi.build(self, ribbon)
+	ribbon.layout_changed.connect(_on_ribbon_layout)
 
 
-func _update_status() -> void:
-	if _status_label == null or not _panel.visible:
+## La cinta se come el borde de arriba: baja el HUD y el panel de rendimiento, y corre la cámara para que el jugador
+## siga centrado en lo que queda visible.
+func _on_ribbon_layout() -> void:
+	var height: float = ribbon.effective_height()
+	var delta: float = height - _ribbon_reserved
+	if is_zero_approx(delta):
 		return
-	_status_label.text = "Vivos %d  ·  en cola %d  ·  generados %d\nÚltimo lote: %d en %.1f ms
-Lluvia del cielo: %d lanzados  ·  charcos de ácido %d" % [
-		get_tree().get_node_count_in_group(&"enemies"), _queue.size(), _spawned_total, _last_spawn_count, _last_spawn_ms,
-		_sky_thrown, get_tree().get_nodes_in_group(&"acid_pools").size()]
-
-
-func _label(text: String, font_size: int, color: Color) -> Label:
-	var label: Label = Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	return label
-
-
-func _separator() -> HSeparator:
-	var sep: HSeparator = HSeparator.new()
-	sep.add_theme_constant_override("separation", 4)
-	return sep
-
-
-## Sin foco de teclado: si no, Espacio (saltar) activaría el último botón tocado.
-func _button(text: String, on_pressed: Callable) -> Button:
-	var button: Button = Button.new()
-	button.text = text
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 11)
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.pressed.connect(on_pressed)
-	return button
-
-
-func _toggle(text: String, initial: bool, on_toggled: Callable) -> CheckButton:
-	var check: CheckButton = CheckButton.new()
-	check.text = text
-	check.button_pressed = initial
-	check.focus_mode = Control.FOCUS_NONE
-	check.add_theme_font_size_override("font_size", 11)
-	check.toggled.connect(on_toggled)
-	return check
-
-
-func _option_row(caption: String, items: Array[String], selected: int, on_selected: Callable) -> HBoxContainer:
-	var row: HBoxContainer = HBoxContainer.new()
-	var label: Label = _label(caption, 11, Color(0.9, 0.85, 0.75, 1.0))
-	label.custom_minimum_size = Vector2(78.0, 0.0)
-	row.add_child(label)
-	var option: OptionButton = OptionButton.new()
-	option.focus_mode = Control.FOCUS_NONE
-	option.add_theme_font_size_override("font_size", 11)
-	option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for item: String in items:
-		option.add_item(item)
-	option.select(maxi(selected, 0))
-	option.item_selected.connect(on_selected)
-	row.add_child(option)
-	return row
+	_ribbon_reserved = height
+	var hud: Node = get_node_or_null("HUD")
+	if hud != null:
+		for child: Node in hud.get_children():
+			var box: MarginContainer = child as MarginContainer
+			if box != null and box.anchor_top == 0.0 and box.anchor_bottom == 0.0:
+				box.offset_top += delta
+				box.offset_bottom += delta
+	var overlay: CanvasLayer = monitor.get("_layer") as CanvasLayer if monitor != null else null
+	if overlay != null:
+		overlay.offset = Vector2(0.0, height)
+	var camera: CameraFollow = get_tree().get_first_node_in_group(&"game_camera") as CameraFollow
+	if camera != null:
+		camera.target_offset.y -= delta * 0.5 / maxf(camera.zoom.y, 0.1)

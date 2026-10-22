@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://combat/throwables/cluster_bomb.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "cluster_bomb"
+item_name = "Bomba Racimo"
+item_color = Color(0.85, 0.7, 0.2, 1)
+equip_slot = "TACTICAL"
+throwable_scene = ExtResource("2_scene")
+tags = Array[String](["THROWABLE"])
+modifiers = Array[Dictionary]([])
+grants_extra_jump = 0
+rarity = 2
+gold_value = 45
+description = "Granada que estalla en el aire y suelta seis bombitas en abanico que explotan un instante después. Para limpiar un pasillo o una arena llena."

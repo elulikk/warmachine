@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://combat/rocket.tscn" id="1_rocket"]
+
+[node name="GuidedRocket" instance=ExtResource("1_rocket")]
+guided = true
+turn_rate = 3.4
+acceleration = 380.0
+max_speed = 620.0
+max_lifetime = 3.6

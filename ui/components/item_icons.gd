@@ -691,32 +691,35 @@ static func _weapon_kind(weapon: WeaponData) -> String:
 			return "sword"
 		"katana":
 			return "katana"
-		"heavy_hammer", "abyss_axe", "mjolnir":
+		"heavy_hammer", "abyss_axe", "mjolnir", "mangual", "nail_bat", "pipe_wrench":
 			return "hammer"
-		"pistol", "pistol_9mm", "desert_eagle", "lava_pistol":
+		"pistol", "pistol_9mm", "desert_eagle", "lava_pistol", "flare_gun", "nail_gun", "dart_venom", "dart_charm", "taser":
 			return "pistol"
 		"rust_revolver", "revolver", "colt_44":
 			return "revolver"
-		"smg", "mp5":
+		"smg", "mp5", "thompson":
 			return "smg"
 		"ak47":
 			return "rifle"
 		"m4":
 			return "carbine"
-		"shotgun":
+		"shotgun", "sawed_off":
 			return "shotgun"
-		"heavy_sniper":
+		"heavy_sniper", "bazooka", "bazooka_guided":
 			return "rifle"
 		"scrap_carbine", "old_rifle":
 			return "carbine"
 		"corrosive_blaster":
 			return "blaster"
-		"plasma_flamethrower", "fuel_flamethrower":
+		"plasma_flamethrower", "fuel_flamethrower", "extinguisher":
 			return "flamer"
 		"mirror_shield", "wooden_shield":
 			return "shield"
-		"javelin", "fire_staff", "ice_staff", "hell_trident", "soul_staff", "sulfur_scepter":
+		"javelin", "fire_staff", "ice_staff", "hell_trident", "soul_staff", "sulfur_scepter", "poseidon_trident", "gungnir", \
+				"zeus_bolt", "excalibur":
 			return "sword"
+		"leviathan_axe", "monkey_staff":
+			return "hammer"
 	# Armas sin ícono propio: por tipo
 	if weapon.weapon_type == WeaponData.WeaponType.MELEE:
 		return "sword"

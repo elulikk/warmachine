@@ -32,7 +32,7 @@ func _ready() -> void:
 	_room.set("alive_cap", int(_env_float("BENCH_CAP", 100.0)))
 	_room.set("spawn_rate", _env_float("BENCH_RATE", 20.0))
 	_room.set("auto_fire_rate", _env_float("BENCH_FIRE", 15.0))
-	_room.call("_set_spawner", true)
+	_room.call("set_spawner", true)
 	_started = true
 
 

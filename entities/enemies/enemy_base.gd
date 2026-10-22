@@ -28,6 +28,7 @@ signal died
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
 const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
+const CodexScript = preload("res://core/codex/codex.gd")
 
 @export_group("Botín (Loot)")
 @export var loot_table: LootTable
@@ -152,6 +153,7 @@ func _deferred_die() -> void:
 		if type_name.is_empty():
 			type_name = "EnemyBase"
 		metrics_mgr.record_kill(type_name)
+	CodexScript.record_enemy(self)
 	died.emit()
 	queue_free()
 

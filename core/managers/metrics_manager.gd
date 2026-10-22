@@ -12,6 +12,10 @@ var total_coins_spent: int = 0
 var total_player_deaths: int = 0
 var time_played_seconds: float = 0.0
 var contracts_completed: int = 0
+## Códice (ver core/codex/codex.gd): enemigo (entity_name) -> {kills, kind, max_hp, max_level}
+## y arma (ruta del .tres) -> true. Se guarda con el resto de las métricas del slot.
+var codex_enemies: Dictionary = {}
+var codex_weapons: Dictionary = {}
 
 static var instance: MetricsManager = null
 
@@ -106,6 +110,8 @@ func reset_metrics() -> void:
 	total_player_deaths = 0
 	time_played_seconds = 0.0
 	contracts_completed = 0
+	codex_enemies.clear()
+	codex_weapons.clear()
 	metrics_updated.emit()
 
 
@@ -120,7 +126,8 @@ func serialize() -> Dictionary:
 		"total_coins_spent": total_coins_spent,
 		"total_player_deaths": total_player_deaths,
 		"time_played_seconds": time_played_seconds,
-		"contracts_completed": contracts_completed
+		"contracts_completed": contracts_completed,
+		"codex": {"enemies": codex_enemies.duplicate(true), "weapons": codex_weapons.keys()}
 	}
 
 
@@ -137,6 +144,19 @@ func deserialize(data: Dictionary) -> void:
 	total_player_deaths = int(data.get("total_player_deaths", 0))
 	time_played_seconds = float(data.get("time_played_seconds", 0.0))
 	contracts_completed = int(data.get("contracts_completed", 0))
+	codex_enemies.clear()
+	codex_weapons.clear()
+	var raw_codex: Variant = data.get("codex", {})
+	if typeof(raw_codex) == TYPE_DICTIONARY:
+		var raw_enemies: Variant = (raw_codex as Dictionary).get("enemies", {})
+		if typeof(raw_enemies) == TYPE_DICTIONARY:
+			for k: Variant in (raw_enemies as Dictionary).keys():
+				if typeof(raw_enemies[k]) == TYPE_DICTIONARY:
+					codex_enemies[str(k)] = raw_enemies[k]
+		var raw_weapons: Variant = (raw_codex as Dictionary).get("weapons", [])
+		if typeof(raw_weapons) == TYPE_ARRAY:
+			for path: Variant in raw_weapons:
+				codex_weapons[str(path)] = true
 	metrics_updated.emit()
 
 

@@ -9,6 +9,8 @@ const BRUTE_SCENE: PackedScene = preload("res://entities/enemies/armored_brute.t
 const SENTINEL_SCENE: PackedScene = preload("res://entities/enemies/shielded_sentinel.tscn")
 const ZOMBIE_SCENE: PackedScene = preload("res://entities/enemies/zombie.tscn")
 const GHOST_SCENE: PackedScene = preload("res://entities/enemies/ghost.tscn")
+const ResupplyPodScript = preload("res://entities/interactables/resupply_pod.gd")
+const EnemySpawnerPodScript = preload("res://entities/interactables/enemy_spawner_pod.gd")
 
 ## Distancia frente al jugador a la que aparecen los enemigos spawneados por atajo.
 const SPAWN_DISTANCE: float = 280.0
@@ -31,6 +33,7 @@ func _ready() -> void:
 			player.stats_manager.coins_changed.emit(999)
 			print("[TestLevel / Modo Fruta] 999 monedas asignadas al jugador para pruebas instantáneas.")
 	SaveManager.set_respawn_point(initial_spawn_position)
+	_spawn_resupply_pods()
 	if "--test-aura" in OS.get_cmdline_args():
 		_run_test_aura_sequence.call_deferred()
 
@@ -61,6 +64,61 @@ func _physics_process(_delta: float) -> void:
 	# Detección de caída al vacío si supera los límites inferiores del mapa expandido
 	if player != null and player.global_position.y > 900.0:
 		respawn_player()
+
+
+## Pods de vida, munición y granadas junto al inicio, y una placa de daño para probar el de vida.
+func _spawn_resupply_pods() -> void:
+	var pods: Array = [
+		[ResupplyPodScript.Kind.HEALTH, 420.0],
+		[ResupplyPodScript.Kind.AMMO, 475.0],
+		[ResupplyPodScript.Kind.GEAR, 530.0],
+		[ResupplyPodScript.Kind.DRAIN, 585.0],
+	]
+	for entry: Array in pods:
+		var pod: Area2D = ResupplyPodScript.new()
+		pod.kind = entry[0]
+		pod.position = Vector2(entry[1], 575.0)
+		add_child(pod)
+	_spawn_enemy_pods()
+
+
+## Invocadores de enemigos del mundo 1 a la izquierda del inicio ([E] encima), y uno para limpiar en el hub.
+func _spawn_enemy_pods() -> void:
+	var pods: Array = [
+		["Matón", "res://entities/enemies/city_thug.tscn"],
+		["Patovica", "res://entities/enemies/city_bouncer.tscn"],
+		["Ladrón", "res://entities/enemies/city_thief.tscn"],
+		["Asaltante", "res://entities/enemies/city_gunman.tscn"],
+		["Sicario", "res://entities/enemies/city_hitman_smg.tscn"],
+		["Sicario
+de Élite", "res://entities/enemies/city_hitman_elite.tscn"],
+		["Rata", "res://entities/enemies/city_rat.tscn"],
+		["Rata
+de techo", "res://entities/enemies/ceiling_rat.tscn"],
+		["Rata Gigante
+(jefe)", "res://entities/enemies/giant_rat.tscn"],
+	]
+	for i: int in pods.size():
+		var pod: Area2D = EnemySpawnerPodScript.new()
+		pod.label_text = pods[i][0]
+		pod.enemy_scene = load(pods[i][1])
+		pod.ceiling = pods[i][1].ends_with("ceiling_rat.tscn")
+		pod.position = Vector2(-230.0 + 60.0 * float(i), 575.0)
+		add_child(pod)
+	var clear_pod: Area2D = EnemySpawnerPodScript.new()
+	clear_pod.label_text = "Limpiar"
+	clear_pod.position = Vector2(960.0, 575.0)
+	add_child(clear_pod)
+	var banner: Label = Label.new()
+	banner.text = "INVOCADORES DE ENEMIGOS — [E] sobre el pod"
+	banner.position = Vector2(-250.0, 405.0)
+	banner.custom_minimum_size = Vector2(540.0, 0.0)
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	banner.add_theme_font_size_override("font_size", 13)
+	banner.add_theme_color_override("font_color", Color(0.85, 0.5, 1.0))
+	banner.add_theme_color_override("font_outline_color", Color.BLACK)
+	banner.add_theme_constant_override("outline_size", 3)
+	add_child(banner)
 
 
 ## Teletransporta al jugador y restaura su vitalidad.

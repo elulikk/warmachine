@@ -4,6 +4,7 @@ extends Node
 ## Sin class_name a propósito. Lo agrega `HealthComponent` solo a los hijos del grupo `enemies`.
 ##
 ## - Cada golpe: salpicadura en la dirección del impacto y manchas donde caen las gotas.
+## - Cicatrices en el cuerpo (heridas chicas que se quedan): una por cada octavo de vida perdido.
 ## - Pixeles de sangre que brotan del cuerpo, más cuanta menos vida le queda.
 ## - Al cruzar 2/3 y 1/3 de vida (y al morir): trozos que salen despedidos.
 
@@ -12,6 +13,9 @@ const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
 const SettingsScript = preload("res://core/settings.gd")
 const ViewCullScript = preload("res://core/view_cull.gd")
 
+## Cicatrices máximas en el cuerpo y tamaño del arte respecto del alto del cuerpo (el arte pintado a escala 0.5 se veía enorme).
+const MAX_MARKS: int = 8
+const MARK_SIZE_RATIO: float = 0.2
 const MECHANICAL_SCRIPTS: Array[String] = ["SniperTurret", "TrainingTurret", "TrainingDummy"]
 const THRESHOLDS: Array[float] = [0.66, 0.33]
 ## Empieza a sangrar al bajar de esta fracción de vida; con menos densidad de partículas no sangra.
@@ -25,6 +29,7 @@ var health: Node = null
 var _host: Node2D = null
 var _mechanical: bool = false
 var _body_rect: Rect2 = Rect2(-10.0, -34.0, 20.0, 34.0)
+var _marks: int = 0
 var _bleed: CPUParticles2D = null
 var _bleed_check: float = 0.0
 var _last_ratio: float = 1.0
@@ -149,6 +154,14 @@ func _on_hit_resolved(payload: HitPayload, damage: float, is_critical: bool) -> 
 		BloodFx.spray_sprite(_host, spot, dir, strength * amount)
 	BloodFx.stains(_host, spot, dir, maxi(1, roundi(float(1 + int(strength / 14.0)) * amount)), clampf(0.8 + strength / 60.0, 0.8, 1.6) * lerpf(0.7, 1.0, amount) * lerpf(0.5, 1.0, _gore_scale()), _mechanical)
 
+	# Cicatrices: una por cada octavo de vida perdido (hasta 3 por golpe)
+	var wanted: int = int(floor((1.0 - ratio) * float(MAX_MARKS)))
+	var added: int = 0
+	while _marks < wanted and added < 3:
+		_add_mark()
+		_marks += 1
+		added += 1
+
 	for threshold: float in THRESHOLDS:
 		if _last_ratio > threshold and ratio <= threshold and amount >= 0.7:
 			BloodFx.gibs(_host, spot, 2, _mechanical, 0.8, _gore_scale())
@@ -172,3 +185,61 @@ func _gore_amount() -> float:
 ## Los bichos chicos (ratas) sueltan menos trozos y más chicos: 1.0 para un humano, menos según el alto del cuerpo.
 func _gore_scale() -> float:
 	return clampf(_body_rect.size.y / 44.0, 0.35, 1.0)
+
+
+## Agrega una cicatriz al cuerpo: herida pintada, o salpicadura / tajo dibujados si no hay arte (y en las máquinas).
+## Su tamaño sale del alto del cuerpo: en una rata es chica y en un humano ronda los 9 px.
+func _add_mark() -> void:
+	var margin_x: float = _body_rect.size.x * 0.15
+	var margin_y: float = _body_rect.size.y * 0.1
+	var at: Vector2 = Vector2(
+		randf_range(_body_rect.position.x + margin_x, _body_rect.end.x - margin_x),
+		randf_range(_body_rect.position.y + margin_y, _body_rect.end.y - margin_y)
+	)
+	var size_px: float = clampf(_body_rect.size.y * MARK_SIZE_RATIO, 4.0, 12.0) * randf_range(0.8, 1.2)
+	var mark: Node2D = Node2D.new()
+	mark.position = at
+	mark.z_index = 2
+	mark.rotation = randf() * TAU
+	var mark_art: Texture2D = null if _mechanical else BloodFx.variant_tex("blood_mark", 4)
+	if mark_art != null:
+		var painted: Sprite2D = Sprite2D.new()
+		painted.texture = mark_art
+		var fit: float = size_px / float(maxi(mark_art.get_width(), mark_art.get_height()))
+		painted.scale = Vector2(fit, fit)
+		mark.add_child(painted)
+	else:
+		var dark: Color = Color(0.09, 0.09, 0.1, 0.9) if _mechanical else Color(0.42, 0.02, 0.04, 0.92)
+		var bright: Color = Color(0.9, 0.88, 0.8, 0.9) if _mechanical else Color(0.72, 0.06, 0.08, 0.95)
+		var half: float = size_px * 0.5
+		if randf() < 0.55:
+			var points: PackedVector2Array = PackedVector2Array()
+			for i in range(8):
+				points.append(Vector2.from_angle(TAU * float(i) / 8.0) * half * randf_range(0.55, 1.1))
+			var splat: Polygon2D = Polygon2D.new()
+			splat.polygon = points
+			splat.color = dark
+			mark.add_child(splat)
+			if not _mechanical:
+				var core_points: PackedVector2Array = PackedVector2Array()
+				for point: Vector2 in points:
+					core_points.append(point * 0.5)
+				var core: Polygon2D = Polygon2D.new()
+				core.polygon = core_points
+				core.color = bright
+				mark.add_child(core)
+		else:
+			var line_points: PackedVector2Array = PackedVector2Array([Vector2(-half, 0.0), Vector2(half, randf_range(-1.0, 1.0))])
+			var gash: Line2D = Line2D.new()
+			gash.points = line_points
+			gash.width = 2.0
+			gash.default_color = dark
+			mark.add_child(gash)
+			var edge: Line2D = Line2D.new()
+			edge.points = line_points
+			edge.width = 0.8
+			edge.default_color = bright
+			mark.add_child(edge)
+	_host.add_child(mark)
+	mark.scale = Vector2(0.2, 0.2)
+	mark.create_tween().tween_property(mark, "scale", Vector2.ONE, 0.1)

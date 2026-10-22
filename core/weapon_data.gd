@@ -85,6 +85,10 @@ signal runes_changed
 ## Multiplicador del alcance y tamaño del hitbox del tajo (1.0 = estándar; el cuchillo usa menos).
 @export var melee_hitbox_scale: float = 1.0
 
+## Alcance extra del tajo en px de mundo: adelanta la mano (el arma en mano) y alarga el hitbox hacia donde se apunta.
+## 0 = sin extra. Varía por arma y se puede subir con mejoras (ver `get_melee_reach`).
+@export var melee_reach: float = 0.0
+
 ## Impulso horizontal de carrera inyectado al jugador al golpear (Katana: 380 px/s).
 @export var melee_dash_impulse: float = 0.0
 
@@ -104,6 +108,14 @@ signal runes_changed
 ## Rayo en cadena (Mjolnir): al conectar el golpe melee, un rayo salta entre enemigos cercanos esta cantidad de
 ## veces (0 = sin rayo). Cada salto hace `chain_lightning_damage_mult` x el daño del golpe y alcanza `chain_lightning_range` px.
 @export var chain_lightning_bounces: int = 0
+## Proyectil que sale con cada tajo (ola del Tridente de Poseidón, haz de luz de Excalibur). null = ninguno.
+## Usa el daño del tajo por `melee_projectile_damage_mult`, el empuje y los estados del arma.
+@export var melee_projectile_scene: PackedScene = null
+@export var melee_projectile_damage_mult: float = 0.5
+@export var melee_projectile_speed: float = 520.0
+@export var melee_projectile_pierce: int = 0
+## true = sale siempre horizontal hacia donde mira el jugador (una ola por el piso), no hacia la mira.
+@export var melee_projectile_horizontal: bool = false
 @export var chain_lightning_damage_mult: float = 0.5
 @export var chain_lightning_range: float = 260.0
 
@@ -157,6 +169,8 @@ signal runes_changed
 ## Escena que aparece donde el proyectil termina (al chocar con un enemigo o con el mundo): área de fuego, veneno...
 ## Un Node2D; si tiene `source_node` recibe al tirador (ver `AreaBurst`).
 @export var impact_scene: PackedScene = null
+## false = sin fogonazo de bala al disparar (solo humo), para armas de gas o aire como el Matafuegos.
+@export var muzzle_flash: bool = true
 
 @export_group("Sockets y Runas")
 ## Cantidad máxima de ranuras de engarce disponibles para runas.
@@ -168,10 +182,12 @@ signal runes_changed
 
 
 @export_group("Sonido")
-## Sonido real de disparo o tajo. Si es null se usa el efecto 8-bit sintetizado según las stats del arma.
+## Sonido de disparo por nombre de Sfx (p. ej. `shot_nail`). Vacío = se elige por la familia y los datos del arma.
+@export var fire_sound: StringName = &""
+## Sonido real de disparo o tajo. Si es null se usa el sonido de Sfx (`fire_sound` o el que toca por familia).
 @export var fire_stream: AudioStream = null
 
-## Sonido real al impactar a un enemigo. Si es null se usa el efecto 8-bit según el blanco.
+## Sonido real al impactar a un enemigo. Si es null se usa el sonido de Sfx según el blanco.
 @export var hit_stream: AudioStream = null
 
 
@@ -218,6 +234,11 @@ func get_total_bonus_damage() -> float:
 		if rune != null:
 			total += rune.bonus_damage
 	return total
+
+
+## Alcance extra del tajo en px de mundo (por ahora solo el del recurso del arma).
+func get_melee_reach() -> float:
+	return maxf(melee_reach, 0.0)
 
 
 ## Retorna el daño base del arma incrementado por el daño de las runas.

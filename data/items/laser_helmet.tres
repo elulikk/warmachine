@@ -14,4 +14,4 @@ modifiers = []
 grants_extra_jump = 0
 rarity = 3
 gold_value = 320
-description = "Visor con lentes de energía. Mantené P (L3 en el mando) para disparar un rayo continuo desde los ojos hacia el cursor: atraviesa enemigos, se frena en las paredes y gasta una barra de energía que se recarga sola."
+description = "Visor con lentes de energía. Mantené P (L3 en el mando) para disparar un rayo óptico rubí desde los ojos hacia el cursor (estilo Cíclope) que empuja a los enemigos: atraviesa enemigos, se frena en las paredes y gasta una barra de energía que se recarga sola."

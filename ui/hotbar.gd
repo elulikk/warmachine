@@ -26,8 +26,11 @@ const MESSAGE_SECONDS: float = 1.6
 ## vacía de derecha a izquierda, y adentro el valor en números y el porcentaje.
 const BAR_HEIGHT: float = 20.0
 const BAR_WIDTH: float = float(SLOT_COUNT) * SLOT_SIZE.x + float(SLOT_COUNT - 1) * SEPARATION
-const COLOR_HP: Color = Color(0.85, 0.12, 0.12, 1.0)
-const COLOR_EXP: Color = Color(1.0, 0.72, 0.2, 1.0)
+## Colores apagados: la vida y la experiencia no deben gritar sobre el resto de la interfaz.
+const COLOR_HP: Color = Color(0.62, 0.17, 0.17, 1.0)
+const COLOR_EXP: Color = Color(0.7, 0.56, 0.3, 1.0)
+## La experiencia es una línea finita, lisa, sin borde ni texto (el detalle está en la ficha de personaje, tecla C).
+const EXP_BAR_HEIGHT: float = 3.0
 const COLOR_BAR_BORDER: Color = Color(0.75, 0.78, 0.85, 1.0)
 
 const COLOR_BORDER: Color = Color(0.3, 0.4, 0.55, 0.8)
@@ -55,7 +58,6 @@ var _name_label: Label = null
 var _hp_bar: ProgressBar = null
 var _hp_label: Label = null
 var _exp_bar: ProgressBar = null
-var _exp_label: Label = null
 
 
 func _ready() -> void:
@@ -67,7 +69,7 @@ func _ready() -> void:
 	var total_width: float = (SLOT_COUNT + 1) * SLOT_SIZE.x + (SLOT_COUNT - 1) * SEPARATION + OFFHAND_GAP + SEPARATION
 	offset_left = -total_width * 0.5
 	offset_right = total_width * 0.5
-	offset_top = -(SLOT_SIZE.y + 64.0 + BAR_HEIGHT * 2.0)
+	offset_top = -(SLOT_SIZE.y + 64.0 + BAR_HEIGHT + EXP_BAR_HEIGHT)
 	offset_bottom = -16.0
 
 	var column: VBoxContainer = VBoxContainer.new()
@@ -117,8 +119,7 @@ func _ready() -> void:
 	_offhand_slot = off_slot
 
 	# Barra de experiencia: debajo de la fila de casilleros
-	_exp_bar = _make_bar(COLOR_EXP)
-	_exp_label = _exp_bar.get_child(0) as Label
+	_exp_bar = _make_thin_bar(COLOR_EXP)
 	column.add_child(_exp_bar)
 
 	_refresh()
@@ -595,6 +596,22 @@ func _make_bar(fill_color: Color) -> ProgressBar:
 	return bar
 
 
+## Línea fina y lisa (sin borde ni texto): fondo apenas visible y relleno del color dado.
+func _make_thin_bar(fill_color: Color) -> ProgressBar:
+	var bar: ProgressBar = ProgressBar.new()
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.show_percentage = false
+	bar.custom_minimum_size = Vector2(BAR_WIDTH, EXP_BAR_HEIGHT)
+	bar.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var bg: StyleBoxFlat = StyleBoxFlat.new()
+	bg.bg_color = Color(0.0, 0.0, 0.0, 0.45)
+	var fg: StyleBoxFlat = StyleBoxFlat.new()
+	fg.bg_color = fill_color
+	bar.add_theme_stylebox_override("background", bg)
+	bar.add_theme_stylebox_override("fill", fg)
+	return bar
+
+
 ## Vida y experiencia del personaje: el relleno es actual / máximo y el texto "actual / máximo  (porcentaje)".
 func _refresh_bars() -> void:
 	var hc: HealthComponent = _player.health_component if _bound else null
@@ -610,12 +627,14 @@ func _refresh_bars() -> void:
 	if stats != null and stats.exp_to_next_level > 0.0:
 		xp = stats.current_exp
 		xp_max = stats.exp_to_next_level
-	_set_bar(_exp_bar, _exp_label, xp, xp_max, false)
+	_set_bar(_exp_bar, null, xp, xp_max, false)
 
 
 func _set_bar(bar: ProgressBar, label: Label, value: float, maximum: float, round_up: bool) -> void:
 	bar.max_value = maximum
 	bar.value = value
+	if label == null:
+		return
 	var shown: int = ceili(value) if round_up else floori(value)
 	label.text = "%d / %d  (%d%%)" % [shown, roundi(maximum), roundi(value / maximum * 100.0)]
 

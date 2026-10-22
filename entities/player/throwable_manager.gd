@@ -1,7 +1,7 @@
 class_name ThrowableManager
 extends Node
 ## Gestor del arrojadizo táctico del Jugador. Mantiene el ítem de la ranura TACTICAL activo,
-## administra el cooldown entre lanzamientos y calcula la parábola balística hacia el cursor
+## administra las cargas (granadas) o el cooldown (gancho, baliza, boomerang) y calcula la parábola balística hacia el cursor
 ## (o hacia el stick derecho del gamepad). La acción `throw_tactical` ([G], clic central o L2)
 ## funciona como apuntado: al mantenerla se muestra la trayectoria y el alcance crece hasta
 ## `max_throw_range` según `full_charge_time`; al soltarla se lanza el proyectil.
@@ -9,12 +9,17 @@ extends Node
 signal throwable_thrown(item: ItemData)
 signal cooldown_changed(remaining: float, total: float)
 signal equipped_throwable_changed(item: ItemData)
+signal charges_changed(item_id: String, charges: float, max_charges: float)
 
 ## Ítem arrojadizo activo (se sincroniza automáticamente con la ranura TACTICAL del EquipmentManager).
 @export var equipped_throwable: ItemData = null
 
-## Tiempo de recarga entre lanzamientos en segundos.
+## Tiempo de recarga entre lanzamientos en segundos (solo gancho, baliza y boomerang; las granadas usan cargas).
 @export var throw_cooldown: float = 4.0
+## Granadas y similares: sin demora entre lanzamientos, se gastan de a una de las `max_charges` y cada carga
+## tarda `charge_recharge_time` en volver.
+@export var max_charges: int = 5
+@export var charge_recharge_time: float = 6.0
 
 @export_group("Balística")
 @export var max_throw_range: float = 460.0
@@ -36,6 +41,8 @@ const TERRAIN_MASK: int = 1
 var player: Player = null
 var equipment_manager: EquipmentManager = null
 var cooldown_left: float = 0.0
+## Cargas actuales por item_id (fraccionarias: la parte decimal es el avance de la próxima). Nace llena.
+var _charges: Dictionary = {}
 ## true mientras el jugador mantiene la acción de apuntar.
 var is_aiming: bool = false
 ## Carga del apuntado: 0.0 = alcance mínimo, 1.0 = alcance máximo.
@@ -85,6 +92,7 @@ func _process(delta: float) -> void:
 	if cooldown_left > 0.0:
 		cooldown_left = maxf(0.0, cooldown_left - delta)
 		cooldown_changed.emit(cooldown_left, throw_cooldown)
+	_recharge(delta)
 	if is_aiming:
 		_update_aim(delta)
 
@@ -147,6 +155,37 @@ func _find_accessory_throwable() -> ItemData:
 	return null
 
 
+## true si el ítem se gasta por cargas (granadas); gancho, baliza y boomerang usan cooldown.
+func uses_charges(item: ItemData) -> bool:
+	if item == null:
+		return false
+	return not ["grappling_hook", "teleport_beacon", "boomerang"].has(item.item_id)
+
+
+func get_charges(item: ItemData) -> float:
+	if item == null:
+		return 0.0
+	return float(_charges.get(item.item_id, float(max_charges)))
+
+
+func _recharge(delta: float) -> void:
+	for id: String in _charges.keys():
+		var current: float = float(_charges[id])
+		if current >= float(max_charges):
+			continue
+		current = minf(float(max_charges), current + delta / maxf(charge_recharge_time, 0.1))
+		_charges[id] = current
+		charges_changed.emit(id, current, float(max_charges))
+
+
+## Adelanta `seconds` de recarga de cargas y cooldown (pods del Sandbox).
+func restock(seconds: float) -> void:
+	if cooldown_left > 0.0:
+		cooldown_left = maxf(0.0, cooldown_left - seconds)
+		cooldown_changed.emit(cooldown_left, throw_cooldown)
+	_recharge(seconds)
+
+
 ## Fracción de recarga restante (1.0 = recién lanzado, 0.0 = listo).
 func get_cooldown_ratio() -> float:
 	if throw_cooldown <= 0.0:
@@ -156,6 +195,8 @@ func get_cooldown_ratio() -> float:
 
 ## Intenta lanzar el arrojadizo equipado hacia el objetivo actual (cursor o stick). Devuelve true si se lanzó.
 func try_throw() -> bool:
+	if _detonate_remote_charges():
+		return true
 	if not _can_throw():
 		return false
 	var origin: Vector2 = _get_throw_origin()
@@ -164,6 +205,9 @@ func try_throw() -> bool:
 
 ## Empieza el apuntado (al mantener [G] / clic central / L2). El gancho y el boomerang se lanzan al instante, sin apuntado.
 func begin_aim() -> void:
+	# Detonador (C4): con cargas puestas, la tecla las hace estallar en vez de lanzar otra
+	if _detonate_remote_charges():
+		return
 	if not _can_throw():
 		return
 	if equipped_throwable.item_id == "grappling_hook" or _is_straight_throw():
@@ -171,6 +215,23 @@ func begin_aim() -> void:
 		return
 	is_aiming = true
 	aim_charge = 0.0
+
+
+## Si el arrojadizo equipado tiene detonador (tag `REMOTE_DETONATE`) y hay cargas puestas, las hace estallar
+## en cadena y devuelve true. Las cargas se buscan por grupo (`c4_charge.gd`).
+func _detonate_remote_charges() -> bool:
+	if equipped_throwable == null or not equipped_throwable.tags.has("REMOTE_DETONATE"):
+		return false
+	var charges: Array[Node] = get_tree().get_nodes_in_group(&"remote_charges")
+	if charges.is_empty():
+		return false
+	var delay: float = 0.0
+	for charge: Node in charges:
+		if charge.has_method("remote_detonate"):
+			charge.call("remote_detonate", delay)
+			delay += 0.08
+	GameFeel.sfx(self, &"c4_beep", Vector2.INF, -2.0, 1.4)
+	return true
 
 
 ## Suelta el apuntado y lanza con el alcance cargado hasta el momento.
@@ -201,6 +262,8 @@ func _can_throw() -> bool:
 		return false
 	if equipped_throwable == null or equipped_throwable.throwable_scene == null:
 		return false
+	if uses_charges(equipped_throwable):
+		return get_charges(equipped_throwable) >= 1.0
 	return cooldown_left <= 0.0
 
 
@@ -269,20 +332,22 @@ func _spawn(origin: Vector2, target: Vector2) -> bool:
 		else:
 			instance.call("launch", origin, velocity, player)
 
-	var current_cooldown: float = throw_cooldown
-	if equipped_throwable.item_id == "teleport_beacon":
-		current_cooldown = 1.5
-	elif equipped_throwable.item_id == "grappling_hook":
-		current_cooldown = 1.2
-	elif equipped_throwable.item_id == "acid_grenade":
-		# Sin recarga: se puede tirar una tras otra.
-		current_cooldown = 0.0
-
-	cooldown_left = current_cooldown
-	cooldown_changed.emit(cooldown_left, current_cooldown)
+	var current_cooldown: float = 0.0
+	if uses_charges(equipped_throwable):
+		var id: String = equipped_throwable.item_id
+		_charges[id] = maxf(0.0, get_charges(equipped_throwable) - 1.0)
+		charges_changed.emit(id, float(_charges[id]), float(max_charges))
+	else:
+		current_cooldown = throw_cooldown
+		if equipped_throwable.item_id == "teleport_beacon":
+			current_cooldown = 1.5
+		elif equipped_throwable.item_id == "grappling_hook":
+			current_cooldown = 1.2
+		cooldown_left = current_cooldown
+		cooldown_changed.emit(cooldown_left, current_cooldown)
 	throwable_thrown.emit(equipped_throwable)
 	GameFeel.sfx(self, &"throw", Vector2.INF, -4.0)
-	print("[ThrowableManager] Usado/Lanzado: %s (recarga %.1fs)" % [equipped_throwable.item_name, current_cooldown])
+	print("[ThrowableManager] Usado/Lanzado: %s (cargas %.1f, recarga %.1fs)" % [equipped_throwable.item_name, get_charges(equipped_throwable), current_cooldown])
 	return true
 
 

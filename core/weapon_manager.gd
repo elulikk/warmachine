@@ -21,6 +21,7 @@ const ShotFx = preload("res://combat/shot_fx.gd")
 const FireVfx = preload("res://combat/fire_vfx.gd")
 const ReloadDebris = preload("res://combat/reload_debris.gd")
 const SettingsScript = preload("res://core/settings.gd")
+const CodexScript = preload("res://core/codex/codex.gd")
 ## Segundos que tarda la reserva en recuperar un cargador completo del arma.
 ## Las recargas duran esto por el `reload_time` de cada arma (más lentas que lo que dice el recurso).
 const RELOAD_TIME_MULT: float = 1.5
@@ -64,6 +65,8 @@ const SLAM_MAX_WAIT: float = 1.5
 
 ## Cuánto se amplía el hitbox melee. Va de la mano con WEAPON_SCALE para que la punta del arma caiga dentro.
 const HITBOX_SCALE: float = 1.5
+## Fracción del alcance del arma que adelanta el dibujo (el resto es solo del hitbox): el brazo no se estira más que su largo.
+const MELEE_VISUAL_REACH: float = 0.35
 
 ## Distancia horizontal desde el pivote de apuntado hasta la mano que sostiene el arma.
 const HAND_OFFSET_X: float = 4.0 * BODY_SCALE
@@ -115,6 +118,7 @@ const SUSTAINED_CLIMB: Dictionary = {
 	"m4": {"step": 1.4, "max": 10.0},
 	"smg": {"step": 1.0, "max": 10.0},
 	"mp5": {"step": 1.0, "max": 9.0},
+	"thompson": {"step": 1.2, "max": 11.0},
 }
 var _swing_index: int = 0
 var _current_swing: Dictionary = {}
@@ -324,6 +328,7 @@ func add_weapon(weapon: WeaponData, auto_equip: bool = true) -> void:
 	var weapon_instance: WeaponData = weapon.duplicate()
 	weapon_instance.source_resource_path = src_path
 	weapons.append(weapon_instance)
+	CodexScript.record_weapon(weapon_instance)
 	print("[WeaponManager] Nueva arma adquirida: %s. Total armas: %d" % [weapon_instance.weapon_name, weapons.size()])
 	if auto_equip:
 		select_weapon(weapons.size() - 1)
@@ -426,6 +431,20 @@ func refill_all_ammo() -> void:
 		ammo_changed.emit(get_weapon_ammo(current_weapon), current_weapon.magazine_size)
 	if offhand != null and offhand.current_weapon != null:
 		offhand.ammo_changed.emit(get_weapon_ammo(offhand.current_weapon), offhand.current_weapon.magazine_size)
+
+
+## Repone `fraction` de cargador en cada arma: primero el cargador, el sobrante a la reserva (pods del Sandbox).
+func restock_ammo(fraction: float) -> void:
+	for weapon: WeaponData in weapons:
+		if weapon == null or weapon.magazine_size <= 0 or weapon.weapon_type == WeaponData.WeaponType.MELEE:
+			continue
+		var amount: int = maxi(1, ceili(float(weapon.magazine_size) * fraction))
+		var mag: int = get_weapon_ammo(weapon)
+		var to_mag: int = mini(amount, weapon.magazine_size - mag)
+		weapon_magazines[weapon] = mag + to_mag
+		weapon_reserves[weapon] = mini(get_reserve_max(weapon), get_reserve(weapon) + amount - to_mag)
+	if current_weapon != null and current_weapon.magazine_size > 0:
+		ammo_changed.emit(get_weapon_ammo(current_weapon), current_weapon.magazine_size)
 
 
 ## La reserva de cada arma sube sola con el tiempo hasta su tope.
@@ -618,6 +637,9 @@ func fire() -> void:
 			3.0,
 			armor_pen
 		)
+		# Duración propia del arma para hielo, aturdimiento (Taser) y hechizo (dardos)
+		payload.ice_duration = current_weapon.ice_duration
+		payload.ice_speed_multiplier = current_weapon.ice_speed_multiplier
 		
 		# El pool solo reutiliza el proyectil estándar; las escenas propias (gotas) van por fuera.
 		if pool != null and current_weapon.projectile_scene.resource_path == "res://combat/projectile.tscn":
@@ -645,7 +667,8 @@ func fire() -> void:
 	if current_weapon.family == WeaponData.WeaponFamily.FLAMETHROWER or current_weapon.projectile_scene.resource_path == "res://combat/fuel_droplet.tscn":
 		FireVfx.spawn_jet(get_tree().current_scene, spawn_pos, aim_dir)
 	else:
-		ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
+		if current_weapon.muzzle_flash:
+			ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
 		ShotFx.muzzle_smoke(self, spawn_pos, aim_dir)
 	GameFeel.sfx_weapon_fire(self, current_weapon)
 
@@ -765,6 +788,7 @@ func _melee_strike(visual_done: bool) -> void:
 	# El hitbox crece junto con el arma en mano
 	var hitbox_scale: float = HITBOX_SCALE * maxf(0.1, current_weapon.melee_hitbox_scale)
 	melee_instance.scale = Vector2(hitbox_scale, hitbox_scale)
+	melee_instance.apply_reach(current_weapon.get_melee_reach())
 	
 	if current_weapon.crit_multiplier > 1.0:
 		melee_instance.custom_crit_multiplier = current_weapon.crit_multiplier
@@ -779,6 +803,9 @@ func _melee_strike(visual_done: bool) -> void:
 	# Rayo en cadena (Mjolnir): el primer enemigo golpeado del tajo lanza el rayo que rebota entre los cercanos
 	if current_weapon.chain_lightning_bounces > 0:
 		melee_instance.target_hit.connect(_on_chain_strike.bind(current_weapon, final_damage), CONNECT_ONE_SHOT)
+	# Ola o haz que sale con el tajo (Tridente de Poseidón, Excalibur)
+	if current_weapon.melee_projectile_scene != null:
+		_spawn_melee_projectile(spawn_pos, aim_dir, final_damage, payload_effects)
 
 	GameFeel.sfx_weapon_swing(self, current_weapon)
 
@@ -809,6 +836,32 @@ func _melee_strike(visual_done: bool) -> void:
 	if player != null and current_weapon.recoil_force > 0.0 and not player.knockback_immune:
 		player.velocity -= aim_dir * current_weapon.recoil_force
 	
+
+
+## Lanza el proyectil del tajo (`WeaponData.melee_projectile_scene`) con el daño, empuje y estados del arma.
+func _spawn_melee_projectile(origin: Vector2, aim_dir: Vector2, base_damage: float, effects: Array[String]) -> void:
+	var node: Node = current_weapon.melee_projectile_scene.instantiate()
+	var proj: Projectile = node as Projectile
+	if proj == null:
+		node.queue_free()
+		return
+	var dir: Vector2 = aim_dir
+	if current_weapon.melee_projectile_horizontal:
+		dir = Vector2(signf(aim_dir.x) if absf(aim_dir.x) > 0.05 else float(player.facing_direction), 0.0)
+	var payload: HitPayload = HitPayload.new(base_damage * current_weapon.melee_projectile_damage_mult,
+			current_weapon.knockback_force, dir, player, effects, 1, 3.0, current_weapon.get_armor_penetration())
+	payload.ice_duration = current_weapon.ice_duration
+	payload.ice_speed_multiplier = current_weapon.ice_speed_multiplier
+	# La escena trae su dibujo: se le pasa como sprite propio para que el proyectil no lo pise con el de balas
+	var sprite: Sprite2D = proj.get_node_or_null("Sprite2D") as Sprite2D
+	var tex: Texture2D = sprite.texture if sprite != null else null
+	proj.global_position = origin + dir * 24.0
+	proj.rotation = dir.angle()
+	proj.setup(current_weapon.melee_projectile_speed, payload, 0, current_weapon.melee_projectile_pierce, 0, tex)
+	var container: Node = get_tree().current_scene if get_tree().current_scene != null else get_tree().root
+	container.add_child(proj)
+	if current_weapon.fire_sound != &"":
+		GameFeel.sfx(self, current_weapon.fire_sound, Vector2.INF, -4.0)
 
 
 ## Golpe melee conectado con un arma de rayo en cadena: dispara la cadena desde el enemigo alcanzado.
@@ -926,6 +979,7 @@ func select_weapon(index: int) -> void:
 		GameFeel.sfx(self, &"weapon_swap", Vector2.INF, -6.0)
 	current_weapon_index = clamped_index
 	current_weapon = weapons[current_weapon_index]
+	CodexScript.record_weapon(current_weapon)
 	fire_cooldown_timer = 0.0
 	_update_weapon_visual()
 	_refresh_offhand()
@@ -1073,6 +1127,18 @@ func _sustained_climb_radians(aim_dir: Vector2) -> float:
 	return deg_to_rad(deg) * side
 
 
+## Grados de desvío que suma la ráfaga sostenida en este momento (0 si pasó la pausa de la ráfaga). La lee la mira.
+func get_aim_bloom_degrees() -> float:
+	var climb: Dictionary = SUSTAINED_CLIMB.get(WeaponMotion.id_of(current_weapon), {}) as Dictionary
+	if climb.is_empty():
+		return 0.0
+	var pattern: Dictionary = WeaponMotion.pattern_for(current_weapon)
+	var window_ms: int = int(float(pattern.get("window", 0.2)) * 1000.0)
+	if Time.get_ticks_msec() - _last_shot_msec > window_ms:
+		return 0.0
+	return minf(float(_burst_count) * float(climb.get("step", 1.0)), float(climb.get("max", 8.0)))
+
+
 ## Golpe de retroceso del arma de fuego al disparar: se echa hacia atrás y el cañón sube (ver `kick` en weapon_motion.gd).
 func _play_weapon_kick() -> void:
 	var kick: Dictionary = WeaponMotion.profile_for(current_weapon).get("kick", {}) as Dictionary
@@ -1120,12 +1186,13 @@ func _play_melee_swing(arc_degrees: float, duration: float) -> void:
 		return
 	var half_arc: float = deg_to_rad(arc_degrees * 0.5)
 	var swing_time: float = maxf(duration, 0.05)
+	var reach: Vector2 = Vector2(current_weapon.get_melee_reach() * MELEE_VISUAL_REACH, 0.0)
 	_weapon_sprite.rotation = _sprite_rest_rotation - half_arc
 	_weapon_sprite.position = _sprite_rest_position + Vector2(-2.0, 0.0) * WEAPON_SCALE
 	_hand_tween = create_tween()
 	_hand_tween.set_parallel(true)
 	_hand_tween.tween_property(_weapon_sprite, "rotation", _sprite_rest_rotation + half_arc, swing_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hand_tween.tween_property(_weapon_sprite, "position", _sprite_rest_position + Vector2(3.0, 0.0) * WEAPON_SCALE, swing_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hand_tween.tween_property(_weapon_sprite, "position", _sprite_rest_position + Vector2(3.0, 0.0) * WEAPON_SCALE + reach, swing_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	# Vuelta suave a la posición de reposo
 	_hand_tween.chain().tween_property(_weapon_sprite, "rotation", _sprite_rest_rotation, 0.12)
 	_hand_tween.tween_property(_weapon_sprite, "position", _sprite_rest_position, 0.12)
@@ -1146,7 +1213,9 @@ func swing_time_total(duration: float) -> float:
 ## Tajo animado con los fotogramas del perfil del arma: posición y rotación relativas al reposo.
 func _play_keyed_swing(keys: Array, total: float) -> void:
 	var first: Dictionary = keys[0] as Dictionary
-	_weapon_sprite.position = _sprite_rest_position + (first.get("pos", Vector2.ZERO) as Vector2)
+	# Alcance del arma: la mano se adelanta en todo el tajo menos en el último fotograma (vuelta al reposo)
+	var reach: Vector2 = Vector2(current_weapon.get_melee_reach() * MELEE_VISUAL_REACH, 0.0)
+	_weapon_sprite.position = _sprite_rest_position + (first.get("pos", Vector2.ZERO) as Vector2) + reach * 0.5
 	_weapon_sprite.rotation = _sprite_rest_rotation + deg_to_rad(float(first.get("rot", 0.0)))
 	_hand_tween = create_tween()
 	var prev_t: float = float(first.get("t", 0.0))
@@ -1168,6 +1237,8 @@ func _play_keyed_swing(keys: Array, total: float) -> void:
 				trans = Tween.TRANS_SINE
 				ease_mode = Tween.EASE_IN_OUT
 		var target_pos: Vector2 = _sprite_rest_position + (key.get("pos", Vector2.ZERO) as Vector2)
+		if i < keys.size() - 1:
+			target_pos += reach
 		var target_rot: float = _sprite_rest_rotation + deg_to_rad(float(key.get("rot", 0.0)))
 		_hand_tween.tween_property(_weapon_sprite, "position", target_pos, seg).set_trans(trans).set_ease(ease_mode)
 		_hand_tween.parallel().tween_property(_weapon_sprite, "rotation", target_rot, seg).set_trans(trans).set_ease(ease_mode)

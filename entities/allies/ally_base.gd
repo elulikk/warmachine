@@ -73,6 +73,23 @@ func _physics_process(delta: float) -> void:
 		_process_leash_rescue(delta)
 
 
+## Tiempo de vida de una invocación: lo dicta el ítem que la invoca. Al vencer, la invocación muere.
+func set_lifetime(seconds: float) -> void:
+	if seconds <= 0.0:
+		return
+	var timer: Timer = Timer.new()
+	timer.one_shot = true
+	timer.wait_time = seconds
+	timer.timeout.connect(_on_lifetime_expired)
+	add_child(timer)
+	timer.start()
+
+
+func _on_lifetime_expired() -> void:
+	if not is_dead and is_inside_tree():
+		_on_died()
+
+
 func _ensure_components() -> void:
 	# 1. HealthComponent (Vida alta por defecto: 250 HP)
 	if health_component == null:

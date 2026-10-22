@@ -38,6 +38,7 @@ var _target: Node2D = null
 var _retarget_left: float = 0.0
 var _slot: float = 0.0
 var _player: Node2D = null
+var _expires_at_ms: int = 0
 
 
 func _init() -> void:
@@ -64,6 +65,22 @@ func _ready() -> void:
 	var art: Node2D = EnemyArtScript.attach(self, "rat")
 	art.scale = Vector2(BODY_SCALE, BODY_SCALE)
 	art.modulate = TINT
+
+
+## Tiempo de vida que dicta la Flauta de Hamelin: al vencer, la rata desaparece. Llamarla de nuevo renueva el plazo
+## (el canto de la flauta): los temporizadores viejos ven que el plazo cambió y no hacen nada.
+func set_lifetime(seconds: float) -> void:
+	if seconds <= 0.0:
+		return
+	_expires_at_ms = Time.get_ticks_msec() + int(seconds * 1000.0)
+	get_tree().create_timer(seconds).timeout.connect(_on_lifetime_expired)
+
+
+func _on_lifetime_expired() -> void:
+	if Time.get_ticks_msec() + 50 < _expires_at_ms:
+		return
+	if is_inside_tree() and not is_queued_for_deletion():
+		queue_free()
 
 
 func _physics_process(delta: float) -> void:

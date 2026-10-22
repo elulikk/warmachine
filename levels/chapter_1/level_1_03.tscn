@@ -7,11 +7,16 @@
 [ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="gate"]
 [ext_resource type="PackedScene" path="res://entities/enemies/giant_rat.tscn" id="giant_rat"]
 [ext_resource type="PackedScene" path="res://ui/hud.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://entities/items/pickup_item.tscn" id="ipickup"]
+[ext_resource type="Resource" path="res://data/items/sewer_boots.tres" id="item_sewer_boots"]
 [ext_resource type="Script" path="res://levels/level_base.gd" id="level"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="player"]
 [ext_resource type="Script" path="res://core/projectile_pool.gd" id="pool"]
 [ext_resource type="PackedScene" path="res://entities/enemies/city_rat.tscn" id="rat"]
 [ext_resource type="Script" path="res://core/managers/save_manager.gd" id="save"]
+[ext_resource type="Resource" path="res://data/weapons/pipe_wrench.tres" id="w_wrench"]
+[ext_resource type="Script" path="res://entities/world/world_prop.gd" id="world_prop"]
+[ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="wpickup"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="zone"]
 
 [sub_resource type="RectangleShape2D" id="Rect_40x800"]
@@ -50,8 +55,8 @@ size = Vector2(100, 20)
 [sub_resource type="RectangleShape2D" id="Rect_160x20"]
 size = Vector2(160, 20)
 
-[sub_resource type="RectangleShape2D" id="Rect_120x50"]
-size = Vector2(120, 50)
+[sub_resource type="RectangleShape2D" id="Rect_64x18"]
+size = Vector2(64, 18)
 
 [node name="Level_1_03" type="Node2D"]
 script = ExtResource("level")
@@ -373,20 +378,164 @@ offset_bottom = 10.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
-[node name="Block1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(10600.0, 531.0)
+[node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1250.0, 547.0)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Block1"]
-shape = SubResource("Rect_120x50")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Pedestal1"]
+shape = SubResource("Rect_64x18")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Block1"]
-offset_left = -60.0
-offset_top = -25.0
-offset_right = 60.0
-offset_bottom = 25.0
+[node name="ColorRect" type="ColorRect" parent="Environment/Pedestal1"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
 mouse_filter = 2
-color = Color(0.16, 0.17, 0.22, 1)
+color = Color(0.5, 0.45, 0.35, 1)
+
+[node name="SewerProp1" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(10600.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(120.0, 53.0)
+art_path = "res://assets/art/world1/sewer_pipe_fallen.png"
+stretch_art = true
+
+[node name="SewerProp2" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(900.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(55.0, 80.0)
+art_path = "res://assets/art/world1/sewer_barrel.png"
+stretch_art = true
+destructible = true
+max_health = 60.0
+
+[node name="SewerProp3" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(1700.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(140.0, 96.0)
+art_path = "res://assets/art/world1/sewer_crates.png"
+stretch_art = true
+destructible = true
+max_health = 90.0
+
+[node name="SewerProp4" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(2650.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(102.0, 60.0)
+art_path = "res://assets/art/world1/sewer_sacks.png"
+stretch_art = true
+destructible = true
+max_health = 40.0
+
+[node name="SewerProp5" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(4100.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(55.0, 80.0)
+art_path = "res://assets/art/world1/sewer_barrel.png"
+stretch_art = true
+destructible = true
+max_health = 60.0
+
+[node name="SewerProp6" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(4170.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(140.0, 96.0)
+art_path = "res://assets/art/world1/sewer_crates.png"
+stretch_art = true
+destructible = true
+max_health = 90.0
+
+[node name="SewerProp7" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(4950.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(113.0, 90.0)
+art_path = "res://assets/art/world1/sewer_bricks.png"
+stretch_art = true
+destructible = true
+max_health = 100.0
+
+[node name="SewerProp8" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(5800.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(55.0, 80.0)
+art_path = "res://assets/art/world1/sewer_barrel.png"
+stretch_art = true
+destructible = true
+max_health = 60.0
+
+[node name="SewerProp9" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(8000.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(140.0, 96.0)
+art_path = "res://assets/art/world1/sewer_crates.png"
+stretch_art = true
+destructible = true
+max_health = 90.0
+
+[node name="SewerProp10" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(8700.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(102.0, 60.0)
+art_path = "res://assets/art/world1/sewer_sacks.png"
+stretch_art = true
+destructible = true
+max_health = 40.0
+
+[node name="SewerProp11" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(10000.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(133.0, 80.0)
+art_path = "res://assets/art/world1/sewer_gate.png"
+stretch_art = true
+
+[node name="SewerProp12" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(11700.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(113.0, 90.0)
+art_path = "res://assets/art/world1/sewer_bricks.png"
+stretch_art = true
+destructible = true
+max_health = 100.0
+
+[node name="SewerProp13" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(13500.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(55.0, 80.0)
+art_path = "res://assets/art/world1/sewer_barrel.png"
+stretch_art = true
+destructible = true
+max_health = 60.0
+
+[node name="SewerProp14" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]
+position = Vector2(13560.0, 556.0)
+collision_mask = 0
+script = ExtResource("world_prop")
+size = Vector2(55.0, 80.0)
+art_path = "res://assets/art/world1/sewer_barrel.png"
+stretch_art = true
+destructible = true
+max_health = 60.0
+
+[node name="ItemPickup1" parent="." instance=ExtResource("ipickup")]
+position = Vector2(600.0, 512)
+item_data = ExtResource("item_sewer_boots")
+
+[node name="WeaponPickup1" parent="." instance=ExtResource("wpickup")]
+position = Vector2(1250.0, 512)
+weapon_data = ExtResource("w_wrench")
 
 [node name="Rat1" parent="." instance=ExtResource("rat")]
 position = Vector2(1000.0, 555.0)

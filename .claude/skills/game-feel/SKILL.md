@@ -59,10 +59,13 @@ Retroceso y animación del arma: `core/art/weapon_motion.gd` por id de arma.
 ### "El enemigo no reacciona"
 - `_play_hit_flash()` ya existe en cada enemigo: ajustar color/duración ahí, no crear otro sistema.
 - `DamageFx` (`combat/damage_fx.gd`) hace sangre/chispas (mecánicos: `MECHANICAL_SCRIPTS`), trozos a 2/3 y 1/3 y **sangrado**: un `CPUParticles2D` por enemigo herido (cuadraditos rojos repartidos por el cuerpo) desde `BLEED_START` (0.8 de vida), con más cantidad y tamaño al bajar la vida (`_update_bleed`: 1.5–6 px → 6–11 px). Se apaga lejos de cámara y con `particle_scale() < 0.5`. Usa un cuadrado blanco de 4 px: sin textura la escala no se respeta.
-- Salpicaduras (`blood_fx.gd`, `spray` / `spray_sprite`): sprite de salpicadura **chico**, gotas que salen volando **grandes** (4–8 px), pedido del usuario. Las "marcas pintadas" en el cuerpo se descartaron (se veían enormes).
+- Salpicaduras (`blood_fx.gd`, `spray` / `spray_sprite`): sprite de salpicadura **chico**, gotas que salen volando **grandes** (4–8 px), pedido del usuario. Las cicatrices (`_add_mark`, una por octavo de vida perdido) vuelven a estar, pero con tamaño según el alto del cuerpo (`MARK_SIZE_RATIO`, ~9 px en un humano): pintadas a escala 0.5 se veían enormes.
 - Muerte: la carne hace un golpe sordo (`enemy_death_flesh`) sin chispas; solo las máquinas conservan estallido (`GameFeel.death_burst(ctx, pos, mechanical)`; `health_component.gd` decide por `MECHANICAL_SCRIPTS` o el grupo `mechanical`). Un enemigo mecánico nuevo debe entrar a esa lista o grupo.
 - Fuego: una llamita por stack sobre el cuerpo, hasta 6 (`StatusReceiverComponent`: `MAX_VISIBLE_FLAMES`, `FLAME_SLOTS`); el cartel "xN" quedó oculto. Hielo conserva su cartel.
 - Retroceso por `HitPayload.knockback_force`; los enemigos con `knockback_immune` o jefes no se mueven (esperado).
+
+### "La mira"
+- La mira de cada arma (`ui/aim_reticle.gd`, datos en `core/crosshair_data.gd`) reemplaza al cursor jugando: forma por familia o por id de arma (`OVERRIDES`), verde fluorescente gruesa con contorno, radio entre `min_r` y `max_r` según `spread_angle_degrees` (+ `WeaponManager.get_aim_bloom_degrees()` de la ráfaga) y un pulso al disparar. Sobre menús y ventanas vuelve la crucecita de `core/crosshair_cursor.gd`. Un arma nueva usa la entrada de su familia; para una propia, agregarla a `OVERRIDES`.
 
 ### "Quiero un efecto nuevo" (explosión, habilidad, aura)
 1. Pasarlo por el patrón del repo: **procedural** (polígonos, `CPUParticles2D`, `draw_*`), compatible con `gl_compatibility`; texturas por `Art.tex()`.

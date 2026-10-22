@@ -1,6 +1,6 @@
 # Arte animado de un enemigo (hojas de Flow → cuadros)
 
-Sustituye la ilustración fija de `MOBS` por cuadros dibujados: caminar, ataque, golpe y muerte. Hecho para la rata (`rat`); falta ladrón, matón, pistolero, patovica, sicarios y agente (ROADMAP 5). **Los prompts los genera el usuario** (política: no usar el navegador). Tu parte: dar los prompts, procesar, conectar.
+Sustituye la ilustración fija de `MOBS` por cuadros dibujados: caminar, ataque, golpe y muerte. **Estado (actualizar siempre que se procese uno nuevo):** hechos rata, ladrón y pistolero (ataque de 2 cuadros); faltan matón, patovica, sicario escopeta (`hitman_elite`), sicario SMG (`hitman_smg`) y agente (`time_agent`) (ROADMAP 5). **Sin animación de muerte:** el cuerpo desaparece y las tripas hacen de cuerpo universal; pedir solo base, walk, attack (y hit de 2 cuadros opcional). **Los prompts los genera el usuario** (política: no usar el navegador). Tu parte: dar los prompts, procesar, conectar.
 
 ## 1. Prompts (4 hojas por enemigo, 16:9, croma verde #00FF00)
 

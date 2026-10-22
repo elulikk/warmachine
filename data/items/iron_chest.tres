@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "iron_chest"
+item_name = "Pechera de Hierro"
+item_color = Color(0.75, 0.12, 0.1, 1)
+equip_slot = "CHEST"
+elemental_infusion = ""
+tags = ["IRON_SUIT"]
+modifiers = [{
+"is_percent": false,
+"stat": "armor",
+"value": 6.0
+}, {
+"is_percent": false,
+"stat": "max_health",
+"value": 40.0
+}]
+grants_extra_jump = 0
+rarity = 4
+gold_value = 520
+description = "La pieza central del traje de hierro, con un reactor en el pecho. +40 de vida y 6 de armadura. Mantené P (L3) para disparar el unirrayo: un haz azul desde el reactor hacia el cursor que atraviesa y empuja (gasta la barra de energía, como el Casco Láser)."

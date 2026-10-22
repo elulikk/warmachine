@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "fedora"
+item_name = "Sombrero de Ala (Cabeza)"
+item_color = Color(0.3, 0.29, 0.33, 1)
+equip_slot = "HEAD"
+elemental_infusion = ""
+tags = []
+modifiers = [{
+"is_percent": false,
+"stat": "crit_chance",
+"value": 0.07
+}, {
+"is_percent": false,
+"stat": "crit_multiplier",
+"value": 0.2
+}]
+grants_extra_jump = 0
+rarity = 0
+gold_value = 45
+description = "Ala baja para mirar sin que te miren. +7 % de probabilidad de crítico y críticos un 20 % más fuertes."

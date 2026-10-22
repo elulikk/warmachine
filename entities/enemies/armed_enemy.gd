@@ -93,12 +93,19 @@ func _update_fire(delta: float) -> void:
 			_shoot_one(0.04)
 
 
+## Apunta al centro del cuerpo en la postura actual: si el jugador se agacha o se tira al piso, los tiros en vuelo pasan por encima.
+func _aim_point(target: Node2D) -> Vector2:
+	if target.has_method("get_body_center"):
+		return target.call("get_body_center") as Vector2
+	return target.global_position + Vector2(0.0, -30.0)
+
+
 ## Un disparo hacia el jugador. `spread` = dispersión aleatoria (rad), `fixed_angle` = desvío fijo, `dmg_mult` = fracción del daño.
 func _shoot_one(spread: float, fixed_angle: float = 0.0, dmg_mult: float = 1.0) -> void:
 	if target_player == null or not is_instance_valid(target_player) or not is_inside_tree():
 		return
 	var origin: Vector2 = global_position + Vector2(_facing * muzzle_forward, -muzzle_height)
-	var aim: Vector2 = (target_player.global_position + Vector2(0.0, -30.0)) - origin
+	var aim: Vector2 = _aim_point(target_player) - origin
 	var angle: float = aim.angle() + fixed_angle + randf_range(-spread, spread)
 	var dir: Vector2 = Vector2.RIGHT.rotated(angle)
 	var payload: HitPayload = HitPayload.new(shot_damage * dmg_mult, 90.0, dir, self, [], 1, 3.0, 0.0)
@@ -113,5 +120,5 @@ func _shoot_one(spread: float, fixed_angle: float = 0.0, dmg_mult: float = 1.0) 
 	if container == null:
 		container = get_parent()
 	container.add_child(proj)
-	var sound: StringName = &"shot_shotgun" if gun == "shotgun" else &"shot_pistol"
+	var sound: StringName = &"shot_shotgun" if gun == "shotgun" else &"shot_enemy_gun"
 	GameFeel.sfx(self, sound, origin, -8.0, randf_range(0.9, 1.1))

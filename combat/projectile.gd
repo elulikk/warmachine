@@ -9,6 +9,10 @@ const DEFAULT_BULLETS_TEX: Texture2D = preload("res://assets/sprites/bullets.png
 @export var speed: float = 520.0
 @export var max_lifetime: float = 3.0
 @export var is_hostile: bool = false
+## Sonido al chocar contra el mundo (vacío = mudo, como las bocanadas del Matafuegos).
+@export var world_hit_sound: StringName = &"hit_world"
+## true = atraviesa el terreno (ola del Tridente, haz de Excalibur, Gungnir); igual choca con las paredes de arena.
+@export var pass_through_terrain: bool = false
 
 ## Sprite propio del arma (proyectiles/*.png). Si es null se usa el atlas bullets.png.
 var sprite_texture: Texture2D = null
@@ -51,7 +55,7 @@ func reset_state() -> void:
 	visible = true
 	modulate = Color.WHITE
 	collision_layer = 4
-	collision_mask = 35
+	collision_mask = 34 if pass_through_terrain else 35
 	set_physics_process(true)
 	_update_appearance()
 
@@ -148,7 +152,8 @@ func _handle_collision(target: Node) -> void:
 	
 	# 1. Comprobar si impactó con geometría sólida del mundo (pared/piso/techo)
 	if target is StaticBody2D or target is TileMap or target.is_in_group("world"):
-		GameFeel.sfx(self, &"hit_world", global_position, -10.0)
+		if world_hit_sound != &"":
+			GameFeel.sfx(self, world_hit_sound, global_position, -10.0)
 		# Obstáculos rompibles (cajas, barriles): los tiros del jugador y los aliados los dañan
 		if not is_hostile and payload != null and target.has_method("take_hit"):
 			target.take_hit(payload)

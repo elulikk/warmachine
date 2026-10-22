@@ -1,0 +1,16 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://combat/throwables/throwable_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://combat/throwables/cluster_bomb.gd" id="2_script"]
+[ext_resource type="PackedScene" path="res://combat/throwables/bomblet_blast.tscn" id="3_fx"]
+[ext_resource type="PackedScene" path="res://combat/throwables/bomblet.tscn" id="4_bomblet"]
+
+[node name="ClusterBomb" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+throwable_id = "cluster_bomb"
+fuse_time = 1.2
+detonate_on_enemy = false
+effect_scene = ExtResource("3_fx")
+bomblet_scene = ExtResource("4_bomblet")
+body_color = Color(0.3, 0.34, 0.24, 1)
+body_radius = 7.0

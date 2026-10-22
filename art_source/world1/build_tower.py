@@ -19,6 +19,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_levels as bl  # noqa: E402
 
+bl.RES["w_thompson"] = ("Resource", "res://data/weapons/thompson.tres")
+bl.RES["riot"] = ("PackedScene", "res://entities/enemies/city_riot_guard.tscn")
+bl.RES["w_bazooka"] = ("Resource", "res://data/weapons/bazooka.tres")
+bl.RES["w_extinguisher"] = ("Resource", "res://data/weapons/extinguisher.tres")
+bl.RES["w_nail_gun"] = ("Resource", "res://data/weapons/nail_gun.tres")
+
 LENGTH = 12000
 TW = 2000                      # ancho de la torre (pared derecha)
 OPEN = 330                     # ancho del hueco de escaleras
@@ -126,8 +132,8 @@ class Tower(bl.Level):
             ext.append('[ext_resource type="%s" path="%s" id="%s"]' % (t, path, key))
         subs = ['[sub_resource type="RectangleShape2D" id="%s"]\nsize = Vector2(%d, %d)\n' % (k, w, h) for k, (w, h) in self.shapes.items()]
         head = ('[node name="Level_1_04" type="Node2D"]\nscript = ExtResource("level")\nlevel_id = "1_04"\nlevel_title = "%s"\n'
-                'chapter_number = 1\nnext_level_path = "%s"\nabyss_after_x = %s\nabyss_threshold_after = %s\n'
-                % (self.name, next_path, bl.fmt(float(TW + 60)), bl.fmt(float(FINAL_TOP + 800))))
+                'chapter_number = 1\nnext_level_path = "%s"\nabyss_after_x = %s\nabyss_threshold_after = %s\ngear_loot_tier = 2\n'
+                %(self.name, next_path, bl.fmt(float(TW + 60)), bl.fmt(float(FINAL_TOP + 800))))
         bg = ('[node name="Background" type="CanvasLayer" parent="."]\nlayer = -100\n\n'
               '[node name="ColorRect" type="ColorRect" parent="Background"]\nanchors_preset = 15\nanchor_right = 1.0\nanchor_bottom = 1.0\n'
               'grow_horizontal = 2\ngrow_vertical = 2\nmouse_filter = 2\ncolor = Color(0.03, 0.04, 0.07, 1)\n')
@@ -188,6 +194,7 @@ def level_tower():
 
     # --- piso 1: de derecha a izquierda; arena de recepción
     L.checkpoint_at(1550, top_of(1))
+    L.weapon_at(1420, top_of(1), "w_extinguisher")  # el matafuegos de la recepción: empuja y congela
     L.foes("thug", [1250], top_of(1))
     L.arena_at(900, top_of(1), "thief", [5, 7], "thug", [1, 2])
     L.checkpoint_at(500, top_of(1))
@@ -196,9 +203,12 @@ def level_tower():
     L.checkpoint_at(450, top_of(2))
     L.weapon_at(620, top_of(2), "w_smg")
     L.foes("gunman", [1000, 1500], top_of(2))
+    # Primer guardia antidisturbios: escudo de frente que tapa a los asaltantes (saltarlo o aturdirlo)
+    L.foes("riot", [1250], top_of(2))
 
     # --- piso 3: de derecha a izquierda; llega el patovica y arena de seguridad
     L.checkpoint_at(1550, top_of(3))
+    L.weapon_at(1380, top_of(3), "w_nail_gun")  # obra en el último piso: clavos que atraviesan
     L.foes("gunman", [1450], top_of(3))
     L.foes("bouncer", [1100], top_of(3))
     L.arena_at(700, top_of(3), "gunman", [5, 7], "bouncer", [1, 1])
@@ -206,6 +216,7 @@ def level_tower():
 
     # --- techo de la torre
     L.checkpoint_at(700, ROOF_Y)
+    L.weapon_at(950, ROOF_Y, "w_thompson")  # la "máquina de escribir" del Sindicato
     L.foes("hitman", [1300], ROOF_Y)
     L.foes("gunman", [1800], ROOF_Y)
     L.foes("hitman", [2300], ROOF_Y)
@@ -224,6 +235,7 @@ def level_tower():
     L.checkpoint_at(6900, ROOFS[2][2])
     L.foes("hitman", [7200, 7500], ROOFS[2][2])
     L.foes("gunman", [7800], ROOFS[2][2])
+    L.foes("riot", [7650], ROOFS[2][2])
 
     L.foes("hitman", [8400, 8800, 9200], ROOFS[3][2])
     L.cover(8600, 120, 50, ROOFS[3][2])
@@ -231,6 +243,7 @@ def level_tower():
     L.foes("bouncer", [9500], ROOFS[3][2])
 
     L.checkpoint_at(10300, ROOFS[4][2])
+    L.weapon_at(10480, ROOFS[4][2], "w_bazooka")  # para la arena final del Sindicato
     L.arena_at(11000, ROOFS[4][2], "hitman", [4, 5, 6], "bouncer", [0, 1, 2])
 
     L.write("res://levels/chapter_1/level_1_08.tscn")

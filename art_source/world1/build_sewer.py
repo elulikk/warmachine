@@ -17,6 +17,8 @@ import build_levels as bl  # noqa: E402
 
 bl.RES["giant_rat"] = ("PackedScene", "res://entities/enemies/giant_rat.tscn")
 bl.RES["ceiling_rat"] = ("PackedScene", "res://entities/enemies/ceiling_rat.tscn")
+bl.RES["world_prop"] = ("Script", "res://entities/world/world_prop.gd")
+bl.RES["w_wrench"] = ("Resource", "res://data/weapons/pipe_wrench.tres")
 
 LENGTH = 16000
 CEILING_BOTTOM = 290.0   # cara inferior del techo (el piso está en 556)
@@ -34,6 +36,19 @@ class Sewer(bl.Level):
     def ceiling_rats(self, xs):
         """Ratas que caminan por el techo y se sueltan sobre el jugador (entities/enemies/ceiling_rat.gd)."""
         self.enemies("ceiling_rat", xs, y=CEILING_Y)
+
+    def prop(self, art, x, w, h, hp=0.0):
+        """Obstáculo sólido con arte (assets/art/world1/<art>.png) apoyado en el piso; con `hp` se rompe a tiros.
+        El origen del nodo es el centro de su base. Sin grupo de decoración: no lo pisa bake_decor_props.py."""
+        self.used.add("world_prop")
+        n = self.uid("SewerProp")
+        lines = ['[node name="%s" type="StaticBody2D" parent="." groups=["world", "decor_prop"]]' % n,
+                 "position = Vector2(%s, %s)" % (bl.fmt(float(x)), bl.fmt(bl.GROUND)), "collision_mask = 0",
+                 'script = ExtResource("world_prop")', "size = Vector2(%s, %s)" % (bl.fmt(float(w)), bl.fmt(float(h))),
+                 'art_path = "res://assets/art/world1/%s.png"' % art, "stretch_art = true"]
+        if hp > 0:
+            lines += ["destructible = true", "max_health = %s" % bl.fmt(float(hp))]
+        self.nodes.append("\n".join(lines) + "\n")
 
     def checkpoint(self, x):
         self.used.add("checkpoint")
@@ -91,8 +106,25 @@ def level_sewer():
     L.plat(4400, 430, 160); L.plat(4640, 430, 160)
     L.plat(8200, 430, 160)
     L.plat(10200, 430, 160)
-    # Caño caído que se salta o se rodea
-    L.block(10600, 120, 50)
+    # Obstáculos con arte (los rompibles aguantan x5 de lo que dice hp, ver DURABILITY_MULT en world_prop.gd).
+    # Caño caído que se salta o se rodea (macizo, no se rompe)
+    L.prop("sewer_pipe_fallen", 10600, 120, 53)
+    L.prop("sewer_barrel", 900, 55, 80, 60)
+    L.prop("sewer_crates", 1700, 140, 96, 90)
+    L.prop("sewer_sacks", 2650, 102, 60, 40)
+    L.prop("sewer_barrel", 4100, 55, 80, 60); L.prop("sewer_crates", 4170, 140, 96, 90)
+    L.prop("sewer_bricks", 4950, 113, 90, 100)
+    L.prop("sewer_barrel", 5800, 55, 80, 60)
+    L.prop("sewer_crates", 8000, 140, 96, 90)
+    L.prop("sewer_sacks", 8700, 102, 60, 40)
+    L.prop("sewer_gate", 10000, 133, 80)
+    L.prop("sewer_bricks", 11700, 113, 90, 100)
+    L.prop("sewer_barrel", 13500, 55, 80, 60); L.prop("sewer_barrel", 13560, 55, 80, 60)
+
+    # Primeras botas del juego, al arrancar: un poco de velocidad y 2 de armadura (data/items/sewer_boots.tres)
+    L.item(600, "res://data/items/sewer_boots.tres")
+    # La llave del plomero: cada golpe aturde (data/weapons/pipe_wrench.tres)
+    L.weapon(1250, "w_wrench")
 
     # Tramos de ratas (más cada vez); todas vienen a buscarte
     L.enemies("rat", [1000, 1400, 1800])

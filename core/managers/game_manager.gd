@@ -8,6 +8,7 @@ const SettingsScript = preload("res://core/settings.gd")
 const SceneLoaderScript = preload("res://core/scene_loader.gd")
 const ErrorLoggerScript = preload("res://core/error_logger.gd")
 const CrosshairCursorScript = preload("res://core/crosshair_cursor.gd")
+const AimReticleScript = preload("res://ui/aim_reticle.gd")
 const PerfMonitorScript = preload("res://core/debug/perf_monitor.gd")
 
 enum GameState { PLAYING, GAME_OVER, VICTORY }
@@ -49,6 +50,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	ErrorLoggerScript.install()
 	CrosshairCursorScript.install()
+	add_child(AimReticleScript.new())
 	_setup_overlay_ui()
 	_scene_loader = SceneLoaderScript.new() as CanvasLayer
 	_scene_loader.name = "SceneLoader"
@@ -197,7 +199,9 @@ func on_player_died(player: Player) -> void:
 			player.respawn(spawn_pos)
 		return
 	
-	# Modo Campaña: pausar y desplegar overlay de derrota
+	# Modo Campaña: penalización de XP (10% del nivel actual), pausar y desplegar overlay de derrota
+	if player != null and player.stats_manager != null:
+		player.stats_manager.apply_death_exp_penalty()
 	current_state = GameState.GAME_OVER
 	game_over_triggered.emit()
 	state_changed.emit(current_state)

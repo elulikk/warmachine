@@ -4,6 +4,8 @@ extends Node
 ## Gestiona temporizadores, acumulación progresiva de stacks, alteración de tintes visuales
 ## y aplicación periódica de daño por fuego sin interferir con la ralentización del hielo.
 
+const CharmControllerScript = preload("res://entities/enemies/charm_controller.gd")
+
 signal burn_stacks_changed(stacks: int, max_stacks: int)
 signal burn_expired
 signal frozen_state_changed(is_frozen: bool)
@@ -17,6 +19,12 @@ const FireVfxScript = preload("res://combat/fire_vfx.gd")
 @export var burn_duration: float = 3.0
 @export var burn_tick_interval: float = 0.5
 @export var base_burn_tick_damage: float = 3.0
+
+@export_group("Veneno (VENOM)")
+@export var max_venom_stacks: int = 5
+@export var venom_duration: float = 4.0
+@export var venom_tick_interval: float = 0.5
+@export var venom_tick_damage: float = 3.0
 
 @export_group("Hielo (Freeze / Slow)")
 @export var slow_duration: float = 2.5
@@ -44,6 +52,11 @@ var _active_slow_multiplier: float = 0.5
 
 # Estado de Aturdimiento (Stun)
 var stun_timer: float = 0.0
+var venom_stacks: int = 0
+var _venom_timer: float = 0.0
+var _venom_tick: float = 0.0
+## Hechizo (dardos): el enemigo pelea contra los suyos mientras dura (ver charm_controller.gd).
+var is_charmed: bool = false
 var is_stunned: bool = false
 
 # Estado de Arraigo (Root): no se mueve, pero puede atacar y recibir daño
@@ -73,8 +86,9 @@ func _ensure_references() -> void:
 
 func _physics_process(delta: float) -> void:
 	# Lo normal: ningún estado activo (cuatro llamadas por enemigo y por cuadro que no hacen nada)
-	if burn_stacks <= 0 and not is_frozen and not is_stunned and stun_timer <= 0.0 and not is_rooted:
+	if burn_stacks <= 0 and not is_frozen and not is_stunned and stun_timer <= 0.0 and not is_rooted and venom_stacks <= 0:
 		return
+	_process_venom_status(delta)
 	_process_fire_status(delta)
 	_process_ice_status(delta)
 	_process_stun_status(delta)
@@ -177,10 +191,56 @@ func apply_payload(payload: HitPayload) -> void:
 			"ROOT":
 				# La duración viaja en ice_duration (0 = valor por defecto del receptor)
 				apply_root(payload.ice_duration)
+			"VENOM":
+				apply_venom(maxi(1, payload.status_stacks_to_apply))
+			"CHARM":
+				apply_charm(payload.ice_duration if payload.ice_duration > 0.0 else 6.0)
 			"STUN":
-				# Usar base_tick_damage o 1.5s por defecto como duración de stun
+				# Duración: ice_duration si el arma la define (Llave Stillson) y no congela; si no,
+				# base_tick_damage o 1.5 s por defecto
 				var dur: float = payload.base_tick_damage if payload.base_tick_damage > 0.0 else 1.5
+				if payload.ice_duration > 0.0 and not payload.status_effects.has("ICE"):
+					dur = payload.ice_duration
 				apply_stun(dur)
+
+
+## Suma stacks de veneno (dardos venenosos): daño por tick = venom_tick_damage * stacks, se renueva con cada dardo.
+func apply_venom(stacks: int = 1) -> void:
+	venom_stacks = mini(max_venom_stacks, venom_stacks + stacks)
+	_venom_timer = venom_duration
+	if _venom_tick <= 0.0:
+		_venom_tick = venom_tick_interval
+	_update_visual_tint()
+
+
+func _process_venom_status(delta: float) -> void:
+	if venom_stacks <= 0:
+		return
+	_venom_timer -= delta
+	_venom_tick -= delta
+	if _venom_tick <= 0.0:
+		_venom_tick = venom_tick_interval
+		var tick_damage: float = venom_tick_damage * float(venom_stacks)
+		if health_component != null and is_instance_valid(health_component):
+			health_component.apply_damage(tick_damage, false, "VENOM_DOT")
+		_spawn_damage_number(tick_damage, "VENOM")
+	if _venom_timer <= 0.0:
+		venom_stacks = 0
+		_update_visual_tint()
+
+
+## Hechiza al enemigo por `duration` s: un CharmController toma su control y lo hace pelear contra los suyos.
+## Los jefes no se dejan.
+func apply_charm(duration: float) -> void:
+	var host: Node = owner if owner != null else get_parent()
+	if host == null or not (host is CharacterBody2D) or host.is_in_group(&"boss"):
+		return
+	var controller: Node = host.get_node_or_null("CharmController")
+	if controller == null:
+		controller = CharmControllerScript.new()
+		controller.name = "CharmController"
+		host.add_child(controller)
+	controller.call("start", duration)
 
 
 ## Aplica o renueva el estado de aturdimiento (STUN).
@@ -353,6 +413,12 @@ func _update_visual_tint() -> void:
 		# Aturdimiento prioritario: Tinte amarillo/blanco eléctrico brillante
 		var stun_tint: Color = Color(1.2, 1.15, 0.4, 1.0)
 		_set_current_visual_color(original_color.lerp(stun_tint, 0.75))
+	elif is_charmed:
+		# Hechizado: rosa brillante, para distinguirlo de los que te siguen atacando
+		_set_current_visual_color(original_color.lerp(Color(1.0, 0.45, 0.95, 1.0), 0.6))
+	elif venom_stacks > 0 and burn_stacks <= 0:
+		# Envenenado: verde ácido
+		_set_current_visual_color(original_color.lerp(Color(0.45, 1.0, 0.3, 1.0), 0.35 + 0.06 * float(venom_stacks)))
 	elif burn_stacks > 0 and is_frozen:
 		# Convivencia simultánea Fuego + Hielo: Tono intermedio violeta / magenta ígneo-gélido
 		var mixed_tint: Color = Color(0.85, 0.3, 0.85, 1.0)

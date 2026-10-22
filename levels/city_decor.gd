@@ -33,9 +33,9 @@ const SECTORS: Dictionary = {
 	"1_02": {"rain": true, "cars": false, "props": [
 		["fire_ladder", 1, 150.0], ["trash_bags", 3, 44.0], ["wet_boxes", 3, 48.0], ["steam_grate", 2, 60.0], ["rust_pipe", 1, 40.0],
 		["barrel", 2, 52.0], ["dumpster", 2, 50.0], ["street_lamp", 1, 120.0]]},
-	"1_03": {"rain": false, "cars": false, "water": true, "props": [
-		["rust_pipe", 2, 40.0], ["valve", 2, 40.0], ["sewer_grate", 1, 50.0], ["puddle", 3, 14.0], ["barrel", 2, 52.0],
-		["iron_ladder", 1, 120.0], ["steam_grate", 1, 60.0], ["trash_bags", 1, 40.0]]},
+	"1_03": {"rain": false, "cars": false, "water": true, "water_art": "sewer_water.png", "hang": "sewer_lamp", "hang_top": 290.0, "hang_len": Vector2(18.0, 40.0), "hang_gap": 0.55, "props": [
+		["sewer_pipe_drip", 2, 230.0], ["sewer_wall_grate", 2, 60.0], ["sewer_ladder", 1, 200.0], ["sewer_railing", 2, 60.0],
+		["sewer_valve", 2, 50.0], ["puddle", 3, 14.0], ["steam_grate", 1, 60.0]]},
 	# 1-04: la torre y los techos. Props de azotea solo sobre los techos exteriores (`prop_max_y`); sin lluvia (cae desde y = -20)
 	"1_04": {"rain": false, "cars": false, "prop_max_y": -990.0, "props": [
 		["water_tank", 1, 150.0], ["antenna", 2, 150.0], ["vent_chimney", 2, 100.0], ["roof_sign", 1, 90.0],
@@ -133,11 +133,11 @@ static func decorate(level: Node, solids: Array[Rect2]) -> void:
 			x += rng.randf_range(130.0, 330.0)
 
 	if cfg.has("hang"):
-		_place_hanging(back, str(cfg["hang"]), level_end, rng)
+		_place_hanging(back, str(cfg["hang"]), level_end, rng, float(cfg.get("hang_top", HANG_TOP)), cfg.get("hang_len", Vector2(90.0, 170.0)) as Vector2, float(cfg.get("hang_gap", 1.0)))
 	if cfg.has("lamps"):
 		_add_street_lamps(back, front, solids, float(cfg["lamps"]), rng)
 	if bool(cfg.get("water", false)):
-		_add_water_pits(back, solids, rng)
+		_add_water_pits(back, solids, rng, str(cfg.get("water_art", "")))
 	if bool(cfg.get("club", false)):
 		_add_club_lights(level, rng)
 	if bool(cfg.get("rain", false)):
@@ -439,16 +439,17 @@ static func _schedule_flicker(light: Node2D, pool: Node2D, wait: float) -> void:
 
 
 ## Lámparas del techo (araña de cristal del hotel, bola de espejos de la discoteca).
-static func _place_hanging(parent: Node2D, name: String, level_end: float, rng: RandomNumberGenerator) -> void:
+static func _place_hanging(parent: Node2D, name: String, level_end: float, rng: RandomNumberGenerator, top: float = HANG_TOP,
+		len_range: Vector2 = Vector2(90.0, 170.0), gap_mult: float = 1.0) -> void:
 	var tex: Texture2D = ArtScript.tex(DIR + name + ".png")
 	if tex == null:
 		return
 	var x: float = rng.randf_range(500.0, 900.0)
 	while x < level_end - 300.0:
-		var length: float = rng.randf_range(90.0, 170.0)
+		var length: float = rng.randf_range(len_range.x, len_range.y)
 		var line: ColorRect = ColorRect.new()
 		line.color = Color(0.1, 0.1, 0.12, 1.0)
-		line.position = Vector2(x - 1.0, HANG_TOP)
+		line.position = Vector2(x - 1.0, top)
 		line.size = Vector2(2.0, length)
 		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		parent.add_child(line)
@@ -458,7 +459,7 @@ static func _place_hanging(parent: Node2D, name: String, level_end: float, rng: 
 		var s: float = (80.0 if name == "chandelier" else 66.0) / float(tex.get_height())
 		sprite.scale = Vector2(s, s)
 		sprite.offset = Vector2(-tex.get_width() * 0.5, 0.0)
-		sprite.position = Vector2(x, HANG_TOP + length)
+		sprite.position = Vector2(x, top + length)
 		parent.add_child(sprite)
 		var center: Vector2 = sprite.position + Vector2(0.0, tex.get_height() * s * 0.5)
 		if name == "disco_ball":
@@ -470,7 +471,7 @@ static func _place_hanging(parent: Node2D, name: String, level_end: float, rng: 
 			_add_glow(parent, center, 1.4, Color(0.8, 0.9, 1.0, 0.55), rng)
 		else:
 			_add_glow(parent, center, 1.8, Color(1.0, 0.8, 0.45, 0.6), rng)
-		x += rng.randf_range(800.0, 1500.0)
+		x += rng.randf_range(800.0, 1500.0) * gap_mult
 
 
 # ==============================================================================
@@ -478,7 +479,8 @@ static func _place_hanging(parent: Node2D, name: String, level_end: float, rng: 
 # ==============================================================================
 
 ## Huecos entre suelos a la misma altura sin nada debajo: agua negra con reflejos.
-static func _add_water_pits(parent: Node2D, solids: Array[Rect2], rng: RandomNumberGenerator) -> void:
+static func _add_water_pits(parent: Node2D, solids: Array[Rect2], rng: RandomNumberGenerator, art: String = "") -> void:
+	var water_tex: Texture2D = ArtScript.tex(DIR + art) if not art.is_empty() else null
 	var floors: Array[Rect2] = []
 	for rect: Rect2 in solids:
 		if rect.size.y > THIN_MAX_HEIGHT and rect.size.x >= 60.0 and rect.size.y < 400.0:
@@ -506,6 +508,19 @@ static func _add_water_pits(parent: Node2D, solids: Array[Rect2], rng: RandomNum
 		water.color = Color(0.03, 0.05, 0.1, 1.0)
 		water.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		parent.add_child(water)
+		if water_tex != null:
+			# Agua pintada: superficie con espuma arriba (se repite en horizontal) y el fondo liso del color de su borde
+			water.color = Color(0.049, 0.061, 0.078, 1.0)
+			var surface: TextureRect = TextureRect.new()
+			surface.texture = water_tex
+			surface.stretch_mode = TextureRect.STRETCH_TILE
+			surface.position = Vector2(a.end.x - 4.0, top + 56.0 - 14.0)
+			surface.size = Vector2(gap + 8.0, float(water_tex.get_height()))
+			surface.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			parent.add_child(surface)
+			water.position.y += float(water_tex.get_height()) - 14.0
+			water.size.y -= float(water_tex.get_height())
+			continue
 		# Línea de reflejo en la superficie
 		var shine: ColorRect = ColorRect.new()
 		shine.position = Vector2(a.end.x - 4.0, top + 56.0)

@@ -15,10 +15,11 @@ const REGEN_DELAY: float = 0.7
 const RESTART_ENERGY: float = 20.0
 
 const BEAM_RANGE: float = 560.0
-const BEAM_THICKNESS: float = 14.0
+const BEAM_THICKNESS: float = 22.0
 const TICK_INTERVAL: float = 0.1
-const TICK_DAMAGE: float = 7.0
-const TICK_KNOCKBACK: float = 40.0
+const TICK_DAMAGE: float = 8.0
+## Rayo óptico estilo Cíclope: empuja fuerte a lo que toca.
+const TICK_KNOCKBACK: float = 140.0
 const ARMOR_PENETRATION: float = 0.25
 const TERRAIN_MASK: int = 1
 const ENEMY_MASK: int = 2
@@ -121,7 +122,11 @@ func _aim_direction() -> Vector2:
 
 
 func _eye_position() -> Vector2:
-	var height: float = -30.0 if _player.is_crouching else -52.0
+	if _player.is_prone:
+		return _player.global_position + Vector2(float(_player.facing_direction) * (30.0 if _player.laser_from_chest else 40.0), -10.0)
+	var height: float = -34.0 if _player.is_crouching else -52.0
+	if _player.laser_from_chest:
+		height = -24.0 if _player.is_crouching else -38.0
 	return _player.global_position + Vector2(float(_player.facing_direction) * 8.0, height)
 
 
@@ -130,13 +135,36 @@ func _draw() -> void:
 		return
 	if _firing:
 		var flicker: float = 0.75 + 0.25 * sin(_pulse)
-		draw_line(_beam_start, _beam_end, Color(1.0, 0.1, 0.1, 0.35 * flicker), BEAM_THICKNESS * 1.6)
-		draw_line(_beam_start, _beam_end, Color(1.0, 0.25, 0.2, 0.9), BEAM_THICKNESS * 0.6)
-		draw_line(_beam_start, _beam_end, Color(1.0, 0.95, 0.9, 1.0), 3.0)
-		draw_circle(_beam_end, 6.0 * flicker + 3.0, Color(1.0, 0.7, 0.4, 0.8))
+		var dir: Vector2 = (_beam_end - _beam_start).normalized()
+		var side: Vector2 = dir.orthogonal()
+		# Haz rubí que se abre hacia el final (sale angosto del visor, como el de Cíclope)
+		for layer: Array in [[1.9, _tint(Color(0.9, 0.0, 0.08, 0.28 * flicker))], [1.1, _tint(Color(1.0, 0.1, 0.15, 0.75))], [0.45, _tint(Color(1.0, 0.55, 0.5, 0.95))]]:
+			var w0: float = BEAM_THICKNESS * 0.25 * float(layer[0])
+			var w1: float = BEAM_THICKNESS * 0.5 * float(layer[0]) * (0.9 + 0.1 * flicker)
+			draw_colored_polygon(PackedVector2Array([_beam_start + side * w0, _beam_end + side * w1,
+				_beam_end - side * w1, _beam_start - side * w0]), layer[1] as Color)
+		draw_line(_beam_start, _beam_end, _tint(Color(1.0, 0.95, 0.9, 1.0)), 2.5)
+		# Visor encendido sobre los ojos
+		var visor: Vector2 = _beam_start - dir * 4.0
+		draw_line(visor - side * 7.0, visor + side * 7.0, _tint(Color(1.0, 0.15, 0.2, 0.9)), 5.0)
+		draw_circle(_beam_start, 9.0 * flicker, _tint(Color(1.0, 0.3, 0.3, 0.55)))
+		# Impacto: destello y chispas
+		draw_circle(_beam_end, 10.0 * flicker + 4.0, _tint(Color(1.0, 0.25, 0.2, 0.45)))
+		draw_circle(_beam_end, 5.0 * flicker + 2.0, _tint(Color(1.0, 0.85, 0.7, 0.95)))
+		for i: int in 5:
+			var a: float = dir.angle() + PI + sin(_pulse * 0.37 + float(i) * 2.1) * 1.3
+			var l: float = 8.0 + 8.0 * absf(sin(_pulse * 0.5 + float(i)))
+			draw_line(_beam_end, _beam_end + Vector2.from_angle(a) * l, _tint(Color(1.0, 0.6, 0.4, 0.9)), 2.0)
 	# Barra de energía sobre la cabeza, solo mientras no está llena
 	if energy < MAX_ENERGY - 0.5:
 		var origin: Vector2 = _player.global_position + Vector2(-20.0, -92.0)
-		draw_rect(Rect2(origin, Vector2(40.0, 4.0)), Color(0.0, 0.0, 0.0, 0.6))
-		var fill: Color = Color(1.0, 0.3, 0.25, 1.0) if _exhausted else Color(1.0, 0.8, 0.3, 1.0)
+		draw_rect(Rect2(origin, Vector2(40.0, 4.0)), _tint(Color(0.0, 0.0, 0.0, 0.6)))
+		var fill: Color = _tint(Color(1.0, 0.3, 0.25, 1.0)) if _exhausted else _tint(Color(1.0, 0.8, 0.3, 1.0))
 		draw_rect(Rect2(origin, Vector2(40.0 * energy / MAX_ENERGY, 4.0)), fill)
+
+
+## Con la Pechera de Hierro el haz es azul: se cambian los canales rojo y azul de cada color del dibujo.
+func _tint(c: Color) -> Color:
+	if _player == null or not _player.laser_from_chest:
+		return c
+	return Color(c.b, maxf(c.g, c.b * 0.7), c.r, c.a)

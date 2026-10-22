@@ -26,6 +26,7 @@ RES = {
     "gate": ("PackedScene", "res://entities/interactables/exit_gate.tscn"),
     "checkpoint": ("PackedScene", "res://entities/interactables/checkpoint_terminal.tscn"),
     "wpickup": ("PackedScene", "res://entities/items/weapon_pickup.tscn"),
+    "ipickup": ("PackedScene", "res://entities/items/pickup_item.tscn"),
     "arena": ("PackedScene", "res://entities/world/arena.tscn"),
     "rat": ("PackedScene", "res://entities/enemies/city_rat.tscn"),
     "thief": ("PackedScene", "res://entities/enemies/city_thief.tscn"),
@@ -131,6 +132,14 @@ class Level:
                           % (self.uid("WeaponPickup"), fmt(float(x)), key))
         if tip:
             self.label(x - 200, 430, tip, GOOD)
+
+    def item(self, x, res_path):
+        """Ítem de equipo suelto en el piso (pickup_item.tscn con un ItemData)."""
+        key = "item_" + os.path.splitext(os.path.basename(res_path))[0]
+        RES[key] = ("Resource", res_path)
+        self.used.update({"ipickup", key})
+        self.nodes.append('[node name="%s" parent="." instance=ExtResource("ipickup")]\nposition = Vector2(%s, 512)\nitem_data = ExtResource("%s")\n'
+                          % (self.uid("ItemPickup"), fmt(float(x)), key))
 
     def enemy(self, kind, x, y=555.0, guard=False):
         self.used.add(kind)

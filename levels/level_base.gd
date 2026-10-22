@@ -8,6 +8,7 @@ const LevelSkinScript = preload("res://levels/level_skin.gd")
 const CityAmbienceScript = preload("res://levels/city_ambience.gd")
 const SewerAmbienceScript = preload("res://levels/sewer_ambience.gd")
 const AmbushDirectorScript = preload("res://levels/ambush_director.gd")
+const GuntherLinesScript = preload("res://levels/gunther_lines.gd")
 ## Exteriores del presente (P-1, P-2, P-4, P-5, P-8). Los interiores (alcantarilla, hotel, discoteca) no
 ## llevan tráfico ni gente de la calle, y el 4-9 y 4-10 son otro contenido (Ciudadela Blindada).
 const CITY_EXTERIOR_IDS: Array[String] = ["1_01", "1_02", "1_04", "1_05", "1_08"]
@@ -17,6 +18,14 @@ const SEWER_IDS: Array[String] = ["1_03"]
 const GRANTED_FLAG_PREFIX: String = "weapon_granted:"
 ## Desvío de nivel de enemigo por capítulo (el 1 es la base; los demás mundos suben).
 const CHAPTER_ENEMY_LEVEL_OFFSET: Dictionary = {1: 0, 2: 6, 3: 8, 4: 4, 5: 12}
+## Cielo abierto: los exteriores de la ciudad y los mundos 2 (valle) y 4 (periferia). Con jetpack o vuelo se sube hasta
+## OPEN_SKY_TOP y la cámara acompaña. Los interiores y el infierno (cadenas colgadas del borde de la cámara) no cambian.
+const OPEN_SKY_CHAPTERS: Array[int] = [2, 4]
+const OPEN_SKY_TOP: float = -2600.0
+## Gasto del jetpack a cielo abierto (fracción del normal): con 0.4 sube unos 1500 px de un tanque.
+const OPEN_SKY_JET_DRAIN: float = 0.4
+## Margen contra los bordes del nivel y de la arena: allá arriba ya no hay paredes que frenen.
+const OPEN_SKY_EDGE: float = 14.0
 
 @export var level_id: String = "4_01"
 @export var level_title: String = "Sector 01"
@@ -69,6 +78,8 @@ const CHAPTER_ENEMY_LEVEL_OFFSET: Dictionary = {1: 0, 2: 6, 3: 8, 4: 4, 5: 12}
 @onready var exit_gate: ExitGate = get_node_or_null("ExitGate") as ExitGate
 
 var initial_spawn_position: Vector2 = Vector2(160, 545)
+var _open_sky: bool = false
+var _camera: Camera2D = null
 
 const ONE_WAY_MAX_HEIGHT: float = 40.0
 const ONE_WAY_MIN_WIDTH: float = 40.0
@@ -97,6 +108,7 @@ func _ready() -> void:
 	_remove_pickup_pedestals()
 	_make_thin_platforms_one_way()
 	LevelSkinScript.apply(self, chapter_number, backdrop_file)
+	_setup_open_sky()
 	GameFeel.music_start_level(self)
 	if base_music != &"explore" and FileAccess.file_exists("res://ost/%s.ogg" % String(base_music)):
 		GameFeel.music_set_base(self, base_music)
@@ -145,6 +157,10 @@ func _ready() -> void:
 		_apply_test_loadout()
 	SaveManager.set_respawn_point(initial_spawn_position)
 	_apply_resume_point()
+	# Frases sueltas de Gunther mientras avanza (subtítulos; data/dialogue/gunther_lines.gd)
+	var lines: Node = GuntherLinesScript.new() as Node
+	lines.set("level_id", level_id)
+	add_child(lines)
 
 	# Conectar ExitGate con el siguiente nivel si existe
 	if exit_gate != null and not next_level_path.is_empty():
@@ -257,9 +273,41 @@ func _player_has_weapon(path: String) -> bool:
 	return sm != null and sm.stash_has_path(path)
 
 
+## Sube el tope de la cámara en los sectores a cielo abierto.
+func _setup_open_sky() -> void:
+	_camera = get_node_or_null("Camera2D") as Camera2D
+	_open_sky = _camera != null and (CITY_EXTERIOR_IDS.has(level_id) or OPEN_SKY_CHAPTERS.has(chapter_number))
+	if _open_sky:
+		_camera.limit_top = mini(_camera.limit_top, int(OPEN_SKY_TOP))
+		if player != null:
+			player.jetpack_drain_mult = OPEN_SKY_JET_DRAIN
+
+
+## Cielo abierto: techo invisible en OPEN_SKY_TOP y bordes del nivel (o de la arena con la cámara trabada), porque
+## volando alto se pasa por encima de las paredes.
+func _clamp_to_open_sky() -> void:
+	var pos: Vector2 = player.global_position
+	var min_x: float = float(_camera.limit_left) + OPEN_SKY_EDGE
+	var max_x: float = float(_camera.limit_right) - OPEN_SKY_EDGE
+	if _camera.has_method("is_horizontal_locked") and bool(_camera.call("is_horizontal_locked")):
+		var view: Vector2 = _camera.call("get_horizontal_view") as Vector2
+		min_x = maxf(min_x, view.x + OPEN_SKY_EDGE)
+		max_x = minf(max_x, view.y - OPEN_SKY_EDGE)
+	var top: float = OPEN_SKY_TOP + 80.0
+	if pos.y < top:
+		pos.y = top
+		player.velocity.y = maxf(player.velocity.y, 0.0)
+	if pos.x < min_x or pos.x > max_x:
+		pos.x = clampf(pos.x, min_x, max_x)
+		player.velocity.x = 0.0
+	player.global_position = pos
+
+
 func _physics_process(_delta: float) -> void:
 	if player == null:
 		return
+	if _open_sky:
+		_clamp_to_open_sky()
 	var limit: float = abyss_threshold
 	if abyss_after_x >= 0.0 and player.global_position.x > abyss_after_x:
 		limit = abyss_threshold_after

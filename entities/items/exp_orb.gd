@@ -8,6 +8,7 @@ extends Area2D
 
 const ArtScript = preload("res://core/art/art.gd")
 const LootCombinerScript = preload("res://core/loot/loot_combiner.gd")
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 
 const ORB_GROUP: StringName = &"exp_orbs"
 const MAX_TIER: int = 3
@@ -47,6 +48,7 @@ static var _frames_cache: SpriteFrames = null
 
 
 func _ready() -> void:
+	LootLifetimeScript.arm(self)
 	_sprite = get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
 	_apply_art_frames()
 	set_deferred("monitoring", false)

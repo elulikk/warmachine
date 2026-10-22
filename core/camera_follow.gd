@@ -95,6 +95,10 @@ func get_horizontal_view() -> Vector2:
 	return Vector2(center_x - half_width, center_x + half_width)
 
 
+func is_horizontal_locked() -> bool:
+	return _x_locked
+
+
 ## Libera la cámara para que vuelva a seguir al jugador.
 func unlock_horizontal() -> void:
 	_x_locked = false

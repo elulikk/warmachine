@@ -57,13 +57,14 @@ Shooter-RPG de plataformas 2D en Godot 4.7 (`gl_compatibility`), GDScript tipado
 ## 4. Combate: daño, estados y efectos
 
 - **Archivos:** `combat/hit_payload.gd` (daño, retroceso, emisor, estados, DoT, `armor_penetration`), `core/health_component.gd`, `core/projectile_pool.gd`, `combat/projectile.gd`, `combat/melee_hitbox.gd`, `core/status_receiver_component.gd`.
+- **Estados:** `FIRE`, `ICE`, `ROOT`, `STUN`, `VENOM` (veneno apilable de dardos) y `CHARM` (el enemigo pelea contra los suyos: `entities/enemies/charm_controller.gd` le apaga la IA mientras dura; no afecta jefes). La duración de `STUN`, `ROOT` y `CHARM` viaja en `HitPayload.ice_duration`, que sale de `WeaponData.ice_duration` tanto en melé como a distancia.
 - **Vida (3 capas):** escudo de energía → armadura (`100 / (100 + armor × (1 − penetración))`) → vida. Crítico x1.5. Emite `hit_resolved` por impacto y `died`. En enemigos escala la vida con la dificultad al aparecer; el daño al jugador se escala en `Player.take_damage()`.
 - **Proyectil:** velocidad, vida útil, rebotes, perforación, bifurcación, `deflect` (parry) y `reflect(normal)` (escudo espejo y superficies reflejantes; cada rebote deja 50 % del daño). Rebotes innatos del arma en `WeaponData.innate_bounces`; `WeaponData.impact_scene` aparece donde termina el proyectil (p. ej. un `AreaBurst`). Un script de proyectil que no es `projectile.tscn` no pasa por el pool.
 - **Melee:** barrido angular por Tween; ventana de parry balístico de 0.06 s.
 - **Estados:** fuego (hasta 10 stacks, DoT), hielo (ralentiza), aturdimiento, **arraigo** (`apply_root()`: velocidad 0, conserva agro y ataques). Por payload llegan como efecto + duración (`"ROOT"` usa `ice_duration`). Tinte y llama (`fire_vfx.gd`) automáticos.
 - **FX de daño:** `combat/damage_fx.gd` y `blood_fx.gd` (sangre, manchas, heridas, trozos con `gib.gd`; arte opcional en `assets/art/fx/`), `shot_fx.gd` (fogonazo, humo, chispas), `damage_number.gd` (tope de 40 vivos), `reload_debris.gd`, `spawn_telegraph.gd`.
 - **Cola de muertes:** `combat/death_fx_queue.gd` reparte gore y botín de muertes masivas con presupuesto por cuadro. Todo lo que crea una muerte pasa por ahí (`burst`, `gore`, `loot`, `exp_orb`).
-- **Arrojadizos:** `combat/throwables/` (base `RigidBody2D` con arco y fusible; granadas, charcos, nubes, red arraigadora, boomerang) y `combat/tools/` (gancho, baliza). Gestor: `entities/player/throwable_manager.gd` (acción `throw_tactical`, [G]).
+- **Arrojadizos:** `combat/throwables/` (base `RigidBody2D` con arco y fusible; granadas, charcos, nubes, red arraigadora, boomerang) y `combat/tools/` (gancho, baliza). Gestor: `entities/player/throwable_manager.gd` (acción `throw_tactical`, [G]). Un arrojadizo con tag `REMOTE_DETONATE` (C4) se pega y la misma tecla detona todas las cargas del grupo `remote_charges`; la bomba racimo (`cluster_bomb.gd`) suelta bombitas al estallar.
 - **Lanzallamas de combustible:** `combat/fuel_droplet.gd` → `throwables/fuel_pool.gd` (charco que quema).
 
 ---
@@ -169,7 +170,7 @@ Shooter-RPG de plataformas 2D en Godot 4.7 (`gl_compatibility`), GDScript tipado
 
 ## 14. Sonido y música
 
-- **Efectos:** `core/sfx.gd` sintetiza WAV por código (estilo 8-bit, provisorio) y los cachea; para uno nuevo, agregar un caso en `_build()`. Se piden por la fachada `GameFeel.sfx(ctx, &"nombre", pos?)` (`core/game_feel.gd`, que también da `shake`, `hit_stop`, `death_burst`). Audio real: `fire_stream` / `hit_stream` en el arma o `Sfx.register_override()`.
+- **Efectos:** `core/sfx.gd` sintetiza WAV por código y los cachea; para uno nuevo, agregar un caso en `_build()`. Si existe `assets/audio/sfx/<nombre>_1.wav` (y `_2`, `_3`...), se usa ese archivo en vez de la receta, con variantes al azar: así suenan disparos, `hit_flesh`, `hit_world` y `boom_frag`, generados offline por `art_source/audio/synth_guns.py` (numpy/scipy; correrlo y reimportar). La degradación 8-bit de las recetas está apagada (`LOFI`). Cada arma elige su disparo por familia (`weapon_fire_profile`) o por `WeaponData.fire_sound`. Se piden por la fachada `GameFeel.sfx(ctx, &"nombre", pos?)` (`core/game_feel.gd`, que también da `shake`, `hit_stop`, `death_burst`). Audio real: `fire_stream` / `hit_stream` en el arma o `Sfx.register_override()`.
 - **Música:** `core/music.gd` (fundido entre pistas `ost/*.ogg`; prioridad anulaciones > situación > base) y `core/music_director.gd` (elige combate / élite / jefe según enemigos cercanos y el grupo `boss`). Para una pista nueva: convertir a `.ogg` y agregarla a `Music.TRACKS`.
 
 ---
@@ -187,6 +188,6 @@ Shooter-RPG de plataformas 2D en Godot 4.7 (`gl_compatibility`), GDScript tipado
 ## 16. Banco de Pruebas, Sala de Estrés y herramientas de editor
 
 - **Banco de Pruebas:** `core/test_level.gd/.tscn`, sandbox con pista, dummies, torretas, pedestales de todo lo nuevo y oleadas continuas. Atajos: N, B, M, Z, V (enemigos), K (limpiar), L (curar), U (subir nivel). No es parte de la campaña.
-- **Sala de Estrés:** `scenes/hub/stress_room.gd` (puerta a la derecha del campamento). Panel F4: generador de enemigos, fuego automático, congelar, matar, inmortal. No guarda nada.
+- **Sala de Estrés:** `scenes/hub/stress_room.gd` (puerta a la derecha del campamento), arena de 6400 px con seis zonas. Cinta de opciones tipo ribbon (F4 la oculta, doble clic en una pestaña la contrae): pestañas Enemigos, Aparición, Jugador, Efectos, Arena, Diagnóstico y Atajos (armada sola). El widget es genérico (`ui/debug/ribbon.gd` + `ribbon_group.gd` + `ribbon_theme.gd`, reutilizable en otras herramientas); el contenido de la sala está en `scenes/hub/stress_room_ui.gd` (una función `_tab_xxx` por pestaña, controles con `id`, `key`, `tip`). La sala expone `set_*`/`queue_batch`/`kill_all`... y sincroniza la cinta con `ribbon.set_value`. No guarda nada.
 - **Marcadores:** `entities/markers/enemy_spawn_marker.gd` (enemigos), `item_floor_marker.gd` (arma, runa o ítem en el piso; escena de prueba `levels/test_markers.tscn`).
 - **Equipo de prueba en F6:** grupo "Equipo de prueba" de `LevelBase` (`test_loadout_enabled`, `test_weapon_paths`, `test_coins`, `test_consumables`). Si después se guarda la partida, queda guardado.

@@ -73,6 +73,8 @@ const ArtScript = preload("res://core/art/art.gd")
 ## Se rompe a tiros, tajos y explosiones. Muestra `<arte>_dmg1.png` bajo el 66% de vida y `<arte>_dmg2.png` bajo el 33%
 ## (los genera art_source/world1/bake_prop_damage.py); sin esos archivos se oscurece. Al romperse desaparece y puede
 ## soltar botín (mucho más raro que el de un enemigo).
+const DURABILITY_MULT: float = 5.0
+
 @export var destructible: bool = false
 @export var max_health: float = 60.0
 ## Multiplica todas las probabilidades de botín de abajo (0 = no suelta nada).
@@ -111,9 +113,11 @@ func _ready() -> void:
 	# Los enemigos terrestres saltan los obstáculos bajos (un cerco alto no se puede saltar)
 	if not Engine.is_editor_hint() and extra_collision_top <= 0.0:
 		add_to_group(&"hop_obstacle")
-	_health = max_health
 	if destructible and not Engine.is_editor_hint():
+		# Aguantan bastante más que lo que dicen las escenas, para no romperlos disparando sin querer.
+		max_health *= DURABILITY_MULT
 		add_to_group(&"destructible")
+	_health = max_health
 	_refresh()
 	if not Engine.is_editor_hint():
 		var timer: Timer = Timer.new()

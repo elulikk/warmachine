@@ -1,5 +1,6 @@
 class_name BasicRunner
 extends CharacterBody2D
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 ## Enemigo bípedo básico que persigue horizontalmente al jugador.
 ## Posee HealthComponent, Hurtbox, animación de parpadeo blanco (Hit Flash)
 ## y genera números de daño flotantes (DamageNumber) al recibir impactos.
@@ -15,6 +16,7 @@ signal died
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
 const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
+const CodexScript = preload("res://core/codex/codex.gd")
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const CHASE_ACCEL: float = 900.0
@@ -253,6 +255,7 @@ func _deferred_death_routine() -> void:
 	var metrics_mgr: MetricsManager = MetricsManager.get_instance()
 	if metrics_mgr != null:
 		metrics_mgr.record_kill("BasicRunner")
+	CodexScript.record_enemy(self)
 	died.emit()
 	queue_free()
 
@@ -287,6 +290,7 @@ func _spawn_dropped_item() -> void:
 	var pickup: PickupItem = (load("res://entities/items/pickup_item.tscn") as PackedScene).instantiate() as PickupItem
 	pickup.item_data = dropped_item
 	scene.add_child(pickup)
+	LootLifetimeScript.arm(pickup)
 	pickup.global_position = global_position + Vector2(0.0, -40.0)
 
 
@@ -299,6 +303,7 @@ func _spawn_dropped_weapon() -> void:
 	var pickup: WeaponPickup = (load("res://entities/items/weapon_pickup.tscn") as PackedScene).instantiate() as WeaponPickup
 	pickup.weapon_data = dropped_weapon
 	scene.add_child(pickup)
+	LootLifetimeScript.arm(pickup)
 	pickup.global_position = global_position + Vector2(0.0, -43.0)
 
 
@@ -318,6 +323,7 @@ func _spawn_rune_drop() -> void:
 			container = owner if owner != null else get_parent()
 		if container != null:
 			container.add_child(pickup)
+			LootLifetimeScript.arm(pickup)
 			print("[BasicRunner] ¡Runa '%s' dropeada al morir!" % drop_rune_on_death.rune_name)
 
 

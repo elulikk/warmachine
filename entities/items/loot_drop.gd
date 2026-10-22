@@ -8,13 +8,14 @@ extends CharacterBody2D
 ## distancia: el `PickupArea` queda apagado porque su máscara (capa 2) también detectaba a los enemigos.
 
 const ArtScript = preload("res://core/art/art.gd")
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 const LootCombinerScript = preload("res://core/loot/loot_combiner.gd")
 
 const LOOT_GROUP: StringName = &"loot_drops"
 const MAX_TIER: int = 3
-## Tamaño por nivel de fusión: cobre, plata, oro, platino. Cada nivel de moneda tiene su propio sprite (plata, oro
+## Tamaño por nivel de fusión (todas iguales: los niveles solo cambian de color): cobre, plata, oro, platino. Cada nivel de moneda tiene su propio sprite (plata, oro
 ## y platino ya traen su color); el cobre es el sprite dorado teñido de cobre.
-const TIER_SCALE: Array[float] = [1.0, 1.4, 1.75, 2.1]
+const TIER_SCALE: Array[float] = [1.0, 1.0, 1.0, 1.0]
 const COPPER_TINT: Color = Color(1.0, 0.72, 0.5, 1.0)
 const SPRITE_BASE_SCALE: float = 0.5
 ## Por debajo de esta velocidad horizontal, apoyada en el piso, la moneda se duerme.
@@ -48,6 +49,7 @@ static var _frames_cache: Dictionary = {}
 
 
 func _ready() -> void:
+	LootLifetimeScript.arm(self)
 	_apply_art_frames()
 	# Impulso físico aleatorio de eyección si no fue configurado previamente (Efecto Piñata)
 	if velocity == Vector2.ZERO:

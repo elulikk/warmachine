@@ -99,8 +99,10 @@ const CHAPTER_THEMES: Dictionary = {
 				"ground_strip_lift": 0.0, "ground_strip": "city_floor_strip.png", "ground_fill": "city_floor_fill.png", "backdrop": "city_night_base.jpg", "backdrop_lift": 0.12, "backdrop_layers": [["city_parallax_sky.webp", 0.15],
 				["city_parallax_far.webp", 0.35], ["city_parallax_mid.webp", 0.65], ["city_parallax_street.webp", 1.0]]},
 			"1_02": {"backdrop": "city_alley.jpg"},
-			"1_03": {"edge": "edge_sewer.png", "ground": "sewer_stone.png", "stone": "sewer_stone.png", "ground_tone": Color(0.8, 0.9, 0.85, 1.0),
-				"fill_tone": Color(0.32, 0.4, 0.38, 1.0), "backdrop": "city_sewer.jpg"},
+			"1_03": {"edge": "edge_sewer.png", "edge_height": 44.0, "ground": "sewer_stone.png", "stone": "sewer_stone.png",
+				"ground_tone": Color(0.85, 0.9, 0.9, 1.0), "fill_tone": Color(0.4, 0.44, 0.46, 1.0), "backdrop": "city_sewer.jpg",
+				"platform_sprites": {"high": ["sewer_plat_hanging.png"], "low": ["sewer_plat_raft.png", "sewer_plat_planks.png",
+					"sewer_plat_grate.png", "sewer_plat_grate2.png", "sewer_plat_pipe.png", "sewer_plat_slab.png"]}},
 			"1_04": {"edge": "edge_roof.png", "ground": "roof_gravel.png", "fill_tone": Color(0.32, 0.32, 0.4, 1.0), "backdrop": "city_rooftop.jpg"},
 			"1_05": {"edge": "edge_dock.png", "ground": "dock_planks.png", "ground_tone": Color(0.8, 0.85, 0.95, 1.0), "fill_tone": Color(0.3, 0.34, 0.42, 1.0),
 				"backdrop": "city_dock.jpg"},
@@ -268,6 +270,31 @@ static func _skin_body(body: StaticBody2D) -> void:
 		border.visible = false
 
 
+## Plataforma delgada dibujada con un sprite entero: `platform_sprites` = {"high": [...], "low": [...]}. Las que están
+## altas (cara superior sobre y = 470) llevan el sprite "colgante" (cadenas hacia arriba, el tablón abajo); el resto
+## se reparte entre los de `low` según su posición (siempre el mismo en la misma plataforma).
+static func _build_sprite_platform(visual: Node2D, dir: String, extent: Vector2, theme: Dictionary, world_rect: Rect2) -> bool:
+	var sprites: Dictionary = theme["platform_sprites"] as Dictionary
+	var high: bool = world_rect.position.y < 470.0
+	var files: Array = sprites.get("high" if high else "low", []) as Array
+	if files.is_empty():
+		return false
+	var tex: Texture2D = ArtScript.tex(dir + str(files[absi(hash(Vector2i(world_rect.position))) % files.size()]))
+	if tex == null:
+		return false
+	var width: float = extent.x + 8.0
+	var height: float = width * float(tex.get_height()) / float(tex.get_width())
+	var sprite: TextureRect = TextureRect.new()
+	sprite.texture = tex
+	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sprite.stretch_mode = TextureRect.STRETCH_SCALE
+	sprite.size = Vector2(width, height)
+	sprite.position = Vector2(-4.0, 10.0 - height if high else -2.0)
+	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	visual.add_child(sprite)
+	return true
+
+
 ## Capítulo con tema propio (CHAPTER_THEMES): misma clasificación de cuerpos (muro / plataforma delgada / suelo).
 static func _skin_body_themed(body: StaticBody2D, rect: ColorRect, origin: Vector2, extent: Vector2, theme: Dictionary) -> void:
 	var dir: String = str(theme["dir"])
@@ -288,7 +315,9 @@ static func _skin_body_themed(body: StaticBody2D, rect: ColorRect, origin: Vecto
 	if stone == null:
 		stone = ground
 
-	if is_thin:
+	if is_thin and theme.has("platform_sprites") and _build_sprite_platform(visual, dir, extent, theme, world_rect):
+		pass # plataforma dibujada de una pieza (balsa, tablones, rejilla, plataforma colgante...)
+	elif is_thin:
 		var plank: Texture2D = ArtScript.tex(dir + str(theme["platform"]))
 		if plank != null:
 			var margins: Array = theme["platform_margins"] as Array

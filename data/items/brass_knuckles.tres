@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "brass_knuckles"
+item_name = "Puño Americano (Manos)"
+item_color = Color(0.84, 0.69, 0.27, 1)
+equip_slot = "GLOVES"
+elemental_infusion = ""
+tags = []
+modifiers = [{
+"is_percent": true,
+"stat": "damage_multiplier",
+"value": 0.08
+}, {
+"is_percent": false,
+"stat": "armor",
+"value": 1.0
+}]
+grants_extra_jump = 0
+rarity = 0
+gold_value = 50
+description = "Bronce macizo para los dedos, sacado del bolsillo de un matón. +8 % de daño con todas las armas y 1 de armadura."

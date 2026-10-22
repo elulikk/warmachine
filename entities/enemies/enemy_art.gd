@@ -39,6 +39,7 @@ const PROPS_DIR: String = "res://assets/art/props/"
 ## Se generan con art_source/process_anim.py, que imprime la línea de este diccionario.
 const MOB_FRAMES: Dictionary = {
 	"thief": {"dir": "res://assets/art/world1/thief/", "foot": Vector2(77.0, 164), "walk": 5, "attack": 4, "hit": 2, "death": 3},
+	"gunman": {"dir": "res://assets/art/world1/gunman/", "foot": Vector2(76.2, 183), "walk": 5, "attack": 2, "hit": 0, "death": 0},
 	"rat": {"dir": "res://assets/art/world1/rat/", "foot": Vector2(73.0, 88), "walk": 5, "attack": 5, "hit": 2, "death": 3},
 }
 
@@ -708,7 +709,7 @@ func _aim_gun() -> void:
 	if target == null:
 		return
 	var origin: Vector2 = _gun.global_position
-	var aim: Vector2 = (target.global_position + Vector2(0.0, -32.0)) - origin
+	var aim: Vector2 = (target.call("get_body_center") as Vector2 if target.has_method("get_body_center") else target.global_position + Vector2(0.0, -32.0)) - origin
 	if aim.length_squared() < 1.0:
 		return
 	# El cañón siempre apunta en su eje X local; al mirar a la izquierda se invierte en Y para no quedar de cabeza

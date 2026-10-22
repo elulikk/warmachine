@@ -4,11 +4,17 @@ extends CanvasLayer
 ## Conecta en tiempo real con las señales de HealthComponent, StatsManager y WeaponManager:
 ## - Superior izquierda: nivel, nombre y EXP (la vida es el rectángulo rojo sobre la hotbar).
 ## - Inferior derecha: arma equipada y visualización gráfica de los 3 sockets de runas.
+## - Abajo a la derecha: contador de munición grande del arma en mano (ui/ammo_counter.gd) y, encima, el estado
+##   del equipo: arrojadizo y combustible del jetpack (ui/equipment_status.gd).
 ## - Centro inferior: barra de acceso rápido de 9 casilleros (ui/hotbar.gd), que reemplaza los botones de arma.
 
 const SteamSkin = preload("res://ui/components/steam_skin.gd")
+const WindowRegistryScript = preload("res://ui/framework/window_registry.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const HotbarScript = preload("res://ui/hotbar.gd")
+const AmmoCounterScript = preload("res://ui/ammo_counter.gd")
+const EquipmentStatusScript = preload("res://ui/equipment_status.gd")
+const BossHealthBarScript = preload("res://ui/boss_health_bar.gd")
 
 @onready var health_bar: ProgressBar = %HealthBar
 @onready var health_label: Label = %HealthLabel
@@ -54,6 +60,12 @@ func _ready() -> void:
 	if bottom_right != null:
 		bottom_right.visible = false
 	add_child(HotbarScript.new())
+	# Barra de vida del jefe, arriba al centro (aparece sola cuando un jefe pelea)
+	add_child(BossHealthBarScript.new())
+	add_child(AmmoCounterScript.new())
+	add_child(EquipmentStatusScript.new())
+	# Ventanas modulares (Códice, etc.): ver ui/framework/window_registry.gd
+	WindowRegistryScript.install(self)
 	_build_sector_title()
 	# Enlazar diferido con el jugador de la escena activa
 	_find_and_bind_player.call_deferred()
@@ -260,7 +272,7 @@ func _on_leveled_up(new_level: int) -> void:
 	_refresh_stats_label()
 
 
-## Línea de estado bajo la barra de EXP: armadura (con su mitigación) y daño por disparo del arma activa.
+## Línea de estado bajo la barra de EXP: armadura (puntos de daño que resta por golpe) y daño por disparo del arma activa.
 func _refresh_stats_label() -> void:
 	if stats_label == null:
 		return
@@ -268,7 +280,7 @@ func _refresh_stats_label() -> void:
 	if player == null or player.stats_manager == null:
 		return
 	var stats: StatsManager = player.stats_manager
-	var line: String = "ARM %d (-%d%%)" % [roundi(stats.get_armor()), roundi(stats.get_armor_mitigation_percent())]
+	var line: String = "ARM %d (-%d)" % [roundi(stats.get_armor()), roundi(stats.get_armor())]
 	if _current_bound_weapon != null:
 		var shot_damage: float = _current_bound_weapon.get_effective_damage() * stats.get_damage_multiplier()
 		line += "  |  DMG %d" % roundi(shot_damage)

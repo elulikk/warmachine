@@ -136,6 +136,8 @@ func _spawn_effect(spawn_pos: Vector2) -> void:
 		(effect as AcidPool).source_node = thrower
 	elif effect is GasCloud:
 		(effect as GasCloud).source_node = thrower
+	elif "source_node" in effect:
+		effect.set("source_node", thrower)
 	
 	effect.position = spawn_pos
 	host.add_child.call_deferred(effect)

@@ -63,9 +63,19 @@ func _land() -> void:
 	if container != null:
 		var pool_node: Area2D = FuelPoolScript.new()
 		pool_node.source_node = payload.source_node if payload != null else null
-		pool_node.position = global_position
+		pool_node.position = _floor_point()
 		container.call_deferred("add_child", pool_node)
 	call_deferred("recycle")
+
+
+## Punto del piso bajo la gota: así todos los charcos quedan a la misma altura, sin importar cuánto se hundió la gota al chocar.
+func _floor_point() -> Vector2:
+	var from: Vector2 = global_position + Vector2(0.0, -48.0)
+	var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(from, from + Vector2(0.0, 160.0), 1)
+	var hit: Dictionary = get_world_2d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return global_position
+	return Vector2(global_position.x, (hit["position"] as Vector2).y)
 
 
 func recycle() -> void:

@@ -11,10 +11,15 @@
 [ext_resource type="Script" path="res://levels/level_base.gd" id="level"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="player"]
 [ext_resource type="Script" path="res://core/projectile_pool.gd" id="pool"]
+[ext_resource type="PackedScene" path="res://entities/enemies/city_riot_guard.tscn" id="riot"]
 [ext_resource type="Script" path="res://core/managers/save_manager.gd" id="save"]
 [ext_resource type="PackedScene" path="res://entities/enemies/city_thief.tscn" id="thief"]
 [ext_resource type="PackedScene" path="res://entities/enemies/city_thug.tscn" id="thug"]
+[ext_resource type="Resource" path="res://data/weapons/bazooka.tres" id="w_bazooka"]
+[ext_resource type="Resource" path="res://data/weapons/extinguisher.tres" id="w_extinguisher"]
+[ext_resource type="Resource" path="res://data/weapons/nail_gun.tres" id="w_nail_gun"]
 [ext_resource type="Resource" path="res://data/weapons/smg.tres" id="w_smg"]
+[ext_resource type="Resource" path="res://data/weapons/thompson.tres" id="w_thompson"]
 [ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="wpickup"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="zone"]
 
@@ -80,6 +85,7 @@ chapter_number = 1
 next_level_path = "res://levels/chapter_1/level_1_08.tscn"
 abyss_after_x = 2060.0
 abyss_threshold_after = -260.0
+gear_loot_tier = 2
 
 [node name="Background" type="CanvasLayer" parent="."]
 layer = -100
@@ -649,13 +655,58 @@ mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
 [node name="Pedestal1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(620.0, -253.0)
+position = Vector2(1420.0, 147.0)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Pedestal1"]
 shape = SubResource("Rect_64x18")
 
 [node name="ColorRect" type="ColorRect" parent="Environment/Pedestal1"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+mouse_filter = 2
+color = Color(0.5, 0.45, 0.35, 1)
+
+[node name="Pedestal2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(620.0, -253.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Pedestal2"]
+shape = SubResource("Rect_64x18")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Pedestal2"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+mouse_filter = 2
+color = Color(0.5, 0.45, 0.35, 1)
+
+[node name="Pedestal3" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1380.0, -653.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Pedestal3"]
+shape = SubResource("Rect_64x18")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Pedestal3"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+mouse_filter = 2
+color = Color(0.5, 0.45, 0.35, 1)
+
+[node name="Pedestal4" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(950.0, -1053.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Pedestal4"]
+shape = SubResource("Rect_64x18")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Pedestal4"]
 offset_left = -32.0
 offset_top = -9.0
 offset_right = 32.0
@@ -723,6 +774,21 @@ offset_bottom = 35.0
 mouse_filter = 2
 color = Color(0.16, 0.17, 0.22, 1)
 
+[node name="Pedestal5" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(10480.0, -1069.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Pedestal5"]
+shape = SubResource("Rect_64x18")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Pedestal5"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+mouse_filter = 2
+color = Color(0.5, 0.45, 0.35, 1)
+
 [node name="Thief1" parent="." instance=ExtResource("thief")]
 position = Vector2(800.0, 555.0)
 
@@ -739,6 +805,10 @@ position = Vector2(1500.0, 555.0)
 [node name="Checkpoint2" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(1550.0, 156.0)
 checkpoint_id = "checkpoint_4_04_b"
+
+[node name="WeaponPickup1" parent="." instance=ExtResource("wpickup")]
+position = Vector2(1420.0, 112.0)
+weapon_data = ExtResource("w_extinguisher")
 
 [node name="Thug2" parent="." instance=ExtResource("thug")]
 position = Vector2(1250.0, 155.0)
@@ -760,7 +830,7 @@ checkpoint_id = "checkpoint_4_04_c"
 position = Vector2(450.0, -244.0)
 checkpoint_id = "checkpoint_4_04_d"
 
-[node name="WeaponPickup1" parent="." instance=ExtResource("wpickup")]
+[node name="WeaponPickup2" parent="." instance=ExtResource("wpickup")]
 position = Vector2(620.0, -288.0)
 weapon_data = ExtResource("w_smg")
 
@@ -770,9 +840,16 @@ position = Vector2(1000.0, -245.0)
 [node name="Gunman2" parent="." instance=ExtResource("gunman")]
 position = Vector2(1500.0, -245.0)
 
+[node name="Riot1" parent="." instance=ExtResource("riot")]
+position = Vector2(1250.0, -245.0)
+
 [node name="Checkpoint5" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(1550.0, -644.0)
 checkpoint_id = "checkpoint_4_04_e"
+
+[node name="WeaponPickup3" parent="." instance=ExtResource("wpickup")]
+position = Vector2(1380.0, -688.0)
+weapon_data = ExtResource("w_nail_gun")
 
 [node name="Gunman3" parent="." instance=ExtResource("gunman")]
 position = Vector2(1450.0, -645.0)
@@ -796,6 +873,10 @@ checkpoint_id = "checkpoint_4_04_f"
 [node name="Checkpoint7" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(700.0, -1044.0)
 checkpoint_id = "checkpoint_4_04_g"
+
+[node name="WeaponPickup4" parent="." instance=ExtResource("wpickup")]
+position = Vector2(950.0, -1088.0)
+weapon_data = ExtResource("w_thompson")
 
 [node name="Hitman1" parent="." instance=ExtResource("hitman")]
 position = Vector2(1300.0, -1045.0)
@@ -847,6 +928,9 @@ position = Vector2(7500.0, -1061.0)
 [node name="Gunman6" parent="." instance=ExtResource("gunman")]
 position = Vector2(7800.0, -1061.0)
 
+[node name="Riot2" parent="." instance=ExtResource("riot")]
+position = Vector2(7650.0, -1061.0)
+
 [node name="Hitman8" parent="." instance=ExtResource("hitman")]
 position = Vector2(8400.0, -1061.0)
 
@@ -862,6 +946,10 @@ position = Vector2(9500.0, -1061.0)
 [node name="Checkpoint10" parent="." instance=ExtResource("checkpoint")]
 position = Vector2(10300.0, -1060.0)
 checkpoint_id = "checkpoint_4_04_j"
+
+[node name="WeaponPickup5" parent="." instance=ExtResource("wpickup")]
+position = Vector2(10480.0, -1104.0)
+weapon_data = ExtResource("w_bazooka")
 
 [node name="Arena4" parent="." instance=ExtResource("arena")]
 position = Vector2(11000.0, -1060.0)

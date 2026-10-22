@@ -6,11 +6,12 @@
 script = ExtResource("1_script")
 weapon_name = "Frostmourne"
 family = 11
-grip = 1
+grip = 0
 weapon_type = 1
 is_automatic = false
-swing_arc_degrees = 140.0
-swing_duration = 0.16
+swing_arc_degrees = 190.0
+swing_duration = 0.18
+melee_reach = 26.0
 damage = 46.0
 fire_rate = 2.2
 knockback_force = 280.0

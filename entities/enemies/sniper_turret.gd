@@ -76,7 +76,7 @@ func _physics_process(delta: float) -> void:
 		
 		# Mantener apuntado hacia el objetivo si sigue activo
 		if current_target != null and is_instance_valid(current_target):
-			var target_center: Vector2 = current_target.global_position + Vector2(0, -32)
+			var target_center: Vector2 = current_target.call("get_body_center") as Vector2 if current_target.has_method("get_body_center") else current_target.global_position + Vector2(0, -32)
 			locked_aim_direction = (target_center - spawn_pos).normalized()
 		
 		# Actualizar línea de mira

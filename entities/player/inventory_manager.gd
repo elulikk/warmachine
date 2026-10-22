@@ -8,6 +8,7 @@ signal item_added(res: Resource, slot_index: int)
 signal item_removed(res: Resource, slot_index: int)
 
 const CAPACITY: int = 20
+const CodexScript = preload("res://core/codex/codex.gd")
 
 var backpack: Array[Resource] = []
 
@@ -30,6 +31,7 @@ func add_item(res: Resource) -> bool:
 	for i in range(backpack.size()):
 		if backpack[i] == null:
 			backpack[i] = res
+			CodexScript.record_weapon(res)
 			item_added.emit(res, i)
 			inventory_updated.emit()
 			print("[InventoryManager] Ítem agregado al slot %d de la mochila." % i)

@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/tidal_wave.tscn" id="2_wave"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/poseidon_trident.tres"
+weapon_name = "Tridente de Poseidón"
+family = 12
+grip = 1
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 80.0
+swing_duration = 0.2
+crit_multiplier = 1.7
+melee_hitbox_scale = 1.1
+melee_reach = 30.0
+ice_duration = 1.5
+ice_speed_multiplier = 0.6
+damage = 48.0
+fire_rate = 1.4
+knockback_force = 320.0
+recoil_force = 0.0
+projectile_speed = 0.0
+armor_penetration = 0.25
+magazine_size = 0
+reload_time = 0.0
+innate_status_effects = Array[String](["ICE"])
+melee_projectile_scene = ExtResource("2_wave")
+melee_projectile_damage_mult = 0.7
+melee_projectile_speed = 430.0
+melee_projectile_pierce = 20
+melee_projectile_horizontal = true
+fire_sound = &"wave_splash"
+max_sockets = 3
+socketed_runes = []
+rarity = 4
+gold_value = 900
+description = "El tridente del dios del mar. Cada estocada levanta una ola que corre por el piso, atraviesa a todos, los empuja y los deja empapados (más lentos)."

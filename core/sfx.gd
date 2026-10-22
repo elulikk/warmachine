@@ -7,7 +7,11 @@ extends RefCounted
 ## Cómo se logra el carácter "sampleado de los 90":
 ## - Capas de ruido blanco filtrado (pasa-bajos con barrido) para el cuerpo y la cola de cada golpe.
 ## - Un "thump" senoidal grave con caída de tono para el peso.
-## - Eco corto de sala, saturación suave, y degradación final (retención de muestras ~11 kHz y 7 bits).
+## - Eco corto de sala y saturación suave (la degradación 8-bit de antes quedó apagada: ver `LOFI`).
+##
+## Disparos, impactos y explosiones de alta calidad: `assets/audio/sfx/<nombre>_<n>.wav` (los genera
+## `art_source/audio/synth_guns.py`). Si existe `<nombre>_1.wav`, se usa en vez de la receta, con las variantes
+## al azar sin repetir. Pisar esos archivos con audio real también funciona.
 ##
 ## Cómo reemplazar un sonido por audio real, sin tocar la lógica:
 ## - Por arma: asignar `fire_stream` / `hit_stream` en su WeaponData (.tres).
@@ -15,6 +19,10 @@ extends RefCounted
 ## Recetas: ver `_build()`. Para sumar un sonido nuevo, agregar un caso ahí y llamarlo por nombre.
 
 const MIX_RATE: int = 22050
+## true = degradación de los 90 (7 bits, ~11 kHz) en los sonidos sintetizados. Apagada: sonaba a 8-bit.
+const LOFI: bool = false
+## Carpeta de sonidos en archivo (`<nombre>_1.wav`, `<nombre>_2.wav`...), con prioridad sobre las recetas.
+const SAMPLE_DIR: String = "res://assets/audio/sfx/"
 const SFX_BUS: StringName = &"SFX"
 const MUSIC_BUS: StringName = &"Music"
 const VOICE_COUNT: int = 20
@@ -27,6 +35,7 @@ const HEAR_MAX_DISTANCE: float = 1400.0
 const DEFAULT_MIN_INTERVAL_MSEC: int = 35
 const MIN_INTERVAL_MSEC: Dictionary = {
 	&"shot_flame": 120,
+	&"shot_extinguisher": 110,
 	&"fire_ignite": 260,
 	&"laser_beam": 80,
 	&"chain_lightning": 45,
@@ -51,6 +60,7 @@ const MIN_INTERVAL_MSEC: Dictionary = {
 ## Sonidos que se generan de a uno por cuadro al cargar un nivel, para evitar tirones en el primer disparo.
 const PREWARM_SOUNDS: Array[StringName] = [
 	&"shot_pistol", &"shot_auto", &"shot_rifle", &"shot_shotgun", &"shot_flame", &"shot_ice",
+	&"shot_revolver", &"shot_smg", &"shot_sniper", &"shot_sawed", &"shot_enemy_gun",
 	&"swing", &"swing_light", &"swing_heavy",
 	&"hit_flesh", &"hit_blade", &"hit_armor", &"hit_crit", &"hit_shield", &"hit_world",
 	&"enemy_death", &"reload_out", &"reload_in", &"reload_done", &"reload_shell", &"reload_rack", &"weapon_swap",
@@ -136,7 +146,8 @@ static func play_weapon_fire(ctx: Node, weapon: WeaponData) -> void:
 	if weapon.fire_stream != null:
 		play_stream(ctx, weapon.fire_stream, &"weapon_stream", Vector2.INF, -2.0, randf_range(0.97, 1.03))
 		return
-	var pitch: float = lerpf(1.15, 0.85, clampf(weapon.damage / 120.0, 0.0, 1.0)) * randf_range(0.96, 1.04)
+	# Los sonidos en archivo ya traen el peso de cada arma: el tono varía poco para no deformarlos.
+	var pitch: float = lerpf(1.06, 0.94, clampf(weapon.damage / 120.0, 0.0, 1.0)) * randf_range(0.97, 1.03)
 	play(ctx, weapon_fire_profile(weapon), Vector2.INF, -3.0, pitch)
 
 
@@ -157,26 +168,33 @@ static func play_weapon_swing(ctx: Node, weapon: WeaponData) -> void:
 
 ## Elige la receta de disparo a partir de la familia y datos del arma (no depende del nombre).
 static func weapon_fire_profile(weapon: WeaponData) -> StringName:
+	if weapon.fire_sound != &"":
+		return weapon.fire_sound
 	# Armas que escupen combustible encendido (no lanzallamas): chasquido mágico suave en vez de bala.
 	if weapon.projectile_scene != null and weapon.projectile_scene.resource_path.ends_with("fuel_droplet.tscn") and weapon.family != WeaponData.WeaponFamily.FLAMETHROWER:
 		return &"shot_magic"
 	match weapon.family:
 		WeaponData.WeaponFamily.SHOTGUN:
-			return &"shot_shotgun"
+			# Recortada o de dos caños (sin bomba) contra la de corredera
+			return &"shot_sawed" if weapon.magazine_size <= 2 else &"shot_shotgun"
 		WeaponData.WeaponFamily.FLAMETHROWER:
 			return &"shot_flame"
-		WeaponData.WeaponFamily.SNIPER, WeaponData.WeaponFamily.RIFLE:
-			return &"shot_rifle"
+		WeaponData.WeaponFamily.SNIPER:
+			return &"shot_sniper"
+		WeaponData.WeaponFamily.RIFLE:
+			return &"shot_auto" if weapon.is_automatic else &"shot_rifle"
 		WeaponData.WeaponFamily.CARBINE:
 			return &"shot_rifle" if weapon.damage >= 24.0 else &"shot_auto"
 		WeaponData.WeaponFamily.SMG:
-			return &"shot_auto"
+			return &"shot_smg"
 		WeaponData.WeaponFamily.ENERGY:
 			if weapon.innate_status_effects.has("ICE"):
 				return &"shot_ice"
 			return &"shot_magic"
-		WeaponData.WeaponFamily.REVOLVER, WeaponData.WeaponFamily.PISTOL:
-			return &"shot_pistol"
+		WeaponData.WeaponFamily.REVOLVER:
+			return &"shot_revolver"
+		WeaponData.WeaponFamily.PISTOL:
+			return &"shot_revolver" if weapon.damage >= 60.0 else &"shot_pistol"
 	if weapon.pellets_per_shot >= 3:
 		return &"shot_shotgun"
 	if weapon.is_automatic and weapon.fire_rate >= 14.0:
@@ -287,9 +305,32 @@ static func _get_stream(sound: StringName) -> AudioStream:
 		return _overrides[sound] as AudioStream
 	if _cache.has(sound):
 		return _cache[sound] as AudioStream
-	var stream: AudioStreamWAV = _build(sound)
+	var stream: AudioStream = _load_samples(sound)
+	if stream == null:
+		stream = _build(sound)
 	_cache[sound] = stream
 	return stream
+
+
+## Variantes en archivo de un sonido (`<nombre>_1.wav`, `_2`...) como un AudioStreamRandomizer; null si no hay.
+static func _load_samples(sound: StringName) -> AudioStream:
+	var first: String = "%s%s_1.wav" % [SAMPLE_DIR, sound]
+	if not ResourceLoader.exists(first):
+		return null
+	var randomizer: AudioStreamRandomizer = AudioStreamRandomizer.new()
+	randomizer.playback_mode = AudioStreamRandomizer.PLAYBACK_RANDOM_NO_REPEATS
+	randomizer.random_pitch = 1.0
+	randomizer.random_volume_offset_db = 1.0
+	var index: int = 1
+	while index <= 8:
+		var path: String = "%s%s_%d.wav" % [SAMPLE_DIR, sound, index]
+		if not ResourceLoader.exists(path):
+			break
+		var variant: AudioStream = load(path) as AudioStream
+		if variant != null:
+			randomizer.add_stream(-1, variant)
+		index += 1
+	return randomizer if randomizer.streams_count > 0 else null
 
 
 # ==============================================================================
@@ -357,13 +398,13 @@ static func _render(
 	var held: float = 0.0
 	var step: int = maxi(1, hold)
 	for i in range(count):
-		if i % step == 0:
+		if not LOFI or i % step == 0:
 			var sample: float = buf[i] * 0.85
 			if drive > 1.0:
 				sample = tanh(sample * drive) / drive_norm
 			sample = clampf(sample, -1.0, 1.0)
-			# Reducción de profundidad de bits: el "grano" de los samples viejos
-			held = roundf(sample * levels) / levels
+			# Reducción de profundidad de bits: el "grano" de los samples viejos (solo con LOFI)
+			held = roundf(sample * levels) / levels if LOFI else sample
 		# Fundido de las últimas muestras para no dejar un clic al final
 		var tail: float = clampf(float(count - i) / 64.0, 0.0, 1.0)
 		data.encode_s16(i * 2, int(held * tail * 32767.0))

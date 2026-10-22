@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat/throwables/area_burst.gd" id="1_burst"]
+
+[node name="MolotovBurst" type="Area2D"]
+script = ExtResource("1_burst")
+radius = 90.0
+damage = 24.0
+status_effects = Array[String](["FIRE"])
+status_stacks = 6
+tick_damage = 4.0
+ignites_gas = true
+burst_color = Color(1, 0.5, 0.1, 1)
+visual_duration = 0.5
+sprite_path = "res://assets/sprites/efectos/fire_explosion.png"
