@@ -3,8 +3,10 @@ extends Node
 ## Sin class_name: lo crea `SettingsHost` con `load()` y vive bajo la raíz (también en pausa y entre escenas).
 ##
 ## Dos capas con un `ColorRect` que lee la pantalla (`hint_screen_texture`, funciona en `gl_compatibility`):
-## - **Mundo** (capa 1, debajo del HUD que está en la 2): viñeta, grano de película y resplandor (bloom barato
-##   de 12 muestras sobre lo brillante). Solo tiñe el juego, no la interfaz.
+## - **Mundo** (capa 1, debajo del HUD que está en la 2): gradación de color del nivel, viñeta, grano de película y
+##   resplandor (bloom barato de 12 muestras sobre lo brillante). Solo tiñe el juego, no la interfaz.
+##   La gradación es dirección de arte (no una opción): la fija el nivel con `set_grade` (ver `grade` en
+##   `levels/level_skin.gd`) y se borra sola cuando esa escena deja de estar en el árbol.
 ## - **Daltonismo** (capa 250, sobre todo, incluida la ventana de opciones): corrección por daltonización (LMS)
 ##   para protanopia, deuteranopia o tritanopia, con intensidad ajustable.
 ## Si un efecto está apagado su capa se oculta y no cuesta nada.
@@ -21,6 +23,13 @@ uniform float vignette = 0.0;
 uniform float grain = 0.0;
 uniform float bloom = 0.0;
 uniform float seed = 0.0;
+uniform float danger = 0.0;
+uniform bool grade_on = false;
+uniform float grade_gamma = 1.0;
+uniform float grade_contrast = 1.0;
+uniform float grade_saturation = 1.0;
+uniform vec3 grade_shadows : source_color = vec3(1.0);
+uniform vec3 grade_highlights : source_color = vec3(1.0);
 
 void fragment() {
 	vec2 uv = SCREEN_UV;
@@ -36,9 +45,22 @@ void fragment() {
 		}
 		col += acc / 12.0 * bloom * 2.2;
 	}
+	if (grade_on) {
+		// gamma > 1 hunde los medios y deja vivas las luces; después contraste, saturación y tinte por luminancia
+		col = pow(max(col, vec3(0.0)), vec3(grade_gamma));
+		col = (col - 0.5) * grade_contrast + 0.5;
+		float lum = dot(col, vec3(0.299, 0.587, 0.114));
+		col = mix(vec3(lum), col, grade_saturation);
+		col = max(col * mix(grade_shadows, grade_highlights, smoothstep(0.05, 0.85, lum)), vec3(0.0));
+	}
 	if (vignette > 0.0) {
 		vec2 d = (uv - 0.5) * vec2(1.0, 0.82);
 		col *= 1.0 - vignette * smoothstep(0.28, 0.78, length(d) * 1.35);
+	}
+	if (danger > 0.0) {
+		vec2 dd = (uv - 0.5) * vec2(1.0, 0.82);
+		float edge = smoothstep(0.18, 0.75, length(dd) * 1.35);
+		col = mix(col, vec3(0.8, 0.03, 0.03), clamp(danger * edge * 0.85, 0.0, 0.85));
 	}
 	if (grain > 0.0) {
 		float n = fract(sin(dot(uv * vec2(1280.0, 720.0) + seed, vec2(12.9898, 78.233))) * 43758.5453);
@@ -85,6 +107,11 @@ var _world_rect: ColorRect = null
 var _world_mat: ShaderMaterial = null
 var _cb_layer: CanvasLayer = null
 var _cb_mat: ShaderMaterial = null
+## Borde rojo de vida baja (0..1), lo fija `low_health_feedback.gd`. Independiente de las opciones de viñeta.
+var _danger: float = 0.0
+## Gradación activa y la escena que la pidió (se apaga cuando esa escena sale del árbol).
+var _grade_on: bool = false
+var _grade_owner: WeakRef = null
 
 
 func _ready() -> void:
@@ -129,14 +156,48 @@ func refresh() -> void:
 	_world_mat.set_shader_parameter("vignette", vignette)
 	_world_mat.set_shader_parameter("grain", grain)
 	_world_mat.set_shader_parameter("bloom", bloom)
-	_world_layer.visible = vignette > 0.0 or grain > 0.0 or bloom > 0.0
+	_world_mat.set_shader_parameter("danger", _danger)
+	_world_mat.set_shader_parameter("grade_on", _grade_on)
+	_world_layer.visible = vignette > 0.0 or grain > 0.0 or bloom > 0.0 or _danger > 0.0 or _grade_on
 	var mode: int = int(_settings.call("get_int", "colorblind"))
 	_cb_mat.set_shader_parameter("mode", mode)
 	_cb_mat.set_shader_parameter("strength", clampf(float(_settings.call("get_float", "colorblind_strength")), 0.0, 1.0))
 	_cb_layer.visible = mode > 0
 
 
+## Intensidad del borde rojo de vida baja. Prende la capa del mundo aunque las demás opciones estén apagadas.
+func set_danger(amount: float) -> void:
+	var clamped: float = clampf(amount, 0.0, 1.0)
+	if is_equal_approx(clamped, _danger) or _world_mat == null:
+		return
+	var was_on: bool = _danger > 0.0
+	_danger = clamped
+	_world_mat.set_shader_parameter("danger", _danger)
+	if was_on != (_danger > 0.0):
+		refresh()
+
+
+## Gradación de color del nivel `owner_node`: `gamma`, `contrast`, `saturation` (float) y `shadows` / `highlights`
+## (Color que multiplica las zonas oscuras / claras). Diccionario vacío = sin gradación.
+func set_grade(grade: Dictionary, owner_node: Node) -> void:
+	if _world_mat == null:
+		return
+	_grade_on = not grade.is_empty()
+	_grade_owner = weakref(owner_node) if _grade_on and owner_node != null else null
+	if _grade_on:
+		_world_mat.set_shader_parameter("grade_gamma", float(grade.get("gamma", 1.0)))
+		_world_mat.set_shader_parameter("grade_contrast", float(grade.get("contrast", 1.0)))
+		_world_mat.set_shader_parameter("grade_saturation", float(grade.get("saturation", 1.0)))
+		_world_mat.set_shader_parameter("grade_shadows", grade.get("shadows", Color.WHITE) as Color)
+		_world_mat.set_shader_parameter("grade_highlights", grade.get("highlights", Color.WHITE) as Color)
+	refresh()
+
+
 func _process(_delta: float) -> void:
+	if _grade_on:
+		var owner_node: Node = _grade_owner.get_ref() as Node if _grade_owner != null else null
+		if owner_node == null or not owner_node.is_inside_tree():
+			set_grade({}, null)
 	# El grano cambia cada cuadro (en tiempo real, aunque el juego esté en pausa o en hit stop)
 	if _world_layer != null and _world_layer.visible:
 		_world_mat.set_shader_parameter("seed", float(Time.get_ticks_msec() % 100000) * 0.013)

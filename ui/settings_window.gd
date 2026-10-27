@@ -255,11 +255,19 @@ func _build_video() -> Control:
 				_rebuild()))
 	_row(page, "Densidad de partículas", _slider(SettingsScript.get_float("particles"), 0.25, 1.0, 0.05,
 		func(v: float) -> void: _put("particles", v)))
+	_row(page, "Estilo del fuego y del ácido", _option(["Sprites (liviano)", "Partículas", "Shaders"] as Array[String],
+		SettingsScript.get_int("fire_style"), func(i: int) -> void: _put("fire_style", i)))
+	_row(page, "Barras de vida de enemigos (al empezar el sector)", _check(SettingsScript.get_bool("enemy_health_bars"),
+		func(on: bool) -> void: _put("enemy_health_bars", on)))
+	_row(page, "Enemigos lejanos como sprite", _check(SettingsScript.get_bool("enemy_lod"),
+		func(on: bool) -> void: _put("enemy_lod", on)))
 	for entry: Array in [["fx_vignette", "Viñeta"], ["fx_grain", "Grano de película"], ["fx_bloom", "Resplandor (bloom)"]]:
 		var key: String = str(entry[0])
 		_row(page, str(entry[1]), _check(SettingsScript.get_bool(key), func(on: bool) -> void:
 			_put(key, on)
 			_rebuild()))
+	_row(page, "Fondos de paralaje (capas)", _check(SettingsScript.get_bool("parallax_bg"), func(on: bool) -> void:
+		_put("parallax_bg", on)))
 	_note(page, "Baja: sin efectos y la mitad de partículas. Media: viñeta. Alta: viñeta y grano. Ultra: además resplandor.")
 	return page
 

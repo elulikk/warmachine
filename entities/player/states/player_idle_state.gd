@@ -28,7 +28,7 @@ func physics_update(delta: float) -> void:
 		transitioned.emit(self, &"jump")
 		return
 	
-	if absf(input_dir) > 0.05:
+	if absf(input_dir) > 0.05 or player.is_dashing():
 		transitioned.emit(self, &"move")
 		return
 	

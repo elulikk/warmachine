@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://entities/world/world_prop.gd" id="1_prop"]
+
+[node name="Doghouse" type="StaticBody2D" groups=["world"]]
+collision_mask = 0
+script = ExtResource("1_prop")
+size = Vector2(110, 80)
+art_path = "res://assets/art/world4/props/doghouse.png"
+placeholder_color = Color(0.55, 0.3, 0.22, 1)

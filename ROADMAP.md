@@ -1,446 +1,257 @@
-# ROADMAP — SHOOTER-RPG PLATAFORMA (PROTOTIPO)
+# ROADMAP — Lo que falta hacer
 
-## 0. Estado Actual (Línea de Base)
-* **Motor:** Godot 4.7, Jolt Physics, GDScript 2.0 con tipado estricto. Sin testing headless: la verificación es en runtime (F5).
-* **Sistemas operativos:**
-  - FSM del jugador (correr, saltar, coyote time, jump buffer, pared, jetpack, alas, vuelo).
-  - Combate desacoplado: `HitPayload` → `HealthComponent` → `ProjectilePool`.
-  - Persistencia en 3 slots JSON (`user://saves/slot_{id}.json`).
-  - Baúl (`StashChest`) individual por personaje.
-  - HUD, `ZoneModifierManager`, `LootTable`, `WaveManager` (oleadas continuas en el sandbox).
-  - Rarezas y tooltips RPG, forja con el Herrero.
-* **Ya existe y se reutiliza:** `LevelRegistry`, `MapSelector` (pestañas por capítulo y grilla de niveles), `LevelBase`, orbes de EXP.
-* **Validado en juego:** Fase A (game feel) y los sectores 1-1 a 1-4 (secciones 2.1 a 2.2c). El balance fino de cada nivel sigue anotado como pendiente en su sección.
-* **Armado, pendiente de validar:** Sector 1-5 (sección 2.2d) y la segunda tanda de la Fase O (opciones, posprocesado, recarga por arma, pantalla de carga, registro de errores, ícono y versión del `.exe`).
-* **Hecho y validado en juego (2026-10-11):** comercio de dos columnas con venta y recompra (`TradeSession`, `TraderData`, `TradeWindow`; sección 2.3), arrastrar armas de la mochila a la barra de acceso rápido, fogonazo y humo del arma, chispas contra el entorno, sangre / manchas / heridas / tripas al dañar y matar enemigos con arte propio (`combat/damage_fx.gd`, `assets/art/fx/`), botón SIGUIENTE SECTOR en la victoria y relleno de suelos solo sobre el vacío.
-* **Hecho (2026-10-11, pendiente de validar en juego):** Sala de Estrés con monitor de rendimiento, fusión de botín y orbes, experiencia con gravedad, cola de efectos de muerte (sin congelamiento al matar muchos juntos), engranaje de munición que recarga al instante. Ver sección 6c.
-* **Versión:** `config/version` en `project.godot` (hoy 0.5.0); se ve en el menú principal y en las propiedades del `.exe`.
-* **Sandbox separado:** `test_level.tscn` se abre solo desde el botón "Banco de Pruebas" del menú principal; no forma parte de la campaña. El Sector 1-1 es un nivel real y no es el sandbox.
-* **Stand-by (no se toca por ahora):** jetpack, alas, vuelo, gancho de anclaje, baliza de translocación, runas avanzadas, alt-fire (zoom del sniper), mercenarios y drones, contratos de zona, los 50 niveles.
+Solo figura lo pendiente. Lo ya construido se documenta en `PROJECT_CONTEXT.md` (mapa técnico) y en el historial de git. Cuando algo se termina y se valida, se **borra de acá**.
+
+**Estado en una línea:** el primer mundo está completo (sectores 1-1 a 1-10 con jefe), con armas, runas, escudos, invocaciones, comercio, opciones y herramientas de editor. Falta validarlo a mano, balancearlo, darle arte y sonido finales, y validar los Capítulos 2 (Valle Esmeralda) y 3 (Abismo Ígneo), ya armados.
 
 ---
 
-## 1. Objetivo del Prototipo
-Validar un bucle simple y divertido: **llega una oleada grande de enemigos, los reventás como piñatas, recogés monedas, loot y XP, subís de nivel, mejorás armadura o arma y avanzás de nivel.**
+## 1. Validar a mano (armado, sin verificar en F5)
 
-Contenido mínimo para validarlo:
-- **Armas:** 2 o 3, introducidas de a una a lo largo de los primeros niveles: **Cuchillo de Combate** (melee) y **Revólver Oxidado** (rango) en el 1-1; la pistola y la escopeta llegan después (ver 2.1).
-- **Enemigos:** 1 o 2 tipos básicos.
-- **Movilidad:** una sola mejora (doble salto, salto más alto o más velocidad).
-- **Niveles:** 2 o 3 jugables a través del menú de niveles.
+Marcar y borrar cada punto al comprobarlo. Si algo falla, pasa a la sección 4 o 7.
+
+- [ ] Manchas de sangre y tripas en el piso: ahora usan `assets/sprites/efectos/blood_pool_0..3.png` con el método del charco de ácido (cuelgan, se aplastan, rebotan al aparecer). Revisar tamaño y que no ensucien con muchos enemigos (`combat/blood_fx.gd`, `POOL_WIDTH_MULT`).
+
+- [ ] **Calle (1-01), pase de ritmo del 2026-10-18:** jugarla entera; primer matón suelto en el px 19700 y tres arenas nuevas sin armas de fuego (px 22000 ladrones + matón; 28800 ladrones + matones; 32800 ratas 8/10/12 + matones) con checkpoints antes (21100, 28000). Ver si el matón es demasiado resistente en grupo.
+- [ ] **Ataque con aviso y niveles de enemigo (2026-10-18):** probar que los enemigos de melé se frenan, se ve la animación de ataque y recién ahí pegan (tocarlos ya no lastima), y que se puede esquivar saltando o alejándose. Ajustar `PROFILES` de `entities/enemies/melee_attack.gd` (aviso, descanso, alcance) por tipo. Verificar que el aviso se lea en los enemigos de ilustración partida (matón, patovica: solo se inclinan y se lanzan). Niveles: rata 1, ladrón 2, matón y asaltante 3, rata gigante 4, patovica 5, sicario 6, agente 7, élite 8; desvío por mundo en `LevelBase.CHAPTER_ENEMY_LEVEL_OFFSET` (2: +6, 3: +8, 4: +4, 5: +12; valores a ojo, ajustar). Con 4 niveles o más de diferencia no dan experiencia.
+- [ ] **Obstáculos rompibles (2026-10-18):** barriles, cajas, tachos, bolsas de basura y buzones de los niveles del mundo 1 (`destructible = true` en `WorldProp`, vida en `BREAKABLE_HEALTH` de `art_source/world1/bake_decor_props.py`) se rompen a tiros, tajos y explosiones, con tres dibujos (`<arte>_dmg1/_dmg2.png` al 66 % y 33 % de vida, generados por `bake_prop_damage.py`; se pueden pisar con arte de Flow). Al romperse sueltan trozos y, con poca chance, una moneda (7 %), experiencia (4 %), munición (2,5 %), vida (1,2 %) o el powerup de munición (0,5 %): ver los `loot_*_chance` del prop. Probar sensación, vida de cada prop, que no estorbe subir escalones de props y si conviene ampliar a contenedores o a otros mundos.
+- [ ] **Sectores 1-5 a 1-10:** recorrerlos completos; que ningún enemigo quede trabado y que las arenas de 12 a 18 enemigos sean jugables.
+- [ ] **Rework de oleadas 1-2 a 1-6:** bruto solo en el 1-4, 10 ladrones en el 1-3, ritmo general.
+- [ ] **Jefe del 1-10 (Coloso del Núcleo):** si 1200 de vida es mucho o poco, y si la franja roja de la onda de choque se lee a tiempo.
+- [ ] **Escudo de madera y Escudo espejo:** sensación del clic derecho mantenido, tamaño de la zona de reflejo, rebote contra plataformas reflectantes.
+- [ ] **Red arraigadora, Boomerang, Casco láser, Capa de invisibilidad:** que se compren, se usen desde la barra y se sientan bien (en especial el robo de la capa y el 70 dps del láser).
+- [ ] **Mjolnir (arma pesada legendaria):** rayo en cadena de 7 rebotes al conectar un golpe melee (`data/weapons/mjolnir.tres`, `combat/chain_lightning.gd`); probar balance (daño 140, rayo 50%), sensación y que el martillo en mano calce (agarre/escala en `weapon_art.gd`). Está en el Banco de Pruebas y en el comerciante.
+- [ ] **Invocaciones separadas (Fase J):** seis esqueletos en la Sala de Estrés; que 70 px de distancia sea buena.
+- [ ] **Opciones (segunda tanda):** cuenta regresiva de 15 s al cambiar resolución, selección de monitor, reasignación de mando, dificultades, accesibilidad, posprocesado por calidad.
+- [ ] **Animaciones de arma:** recarga propia por arma, ráfaga sostenida de las automáticas, tajo de espada y katana a dos manos, doble empuñe y casillero M2.
+- [ ] **Posturas con 3 alturas de disparo (2026-10-19, hecho, sin validar jugando):** de pie (arma a -54), agachado con rodilla en tierra (mantener abajo, arma a -35, 40 px) y cuerpo a tierra (doble toque de abajo o Alt; arma a -10 adelante de la cabeza, 18 px, se arrastra al 30 %, apunta ±22°; arriba/salto/Alt levanta). Los enemigos apuntan al centro del cuerpo en la postura actual: cambiar de postura esquiva tiros en vuelo. Constantes en `player.gd` y `character_rig.gd`.
+- [ ] **Pulido visual:** aura de los objetos del piso, pose agachado, brazos abiertos al saltar, borde rojo y latido con poca vida, llama sobre enemigos que arden.
+- [ ] **Progresión:** con 15 de EXP por enemigo, en qué punto del 1-2 se llega al nivel 5; presión de enemigos con la vida subida (ladrón 70, bruto 250, centinela 70).
+- [ ] **Piezas de editor:** armar una arena y una plataforma desde `platform.tscn` / `arena.tscn`, y correr un nivel con F6 y el equipo de prueba activo.
+- [ ] **Props arrastrables (nivel 1):** `entities/world/props/` (cajas S/M/L, cerco, casa, caseta, **paredón** `wall.tscn`; script `world_prop.gd`). Los bloques `Block*`/`JumpBlock*` de los niveles ya son props placeholder (cajas) y 2_02, 2_08, 3_04, 3_08, 4_01 y 4_04 llevan un paredón de 520 px caminable por arriba (`WallStep` + `Wall`); PNG pendientes: `crate_*`, `wall`, etc. En el mundo 1 la decoración automática (`levels/city_decor.gd`, `SOLID_PROPS`) pone contenedores, tachos, buzones, bancas y cajas como sólidos escalonados (grupos de 1 a 3, alturas 48–115 px); los enemigos los saltan (`entities/enemies/obstacle_hop.gd`). Pendiente: lo mismo para `meadow_decor` / `hell_decor`. Generar con Flow los PNG en `assets/art/world4/props/` con el nombre de la escena (`crate_small.png`, `house.png`...), probar saltos en `levels/chapter_4/props_playground.tscn` y ajustar tamaños/hitboxes.
+- [ ] **Capítulo 2 — Valle Esmeralda (hecho, sin verificar):** recorrer 2-1 a 2-10; saltos de los pozos reales del 2-4 y 2-7; balance de Arco Largo, Jabalina, Báculo de Fuego y de Hielo (`data/weapons/*.tres`); agarre en mano del arco y los báculos (`weapon_art.gd`); densidad de árboles/flores y cantidad de hojas (`levels/meadow_decor.gd`); jefe del 2-10. Al entrar al mundo 2 el jugador conserva su arsenal del mundo 4 (las armas medievales llegan por pedestal).
+- [ ] **Capítulo 3 — Abismo Ígneo (hecho, sin verificar):** recorrer 3-1 a 3-10; saltos de los pozos de lava del 3-3, 3-5 y 3-7; balance de Guadaña, Ballesta Infernal, Tridente Infernal, Báculo de Almas (3 rebotes), Cetro de Azufre (estallido `combat/throwables/sulfur_burst.tscn`), Espada Demoníaca y Hacha del Abismo (`data/weapons/*.tres`); agarre en mano de la ballesta, la guadaña y el hacha (`weapon_art.gd`, `ALIASES` en `weapon_motion.gd`); oscuridad de fondos y suelo (`CHAPTER_THEMES` en `level_skin.gd`); cantidad de brasas, cadenas y braseros (`levels/hell_decor.gd`); **lava que daña** (20 % de la vida + llama + rebote de 800 px/s al tocarla, `LAVA_DAMAGE_FRACTION` / `LAVA_BOUNCE`: que se pueda salir del pozo y no sea injusta); jefe del 3-10 (reusa `brute_boss`).
+- [ ] **Capítulo 1 — El Presente (hecho, sin verificar):** recorrer P-1 a P-8 con una partida nueva (el P-1 se rehízo: arranca sin armas, cuchillo en el piso, ratas de a 1-2-3 a modo de tutorial y un asaltante esperando al final que deja la 9 mm; sin props ni obstáculos ni cinemáticas). Revisar: legibilidad de lluvia y fondos (`CHAPTER_THEMES[4]` en `level_skin.gd`), escala de props de `city_decor.gd` (`SECTORS`), pozos de agua del P-3 y P-5, balance de ratas/ladrones/matones/asaltantes/patovicas/sicarios (`entities/enemies/city_*.tscn`, `armed_enemy.gd`), evento del helicóptero del P-5 y el portal de P-6/P-7, cristales de tiempo en el HUD, textos y tiempos de las 7 cinemáticas (`core/cinematics/cinematic_library.gd`), oleadas del P-8 y salida por la Caja a `level_4_01`. FPS con lluvia y muchos enemigos en la Sala de Estrés (F9).
+- [ ] **Música de la discoteca:** poner `ost/club.ogg` (el 4-7 ya pide la pista `club`).
+- [ ] **Arte del presente por pulir:** el rig de Gunther (`art_source/world1/gunther_parts.jpg` está bajado pero no se usa; hoy sigue el rig actual), enemigos con una sola ilustración (sin ataque propio), toldo y escalera de incendio como plataformas (hoy chapa y madera lisas).
+- [ ] **Sonido:** `fire_ignite`, `net_deploy`, `laser_beam`, `cloak_on/off`, `heartbeat`.
 
 ---
 
-## 2. Fase A — Game Feel en el Sandbox
-*Objetivo:* Que disparar y reventar enemigos se sienta bien antes de construir nada encima.
-* **Modelo recomendado:** Sonnet, esfuerzo **medium**.
-* **Alcance:**
-  1. Screen shake en impactos fuertes y disparos pesados (`camera_follow.gd`).
-  2. Hit stop de 0.03 s en críticos y melee.
-  3. Flash de daño en enemigos.
-  4. Explosión de muerte (partículas y sonido) al eliminar un enemigo.
-  5. Magnetismo de pickups (monedas y orbes van hacia el jugador al acercarse).
-  6. *(Agregado)* Indicador visual de recarga: barra sobre el jugador que se llena durante la recarga (`ui/reload_indicator.gd`).
-* **Criterio de cierre:** En `test_level.tscn`, con F5, cada golpe y cada muerte tiene respuesta visual clara y el juego no se traba.
+- **Mangual** (2026-10-19, `data/weapons/mangual.tres`): melé a una mano con el movimiento de la espada, arco de 230°, más alcance, empuje y 30% de perforación de armadura. Pedestal en la Armería Melee del Banco de Pruebas. Validar balance y sensación (la cadena no se mueve: el arte es una sola pieza).
+- **Casco Láser estilo Cíclope** (2026-10-19): el rayo de P ahora es un haz rubí ancho que sale del visor, con chispas en el impacto y más empuje (140). Validar que no empuje demasiado.
+
+- **Tanda noir del mundo 1: 4 armas y 4 ítems (2026-10-19, hecho, sin verificar):** Bate con Clavos (`data/weapons/nail_bat.tres`, melé pesada a dos manos, común), Escopeta Recortada (`sawed_off.tres`, a una mano, 2 tiros, 7 perdigones), Pistola de Bengalas (`flare_gun.tres`, 1 tiro, prende fuego y estalla en chispas: `combat/throwables/flare_burst.tscn`), Thompson del Sindicato (`thompson.tres`, épica, tambor de 50); Gabardina de Detective (`data/items/trench_coat.tres`, torso: +20 vida, 3 armadura), Sombrero de Ala (`fedora.tres`, cabeza: +7 % crítico, críticos +20 %), Puño Americano (`brass_knuckles.tres`, manos: +8 % daño, 1 armadura) y Cóctel Molotov (`data/items/throwables/molotov.tres`, táctico: llamarada + 3 charcos de fuego, `combat/throwables/molotov_splash.gd`). Se consiguen: en el mercader; en el Banco de Pruebas (armas en la Armería Melee, ítems en el Laboratorio Elemental); de botín de matones, patovicas y sicarios (`city_elite_loot.tres`; en la calle, `gear_loot_tier = 1`, solo bate, gabardina, sombrero, puño y molotov; en la torre, tier 2, todo); la Thompson también en un pedestal en el techo de la torre (x 950, `build_tower.py`), con frase de Gunther. **Validar:** balance (sobre todo la recortada a una mano y la Thompson), que el molotov no sea demasiado fuerte contra grupos de ratas, cuánto botín cae en la calle (6 % por élite) y el agarre en mano del arte provisorio (`weapon_art.gd`, `ALIASES` de `weapon_motion.gd`). **Arte provisorio** hecho por script (`art_source/draw_noir_placeholders.py`): armas en mano e íconos de los ítems; prompts de Flow en `add-level/politicas.md`.
+
+- **Disparos rehechos, menos 8-bit (2026-10-19, hecho, sin escuchar en juego):** los disparos ahora son WAV de 44 kHz con chasquido, explosión por bandas, golpe grave, mecánica (corredera, bomba) y eco de edificios + reverb, 3 variantes al azar por sonido (`assets/audio/sfx/`, generados por `art_source/audio/synth_guns.py`). Perfiles: pistola, revólver (y pistolas de 60+ de daño), subfusil, automática, fusil, francotirador, escopeta de bomba, recortada, enemigo armado (más lejano), clavadora, bengala y matafuegos; también `hit_flesh`, `hit_world` (con rebote a veces) y `boom_frag`. El resto de los sonidos sintetizados perdió la degradación de bits (`LOFI = false` en `core/sfx.gd`). **Validar:** volumen relativo entre armas y contra la música, que las automáticas no cansen, y si el eco de calle sobra en las alcantarillas. Para retocar: cambiar la receta en el script, correrlo y reimportar.
+- **Segunda tanda noir: 3 armas (2026-10-19, hecho, sin verificar jugando):** Clavadora Neumática (`data/weapons/nail_gun.tres`: automática a una mano, cada clavo atraviesa 2 enemigos más; pedestal en el piso 3 de la torre), Llave Stillson (`pipe_wrench.tres`: melé a una mano, cada golpe aturde 0,6 s vía `ice_duration` + `STUN`; pedestal en las alcantarillas, x 1250) y Matafuegos (`extinguisher.tres`: chorro de CO2 a dos manos, casi sin daño, congela y empuja 240; bocanadas que se frenan y crecen, `combat/foam_spray.gd`; pedestal en el piso 1 de la torre). Las tres en el Banco de Pruebas (Armería Melee, x 2500–2660), en el mercader y en el botín de élites (la llave también en la calle). **Validar:** balance (el aturdimiento encadenado de la llave contra jefes, el empuje del matafuegos para tirar enemigos de los techos), alcance del chorro (0,5 s) y agarre en mano del arte provisorio.
+- **Tanda de explosivos y armas especiales (2026-10-19, hecho, sin verificar jugando):** Bazuca (`data/weapons/bazooka.tres`: cohete que acelera, 40 al pegar + 110 en área, retroceso fuerte; pedestal en el último techo de la torre, x 10480) y Bazuca Dirigida (`bazooka_guided.tres`, legendaria: cohete más lento que sigue al cursor; con mando va derecho) con `combat/rocket.gd`; Bomba Racimo (`data/items/throwables/cluster_bomb.tres`: suelta 6 bombitas) y C4 (`c4.tres`: se pega a paredes y enemigos, la tecla del arrojadizo detona todas, solo a los 25 s); Pistola de Dardos Venenosos (`dart_venom.tres`: hasta 5 dosis de 3 por medio segundo durante 4 s), Pistola de Dardos de Hechizo (`dart_charm.tres`: el enemigo pelea 6 s contra los suyos, rosa; no anda con jefes) y Pistola Taser (`taser.tres`: corto alcance, aturde 1,5 s). Sonidos nuevos en `synth_guns.py` (cohete, dardo, taser, pitido del C4). Probado por código: la bazuca mata un ladrón, el C4 se pega y detona, el racimo suelta 6 bombitas, el veneno apila, el hechizado le saca 52 de vida a otro ladrón y vuelve a la normalidad, el taser aturde. En el Banco de Pruebas (bazucas, dardos y taser en x 960–1390; racimo y C4 en x 5060–5140), en el mercader y en el botín de élites (taser también en la calle). **Validar:** balance del C4 y del racimo contra arenas, que el cohete guiado se controle bien, si el hechizo dura mucho y si el retroceso de la bazuca tira al jugador de los techos. El molotov ya estaba (tanda noir).
+- **Armas míticas (2026-10-19, hecho, sin verificar jugando; todas legendarias, en el mercader y en el Banco de Pruebas junto al arranque, x -120 a 280):** Tridente de Poseidón (`data/weapons/poseidon_trident.tres`: melé a dos manos, cada estocada suelta una ola por el piso que atraviesa, empuja y ralentiza), Rayo de Zeus (`zeus_bolt.tres`: rayo casi instantáneo, estallido que aturde 0,6 s y cadena a 5 enemigos, `combat/zeus_bolt.gd`), Hacha Leviatán (`leviathan_axe.tres`: se lanza girando, congela, atraviesa a todos y vuelve sola a la mano cortando otra vez, `combat/returning_axe.gd`), Gungnir (`gungnir.tres`: lanza que busca sola al enemigo más cercano y atraviesa el terreno), Excalibur (`excalibur.tres`: cada tajo lanza una media luna de luz que atraviesa 3) y Báculo del Rey Mono (`monkey_staff.tres`: barrido de 220° con 70 px de alcance extra y mucho empuje). Mecánica nueva reutilizable: `WeaponData.melee_projectile_*` (proyectil que sale con el tajo) y `Projectile.pass_through_terrain`. Sonidos nuevos en `synth_guns.py` (trueno, ola, tajo de luz, hacha que vuela y vuelve, lanza). Probado por código: todas pegan (el hacha 125 entre ida y vuelta, Zeus 105 + cadena, Gungnir da la vuelta sola). **Validar:** balance (son fuertes a propósito), dónde se consiguen en la campaña (¿premio de jefes o de un mundo cada una?) y el agarre en mano del arte provisorio (recoloreado de armas existentes, `art_source/draw_myth_placeholders.py`).
+- **Armadura de hierro estilo Iron Man (2026-10-19, hecho, sin verificar jugando; íconos por defecto):** Casco de Hierro (cabeza: 4 de armadura, +8 % crítico), Pechera de Hierro (pecho, legendaria: +40 vida, 6 de armadura y el unirrayo: el rayo del Casco Láser sale azul desde el reactor, con P), Guanteletes de Hierro (manos: +12 % daño), Botas de Hierro (vuelo propulsado como el jetpack, +20 velocidad) y Reactor de Arco (accesorio: +25 vida, +5 % daño). Archivos `data/items/iron_*.tres` y `arc_reactor.tres`, tag `IRON_SUIT` (sin bonus de set por ahora). En el Banco de Pruebas sobre la plataforma de la sala 1 (x -300 a 250) y en el mercader. **Validar:** que la plataforma se alcance, el vuelo con las botas y si conviene un bonus por traje completo.
+
+- **Guardia Antidisturbios (2026-10-19, hecho, sin verificar jugando):** enemigo nuevo de la torre (`entities/enemies/city_riot_guard.tscn`, `riot_guard.gd` sobre el bruto): escudo frontal que deja pasar el 10 % de las balas y el 50 % de la melé de frente; por la espalda o aturdido recibe todo. Uno en el piso 2 tapando a los asaltantes y otro en el tercer techo (x 7650). 240 de vida, 20 de armadura, nivel 5; usa el arte del patovica con un escudo provisorio. Probado por código (de frente 6 de 50, por la espalda 42, aturdido 62). **Validar:** que se lea que hay que saltarlo, que no quede trabado en las tablas de los huecos y que el escudo se dé vuelta bien con el arte.
+
+- **Barra de vida del jefe** (2026-10-19, `ui/boss_health_bar.gd`, la crea el HUD): arriba al centro con el nombre; aparece cuando un enemigo del grupo `boss` persigue al jugador o está a menos de 900 px, y la franja clara muestra el daño reciente. Vale para la Rata Gigante y el Coloso. Validar que no tape nada en los niveles.
+
+## 1b. Nueva estructura del primer mundo (decisión del usuario, a pulir)
+
+**El mundo 1 pasa de 10 sectores a 3 niveles.** Todo es borrador: faltan ideas y pulido. Lo anotado:
+
+1. **Nivel 1 — La calle (el largo).** Es el que se está armando ahora (`level_1_01.tscn`, 34.000 px, ratas y asaltantes en tramos, checkpoints, obstáculos y plataformas). Acá van **la historia y las cinemáticas** (intro, el asaltante, el paseo de Gunther; ver `story.md` sección 4 y la idea de intro). Sirve de **plantilla** para armar el resto de los niveles: largo, tramos, props, checkpoints, arma inicial débil y reserva de munición.
+2. **Nivel 2 — Las alcantarillas.** Gunther entra a las alcantarillas. **Se van a rehacer más adelante** (hoy es el sector 1-03 de agua y piedra); por ahora solo se reserva el lugar.
+3. **Nivel 3 — La torre y los techos.** Sale de las alcantarillas a un edificio que hay que **subir derrotando enemigos y saltando entre techos de edificios**, hasta llegar al mapa final (jefe / la Caja). Es un nivel vertical de plataformas.
+4. **Pendiente por esto:** `build_levels.py`, `level_registry.gd` (10 sectores fijos por capítulo), `PROJECT_CONTEXT.md`, `story.md` (tabla de sectores P-1 a P-8) y los sectores 1-02 a 1-08 actuales (se reusan como cantera de ideas, arte y enemigos, o se descartan). Decidir qué pasa con los jefes y el guardado (`unlocked_levels`, `next_level_path` del 1-01, que hoy lleva al 1-02).
+5. **Ideas por definir:** cómo se lee la subida del edificio (pisos, ascensores, escaleras de incendio), qué enemigos nuevos aparecen arriba, y qué cuenta la cinemática de entrada a las alcantarillas.
+6. **Historia simple (escrita el 2026-10-19, a aprobar):** `story.md` secciones 1 a 6. Gunther recibe el encargo de recuperar una caja que robó el Sindicato; persigue a un mensajero por la calle y las alcantarillas, sube la torre y en la azotea Víctor Valmont, el Patrón (jefe del Sindicato), abre la Caja y huye por el pasillo de puertas. Cada mundo: el Patrón hizo un trato con el jefe local, Gunther lo derrota, se queda con su arma y lo sigue. Agentes del Tiempo como estorbo que suelta cristales. Plantilla por mundo: 3 niveles + jefe, una mecánica propia, 2-3 armas de época, 3 escenas cortas. Nombres elegidos: Víctor Valmont y La Voz (contacto por teléfono). Falta: arma de cada jefe, orden de mundos, y alinear `lore.md` (todavía menciona al compañero muerto, que quedó fuera).
+
+7. **Orden de trabajo (decisión del usuario):** primero mapas, combates y mecánicas; después historia y cinemáticas. Mientras tanto, los puntos de historia quedan sin cinemática (se borraron todas el 2026-10-18; el motor está en `core/cinematics/` y se prueba en el Banco de Cinemáticas) y los textos de pantalla quedan como carteles provisorios, para no rehacer nada cuando llegue la historia.
+
+8. **Nivel 2 — Las alcantarillas (rework hecho el 2026-10-18, sin validar jugando).** `levels/chapter_1/level_1_03.tscn`, generado por `art_source/world1/build_sewer.py` (aparte de `build_levels.py`, que reescribe todo). Pasillo de 16.000 px con **piso y techo**, solo **ratas** (sin personas, sin emboscadas del mundo 1), **charcos** (huecos de agua) con tablones para cruzar, ruta alta opcional, 4 checkpoints, dos arenas de ratas (LA PLAGA, EL NIDO) y al final la **Rata Gigante** (`entities/enemies/giant_rat.tscn`: 1100 de vida, persigue, sin mecánicas todavía) tras una ronda de ratas. Hay **ratas de techo** (`ceiling_rat.gd`): caminan cabeza abajo por el techo hacia el jugador y, al quedar encima, se frenan un instante (chillido) y se sueltan; al caer son ratas comunes. Suenan **goteos** sintetizados (`levels/sewer_ambience.gd`, sonido `drip`). La Rata Gigante suelta la **Flauta de Hamelin** (`data/items/hamelin_flute.tres`, accesorio): las ratas que se acercan al portador pasan a ser **aliadas** (`rat_ally.gd`, hasta 8, muerden a los enemigos; `hamelin_flute_controller.gd`). El 1-01 ahora lleva directo a este nivel (el 1-02 queda fuera del camino); este nivel apunta al 1-04, que ahora es la torre (punto 9).
+   - **Botas de Goma** (`data/items/sewer_boots.tres`: +20 de velocidad, +2 de armadura, se equipan solas) en el piso al arrancar (x=600), puestas desde `build_sewer.py` con `L.item`. Ícono pendiente (`assets/art/items/sewer_boots.png`, hoy cae al pixel art de reserva).
+   - **Sprites y audio pendientes de este nivel** (arte generado por el usuario en Flow; los prompts están en `.claude/skills/add-level/politicas.md`): ícono de la Flauta de Hamelin (hoy usa el de anillo), sprite propio de la Rata Gigante (hoy es la rata común agrandada 4,5x), rata aliada (hoy la rata común con tinte verde), rata de techo (hoy la rata común volteada en vertical; podría tener cuadros propios agarrada al techo), props propios de alcantarilla (tuberías, rejillas, goteras; hoy solo los decorados sueltos del 1-03), goteos y ambiente reales (hoy sintetizados), música propia del nivel y del jefe.
+   - **Mecánicas de la Rata Gigante (2026-10-19, sin validar jugando):** embestida con aviso (se agacha temblando y chilla 0,75 s, corre a 560 px/s, 26 de daño y empuje; se esquiva saltando; al chocar o terminar queda aturdida 0,9 s), llamado de la plaga (cada 11 s salen 3 ratas a sus costados, tope 7 vivas; mueren con ella) y furia bajo el 40 % (roja, más rápida, embestida y crías más seguidas). Valores en las constantes de `entities/enemies/giant_rat.gd`. Validar que la embestida se lea y se pueda esquivar en el pasillo.
+   - **Canto de la flauta (2026-10-19, sin validar jugando):** tecla J (remapeable, sin botón de mando todavía: están todos ocupados) hechiza ratas hasta 760 px, renueva a las aliadas y llama ratas del suelo si hay menos de 3; recarga 20 s (`hamelin_flute_controller.gd`). Falta un indicador de recarga en la UI.
+
+9. **Nivel 3 — La torre y los techos (armado el 2026-10-18, sin validar jugando).** `levels/chapter_1/level_1_04.tscn` (id `1_04`, reemplaza al viejo "barrio de casitas"), generado por `art_source/world1/build_tower.py` (como el de las alcantarillas, aparte de `build_levels.py`, que ya no genera el 1-03 ni el 1-04). 12.000 px. **Torre** (x 0–2000): planta baja + 3 pisos de 400 px de alto; cada losa deja un hueco de 330 px alternando derecha/izquierda y en el hueco hay tres tablas de una vía (`one_way_collision`, a 100/200/300 px) que se suben saltando de a 100 px. Pared del fondo oscura con ventanas tenues (`TowerBack`, placeholder). Enemigos: ladrones y matones en la planta baja, arena de recepción en el piso 1 (ladrones + matones), asaltantes y el SMG en el piso 2, patovica y arena de seguridad en el piso 3. **Techos** (x 330–12000): cinco edificios separados por huecos al vacío (110 a 330 px; los de más de 130 llevan una tabla de 120 px al medio), cajas de cobertura, sicarios, una arena de azotea (asaltantes + patovicas) y la arena final EL SINDICATO (sicarios + patovicas) junto a la salida, que lleva al 1-08 (la azotea con la Caja). Caer de los techos devuelve al último checkpoint: `LevelBase.abyss_after_x` / `abyss_threshold_after` (a la derecha de la torre el vacío empieza más arriba). Decoración de azotea solo sobre los techos (`prop_max_y` en `city_decor.gd`); sin lluvia (nace en y = -20). Cámara con `limit_top` alto.
+   - **Validar:** que las tres tablas de cada hueco se suban sin trabarse (el salto llega a ~138 px), que ningún enemigo quede en otro piso sin poder llegar, que los saltos entre techos sean justos y que la cantidad de enemigos (sin balancear) sea jugable. Los enemigos sueltos de otros pisos esperan escondidos hasta que el jugador está a ±260 px de altura (`ambush_director.gd`).
+   - **Pendiente:** props y fondo propios de la torre (interior con pisos, oficinas, ascensor, escalera de incendio; hoy ventanas planas y la losa con ladrillo), enemigos nuevos de la subida, cinemática de entrada y de salida a los techos, y música propia. Prompts de arte en `.claude/skills/add-level/politicas.md`.
 
 ---
 
-## 2.1 Fase A.1 — Nivel 1 (Sector 1-1): Tutorial de Progresión
-*Estado:* Armado en `levels/chapter_1/level_1_01.tscn`, conectado al selector de expediciones. Validado en juego (`run.bat` → Campamento → Capítulo 1).
-*Objetivo:* Que el jugador **sienta la progresión**: arranca con casi nada y cada herramienta nueva se gana durante el recorrido, una a la vez, con un tramo para practicarla antes de que llegue la siguiente.
+## 2. Contenido nuevo
 
-**Principios de diseño (valen para los primeros niveles):**
-- **Nada avanzado en el 1-1:** sin runas, armaduras, movilidad extra, arrojadizos ni contratos. Los checkpoints son solo checkpoints: los contratos viven en una terminal aparte (`ContractTerminal`) que por ahora solo existe en el sandbox.
-- **Armas súper básicas:** Cuchillo de Combate (melee, 30 de daño) y Revólver Oxidado (rango, 18 de daño, 6 balas, recarga 2.0 s, cadencia lenta). No aparece la pistola criogénica ni la escopeta.
-- **Una mecánica por tramo:** se presenta, se practica contra enemigos simples (solo `BasicRunner`) y recién después aparece la siguiente.
-- **Niveles largos y legibles:** recorrido de ~8200 px, pasillos largos con enemigos espaciados en vez de arenas llenas.
-- **Sin cambios grandes entre niveles:** el jugador debería completar uno o más niveles con este mismo equipo antes de ver una mejora fuerte (Fase C y D).
+1. **Mundo del presente:** armado (ver sección 1). Falta validarlo y pulirlo; `PROMPT_MUNDO_MODERNO.md` queda como referencia del plan.
+2. **Capítulo 2 (pendiente sobre lo armado):** enemigos con aspecto medieval propio (hoy reusa zombis, ladrones, brutos, fantasmas y centinelas) y un jefe propio para el Rey Caído; runas y movilidad avanzada; HUD sin estética steampunk en este mundo.
+3. **Capítulo 3 (pendiente sobre lo armado):** enemigos demoníacos propios (hoy reusa los mismos cinco tipos) y un jefe propio para el Señor del Abismo; sonido de lava y braseros.
+4. **Capítulos 4 y 5** y el total de 50 niveles. Sin fecha.
+5. **Reintegrar mecánicas en stand-by** (ya existen en código, fuera de la campaña): jetpack, alas, vuelo mágico, gancho de anclaje, baliza de translocación, runas avanzadas, mercenarios y drones, contratos de zona. Decidir en qué capítulo entra cada una.
+6. **Tramos prearmados (a mano):** hecho el formato base en `levels/chunks/` (ver su README): escenas que se arrastran dentro de un sector y toman el tileset del mundo. Pendiente: más tramos (plataformas, interiores, azoteas), probarlos en un sector de verdad, y un generador que los una con semilla si hace falta.
 
-**Recorrido (posiciones en px aproximadas):**
+---
 
-| # | Tramo | x | Qué pasa |
+## 3. Visión: el multiverso y la máquina del tiempo
+
+Idea rectora del juego a largo plazo. Todavía es diseño, no hay nada armado. Los mundos se van a ir sumando a medida que el usuario los defina; no inventar mundos nuevos sin consultarlo.
+
+### 3.1 Estructura general
+
+1. **Mundo inicial — el presente:** ciudad moderna, de noche y con lluvia (8 sectores: calle, callejones, alcantarillas, barrio de casitas, muelle, hotel, discoteca, azotea). Es un mundo nuevo; plan de trabajo en `PROMPT_MUNDO_MODERNO.md`. La Periferia Subterránea (steampunk, Capítulo 4 actual) queda tal cual y pasa a ser un mundo tier 1.
+2. **Final del presente:** sin jefe único; oleadas de lo peor del Sindicato protegiendo la Caja en la azotea.
+3. **La Caja:** la "Máquina" es una caja negra lisa (estilo *Dark Matter*, 2024). Por dentro es un pasillo negro infinito con puertas; cada puerta es un mundo. Es el momento más importante del juego para el personaje.
+4. **Apertura del multiverso:** la misma Caja existe en todos los mundos y lleva al mismo pasillo; desde ahí se vuelve o se salta a otro mundo. El pasillo reemplaza al selector de mapas.
+5. **Costo del viaje:** cada puerta cuesta **cristales** que al principio el jugador no tiene. Detalle en `lore.md`; trama en `story.md`.
+
+### 3.2 Cristales y Agentes del Tiempo
+
+- **Agentes del Tiempo:** una facción que controla las dimensiones y el tiempo. Empiezan a aparecer cada tanto en la partida para capturar al jugador: llegan en helicópteros, naves o portales, como evento que interrumpe el nivel.
+- **Drop:** en vez de monedas, los Agentes sueltan **cristales temporales**, la moneda exclusiva para usar la Máquina.
+- **Pendiente de diseñar:** frecuencia de aparición (por tiempo, por nivel o por "nivel de búsqueda"), tipos de Agente (soldado, piloto, comandante), si escalan con el tier del mundo actual, y si se pueden rechazar o farmear.
+- **Implementación probable:** una moneda nueva en el inventario/guardado, un tipo de enemigo con `loot_table` propia y un evento de aparición en `level_base.gd`.
+
+### 3.3 Tiers de mundos
+
+| Tier | Costo en cristales | Cómo se desbloquea | Mundos |
 |---|---|---|---|
-| 1 | Calentamiento | 0–800 | Spawn y cartel de movimiento. Sin enemigos. |
-| 2 | Aprender a saltar | 800–2060 | 3 bloques de altura creciente (40, 70 y 96 px) y luego 2 pozos poco profundos (140 y 180 px) con una isla en el medio. Los pozos tienen fondo: si cae, sale saltando. |
-| 3 | Distancia larga | 2060–2650 | Tramo plano largo con un checkpoint (x 2350). |
-| 4 | Pedestal del cuchillo | 2700 | Primera arma: **Cuchillo de Combate**. |
-| 5 | Pasillo 1 | 2900–4600 | Techo bajo, 3 ladrones bien separados. Se prueba el cuchillo. |
-| 6 | Descanso | 4820 | Checkpoint. |
-| 7 | Pedestal del revólver | 5400 | Primera arma de rango: **Revólver Oxidado**. |
-| 8 | Pasillo 2 | 5700–7500 | Muñeco de práctica y 4 ladrones. Estos 4 bloquean la compuerta (grupo `arena_enemies`), así que hay que usar el revólver. |
-| 9 | Extracción | 7950 | `ExitGate`. Desbloquea el Sector 1-2. |
+| 0 | — | Inicio | Presente (mundo moderno) |
+| 1 | Bajo | Al derrotar al jefe del presente | Mitología nórdica, Mitología griega, Medieval fantástico (Valle Esmeralda, ya armado como Capítulo 2), Infierno (Abismo Ígneo, ya armado como Capítulo 3), Mundo de hielo, … |
+| 2 | Alto | Tras completar algunos mundos tier 1 | Futuro (año 3000/5000), … |
+| 3 | Muy alto | Tras completar algunos mundos tier 2 | Vía Láctea colonizada (tier a confirmar), … |
 
-**Notas técnicas:**
-- Se corrigió `data/weapons/rust_revolver.tres`: no tenía `projectile_scene` y no podía disparar. Ahora tiene proyectil y stats propios.
-- Los pickups de arma no revisan duplicados: repetir el nivel con un personaje guardado acumula copias del cuchillo y del revólver.
-- Dificultad sin balancear: ajustar cantidad de enemigos y separación después de jugarlo.
+- **Largo variable:** no todos los mundos tienen 10 niveles. Algunos pueden tener 2, 3 o 4; otros 7 u 8, y algunos más de 10. El largo se elige según lo que pida cada mundo (un planeta chico puede ser una visita corta, una saga mitológica puede ser larga).
+- La Máquina muestra los mundos bloqueados con su requisito, para que el jugador sepa qué le falta.
+- Cada mundo tiene su propio botín temático: armas e ítems que solo se consiguen ahí y que el jugador se lleva al resto del multiverso.
 
-**Propuesta para los siguientes niveles (a confirmar):**
-- **1-3:** primera mejora de arma como recompensa de nivel. Hecho (sección 2.4): arma nueva **Carabina de Chatarra**; la pistola criogénica y la escopeta quedan para más adelante.
-- **1-4:** hecho (sección 2.2c): estrena el Bruto Acorazado y el botín de equipo.
-- **1-5:** hecho (sección 2.2d): estrena el Centinela con escudo; recompensa MP5 y Runa de Perforación opcional.
-- **1-6 o más:** movilidad avanzada y el resto de runas (Fases C y D; hoy en stand-by).
+### 3.4 Mundos confirmados
 
----
+- **Saga de Asgard (nórdico, tier 1):** recorrer los lugares clásicos de la mitología nórdica (Asgard, Jotunheim / el planeta de los gigantes, etc.); varios jefes, entre ellos un encuentro con **Loki**. Botín estrella: **Martillo de Thor**, que lanza un rayo que rebota entre todos los enemigos cercanos.
+- **Mitología griega (tier 1):** encuentros con **Zeus**, **Poseidón**, **Eolo** y otros dioses. Botín estrella: **Rayo de Zeus**, arma mágica que dispara rayos (diferenciarlo del martillo: el martillo encadena, el rayo puede ser disparo directo o caída desde el cielo).
+- **Futuro (tier 2):** el año 3000 o 5000; armas e ítems súper tecnológicos, por ejemplo **teletransporte** (puede reusar la baliza de translocación en stand-by).
+- **Vía Láctea colonizada (tier 3 tentativo, a confirmar):** toda la galaxia está habitada y **cada planeta colonizado es un mundo propio**, con su estética, sus bichos, sus ítems para farmear y sus **tecnologías propias** que solo se consiguen ahí. Se avanza con misiones de un planeta a otro. Pensar si los planetas se eligen desde la Máquina como cualquier mundo o desde un mapa estelar que se abre al llegar a la galaxia, y si todos comparten el mismo tier.
+- **Medieval fantástico (tier 1):** el Valle Esmeralda del Capítulo 2 pasa a ser uno de estos mundos.
+- **Steampunk (tier 1):** la Periferia Subterránea (Capítulo 4 actual), sin cambios. Propuesta: es la primera puerta.
+- **Infierno (tier 1):** el Abismo Ígneo (Capítulo 3); lore en `lore.md`.
+- **Infierno (tier 1):** el Abismo Ígneo del Capítulo 3 pasa a ser uno de estos mundos.
+- **Páramo Radiactivo (tier a definir):** mundo devastado tipo *Fallout*; criaturas con un aura de radiactividad que daña al jugador si está cerca (implementación probable: un `Area2D` de daño por segundo alrededor del enemigo). Recompensa final: **Reactor portátil** (uso a definir). Lore en `lore.md`.
+- **Mencionados sin detalle:** Mundo de hielo. Más mundos los va a definir el usuario.
 
-## 2.2 Fase A.2 — Nivel 2 (Sector 1-2): Oleadas
-*Estado:* Armado en `levels/chapter_1/level_1_02.tscn` (validado en juego). Es la primera aplicación real de la Fase B y la primera mejora de la Fase D.
-*Objetivo:* Que el jugador se defienda de oleadas con **las mismas dos armas** (cuchillo y revólver oxidado) y sienta sus límites: 6 balas, recarga de 2.0 s y cuchillo de corto alcance.
+### 3.5 Historia (por escribir)
 
-**Estructura: arena → pasillo → arena → pasillo → arena**
+Borrador de trama en `story.md` y reglas del universo en `lore.md`. Preguntas que esos archivos todavía tienen que cerrar:
 
-| # | Tramo | x | Qué pasa |
-|---|---|---|---|
-| 1 | Entrada | 0–800 | Cartel y checkpoint (x 560). |
-| 2 | Arena 1 | 800–1740 | **Oleada de 3 ladrones.** Al entrar se cierran las barreras. |
-| 3 | Pasillo 1 | 1760–3000 | Techo bajo, 2 ladrones. Checkpoint (x 3120). |
-| 4 | Arena 2 | 3300–4340 | **Oleada de 4 ladrones.** |
-| 5 | Pasillo 2 | 4360–5800 | Techo bajo, 3 ladrones. Checkpoint (x 5920). |
-| 6 | Arena 3 | 6100–7180 | **Oleada de 6 ladrones.** |
-| 7 | Pedestal | 7450 | **Botas Ligeras** (+60 de velocidad de movimiento), la recompensa del nivel. |
-| 8 | Extracción | 7850 | `ExitGate`. Desbloquea el Sector 1-3. |
+- **¿Quién es el personaje y por qué encuentra la Máquina?** ¿Fue casualidad, la buscaba, o alguien la dejó para él?
+- **¿Para qué viaja de mundo en mundo juntando ítems?** Opciones a debatir: reparar o completar la Máquina; reunir artefactos legendarios (martillo, rayo, etc.) para enfrentar a quien controla a los Agentes; rescatar a alguien perdido en el tiempo; evitar que los Agentes "borren" su línea temporal.
+- **¿Quiénes son los Agentes del Tiempo y por qué lo persiguen?** ¿Guardianes del orden temporal, una corporación del futuro, los dueños originales de la Máquina?
+- **¿Por qué hay una copia de la Máquina en cada mundo?** Es una pista natural para el misterio central de la historia.
+- **¿Cuál es el final?** Un jefe último (¿el líder de los Agentes?) en el tier más alto.
 
-**Reglas y decisiones:**
-- **Oleadas 3 → 4 → 6:** una ronda por arena; el pasillo con su checkpoint hace de descanso. `WaveManager` además soporta varias rondas en la misma arena con `rest_between_rounds` (se usará más adelante).
-- **Barreras:** se cierran al entrar y se abren al despejar la arena. Si el jugador cae, la arena se reinicia y se puede repetir desde el checkpoint.
-- **Mismo equipo:** el nivel garantiza cuchillo y revólver oxidado (`guaranteed_weapon_paths` en `LevelBase`) para que un personaje nuevo no quede desarmado.
-- **Solo `BasicRunner`:** el `ArmoredBrute` queda para un nivel posterior.
-- **Botas = mejora de movilidad de la Fase D:** se equipan solas en la ranura de pies si está libre; si no, van a la mochila.
-- **`ExitGate` ya no anuncia "Pistola Criogénica":** `reward_weapon_text` y `reward_world_flag` están vacíos por defecto.
+### 3.6 Motor de cinemáticas
 
-**Pendiente de balance:** cantidad de ladrones, separación y velocidad (el ladrón va a 65 px/s, más lento que el jugador).
+Para contar la historia hace falta un sistema de escenas que se arme con datos, no con código a mano en cada escena.
 
----
+- **Qué tiene que poder hacer:** traer personajes a escena y moverlos (caminar, correr, saltar, girar); diálogos cortos tipo subtítulo mientras los personajes siguen moviéndose, con respuestas entre personajes; cámara con **acercamiento a las caras**, paneos y seguimiento; pausas, esperas y efectos (sacudón, fundido, destellos, sonido).
+- **Formato:** cada cinemática como una lista de pasos en un recurso (`.tres`) o un archivo de texto simple, por ejemplo `mover A hasta X`, `decir A "..."`, `enfocar cara B`, `esperar 1 s`. Pasos en paralelo para que alguien hable mientras camina.
+- **Subtítulos:** frases breves con nombre de quien habla y retrato opcional; avanzan solas por tiempo o con un botón; opción de saltar la cinemática entera.
+- **Dónde se usan primero:** el encuentro con la Máquina tras el jefe del presente, la primera aparición de los Agentes del Tiempo, la llegada a cada mundo y la presentación de cada jefe (Loki, Zeus, etc.).
+- **Técnico:** Godot ya trae `AnimationPlayer` y `Tween`; el motor puede ser un intérprete de pasos que los use, con la `Camera2D` del nivel y los rigs de personaje existentes (`character_rig.gd`). Bloquear el control del jugador y la IA de enemigos mientras corre.
+- **Pendiente de decidir:** si los textos pasan por `tr()` desde el inicio (traducción futura) y si habrá voces.
+- **Presets de acciones (pedido 2026-10-17):** las acciones vienen prearmadas y el motor solo las encadena — acercarse, apuntar/amenazar, disparar, arrodillarse, hablar, morir, arrojar un objeto, etc. — más pasos de cámara (enfocar a alguien, panear de un actor a otro, seguir un proyectil, cámara lenta) y de escena (iniciar música, hacer aparecer a alguien fuera de cámara). La idea es tener muchos presets para armar escenas fácil. Hoy existe un intérprete básico en `core/cinematics/` (`focus`, `spawn`, `say`, `move`, `par`, `shake`, `release`): crecer desde ahí.
+- **Pendiente del motor (pedido 2026-10-18):**
+  - **Apertura del juego:** arranca en negro con subtítulos y narración; a los segundos aclara (`fade`) y enfoca una ventana de edificio con la silueta de una persona detrás del vidrio. Solo imágenes fijas 2D, sin video. Se arma con los pasos que ya existen (`fade`, `say`, `wait`, `bg`, `show`).
+  - **Narración:** `say` debe aceptar un audio (voz en inglés) y un subtítulo en español por separado, sin retrato; el subtítulo dura lo que dura la línea. Hoy no verificado si `say` reproduce audio.
+  - **Enfoque por punto:** `focus` hoy recibe un `id` de personaje; hace falta uno que reciba `x`, `y` y `zoom` para encuadrar un lugar (una ventana, un cartel).
+  - **Saltar la cinemática** con una tecla, dejando la pantalla limpia (sin negro pegado).
+  - **Voces:** la elegida es en inglés (ElevenLabs); los textos en español quedan como subtítulos. Guion del primer plano en la conversación; pendiente guardarlo en un archivo.
+- **Primera escena a armar con eso — el asaltante del P-1** (hoy el asaltante solo espera y pelea normal, en `level_1_01.tscn`):
+  ```
+  CINEMATIC START / MUSICA START
+  CAMARA enfoca al personaje principal
+  fuera de cámara aparece el ASALTANTE; CAMARA panea hacia él
+  ASALTANTE dice "Dame la guita, amigo" + acción apuntar/amenazar
+  CAMARA vuelve al personaje principal
+  PERSONAJE arroja el cuchillo hacia el asaltante
+  CAMARA sigue al cuchillo, alternando cámara lenta y rápida, hasta que en cámara lenta impacta
+  ASALTANTE animación de muerte → muere
+  ```
 
-## 2.2b Fase A.3 — Nivel 3 (Sector 1-3): Fosos y Arenas con Plataformas
-*Estado:* Armado en `levels/chapter_1/level_1_03.tscn` (validado en juego). Es el primer nivel que premia con un arma nueva.
-*Objetivo:* Combinar plataformeo mínimo con oleadas, y entregar una mejora clara de arma sin tocar el resto del equipo.
+### 3.7 Impacto en lo que ya existe
 
-| # | Tramo | x | Qué pasa |
-|---|---|---|---|
-| 1 | Entrada | 0–1000 | Cartel y checkpoint (x 560). |
-| 2 | Fosos 1 | 1000–2240 | 3 fosos (170, 200 y 280 px) con piedras de apoyo en los dos anchos. Sin enemigos. Los fosos tienen fondo a 74 px: si cae, sale saltando. Checkpoint (x 2400). |
-| 3 | Pasillo 1 | 2600–3700 | Techo bajo, 3 ladrones espaciados. |
-| 4 | Arena 1 | 3900–4960 | **Oleada de 5 ladrones**, con 2 plataformas elevadas. Checkpoint (x 5060). |
-| 5 | Fosos 2 | 5300–6480 | 3 fosos (180, 240 y 280 px) con piedras. Sin enemigos. Checkpoint (x 6600). |
-| 6 | Arena final | 6800–8200 | **2 rondas (4 y 6 ladrones)** con descanso de 5 s, con 3 plataformas elevadas. Primer uso de varias rondas en una arena. |
-| 7 | Recompensa | 8450 | Pedestal con la **Carabina de Chatarra**. |
-| 8 | Extracción | 8800 | `ExitGate`. Desbloquea el Sector 1-4. |
-
-**Reglas y decisiones:**
-- **Arma nueva, inventada:** `data/weapons/scrap_carbine.tres` (RANGED semiautomática, 20 de daño, 3.5 tiros/s, cargador 10, recarga 1.8 s, atraviesa 1 enemigo, 2 sockets, rareza uncommon). DPS sostenido ~43 contra ~25 del revólver oxidado.
-- **Sin duplicados:** `WeaponPickup` tiene `allow_duplicates` (false por defecto). Si el jugador ya posee el arma (arsenal o mochila), el pickup desaparece al cargar el nivel. Esto también corrige la acumulación de cuchillo y revólver en el 1-1. El baúl del campamento no se revisa. Para botín repetible y vendible (legendarias, etc.) se pondrá `allow_duplicates = true`.
-- **Solo `BasicRunner`:** el `ArmoredBrute` sigue para un nivel posterior.
-- **Plataformas en arenas:** los ladrones no saltan, así que las plataformas dan ventaja de altura.
-- **Mismo equipo garantizado:** cuchillo y revólver oxidado (`guaranteed_weapon_paths`).
-
-**Pendiente de balance:** cantidad de ladrones, largo de los fosos y si la carabina se siente como mejora real.
+- **Capítulos → mundos:** `level_registry.gd` hoy ordena capítulos 1 a 5 en línea con 10 sectores fijos; habrá que admitir una cantidad de niveles distinta por mundo y pasar a mundos con tier y requisito de desbloqueo, elegidos desde la Máquina en vez de desde el `map_selector` lineal.
+- **Hub:** la Máquina puede vivir en el hub (con acceso desde el presente tras el jefe) o ser una sala propia.
+- **Guardado:** mundos visitados/completados, cristales y mundos desbloqueados.
+- **Orden sugerido para construirlo:** (1) motor de cinemáticas básico; (2) cristales + Agentes del Tiempo como evento en niveles existentes; (3) la Máquina con selección de mundo, costo y su cinemática de descubrimiento; (4) tiers y desbloqueos; (5) reconvertir el Valle Esmeralda en el primer mundo tier 1; (6) mundos nuevos uno por uno.
 
 ---
 
-## 2.2c Fase A.4 — Nivel 4 (Sector 1-4): El Bruto Acorazado
-*Estado:* Armado en `levels/chapter_1/level_1_04.tscn` (validado en juego). Estrena el `ArmoredBrute` (220 HP, 65 de armadura, 38 px/s) y el botín de equipo.
-*Objetivo:* Que el jugador entienda que la armadura enemiga reduce su daño y aprenda a resolverlo con espacio y altura, sin que el nivel sea injusto.
+## 4. Balance pendiente
 
-| # | Tramo | x | Qué pasa |
-|---|---|---|---|
-| 1 | Entrada | 0–1100 | Cartel del Bruto y checkpoint (x 560 y 1100). |
-| 2 | Arena 1: Duelo | 1500–2700 | **Un solo Bruto**, ronda `[1]`. Arena de 1200 px con 2 plataformas. Tarda ~26 s en cruzarla. |
-| 3 | Pasillo | 2900–4100 | Techo bajo, 3 ladrones. Checkpoints (x 2860 y 4400). |
-| 4 | Arena 2: Mixta | 4520–5780 | **Rondas `[3, 4]`**, la segunda con 1 Bruto + 3 ladrones. 3 plataformas. |
-| 5 | Desvío opcional | 5900–6700 | Escalera de 3 plataformas a la **Runa de Afilado** (+15 de daño plano). Checkpoint (x 5900 y 6800). |
-| 6 | Arena final | 6900–8200 | **Rondas `[4, 6]`**, cada una con 1 Bruto. Nunca hay más de 1 Bruto vivo. |
-| 7 | Recompensa | 8450 | Pedestal vacío: la armadura T1 que iba acá se eliminó junto con las armaduras. |
-| 8 | Extracción | 8700 | `ExitGate`. Desbloquea el Sector 1-5. |
-
-**Reglas y decisiones:**
-- **Cómo se resuelve el Bruto:** mitigación 100/165 = 0.61, así que revólver (10.9 por bala) y carabina (12.1) necesitan ~20 y ~18 balas. Se enseña con kiteo (jugador 240 px/s contra 38) y plataformas (no salta; su único ataque es de contacto, 24 por segundo). Sin enemigos a distancia y sin presión de munición (`add_ammo()` es un no-op, solo cuentan cargador y recarga).
-- **Penetración real:** revólver, carabina y cuchillo 0; katana 0.1; martillo 0.25; pistola corrosiva 0.5; rifle de precisión **0.85** (el `.tres` manda; antes se documentaba 100%); granada ácida 1.0. La runa de piercing atraviesa enemigos, no armadura; la de afilado (+15 plano) sí ayuda porque suma antes de la mitigación.
-- **Runa opcional:** las runas solo se engarzan en el Herrero, así que rinde desde el 1-5.
-- **Carabina garantizada:** `guaranteed_weapon_paths` = cuchillo, revólver y carabina, para que entrar al 1-4 sin la carabina no sea una trampa.
-- **`WaveManager`** ahora admite `elite_scene` y `elite_per_round`: de los N enemigos de una ronda, los primeros son el elite (cuenta dentro del tamaño). Con los valores por defecto se comporta igual que antes. Acepta cualquier `BasicRunner` o `EnemyBase`.
-- **`gear_loot_tier = 1`** en este nivel: los enemigos pueden soltar equipo (ver sección 4, Botín de equipo).
-- **Selector bloqueado de verdad:** `MapSelector` deshabilita los sectores sin desbloquear y los no implementados (`LevelRegistry.IMPLEMENTED_LEVELS`) como "PENDIENTE". El 1-4 se desbloquea al extraer del 1-3.
-
-**Pendiente de balance:** tiempo del duelo, cantidad de ladrones en las arenas mixtas y si el nivel se siente demasiado largo.
+- **Oleadas del 1-7 al 1-10:** cantidades sin revisar; las arenas de 16 a 18 pueden ser injustas. Los élites no tienen tope de vivos (corregir con `elite_per_round` o `round_sizes`).
+- **Jefe del 1-10:** vida y armadura según el equipo real que llega; efecto del escudo de madera y del espejo.
+- **Arena final del 1-5:** si 2 Centinelas a la vez es demasiado; si el MP5 llega tarde o temprano.
+- **Casco láser:** 70 dps sostenido es alto; limitar con la barra de energía.
+- **Dash:** distancia y tiempo de recarga.
+- **Economía:** precios contra el ingreso real de monedas por nivel; el 40 % de compra para que vender no sea oro trivial; un casillero de consumible para el 1-3; segundo comerciante (herrero con runas) con `TraderData`.
+- **Mercader en modo prueba:** `sell_everything = true` en `data/traders/merchant.tres`. Apagarlo y definir el stock real antes de una versión jugable.
+- **Sockets de runas en armas del primer mundo:** sin runas hasta el Capítulo 2, ¿conviene quitárselos?
 
 ---
 
-## 2.2d Fase A.5 — Nivel 5 (Sector 1-5): El Centinela con Escudo
-*Estado:* Armado en `levels/chapter_1/level_1_05.tscn` (pendiente de validar en juego). Estrena el `ShieldedSentinel` (60 HP, 130 de escudo celeste que se recarga a 30/s si pasan 3 s sin recibir daño, 70 px/s, 14 de contacto).
-*Objetivo:* Que el jugador aprenda a **sostener el fuego**: el escudo absorbe todo, pero si no se le da respiro cae y el Centinela muere rápido. Es la contracara del Bruto (que se resuelve con espacio y paciencia).
+## 5. Arte pendiente
 
-| # | Tramo | x | Qué pasa |
-|---|---|---|---|
-| 1 | Entrada | 0–1100 | Cartel del Centinela y checkpoint (x 560). |
-| 2 | Arena 1: Duelo | 1300–2500 | **Un solo Centinela**, ronda `[1]`, una plataforma central. |
-| 3 | Pasillo | 2650–4100 | Techo bajo: ladrón, Centinela y ladrón (x 3000, 3450, 3850). Checkpoints (x 2650 y 4250). |
-| 4 | Arena 2: Mixta | 4400–5600 | **Rondas `[3, 5]`**, 1 Centinela en cada una. 3 plataformas. |
-| 5 | Desvío opcional | 5750–6450 | Escalera de 3 plataformas a la **Runa de Perforación** (+1 enemigo atravesado). Checkpoint (x 5750). |
-| 6 | Arena final | 6800–8150 | **Rondas `[4, 6, 6]`**, Centinelas `[1, 1, 2]`, descanso de 5 s. Checkpoint (x 6650). |
-| 7 | Recompensa | 8450 | Pedestal con el **Subfusil MP5** (automático, 7 de daño a 12 tiros/s). |
-| 8 | Extracción | 8800 | `ExitGate`. Desbloquea el Sector 1-6 (todavía esqueleto, sale como PENDIENTE). |
-
-**Reglas y decisiones:**
-- **Cómo se resuelve:** 190 de vida efectiva (130 + 60). La carabina (10 balas de 20) lo mata con un cargador si acierta todo; el revólver (6 de 18) necesita recargar, y su recarga (2.0 s) es menor que la espera del escudo (3.0 s): si se recarga y se sigue tirando, el escudo no vuelve.
-- **Recompensa MP5:** el primer automático gratis, justo cuando el enemigo nuevo premia la cadencia. Sigue a la venta en el Mercader; con `allow_duplicates = false` el pedestal desaparece si ya se tiene.
-- **Botín del Centinela** (`data/loot/shielded_sentinel_loot.tres`, nuevo): 4 a 7 monedas, munición 70%, vida 35%, equipo 12% (carabina, SMG, 9 mm, Colt, MP5, M4). Antes no soltaba nada.
-- **`gear_loot_tier = 2`** y armas garantizadas: cuchillo, revólver oxidado y carabina.
-- **Nunca más de 2 Centinelas vivos** y siempre con ladrones de distracción: la presión es de foco, no de cantidad.
-- **Barra rápida:** las armas garantizadas, compradas o recogidas sin equipar ahora entran solas a los casilleros 1-3 libres (antes una partida con barra guardada no las mostraba y había que ir al inventario).
-
-**Pendiente de balance:** si la arena final con 2 Centinelas es demasiado y si el MP5 llega tarde o temprano.
+- **Enemigos por piezas** (ladrón, bruto, centinela): hoy son una ilustración partida en la cintura. Separar brazos y arma como el héroe (`assets/PSD`) para que golpeen de verdad. Arte a mano, luego `enemy_art.gd`.
+- **Hojas de sprites de animación por enemigo:** la **rata** ya está hecha (caminar, ataque, golpe, cadáver; `MOB_FRAMES` en `enemy_art.gd`). Faltan ladrón, matón, pistolero, patovica, sicarios y agente del tiempo; receta y prompts en `.claude/skills/add-enemy/animacion.md`.
+- **Jefe del 1-10:** usa el arte del bruto agrandado; necesita el suyo.
+- **Escudos en mano:** el espejo ya tiene arte propio (Flow, `assets/art/weapons/mirror_shield.png`); el de madera usa arte de respaldo.
+- **Lanzallamas de combustible:** sprites de gota, charco animado, boquilla del arma e ícono de inventario (`ui/components/item_icons.gd`).
+- **Frostmourne:** el último cuadro de la hoja de armado (`frostmoon_spawn_sheet.png`) es un caballero y el esqueleto que camina es más simple; regenerar la hoja.
+- **Íconos propios:** Botas de Súper Velocidad y los ítems nuevos que hoy usan el ícono de respaldo.
+- **Haz del casco láser y boomerang:** dibujo procedural, con arte propio opcional.
+- **Emboscadas del Mundo 1** (`levels/ambush_director.gd`): los enemigos sueltos arrancan escondidos; las ratas saltan del tacho más cercano o salen por la abertura baja dibujada en cada edificio, y los humanos salen por sus puertas (salidas marcadas en `levels/building_exits.gd`, generado por `art_source/world1/process_buildings_2d.py`; sin salida cerca, de la penumbra). Falta validar en juego las distancias de disparo (200 ratas / 620 humanos) y el arte 2D plano de los obstáculos (tachos, pila de cajas) con fondo croma: `flow_tools.py split --bg green`.
+- **Atmósfera (pase de luz y color):** Fase 1 hecha en el Sector 1-01: gradación noir por sector (`grade` en `level_skin.gd`, shader en `core/post_fx.gd`), faroles con cono de luz y charco, uno que parpadea (`lamps` en `city_decor.gd`) y halo cálido detrás del jugador (`player_glow`). Falta: validar en juego, extender a los demás sectores y mundos con su paleta (alcantarilla verdosa, discoteca, infierno), y las fases siguientes: vida en el fondo (vapor, polvo, ceniza), sonido por tramo y frases de Gunther por zona.
+- **Sombras 2D:** necesitan `LightOccluder2D` en plataformas y luces por nivel; hacerlo junto con un pase de iluminación y colgarlas del preajuste Ultra.
 
 ---
 
-## 2.3 Economía — Mercader y Consumibles
-*Estado:* Armado (pendiente de validación en juego). Da un destino a las monedas del loot y herramientas tácticas para las oleadas.
+- Mangual: arte provisorio dibujado por script (`art_source/draw_mangual_placeholder.py`); falta `assets/art/weapons/mangual.png` de Flow (ver prompt en `add-level/politicas.md`).
 
-**Comercio (rework):** el Mercader y cualquier NPC comerciante usan una ventana grande de dos columnas (tus pertenencias / stock del comerciante) para **comprar y vender** arrastrando o con clic derecho, con filtros (categoría, rareza, búsqueda, orden), precios sobre cada casillero, lote de consumibles con Mayús, confirmación en operaciones caras o delicadas y una pestaña de **recompra**. Cada comerciante es un recurso `TraderData` (stock, límites, precios de compra y venta, qué categorías compra); la lógica vive en `TradeSession` y el estado (stock limitado, recompra) se guarda en el slot. Ver PROJECT_CONTEXT (`core/trade/`, `TradeWindow`).
+## 6. Sonido
 
-**Consumibles (máximo 5 de cada uno, se compran en el Campamento Base):**
-
-| Casillero | Consumible | Precio | Efecto |
-|---|---|---|---|
-| [4] / Mouse 4 | Poción de Vida | 15 | +50 de vida al instante (no se gasta con la vida completa) |
-| [5] / Mouse 5 | Poción Sin Recarga | 25 | 15 s sin gastar munición ni recargar |
-| [6] | Poción de Velocidad | 20 | +20 % de velocidad de movimiento por 20 s |
-
-**Reglas y decisiones:**
-- **Mercader:** NPC en el Campamento Base ([E]) y también en el hub del sandbox para probar con las 999 monedas. Vende al valor del objeto y compra al 40 %.
-- **Persistencia:** las cantidades se guardan en el slot (`consumables`). La compra guarda la partida.
-- **Efectos que no se apilan:** volver a usar una poción activa renueva su duración sin duplicar el bono.
-- **Botones laterales del ratón:** M4 y M5 usan los consumibles 1 y 2 (antes M4 lanzaba el arrojadizo táctico; el arrojadizo conserva [G] y el gatillo izquierdo).
-- **Indicador de recarga:** barra sobre el jugador (sección 2, punto 6).
-
-**Pendiente:** balance de precios con el ingreso real de monedas por nivel (y del 40 % de compra, para que vender no sea una fuente de oro trivial); evaluar un casillero de consumible para el 1-3; ver si conviene un segundo comerciante (herrero con runas) usando `TraderData`.
+- **Reemplazar el 8-bit provisorio por sonido de calidad** (tarea aparte, no bloquea nada): crear o importar los efectos y asignarlos arma por arma con `fire_stream` / `hit_stream`, o con `Sfx.register_override()`.
+- Sin sonido a propósito: ambientes, pasos y voces.
+- **Frases sueltas de Gunther (hecho, sin verificar en F5; 2026-10-19):** dice líneas cortas como subtítulo mientras avanza (al pasar puntos de 1-01, alcantarillas y torre, al ver por primera vez cada tipo de enemigo, arenas, checkpoints, vida baja, racha de bajas, reaparecer, quedarse quieto y jefe). Textos y reglas en `data/dialogue/gunther_lines.gd`; lógica en `levels/gunther_lines.gd` (lo crea `LevelBase`). **Voces:** grabar `assets/voice/gunther/<id>.ogg` con el id de cada frase y suenan solas. Revisar en juego frecuencia y textos.
+- **Música invocada:** la música de pelea ya no salta con cualquier enemigo. La invocan las arenas (`ArenaEncounter.combat_music`, por defecto `combat`) y los enemigos configurados (`EnemyBase.combat_music`; jefes → `boss` y élites → `elite` por defecto). Falta decidir qué enemigos/arenas de cada mundo llevan pista propia y, si se quiere, temas distintos por arena.
 
 ---
 
-## 2.5 Fase S — Sonido Básico (8-bit)
-*Estado:* Armado (pendiente de validación en juego). Efectos con estética shooter clásico (tipo Doom: ruido filtrado, golpe grave, eco de sala y grano ~11 kHz / 7 bits). Módulo `core/sfx.gd` con unos 55 efectos sintetizados, enganchado en armas, combate, jugador, recolección, tienda, granadas y mundo. Ver PROJECT_CONTEXT (`sfx.gd` y `GameFeel`) para el catálogo. Quedan sin sonido a propósito: música, ambiente, pasos y voces.
-*Objetivo:* Que cada disparo, golpe, recarga y daño tenga sonido, con efectos sintetizados por código (ondas cuadradas y ruido, estilo 8-bit) y una estructura que permita **reemplazarlos después por audio real sin tocar la lógica**.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (toca arma, combate, jugador y pickups a la vez).
-* **Alcance:**
-  1. **Generador central** (helper estático con `preload`, sin `class_name`, como `GameFeel`): sintetiza `AudioStreamWAV` (onda cuadrada, triangular, ruido, barrido de frecuencia, envolvente), los cachea y los reproduce con un pool de `AudioStreamPlayer`. Variación de tono ±5% y límite de voces simultáneas para que las armas automáticas no saturen.
-  2. **Buses de audio** `Master`, `SFX` y `Music` (volumen ajustable; el menú de opciones queda para después).
-  3. **Disparo por familia de arma:** pistola/revólver, automática (corta), rifle/francotirador, escopeta, lanzallamas (ráfagas de ruido) y, cuando existan, arco/ballesta y bastones. El tono sale de datos del arma, no de un `match` por nombre.
-  4. **Impacto:** golpe a enemigo, golpe a blindado (metálico, según armadura), crítico (más agudo), muerte (ya existe), choque contra pared y parry.
-  5. **Melee:** tajo (silbido, más agudo cuanto más rápida el arma) e impacto del filo.
-  6. **Recarga:** clic de cargador sacado y puesto, y aviso de recarga lista.
-  7. **Jugador y mundo:** daño recibido, salto, aterrizaje, moneda, orbe de EXP, pickup de arma, subir de nivel y compra en la tienda.
-  8. **Gancho de reemplazo:** `WeaponData` gana campos opcionales de sonido (`fire_stream`, `hit_stream`); si están asignados se usan en lugar del procedural. Así el audio real se cambia arma por arma, desde los `.tres`.
-  9. **Música (hecha):** `core/music.gd` + `core/music_director.gd` con la banda sonora de `ost/`: menú, campamento, tienda (al abrir el Mercader), exploración de nivel, combate estándar y élite según los enemigos cercanos, derrota y victoria. La pista de jefe queda lista para el grupo `boss` (todavía no hay jefes).
-* **Fuera de alcance por ahora:** ambientes, sonido posicional real, pasos y voces.
-* **Criterio de cierre:** En `test_level.tscn` y en el 1-1, con F5, cada disparo, impacto, recarga, tajo y daño recibido suena; el SMG y el lanzallamas no saturan ni cortan el audio; y se puede reemplazar el sonido de un arma asignando un `AudioStream` en su `.tres`.
+## 7. Decisiones abiertas y cabos sueltos
+
+- **Escudo:** ¿el bloqueo del escudo de madera debe ser direccional (solo de frente)? Hoy protege de todo mientras está levantado.
+- **Función secundaria de arma** (p. ej. zoom del rifle de precisión): `has_secondary_function()` está listo pero ninguna arma lo usa; mientras tanto el clic derecho dispara la mano 2.
+- **Nivel antiguo:** `levels/level_01.tscn` / `.gd` está sin conectar al registro; borrarlo o dejarlo.
+- **Tests históricos:** `tests/test_phase4..8.gd` ya no se usan; borrarlos o dejarlos.
 
 ---
 
-## 3. Fase B — Bucle Piñata (Oleadas, Loot y XP)
-*Objetivo:* El núcleo del juego: muchos enemigos, muertes que sueltan recompensas.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (toca varios sistemas a la vez).
-* **Alcance:**
-  1. `WaveManager`: oleadas con cantidad creciente por ronda, y ráfagas además del mantener-uno-vivo actual.
-  2. `EnemyBase`: al morir, dispersa monedas, loot y orbes de XP con `LootTable`.
-  3. Tabla de loot de ejemplo para los 2 enemigos básicos.
-* **Criterio de cierre:** Una oleada de 20 o más enemigos se puede reventar en el sandbox, y el loot cae, se recoge y suma sin errores ni caídas de rendimiento notorias.
+## 8. Técnico y distribución
 
-**Estado:** Cumplido. Oleadas por rondas con elites (`WaveManager`), botín con `LootTable` y orbes de EXP en uso desde el 1-2. Medido en la Sala de Estrés (sección 6c): 100 enemigos muertos juntos cuestan un cuadro de ~19 ms y otro de ~52 ms, y el botín se funde para no llenar el escenario.
-
----
-
-## 4. Fase C — Progresión (Nivel, Armadura y Armas)
-*Objetivo:* Que tenga sentido seguir jugando: subir de nivel y equipar algo mejor.
-* **Modelo recomendado:** Sonnet, esfuerzo **medium** (mayormente recursos y stats).
-* **Alcance:**
-  1. Nivel de personaje a partir de XP, con una mejora simple por nivel (por ejemplo, +vida).
-  2. 3 o 4 tiers de armadura y de arma, definidos en `.tres` con stats simples.
-  3. Mostrar el tier en el inventario y en el tooltip existente.
-* **Criterio de cierre:** Subir de nivel cambia algo visible, y equipar un tier superior cambia las stats que se ven en el HUD.
-
-**Estado:** Armado (pendiente de validar en juego). **Las armaduras se eliminaron** después de armar esta fase (no gustaron): no hay piezas de casco, pecho, guantes ni botas de armadura, ni tiers de armadura, ni sets. La mitigación por armadura del jugador sigue en el código (`StatsManager.get_armor()`) por si vuelven, pero hoy vale 0.
-
-**Decisiones:**
-- **Tier = rareza.** 4 tiers con la escala clásica: Normal (T1), Bueno (T2), Épico (T3), Legendario (T4). `Raro` sigue existiendo en el enum pero no se usa en el equipo por tiers.
-- **Nivel:** máximo 10. Cada nivel sobre el 1 da +10 de vida máxima y +3% de daño, derivado de `level` (sobrevive al guardado). La EXP deja de acumularse en el nivel máximo.
-- **Armadura del jugador:** mitigación `100 / (100 + armadura)` aplicada en `Player.take_damage()` (sin fuentes de armadura por ahora).
-
-| Tier | Rareza | Arma de rango | Arma melee |
-|---|---|---|---|
-| T1 | Normal | Revólver Oxidado, Pistola 9 mm | Cuchillo de Combate |
-| T2 | Bueno | Carabina de Chatarra, Colt .44, MP5 | Espada de Hierro |
-| T3 | Épico | Subfusil SMG, AK-47, M4, Desert Eagle | Katana de Asalto |
-| T4 | Legendario | Rifle de Precisión (130 de daño, 5 balas) | Martillo Pesado (100 de daño, 1.1/s) |
-
-**Cómo se consiguen:** revólver, botas, carabina y MP5 son recompensas de los sectores 1-1, 1-2, 1-3 y 1-5. El resto se compra en el Mercader (sección EQUIPO, precio = `gold_value`: espada 80, SMG y katana 220, rifle y martillo 500, etc.) o cae como botín de equipo desde el 1-4.
-
-**Inventario (mejora de UX):** nuevo sistema de ítem en mano (arrastrar y soltar, o clic y clic; clic derecho o ESC cancela), con resaltado de destinos válidos, acomodo en el casillero, vuelta animada al origen y sonidos. Hoja de equipamiento con silueta (paper doll). Arrastrar baúl a mochila y arma a mochila ahora funciona.
-
-**Baúl y armas (campamento):** el Baúl guarda armas (con sus runas) y equipo directamente desde la barra rápida y el cuerpo, y el personaje puede quedarse **sin ninguna arma**. Lo equipado, el arma activa, la mochila y el baúl se guardan solos al moverlos y al cerrar el juego.
-
-**Botín de equipo (enemigos):** además de monedas, munición y vida, los enemigos pueden soltar armas por tier (las armaduras del pool se quitaron junto con las armaduras).
-- **Dónde se configura:** `LootTable` suma `gear_chance` y `gear_pool` (`ItemData` o `WeaponData`); el nivel aporta `LevelBase.gear_loot_tier` (0 = apagado, por defecto: los sectores 1-1 a 1-3 y el sandbox no cambian).
-- **Probabilidad:** `gear_chance × (1 + 0.5 × (tier − 1))`, tope 50%. Ladrón 3%, Bruto 20% en tier 1.
-- **Rareza por tier de nivel** (Normal / Bueno / Raro / Épico / Legendario): tier 1 `70/30/0/0/0`, tier 2 `50/35/0/15/0`, tier 3 `30/35/0/25/10`, tier 4+ `15/30/0/35/20`. El peso es sobre las piezas del pool.
-- **Filtro:** no suelta lo que el jugador ya posee (equipado, arsenal, mochila o baúl) ni ítems de rareza igual o menor a lo equipado en su ranura.
-- **Recogida:** `PickupItem` y `WeaponPickup` con `allow_duplicates = true`. Con la mochila llena el ítem se queda en el suelo (antes `PickupItem` lo perdía).
-- **Sin sistema de venta:** el filtro evita llenar la mochila de chatarra.
-
-**Personaje al doble de tamaño:** sprite, colisión, hurtbox, arma en mano y hitbox melee se duplicaron (ver PROJECT_CONTEXT, `Player`). La física no cambió (velocidad 240, salto 530), así que los niveles siguen siendo los mismos en píxeles. Los enemigos no se escalaron.
-
-**Equipo visible en el personaje:** la granada táctica y el jetpack/alas se dibujan en el esqueleto del personaje (`CharacterRig`). Las piezas de armadura que se dibujaban antes ya no existen.
-
-**Armas en mano:** el arma activa se dibuja con el mismo ícono pixel art del inventario (`ItemIcons.WEAPON_POSES`: agarre, punta, giro y escala por tipo). La boca del cañón (`Muzzle`) queda en la punta del arma. En melee el arma recorre el arco del tajo junto con el hitbox; al disparar da un golpe de retroceso; al recargar baja el cañón y mueve el cargador durante todo el `reload_time`. Los pickups del suelo (armas e ítems) también muestran el ícono y el nombre con el color de su rareza.
-
-**Qué se ve:** HUD con línea `ARM x (-y%) | DMG z`, nombre del arma con su rareza y color, aviso central al subir de nivel, borde del casillero con el color de rareza y tooltip con rareza y stats con nombre legible.
-
-**Pendiente (agregado 2026-10-11):**
-- **Subida de nivel demasiado rápida:** el personaje llega al nivel alto muy pronto. Bajar la EXP que dan los enemigos o subir la curva (base 150, x1.5 por nivel) y revisar que el nivel 10 se alcance recién avanzada la campaña.
-- **Drops de equipo generosos en los sectores tempranos:** en el 1-4 un mob soltó el arma del pedestal y otro una M4 (T3) antes de llegar al final. Revisar `gear_chance` y el peso de rareza por tier (sección "Botín de equipo") para que un nivel temprano no entregue armas de tier 3.
-- **Enemigos levemente más duros:** con la Runa de Perforación y la de Afilado las oleadas caen con facilidad, y es muy temprano para eso. Subir un poco la vida o la armadura de ladrón, bruto y centinela (o escalarlas por sector) sin tocar la cantidad de enemigos.
+- **Exportación a `.exe` (diferido hasta tener una versión final cercana):** instalar las plantillas de exportación 4.7.2 (Editor > Administrar plantillas), correr `build_exe.bat` y **probar el `.zip` en una PC limpia**, sin Godot. No se puede hacer desde el código.
+- **UI modular y Códice (2026-10-19, hecho; jugabilidad sin verificar):** tema intercambiable `ui/themes/steam_theme.tres` (texturas, colores, fuentes; SteamSkin lo lee), base `GameWindow` + `UiKit` + `WindowRegistry` en `ui/framework/`, skill `add-window`. Primera ventana: Códice [O] con enemigos (se registran al matarlos, con lore) y armas (al conseguirlas), guardado en el slot. Pendiente si se quiere: migrar las ventanas viejas (`.tscn`) a `GameWindow`; retratos para Fantasma y Zombi (hoy sin imagen).
+- **Idioma y subtítulos:** hoy solo español y sin voces. Si hace falta, pasar los textos a `tr()` con un archivo de traducción.
+- **Rendimiento (reabrir solo si el registro muestra caídas):**
+  1. Costo de enemigos vivos: con ~100 persiguiendo bajan a 45-48 FPS (CPU: IA y física, ~4 `Area2D` por enemigo). Auditar sensores, capas y máscaras; IA y animación más baratas fuera de cámara.
+  2. Instanciado: 2 a 4 ms por enemigo al aparecer; evaluar pool de enemigos.
+  3. Liberación repartida de enemigos tras una masacre (el cuadro del golpe ronda 55 ms con 300 muertes).
+  - **Criterio:** 100 enemigos persiguiendo a 60 FPS estables y 200 jugables en la Sala de Estrés (tabla "FPS según enemigos vivos" del monitor, F9).
+  - **Hecho (sesión del 2026-10-13):** `ViewCull` (dormir animación y redibujado fuera de cámara), tope y reciclaje de charcos de ácido/gas/fuego/redes, barra de vida de un solo nodo, enemigos lejanos como un sprite (opción `enemy_lod`), estilos de fuego y ácido sprites/partículas/shaders (opción `fire_style`), pool de proyectiles con lista de libres. En la Sala de Estrés: lluvia del cielo (F9/F11) con ácido, granadas, fuego y balas.
+  - **Medido:** los shaders rinden igual o un poco mejor que los sprites y las partículas son 10-25 % más caras (en cuadros de 40-160 charcos/s). Lo caro eran las `draw_circle` de las gotas, no las áreas.
+  - **Hecho (sin medir en F9):** pool de efectos de disparo (fogonazo, humo y chispas de `combat/shot_fx.gd`, hasta 40 por tipo; al cerrar el juego Godot avisa de recursos sin liberar por esa reserva, es ruido esperado).
+  - **Pendiente:** pool de granadas, física de enemigos lejanos más barata, cartel de estados creado recién al quemarse/congelarse, nubes de gas con estilo partículas/shader.
 
 ---
 
-## 5. Fase D — Movilidad Mínima
-*Objetivo:* Una sola mejora de movimiento, sin tocar el resto de la FSM.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (la FSM del jugador es la parte más delicada). Si solo se agrega un valor o un flag en `ItemData`, medium alcanza.
-* **Alcance:**
-  1. Elegir una: doble salto, salto más alto o velocidad. **Elegida: velocidad**, como `Botas Ligeras` en la recompensa del Sector 1-2 (sección 2.2). Criterio de cierre validado en juego.
-  2. Dejarla como mejora obtenible (pickup o desbloqueo por nivel).
-* **Criterio de cierre:** Con la mejora equipada, el salto o la velocidad cambian; sin ella, el comportamiento actual no cambia.
+## 9. Cómo trabajar las tareas de acá
 
-**Ampliación (agregada 2026-10-11, pendiente):**
-- **Agacharse:** disponible siempre, sin ítem. Achica la hitbox y baja el cuerpo; el arma sigue funcionando agachado.
-- **Roll y dash:** no están desbloqueados. Se habilitan con ítems (una ranura de movilidad nueva o un ítem consumible de un solo uso según el caso), así que la FSM tiene que leer el flag del ítem y no hardcodearlo. Desbloqueables a futuro, sin fecha.
-- **Modelo recomendado:** Sonnet, esfuerzo **high** (toca la FSM del jugador).
-
----
-
-## 6. Fase E — Menú de Niveles Operativo
-*Objetivo:* Poder entrar a niveles reales desde el Campamento.
-* **Modelo recomendado:** Haiku, esfuerzo **medium**.
-* **Alcance:**
-  1. `MapSelector` lista los niveles jugables y bloquea el resto como "pendiente".
-  2. Entre 2 y 3 niveles reales conectados a `LevelRegistry` y a `level_base.gd`. El 1-1 ya está hecho (sección 2.1); los demás siguen sus principios de progresión (una mecánica nueva por tramo, pasillos largos, sin ítems avanzados al principio).
-  3. Al terminar un nivel, vuelve el menú con el siguiente desbloqueado.
-* **Criterio de cierre:** Se puede ir del Campamento a un nivel, completarlo y volver con el progreso guardado.
-
-**Estado:** Cumplido. Sectores 1-1 a 1-5 jugables (`LevelRegistry.IMPLEMENTED_LEVELS`), el resto sale como PENDIENTE; extraer desbloquea el siguiente y la victoria ofrece SIGUIENTE SECTOR.
-
----
-
-## 6b. Fase O — Opciones, Pulido de Personajes y Distribución
-*Estado:* Primera y segunda tanda hechas (la segunda, pendiente de validar en juego). Queda solo lo que necesita arte a mano o una prueba física (ver "Pendiente").
-
-**Hecho (primera tanda):**
-- **Panel de opciones** (`core/settings.gd` + `ui/settings_window.gd`; menú principal y pausa, se guarda en `user://settings.cfg`): modo de pantalla (ventana, ventana sin bordes a pantalla completa, exclusiva), resolución, V-Sync (4 modos), FPS máximos, calidad gráfica (4 preajustes + personalizada: MSAA 2D y densidad de partículas), contador de FPS, volúmenes (general, música, efectos), silencio al perder el foco, intensidad del temblor de cámara, números de daño y reasignación de teclas.
-- **Personaje:** cuerpo `hero` articulado (hombro/codo/muñeca y cadera/rodilla/tobillo), IK de brazos hacia el arma, agarre y animación propios por arma (`core/art/weapon_motion.gd`).
-- **Enemigos:** ladrón, bruto y centinela con ciclo de marcha (torso y piernas partidos) y embestida al atacar; zombi, esqueleto y fantasma con zarpazo.
-- **Balance:** XP más lenta (150 de base, x1.5 por nivel, 20 por enemigo), cuchillo con menos daño y más cadencia, bruto 25 % más grande, monedas apoyadas sobre el piso con sonido encadenado.
-
-**Hecho (segunda tanda, pendiente de validar en juego):**
-- **Opciones:** confirmación con cuenta regresiva de 15 s al cambiar modo, resolución o monitor (si no se confirma vuelve sola; ESC también revierte), **selección de monitor**, **reasignación de teclado, ratón y mando** (dos casilleros por acción, 21 acciones, botón ↺ por acción) con **detección de conflictos** (si otra acción usaba esa tecla, intercambian y se avisa), **dificultad** (Recluta / Soldado / Veterano / Pesadilla: daño enemigo x0.6 / 1 / 1.35 / 1.75 y vida enemiga x0.75 / 1 / 1.25 / 1.6) y una pestaña de **Accesibilidad**: escala de la interfaz y el texto (85-125 %, la cámara compensa para ver la misma porción del nivel), filtro para daltonismo (protanopia, deuteranopia, tritanopia, con intensidad), reducir destellos, apagar el hit stop y temblor de cámara. Las teclas guardadas con la versión anterior de `settings.cfg` se migran solas.
-- **Calidad gráfica real:** posprocesado por pantalla (`core/post_fx.gd`) colgado del preajuste: Media = viñeta, Alta = viñeta + grano, Ultra = + resplandor (bloom). Cada efecto se puede tocar a mano (pasa a "Personalizada"). Solo tiñe el mundo: el HUD pasó a la capa 2 y el efecto vive en la 1. El MSAA 2D se oculta porque `gl_compatibility` no lo soporta (el motor lo avisaba en el log).
-- **Recarga propia por arma y combos de las automáticas** (`RELOADS` y `PATTERNS` en `core/art/weapon_motion.gd`): los revólveres abren el tambor y meten bala por bala, la escopeta mete 4 cartuchos y bombea, el rifle de precisión acciona el cerrojo, fusiles y carabina tiran de la manija, las armas de energía cambian el bidón con un siseo. Sonidos nuevos `reload_shell`, `reload_rack`, `reload_vent`. Las automáticas suben el cañón y se mecen a medida que se sostiene la ráfaga y vuelven al soltar (solo visual, no cambia la dispersión).
-- **Distribución:** ícono del `.exe` (`icon.ico`, generado por `art_source/icon/make_icon.py` desde la cabeza del héroe), versión y metadatos en el preset (`application/modify_resources = true`), **pantalla de carga** con barra de progreso y consejos (carga en segundo plano, `core/scene_loader.gd`; todos los cambios de escena pasan por `GameManager.change_scene()`), **registro de errores** en `user://logs/errors_<fecha>.log` (solo si hubo errores; versión, sistema y placa de video en el encabezado; guarda los últimos 10), lista de exclusiones afinada y `build_exe.bat` que importa, exporta y arma `build/WARMACHINE_<versión>.zip`.
-- **Arreglo:** la tecla de recarga ya no está fija en R (respeta la reasignación).
-
-**Pendiente:**
-1. **Enemigos con arte por piezas:** el ladrón, el bruto y el centinela son una ilustración partida en cintura; para brazos que golpeen de verdad hay que separar brazos y arma como se hizo con el héroe (`assets/PSD`). Tarea de arte + `enemy_art.gd`. *Arte a mano, luego Sonnet.*
-2. **Instalar las plantillas de exportación 4.7.2** (Editor > Administrar plantillas) y correr `build_exe.bat`; después **probar el `.zip` en una PC limpia** (sin Godot). No se puede hacer desde el código.
-3. **Sombras 2D:** necesitan `LightOccluder2D` en las plataformas y luces por nivel; conviene hacerlo junto con un pase de iluminación de los niveles. Cuando estén, colgarlas del preajuste Ultra.
-4. **Idioma y subtítulos:** quedan fuera mientras el juego tenga un solo idioma (español) y no haya voces. El paso previo sería pasar los textos a `tr()` con un archivo de traducción.
-
-**Exportación a `.exe` único:** `export_presets.cfg` ya define el preset "Windows Desktop" con el `.pck` embebido (un solo archivo). Hace falta instalar una vez las plantillas de exportación de Godot 4.7.2 (Editor > Administrar plantillas de exportación) y correr `build_exe.bat`; sale `build/WARMACHINE.exe`.
-
----
-
-## 6c. Fase P — Rendimiento y Optimización
-*Objetivo:* Que el juego aguante pantallas llenas de enemigos, balas, gore y botín sin trabarse, midiendo en vez de adivinar.
-
-**Hecho (2026-10-11, pendiente de validar en juego):**
-- **Sala de Estrés** (puerta a la derecha del Campamento): generador infinito de enemigos (tipo, lote, ritmo, tope de vivos, cuántos por cuadro), fuego automático, congelar enemigos (separa el costo de dibujo del de IA y física), matar / herir / borrar, limpiar escombros, inmortal sin empujones. No guarda nada de lo que pasa adentro.
-- **Monitor de rendimiento** (`core/debug/perf_monitor.gd`): fijo en la sala y con **F9** en cualquier nivel. Registra en `user://logs/rendimiento/` un `.csv` cada 0.5 s y un `.txt` con eventos, picos, censo de nodos y la tabla de FPS según enemigos vivos.
-- **Botín:** monedas, munición, vida y orbes quietos se funden de a 10 en uno más grande que vale la suma (4 niveles). Quietos no calculan física y se juntan por distancia (antes sus áreas detectaban a los enemigos y llenaban la física de pares de colisión). La experiencia cae con gravedad.
-- **Muertes masivas:** cola de efectos con presupuesto de 2.5 ms por cuadro (`combat/death_fx_queue.gd`): gore y botín se reparten en varios cuadros; el botín nunca se pierde. Se sacaron los `print()` por baja y por moneda (~15 ms cada uno con muchas bajas). 300 muertes juntas pasaron de 5.7 s congelado a ~0.2 s.
-
-**Pendiente (no urgente; hacerlo cerca del cierre, sobre los enemigos definitivos):**
-1. **Costo de los enemigos vivos:** con ~100 persiguiendo el juego baja a ~45-48 FPS; congelados vuelve a 60, así que es CPU (IA + física), no dibujo. Hay ~4 `Area2D` por enemigo y hasta 2000-2700 pares de colisión. Auditar sensores, capas y máscaras; IA y animación más baratas lejos o fuera de cámara; cachear búsquedas por cuadro.
-2. **Instanciado:** cada enemigo cuesta 2-4 ms al aparecer (arte del rig y componentes). Evaluar pool de enemigos.
-3. **Cuadro del golpe en masacres:** ~55 ms con 300 muertes (números de daño, señales) y ~148 ms el siguiente (liberar los enemigos). Pool o tope de números de daño y liberación repartida.
-- **Cuándo adelantarlo:** si se diseñan niveles u hordas de más de 30-40 enemigos simultáneos, si el registro muestra caídas con pocos enemigos, o antes de probar el `.exe` en PCs más modestas.
-- **Regla desde ya:** cada sistema pesado nuevo (explosiones, misiles, efectos de área) se prueba en la Sala de Estrés apenas está armado.
-- **Modelo recomendado:** Sonnet, esfuerzo **high** (toca enemigos, componentes y física).
-- **Criterio de cierre:** 100 enemigos persiguiendo a 60 FPS estables y 200 jugables en la Sala de Estrés, comparando la tabla "FPS según enemigos vivos" antes y después.
-
----
-
-## 6d. Fase W — Armas: Manos, Tipos y Animación
-*Objetivo:* Que cada arma se sienta distinta en la mano, y que el personaje pueda llevar dos cosas a la vez. Es la base de varios puntos de abajo, así que el sistema de tipos va primero.
-* **Modelo recomendado:** Sonnet, esfuerzo **high** (toca armas, animación y FSM de combate).
-
-**Pendiente:**
-1. **Sistema de tipos de arma (primero):** cada `WeaponData` declara su familia (pistola, revólver, carabina, subfusil, escopeta, rifle, melee corto, espada, etc.) y su empuñadura: **una mano**, **dos manos** o **escudo**. La familia define el comportamiento base (eyección, animación, sonido); el tipo define si puede ir en la mano secundaria. Esto evita un `match` por nombre en cada sistema.
-2. **Dos manos (mano principal y secundaria):** el personaje tiene un arma en cada mano si ambas son de una mano. Click izquierdo usa la principal, click derecho la secundaria. Combinaciones previstas: cuchillo + pistola, escudo + arma, dos pistolas. Un arma a dos manos ocupa las dos y deja la secundaria vacía. Revisar cómo se reparte la munición y la recarga cuando las dos armas son de fuego.
-3. **Casquillos y cargador al recargar:** al recargar, cae el cargador viejo y salen los casquillos al piso, según la familia (revólver: casquillos del tambor; pistola y fusiles: cargador y casquillos; escopeta: cartuchos). Son efectos visuales, sin física de recogida.
-4. **Carabina de Chatarra:** sube de daño, **no atraviesa enemigos** y gana un poco de penetración de armadura. Aplicar lo mismo a todas las carabinas, según su tipo.
-5. **Cuchillo de Combate:** menos daño y un poco más de cadencia.
-6. **Revólver Oxidado:** un poco menos de daño (el de inicio del 1-1 ya no debe ser tan fuerte).
-7. **Swing de espada:** los ataques de espada y armas grandes hacen un arco amplio frente al personaje. El brazo acompaña el movimiento, y el cuerpo gira con él (no solo el arma). Aplica a las armas melee de dos manos. Ver `core/art/weapon_motion.gd`.
-
----
-
-## 6e. Fase V — Recompensas Visibles
-*Objetivo:* Que el loot y la subida de nivel se vean a distancia, sin texto encima.
-* **Modelo recomendado:** Sonnet, esfuerzo **medium** (efectos visuales, sin cambiar la lógica).
-
-**Pendiente:**
-1. **Objetos del piso (items y runas):** en vez de la caja actual, cada objeto flota con un leve movimiento de vaivén y un aura brillante que pulsa. El color del aura sale de la rareza.
-2. **Aura de subida de nivel:** al subir de nivel, un aura alrededor del personaje, estilo MU Online o WoW (columna o destello de luz, unos segundos, sin bloquear el juego).
-
----
-
-## 6f. Fase T — Herramientas de Diseño desde el Editor
-*Objetivo:* Que armar niveles y probar cosas sea rápido desde Godot, sin tocar código ni escribir a mano coordenadas o rutas.
-* **Modelo recomendado:** Sonnet, esfuerzo **medium** (mayormente escenas, exports y un editor simple).
-
-**Pendiente:**
-1. **Colocar en el nivel sin código:** que un nivel se arme arrastrando escenas en el editor (plataformas, checkpoints, arenas, pedestales, puertas de salida), con los parámetros visibles en el Inspector.
-2. **Spawnear enemigos desde el editor:** un marcador de spawn por enemigo o por oleada, con tipo, cantidad y ronda como exports. Sin editar `WaveManager` a mano.
-3. **Tirar armas e ítems al piso:** un marcador que deja cualquier `WeaponData` o `ItemData` (o una runa) en el suelo, eligiendo el recurso desde el Inspector.
-4. **Probar desde el editor:** poder lanzar un nivel desde su escena y arrancar con un equipo de prueba (armas, consumibles, monedas) sin pasar por el Campamento.
-5. **Regla desde ya:** cada sistema nuevo (armas, enemigos, ítems, runas) tiene que poder usarse desde el editor. Si para colocarlo hay que escribir código, no está terminado.
-
----
-
-## 7. Después del Prototipo (no entra ahora)
-- Los 50 niveles y los 5 capítulos (Fase 16 del plan anterior). Hechos: 1-1 a 1-5.
-- Stand-by de la sección 0.
-- Cierre y exportación a `.exe` (cuando el bucle esté validado): el pipeline ya está listo (sección 6b), falta instalar las plantillas y probar.
-
----
-
-## 8. Tareas Menores (para IA liviana)
-*Objetivo:* Cambios chicos, mayormente de valores en los `.tres` y las curvas, que se pueden hacer sin pensar en la arquitectura.
-* **Modelo recomendado:** Haiku, esfuerzo **medium**.
-* **Reglas para quien las haga:**
-  - Cambiar solo los valores indicados. Si una tarea pide tocar la lógica de combate, la FSM o el sistema de armas, parar y reportar: no es una tarea menor.
-  - No crear escenas ni scripts nuevos.
-  - Verificar cada cambio con F5 en el Sector 1-1 o en el Banco de Pruebas. Anotar en la tarea qué se probó y qué se sintió.
-  - No hacer commit ni push sin que lo pidan.
-
-**Tareas:**
-1. **Cuchillo de Combate:** bajar el daño un poco y subir la cadencia un poco. Archivo: el `.tres` del cuchillo en `data/weapons/`. Criterio: sigue matando a un ladrón de un golpe o dos, y se siente un poco más rápido.
-2. **Revólver Oxidado:** bajar el daño un poco. Archivo: `data/weapons/rust_revolver.tres`. Criterio: el 1-1 sigue siendo posible con el revólver solo, sin que se sienta lento.
-3. **Carabina de Chatarra:** subir el daño un poco y dejar la penetración de armadura en un valor chico. Archivo: `data/weapons/scrap_carbine.tres`. Criterio: el DPS sube sin cambiar la cadencia ni el cargador. No tocar el atravesar: eso es otra tarea (Fase W).
-4. **Enemigos levemente más duros:** subir un poco la vida o la armadura de ladrón, bruto y centinela, sin cambiar cantidades ni rondas. Archivos: los `.tscn` o `.tres` de cada enemigo en `enemies/` (buscar los valores de vida y armadura). Criterio: las oleadas del 1-2 y del 1-3 se sienten con más presión, no más largas.
-5. **Subida de nivel:** bajar un poco la EXP que da cada enemigo (`EXP por enemigo` en el código de experiencia). Criterio: llegar al nivel 5 toma más de la mitad del 1-2, no toda la campaña. No cambiar la curva de nivel (x1.5), solo la base o la ganancia por enemigo.
-6. **Drops de equipo tempranos:** en los niveles 1-3 y 1-4, bajar `gear_chance` de los enemigos del nivel (o el `gear_loot_tier` si conviene). Criterio: un arma de tier 3 no aparece en los primeros cuatro sectores.
-
----
-
-## Reglas para Ahorrar Cuota
-- Una sesión nueva por fase.
-- Empezar siempre en Sonnet medium, subir a high solo si el cambio toca varios sistemas.
-- Haiku para tareas mecánicas (valores, recursos, textos).
-- Opus solo si Sonnet high falla dos veces en el mismo bug.
+- Una tarea por sesión, chica y verificable. Si una tarea parece pedir esfuerzo alto, partirla.
+- Sonnet con esfuerzo medio por defecto; Haiku para cambios de valores en `.tres`.
+- Cambios de valores: tocar solo los valores indicados, sin escenas ni scripts nuevos.
+- No hacer commit ni push sin que el usuario lo pida.
+- Al cerrar una tarea: actualizar `PROJECT_CONTEXT.md` solo si cambió un archivo de entrada o una regla, y borrar la tarea de este archivo.

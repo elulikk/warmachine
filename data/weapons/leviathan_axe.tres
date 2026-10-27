@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/leviathan_axe_throw.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/hacha_leviatan.png" id="3_sprite"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/leviathan_axe.tres"
+weapon_name = "Hacha Leviatán"
+family = 0
+grip = 0
+weapon_type = 0
+is_automatic = false
+damage = 50.0
+fire_rate = 1.2
+knockback_force = 160.0
+recoil_force = 20.0
+projectile_speed = 820.0
+magazine_size = 1
+reload_time = 0.95
+innate_pierce = 99
+ice_duration = 2.0
+projectile_scene = ExtResource("2_proj")
+projectile_sprite = ExtResource("3_sprite")
+innate_status_effects = Array[String](["ICE"])
+muzzle_flash = false
+fire_sound = &"axe_throw"
+max_sockets = 3
+socketed_runes = []
+rarity = 4
+gold_value = 880
+description = "Hacha forjada con la escarcha de los gigantes del norte. Se lanza girando, corta y congela a todos los que cruza, y vuelve sola a la mano cortando otra vez a la vuelta."

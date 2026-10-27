@@ -3,6 +3,7 @@ extends RefCounted
 ## ya posee (o que sería peor que lo equipado) y deja el pickup en el suelo.
 ## Sin class_name a propósito: se carga por `preload` desde EnemyBase y BasicRunner.
 
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 const PICKUP_ITEM_SCENE: PackedScene = preload("res://entities/items/pickup_item.tscn")
 const WEAPON_PICKUP_SCENE: PackedScene = preload("res://entities/items/weapon_pickup.tscn")
 
@@ -20,16 +21,20 @@ static func try_drop(source: Node2D, table: LootTable) -> void:
 	if container == null:
 		return
 
+	var player: Player = tree.get_first_node_in_group(&"player") as Player
+	var owned_paths: Dictionary = _collect_owned_paths(player)
+	var is_excluded: Callable = _is_excluded.bind(player, owned_paths)
+
+	# El escudo no depende del tier de botín: se tira aparte, antes de mirar el equipo del nivel
+	if table.shield_item != null and randf() <= table.shield_chance and not is_excluded.call(table.shield_item):
+		_spawn_pickup(table.shield_item, source.global_position + Vector2(0.0, -16.0), container)
+
 	var tier: int = 0
 	var tier_value: Variant = container.get("gear_loot_tier")
 	if typeof(tier_value) == TYPE_INT:
 		tier = int(tier_value)
 	if tier <= 0:
 		return
-
-	var player: Player = tree.get_first_node_in_group(&"player") as Player
-	var owned_paths: Dictionary = _collect_owned_paths(player)
-	var is_excluded: Callable = _is_excluded.bind(player, owned_paths)
 
 	var gear: Resource = table.roll_gear(tier, is_excluded)
 	if gear == null:
@@ -61,6 +66,7 @@ static func _spawn_pickup(gear: Resource, pos: Vector2, container: Node) -> void
 
 	pickup.global_position = pos
 	container.add_child(pickup)
+	LootLifetimeScript.arm(pickup)
 
 	# Salto de aparición: sube y cae a un costado, como el resto del botín piñata
 	var side: float = randf_range(-26.0, 26.0)

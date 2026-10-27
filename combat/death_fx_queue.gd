@@ -24,6 +24,8 @@ const MERGE_BATCH: int = 10
 ## Cuántas entradas mira hacia adelante para juntar las del mismo tipo.
 const MERGE_LOOKAHEAD: int = 40
 const SPAWN_OFFSET: Vector2 = Vector2(0.0, -16.0)
+## La experiencia que sueltan los enemigos se reduce a la mitad (el botín se reduce en LootTable.DROP_AMOUNT_MULT).
+const EXP_MULT: float = 0.5
 
 var _gore: Array[Dictionary] = []
 var _loot: Array[Dictionary] = []
@@ -37,20 +39,20 @@ var _default_exp: Dictionary = {}
 # ==============================================================================
 
 ## Explosión de muerte (chispas, destello y sonido) de `GameFeel.death_burst`.
-static func burst(ctx: Node, pos: Vector2) -> void:
+static func burst(ctx: Node, pos: Vector2, mechanical: bool = true) -> void:
 	var queue: Node = _get_queue(ctx)
 	if queue == null:
-		GameFeel.death_burst(ctx, pos)
+		GameFeel.death_burst(ctx, pos, mechanical)
 		return
-	queue.call("_push_gore", {"kind": "burst", "pos": pos})
+	queue.call("_push_gore", {"kind": "burst", "pos": pos, "mechanical": mechanical})
 
 
 ## Lluvia de trozos, salpicaduras y charcos del final de `DamageFx`.
-static func gore(ctx: Node, pos: Vector2, mechanical: bool) -> void:
+static func gore(ctx: Node, pos: Vector2, mechanical: bool, size_scale: float = 1.0, amount: float = 1.0) -> void:
 	var queue: Node = _get_queue(ctx)
 	if queue == null:
 		return
-	queue.call("_push_gore", {"kind": "gore", "pos": pos, "mechanical": mechanical})
+	queue.call("_push_gore", {"kind": "gore", "pos": pos, "mechanical": mechanical, "size": size_scale, "amount": amount})
 
 
 ## Una pieza de botín (`LootDrop`). `pos` es la posición del enemigo.
@@ -137,18 +139,21 @@ func _run_gore(entry: Dictionary) -> void:
 	var pos: Vector2 = entry["pos"]
 	match str(entry["kind"]):
 		"burst":
-			GameFeel.death_burst(self, pos)
+			GameFeel.death_burst(self, pos, bool(entry.get("mechanical", true)))
 		"gore":
 			var mechanical: bool = bool(entry["mechanical"])
 			var host: Node2D = _host()
-			BloodFx.gibs(host, pos, 12, mechanical, 1.0)
-			BloodFx.spray(host, pos, Vector2.UP, 60.0, mechanical)
-			BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, mechanical)
-			BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, mechanical)
-			BloodFx.spray_sprite(host, pos, Vector2.UP, 90.0)
-			BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-30.0)), 70.0)
-			BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-150.0)), 70.0)
-			BloodFx.stains(host, pos, Vector2.ZERO, 6, 1.9, mechanical)
+			var size_scale: float = float(entry.get("size", 1.0))
+			var amount: float = float(entry.get("amount", 1.0))
+			BloodFx.gibs(host, pos, maxi(1, roundi(6.0 * amount)), mechanical, 1.0, size_scale)
+			BloodFx.spray(host, pos, Vector2.UP, 60.0 * amount, mechanical)
+			if amount >= 0.7:
+				BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.LEFT, 40.0, mechanical)
+				BloodFx.spray(host, pos + Vector2(0.0, 6.0), Vector2.RIGHT, 40.0, mechanical)
+				BloodFx.spray_sprite(host, pos, Vector2.UP, 90.0)
+				BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-30.0)), 70.0)
+				BloodFx.spray_sprite(host, pos, Vector2.from_angle(deg_to_rad(-150.0)), 70.0)
+			BloodFx.stains(host, pos, Vector2.ZERO, maxi(1, roundi(6.0 * amount)), lerpf(0.9, 1.9, amount), mechanical)
 
 
 ## BloodFx necesita un Node2D en el árbol para ubicar el contenedor y el espacio de física.
@@ -177,6 +182,8 @@ func _spawn_next_loot() -> void:
 		var value: float = float(entry["value"])
 		if item_type == "EXP" and value < 0.0:
 			value = _scene_default_exp(entry["scene"] as PackedScene)
+		if item_type == "EXP":
+			value *= EXP_MULT
 		total += value
 		center += entry["pos"] as Vector2
 	center /= float(batch.size())

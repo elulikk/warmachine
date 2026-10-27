@@ -54,7 +54,7 @@ func physics_update(delta: float) -> void:
 	if player.has_jetpack and not player.is_on_floor() and player.is_jump_pressed():
 		if player.jetpack_fuel > 0.0:
 			player.velocity.y = -260.0
-			player.jetpack_fuel = maxf(0.0, player.jetpack_fuel - 45.0 * delta)
+			player.jetpack_fuel = maxf(0.0, player.jetpack_fuel - player.JETPACK_DRAIN * player.jetpack_drain_mult * delta)
 			player.is_using_jetpack = true
 			_trigger_jetpack_visual()
 		else:

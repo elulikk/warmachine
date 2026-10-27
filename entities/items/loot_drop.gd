@@ -2,24 +2,21 @@ class_name LootDrop
 extends CharacterBody2D
 ## Recompensa física arrojada por enemigos con efecto de dispersión piñata, rebote
 ## sobre el suelo, atracción magnética hacia el Jugador y recolección de recursos.
-## El botín quieto se funde de a 10 del mismo tipo en uno más grande que vale la suma (`core/loot/loot_combiner.gd`):
-## `merge_tier` 0-3. Las monedas además cambian de tono (moneda, grande, platino, gema de tesoro).
+## El botín quieto se funde del mismo tipo en uno más grande que vale la suma (`core/loot/loot_combiner.gd`):
+## las monedas de a 3 (cobre, plata, oro, platino) y el resto de a 10. `merge_tier` 0-3.
 ## Quietas en el piso no calculan física (solo revisan cada tanto si siguen apoyadas) y la recolección es por
 ## distancia: el `PickupArea` queda apagado porque su máscara (capa 2) también detectaba a los enemigos.
 
 const ArtScript = preload("res://core/art/art.gd")
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 const LootCombinerScript = preload("res://core/loot/loot_combiner.gd")
 
 const LOOT_GROUP: StringName = &"loot_drops"
 const MAX_TIER: int = 3
-## Tamaño y tinte por nivel de fusión: moneda, moneda grande, moneda de platino, gema de tesoro.
-const TIER_SCALE: Array[float] = [1.0, 1.4, 1.75, 2.1]
-const TIER_TINT: Array[Color] = [
-	Color(1.0, 1.0, 1.0, 1.0),
-	Color(1.25, 1.12, 0.8, 1.0),
-	Color(0.85, 1.05, 1.4, 1.0),
-	Color(1.45, 0.55, 0.85, 1.0),
-]
+## Tamaño por nivel de fusión (todas iguales: los niveles solo cambian de color): cobre, plata, oro, platino. Cada nivel de moneda tiene su propio sprite (plata, oro
+## y platino ya traen su color); el cobre es el sprite dorado teñido de cobre.
+const TIER_SCALE: Array[float] = [1.0, 1.0, 1.0, 1.0]
+const COPPER_TINT: Color = Color(1.0, 0.72, 0.5, 1.0)
 const SPRITE_BASE_SCALE: float = 0.5
 ## Por debajo de esta velocidad horizontal, apoyada en el piso, la moneda se duerme.
 const REST_SPEED: float = 20.0
@@ -52,6 +49,7 @@ static var _frames_cache: Dictionary = {}
 
 
 func _ready() -> void:
+	LootLifetimeScript.arm(self)
 	_apply_art_frames()
 	# Impulso físico aleatorio de eyección si no fue configurado previamente (Efecto Piñata)
 	if velocity == Vector2.ZERO:
@@ -102,17 +100,22 @@ func _apply_art_frames() -> void:
 	if anim_sprite == null:
 		return
 	var kind: String = item_type.to_upper()
-	if _frames_cache.has(kind):
-		_set_frames(_frames_cache[kind] as SpriteFrames)
-		return
+	var cache_key: String = kind
 	var files: Array[String] = []
 	match kind:
 		"AMMO":
 			files = ["ammo_gear.png"]
 		"HEALTH":
 			files = ["health_drop.png"]
+		"COIN":
+			# Cada nivel de moneda tiene su cache (cambia al fundirse, ver upgrade_merge)
+			cache_key = "COIN_%d" % clampi(merge_tier, 0, MAX_TIER)
+			files = _coin_files(merge_tier)
 		_:
-			files = ["coin_0.png", "coin_1.png", "coin_2.png", "coin_3.png", "coin_4.png", "coin_5.png"]
+			files = _coin_files(0)
+	if _frames_cache.has(cache_key):
+		_set_frames(_frames_cache[cache_key] as SpriteFrames)
+		return
 	var frames: SpriteFrames = SpriteFrames.new()
 	frames.add_animation(&"spin")
 	frames.set_animation_loop(&"spin", true)
@@ -124,8 +127,21 @@ func _apply_art_frames() -> void:
 		frames.add_frame(&"spin", texture)
 	if frames.has_animation(&"default"):
 		frames.remove_animation(&"default")
-	_frames_cache[kind] = frames
+	_frames_cache[cache_key] = frames
 	_set_frames(frames)
+
+
+## Sprites de moneda por nivel: cobre gira (6 cuadros, teñido de cobre); plata, oro y platino son un cuadro fijo.
+static func _coin_files(tier: int) -> Array[String]:
+	match clampi(tier, 0, MAX_TIER):
+		1:
+			return ["coin_silver.png"]
+		2:
+			return ["coin_gold.png"]
+		3:
+			return ["coin_platinum.png"]
+		_:
+			return ["coin_0.png", "coin_1.png", "coin_2.png", "coin_3.png", "coin_4.png", "coin_5.png"]
 
 
 func _set_frames(frames: SpriteFrames) -> void:
@@ -153,7 +169,10 @@ func _update_visuals() -> void:
 	if anim_sprite != null:
 		match item_type.to_upper():
 			"COIN":
-				anim_sprite.modulate = TIER_TINT[clampi(merge_tier, 0, MAX_TIER)] # Dorado original; más grande y otro tono al fundirse
+				# Cobre teñido; plata, oro y platino ya son sus propios sprites (sin tinte)
+				anim_sprite.modulate = COPPER_TINT if merge_tier == 0 else Color.WHITE
+			"CRYSTAL":
+				anim_sprite.modulate = Color(0.45, 1.2, 1.6, 1.0) # moneda teñida de cian: cristal de tiempo
 			"AMMO":
 				anim_sprite.modulate = Color(0.75, 0.92, 1.1, 1.0) # Engranaje con leve tinte frío (fundido: solo más grande)
 			"HEALTH":
@@ -251,6 +270,8 @@ func merge_value() -> float:
 func upgrade_merge(new_tier: int, total_value: float) -> void:
 	merge_tier = mini(new_tier, MAX_TIER)
 	amount = maxi(1, int(roundf(total_value)))
+	if item_type.to_upper() == "COIN":
+		_apply_art_frames() # cambia al sprite del nuevo nivel (plata, oro o platino)
 	_apply_tier_scale()
 	_update_visuals()
 	var visuals: Node2D = get_node_or_null("Visuals") as Node2D
@@ -287,6 +308,10 @@ func _collect(player: Player) -> void:
 			_last_coin_msec = now_msec
 			# Las fundidas suenan más graves (más pesadas)
 			GameFeel.sfx(self, &"coin", Vector2.INF, -1.0, pow(2.0, float(_coin_combo - merge_tier * 4) / 12.0))
+		"CRYSTAL":
+			if player.stats_manager != null:
+				player.stats_manager.add_crystals(amount)
+			GameFeel.sfx(self, &"coin", Vector2.INF, -2.0, 1.5)
 		"AMMO":
 			if player.weapon_manager != null:
 				player.weapon_manager.add_ammo(amount)

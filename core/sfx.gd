@@ -7,7 +7,11 @@ extends RefCounted
 ## Cómo se logra el carácter "sampleado de los 90":
 ## - Capas de ruido blanco filtrado (pasa-bajos con barrido) para el cuerpo y la cola de cada golpe.
 ## - Un "thump" senoidal grave con caída de tono para el peso.
-## - Eco corto de sala, saturación suave, y degradación final (retención de muestras ~11 kHz y 7 bits).
+## - Eco corto de sala y saturación suave (la degradación 8-bit de antes quedó apagada: ver `LOFI`).
+##
+## Disparos, impactos y explosiones de alta calidad: `assets/audio/sfx/<nombre>_<n>.wav` (los genera
+## `art_source/audio/synth_guns.py`). Si existe `<nombre>_1.wav`, se usa en vez de la receta, con las variantes
+## al azar sin repetir. Pisar esos archivos con audio real también funciona.
 ##
 ## Cómo reemplazar un sonido por audio real, sin tocar la lógica:
 ## - Por arma: asignar `fire_stream` / `hit_stream` en su WeaponData (.tres).
@@ -15,6 +19,10 @@ extends RefCounted
 ## Recetas: ver `_build()`. Para sumar un sonido nuevo, agregar un caso ahí y llamarlo por nombre.
 
 const MIX_RATE: int = 22050
+## true = degradación de los 90 (7 bits, ~11 kHz) en los sonidos sintetizados. Apagada: sonaba a 8-bit.
+const LOFI: bool = false
+## Carpeta de sonidos en archivo (`<nombre>_1.wav`, `<nombre>_2.wav`...), con prioridad sobre las recetas.
+const SAMPLE_DIR: String = "res://assets/audio/sfx/"
 const SFX_BUS: StringName = &"SFX"
 const MUSIC_BUS: StringName = &"Music"
 const VOICE_COUNT: int = 20
@@ -26,7 +34,11 @@ const HEAR_MAX_DISTANCE: float = 1400.0
 ## Separación mínima entre dos reproducciones del mismo sonido (evita saturar con ráfagas).
 const DEFAULT_MIN_INTERVAL_MSEC: int = 35
 const MIN_INTERVAL_MSEC: Dictionary = {
-	&"shot_flame": 55,
+	&"shot_flame": 120,
+	&"shot_extinguisher": 110,
+	&"fire_ignite": 260,
+	&"laser_beam": 80,
+	&"chain_lightning": 45,
 	&"shot_auto": 40,
 	&"exp": 45,
 	&"coin": 22,
@@ -35,7 +47,10 @@ const MIN_INTERVAL_MSEC: Dictionary = {
 	&"jump": 120,
 	&"land": 120,
 	&"hurt": 150,
+	&"hurt_thud": 150,
+	&"heartbeat": 200,
 	&"enemy_death": 60,
+	&"enemy_death_flesh": 60,
 	&"reload_out": 100,
 	&"reload_done": 100,
 	&"reload_shell": 60,
@@ -45,10 +60,11 @@ const MIN_INTERVAL_MSEC: Dictionary = {
 ## Sonidos que se generan de a uno por cuadro al cargar un nivel, para evitar tirones en el primer disparo.
 const PREWARM_SOUNDS: Array[StringName] = [
 	&"shot_pistol", &"shot_auto", &"shot_rifle", &"shot_shotgun", &"shot_flame", &"shot_ice",
+	&"shot_revolver", &"shot_smg", &"shot_sniper", &"shot_sawed", &"shot_enemy_gun",
 	&"swing", &"swing_light", &"swing_heavy",
 	&"hit_flesh", &"hit_blade", &"hit_armor", &"hit_crit", &"hit_shield", &"hit_world",
 	&"enemy_death", &"reload_out", &"reload_in", &"reload_done", &"reload_shell", &"reload_rack", &"weapon_swap",
-	&"hurt", &"jump", &"land", &"coin", &"exp", &"pickup_gear", &"levelup",
+	&"hurt", &"hurt_thud", &"heartbeat", &"jump", &"land", &"coin", &"exp", &"pickup_gear", &"levelup",
 ]
 
 const WAVE_SQUARE: int = 0
@@ -130,7 +146,8 @@ static func play_weapon_fire(ctx: Node, weapon: WeaponData) -> void:
 	if weapon.fire_stream != null:
 		play_stream(ctx, weapon.fire_stream, &"weapon_stream", Vector2.INF, -2.0, randf_range(0.97, 1.03))
 		return
-	var pitch: float = lerpf(1.15, 0.85, clampf(weapon.damage / 120.0, 0.0, 1.0)) * randf_range(0.96, 1.04)
+	# Los sonidos en archivo ya traen el peso de cada arma: el tono varía poco para no deformarlos.
+	var pitch: float = lerpf(1.06, 0.94, clampf(weapon.damage / 120.0, 0.0, 1.0)) * randf_range(0.97, 1.03)
 	play(ctx, weapon_fire_profile(weapon), Vector2.INF, -3.0, pitch)
 
 
@@ -149,8 +166,35 @@ static func play_weapon_swing(ctx: Node, weapon: WeaponData) -> void:
 	play(ctx, profile, Vector2.INF, -4.0, randf_range(0.94, 1.06))
 
 
-## Elige la receta de disparo a partir de los datos del arma (no depende del nombre).
+## Elige la receta de disparo a partir de la familia y datos del arma (no depende del nombre).
 static func weapon_fire_profile(weapon: WeaponData) -> StringName:
+	if weapon.fire_sound != &"":
+		return weapon.fire_sound
+	# Armas que escupen combustible encendido (no lanzallamas): chasquido mágico suave en vez de bala.
+	if weapon.projectile_scene != null and weapon.projectile_scene.resource_path.ends_with("fuel_droplet.tscn") and weapon.family != WeaponData.WeaponFamily.FLAMETHROWER:
+		return &"shot_magic"
+	match weapon.family:
+		WeaponData.WeaponFamily.SHOTGUN:
+			# Recortada o de dos caños (sin bomba) contra la de corredera
+			return &"shot_sawed" if weapon.magazine_size <= 2 else &"shot_shotgun"
+		WeaponData.WeaponFamily.FLAMETHROWER:
+			return &"shot_flame"
+		WeaponData.WeaponFamily.SNIPER:
+			return &"shot_sniper"
+		WeaponData.WeaponFamily.RIFLE:
+			return &"shot_auto" if weapon.is_automatic else &"shot_rifle"
+		WeaponData.WeaponFamily.CARBINE:
+			return &"shot_rifle" if weapon.damage >= 24.0 else &"shot_auto"
+		WeaponData.WeaponFamily.SMG:
+			return &"shot_smg"
+		WeaponData.WeaponFamily.ENERGY:
+			if weapon.innate_status_effects.has("ICE"):
+				return &"shot_ice"
+			return &"shot_magic"
+		WeaponData.WeaponFamily.REVOLVER:
+			return &"shot_revolver"
+		WeaponData.WeaponFamily.PISTOL:
+			return &"shot_revolver" if weapon.damage >= 60.0 else &"shot_pistol"
 	if weapon.pellets_per_shot >= 3:
 		return &"shot_shotgun"
 	if weapon.is_automatic and weapon.fire_rate >= 14.0:
@@ -261,9 +305,32 @@ static func _get_stream(sound: StringName) -> AudioStream:
 		return _overrides[sound] as AudioStream
 	if _cache.has(sound):
 		return _cache[sound] as AudioStream
-	var stream: AudioStreamWAV = _build(sound)
+	var stream: AudioStream = _load_samples(sound)
+	if stream == null:
+		stream = _build(sound)
 	_cache[sound] = stream
 	return stream
+
+
+## Variantes en archivo de un sonido (`<nombre>_1.wav`, `_2`...) como un AudioStreamRandomizer; null si no hay.
+static func _load_samples(sound: StringName) -> AudioStream:
+	var first: String = "%s%s_1.wav" % [SAMPLE_DIR, sound]
+	if not ResourceLoader.exists(first):
+		return null
+	var randomizer: AudioStreamRandomizer = AudioStreamRandomizer.new()
+	randomizer.playback_mode = AudioStreamRandomizer.PLAYBACK_RANDOM_NO_REPEATS
+	randomizer.random_pitch = 1.0
+	randomizer.random_volume_offset_db = 1.0
+	var index: int = 1
+	while index <= 8:
+		var path: String = "%s%s_%d.wav" % [SAMPLE_DIR, sound, index]
+		if not ResourceLoader.exists(path):
+			break
+		var variant: AudioStream = load(path) as AudioStream
+		if variant != null:
+			randomizer.add_stream(-1, variant)
+		index += 1
+	return randomizer if randomizer.streams_count > 0 else null
 
 
 # ==============================================================================
@@ -331,13 +398,13 @@ static func _render(
 	var held: float = 0.0
 	var step: int = maxi(1, hold)
 	for i in range(count):
-		if i % step == 0:
+		if not LOFI or i % step == 0:
 			var sample: float = buf[i] * 0.85
 			if drive > 1.0:
 				sample = tanh(sample * drive) / drive_norm
 			sample = clampf(sample, -1.0, 1.0)
-			# Reducción de profundidad de bits: el "grano" de los samples viejos
-			held = roundf(sample * levels) / levels
+			# Reducción de profundidad de bits: el "grano" de los samples viejos (solo con LOFI)
+			held = roundf(sample * levels) / levels if LOFI else sample
 		# Fundido de las últimas muestras para no dejar un clic al final
 		var tail: float = clampf(float(count - i) / 64.0, 0.0, 1.0)
 		data.encode_s16(i * 2, int(held * tail * 32767.0))
@@ -462,10 +529,16 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_s(0.42, 0.05, 180.0, 90.0, 0.5, 2.5),
 			], 7, 2, 1.9, 95.0, 0.35)
 		&"shot_flame":
-			return _render(0.13, [
-				_n(0.0, 0.11, 0.7, 0.9, 3500.0, 1500.0),
-				_s(0.0, 0.11, 75.0, 60.0, 0.5, 1.0, 0.1),
-			], 7, 2, 1.3)
+			# Soplido de gas encendido: ruido suave que sube y baja, rugido grave y chisporroteo.
+			# Se dispara cada ~120 ms con 0.3 s de duración, así los disparos se funden en un rugido continuo.
+			return _render(0.3, [
+				_n(0.0, 0.3, 0.55, 1.2, 700.0, 2400.0, 0.35),
+				_n(0.0, 0.3, 0.35, 1.0, 1800.0, 600.0, 0.5),
+				_s(0.0, 0.3, 62.0, 48.0, 0.55, 1.0, 0.08),
+				_n(0.05, 0.015, 0.35, 3.0, 5000.0, 2500.0),
+				_n(0.14, 0.012, 0.3, 3.0, 4500.0, 2000.0),
+				_n(0.22, 0.015, 0.3, 3.0, 5500.0, 2500.0),
+			], 8, 1, 1.2, 38.0, 0.15)
 		&"shot_ice":
 			return _render(0.24, [
 				_n(0.0, 0.10, 0.5, 2.5, 7000.0, 2000.0),
@@ -557,6 +630,28 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_l(0.0, 0.25, 3600.0, 3600.0, tri, 0.12, 3.0),
 				_n(0.0, 0.06, 0.7, 4.0, 9000.0, 3000.0),
 			], 7, 1, 1.3, 35.0, 0.2)
+		&"drip":  # gota de alcantarilla: "plip" agudo que cae de tono y rebota en la bóveda (eco largo)
+			return _render(0.5, [
+				_l(0.0, 0.09, 1900.0, 700.0, sine, 0.45, 3.0),
+				_l(0.0, 0.05, 3800.0, 1400.0, sine, 0.15, 3.5),
+				_n(0.0, 0.015, 0.2, 4.0, 6000.0, 2500.0),
+			], 9, 1, 1.0, 110.0, 0.5)
+		&"flute_call":  # Flauta de Hamelin: tres notas suaves que suben
+			return _render(0.5, [
+				_arp(0.0, 0.42, PackedFloat32Array([784.0, 988.0, 1319.0]), tri, 0.3, 0.9),
+				_arp(0.0, 0.42, PackedFloat32Array([1568.0, 1976.0, 2637.0]), sine, 0.08, 1.2),
+			], 9, 1, 1.0, 70.0, 0.3)
+		&"rat_screech":  # chillido de la Rata Gigante
+			return _render(0.55, [
+				_l(0.0, 0.5, 2100.0, 650.0, saw, 0.45, 1.4, 0.5, 0.18, 0.0, 3800.0, 900.0),
+				_n(0.0, 0.2, 0.25, 2.0, 5000.0, 1500.0),
+			], 8, 2, 1.3, 60.0, 0.25)
+		&"enemy_death_flesh":  # cuerpo que cae: golpe sordo y húmedo, sin estallido
+			return _render(0.28, [
+				_s(0.0, 0.2, 130.0, 40.0, 0.9, 2.2),
+				_n(0.0, 0.16, 0.5, 2.5, 1800.0, 250.0),
+				_n(0.03, 0.1, 0.3, 3.0, 900.0, 200.0),
+			], 7, 2, 1.5)
 		&"enemy_death":
 			return _render(0.6, [
 				_l(0.0, 0.5, 260.0, 35.0, saw, 0.6, 1.3, 0.5, 0.14, 0.0, 1300.0, 200.0),
@@ -619,6 +714,19 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_n(0.0, 0.12, 0.4, 2.5, 1800.0, 500.0),
 				_s(0.0, 0.10, 120.0, 60.0, 0.5, 2.0),
 			], 7, 2, 1.4)
+		&"hurt_thud":  # cuerpo enemigo que empuja al jugador: golpe sordo que se suma al grito de "hurt"
+			return _render(0.16, [
+				_s(0.0, 0.14, 150.0, 45.0, 1.0, 2.2),
+				_n(0.0, 0.05, 0.5, 3.0, 2500.0, 600.0),
+			], 7, 2, 1.3)
+		&"heartbeat":
+			# Dos golpes sordos seguidos (lub-dub), graves y sin brillo
+			return _render(0.42, [
+				_s(0.0, 0.14, 70.0, 38.0, 1.0, 1.6),
+				_n(0.0, 0.06, 0.25, 2.5, 500.0, 150.0),
+				_s(0.17, 0.16, 58.0, 32.0, 0.8, 1.6),
+				_n(0.17, 0.06, 0.2, 2.5, 450.0, 130.0),
+			], 8, 1, 1.2)
 		&"player_death":
 			return _render(0.9, [
 				_l(0.0, 0.7, 200.0, 40.0, saw, 0.7, 1.2, 0.5, 0.1, 0.0, 1100.0, 250.0),
@@ -689,6 +797,20 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_n(0.0, 0.13, 0.5, 1.6, 700.0, 3500.0, 0.3),
 				_s(0.0, 0.1, 140.0, 200.0, 0.2, 2.0),
 			], 7, 2, 1.0)
+		&"glass_break":
+			# Frasco de ácido que estalla: crujido brillante, una lluvia de tintineos de vidrio
+			# a destiempo y un chapoteo húmedo y corto al final.
+			return _render(0.6, [
+				_n(0.0, 0.05, 0.9, 3.0, 12000.0, 5000.0),
+				_l(0.0, 0.12, 3400.0, 2600.0, tri, 0.3, 3.0, 0.5, 0.0, 0.0, 9000.0),
+				_l(0.03, 0.14, 5200.0, 4300.0, sine, 0.25, 3.5),
+				_l(0.07, 0.12, 4100.0, 3300.0, tri, 0.22, 3.5),
+				_l(0.12, 0.16, 6100.0, 5000.0, sine, 0.18, 3.0),
+				_l(0.18, 0.12, 3000.0, 2400.0, tri, 0.16, 3.5),
+				_l(0.25, 0.1, 5600.0, 4700.0, sine, 0.12, 3.0),
+				_n(0.04, 0.3, 0.45, 1.8, 3200.0, 500.0, 0.1),
+				_s(0.0, 0.12, 180.0, 70.0, 0.4, 2.0),
+			], 8, 1, 1.4, 55.0, 0.2)
 		&"boom_frag":
 			return _render(0.75, [
 				_n(0.0, 0.04, 1.0, 3.0, 11000.0, 2500.0),
@@ -703,6 +825,43 @@ static func _build(sound: StringName) -> AudioStreamWAV:
 				_l(0.0, 0.25, 2500.0, 500.0, sq, 0.2, 2.5, 0.125, 0.0, 0.0, 4000.0),
 				_s(0.0, 0.25, 120.0, 40.0, 0.7, 2.0),
 			], 7, 1, 1.5, 70.0, 0.25)
+		&"fire_ignite":
+			# Charco de combustible que se prende: soplido corto y grave, sin golpe (suena muchas veces seguidas).
+			return _render(0.25, [
+				_n(0.0, 0.25, 0.4, 1.4, 500.0, 1600.0, 0.4),
+				_s(0.0, 0.2, 70.0, 50.0, 0.3, 1.5),
+			], 8, 1, 1.2, 38.0, 0.15)
+		&"laser_beam":
+			# Tick del haz: zumbido eléctrico corto y agudo (suena cada 0.1 s con el rayo sostenido)
+			return _render(0.12, [
+				_l(0.0, 0.1, 1500.0, 900.0, saw, 0.3, 1.2, 0.5, 0.0, 0.0, 3500.0),
+				_n(0.0, 0.08, 0.25, 1.4, 6000.0, 2500.0),
+			], 8, 1, 1.0)
+		&"chain_lightning":
+			# Chasquido eléctrico: crujido agudo con un golpe seco
+			return _render(0.22, [
+				_l(0.0, 0.18, 2400.0, 500.0, saw, 0.35, 1.3, 0.5, 0.0, 0.0, 4500.0),
+				_n(0.0, 0.16, 0.5, 1.6, 8000.0, 1500.0),
+				_s(0.0, 0.08, 140.0, 60.0, 0.5, 1.8),
+			], 7, 1, 1.2)
+		&"cloak_on":
+			# Tela que se abre / roce: soplido filtrado ascendente
+			return _render(0.35, [
+				_n(0.0, 0.3, 0.4, 1.6, 600.0, 2800.0, 0.3),
+				_l(0.0, 0.25, 220.0, 520.0, sine, 0.2, 1.4),
+			], 7, 1, 1.1, 40.0, 0.2)
+		&"cloak_off":
+			return _render(0.3, [
+				_n(0.0, 0.25, 0.4, 1.5, 2800.0, 500.0, 0.3),
+				_l(0.0, 0.2, 520.0, 200.0, sine, 0.2, 1.4),
+			], 7, 1, 1.1, 40.0, 0.2)
+		&"net_deploy":
+			# Red que se abre: soplido de tela con un chasquido corto y grave al caer.
+			return _render(0.45, [
+				_n(0.0, 0.3, 0.45, 1.5, 3500.0, 700.0, 0.3),
+				_l(0.0, 0.2, 520.0, 220.0, tri, 0.25, 1.5),
+				_s(0.0, 0.12, 110.0, 60.0, 0.5, 1.8),
+			], 7, 1, 1.2, 45.0, 0.2)
 		&"boom_fire":
 			return _render(0.7, [
 				_s(0.0, 0.55, 85.0, 22.0, 1.0, 1.4),

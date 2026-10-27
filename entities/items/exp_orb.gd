@@ -3,11 +3,12 @@ extends Area2D
 ## Orbe de experiencia soltado por enemigos al ser derrotados.
 ## Salta al aparecer, cae con gravedad hasta el piso (un rayo corto hacia abajo por cuadro mientras cae; quieto no
 ## consulta nada) y es atraído magnéticamente hacia el jugador, que lo junta por distancia.
-## Los quietos se funden de a 10 en uno más brillante (`core/loot/loot_combiner.gd`): azul, verde, dorado, violeta.
+## Los quietos se funden de a 3 en uno más brillante (`core/loot/loot_combiner.gd`): azul, verde, dorado, violeta.
 ## El área no monitorea: su máscara (capa 2) también detectaba a los enemigos y sumaba pares de colisión.
 
 const ArtScript = preload("res://core/art/art.gd")
 const LootCombinerScript = preload("res://core/loot/loot_combiner.gd")
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 
 const ORB_GROUP: StringName = &"exp_orbs"
 const MAX_TIER: int = 3
@@ -29,7 +30,7 @@ const WORLD_MASK: int = 1
 ## Si cae más que esto sin encontrar piso (vacío), se queda quieto donde está en vez de caer para siempre.
 const MAX_FALL_DISTANCE: float = 3000.0
 
-@export var exp_amount: float = 20.0
+@export var exp_amount: float = 15.0
 @export var attract_distance: float = 240.0
 @export var attract_speed: float = 400.0
 
@@ -47,6 +48,7 @@ static var _frames_cache: SpriteFrames = null
 
 
 func _ready() -> void:
+	LootLifetimeScript.arm(self)
 	_sprite = get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
 	_apply_art_frames()
 	set_deferred("monitoring", false)
@@ -192,6 +194,7 @@ func _give_exp(player: Player) -> void:
 	remove_from_group(ORB_GROUP)
 	if player != null and player.stats_manager != null:
 		player.stats_manager.add_experience(exp_amount)
+		player.flash_exp_pickup()
 	# Los fundidos suenan más graves
 	GameFeel.sfx(self, &"exp", Vector2.INF, -8.0, randf_range(0.9, 1.3) * pow(0.8, float(merge_tier)))
 	queue_free()

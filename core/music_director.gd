@@ -1,11 +1,12 @@
 extends Node
 ## Director de música dinámica de un nivel.
-## Cada pocas décimas de segundo revisa los enemigos hostiles cercanos al jugador y pide a Music
-## la pista de combate, élite o jefe; al terminar la pelea espera unos segundos antes de volver
-## a la música de exploración (para que no parpadee entre pistas).
+## La música de pelea se "invoca": solo la cambian las arenas activas (`ArenaEncounter.combat_music`) y los
+## enemigos configurados para eso (`EnemyBase.combat_music`, más jefes y élites). Un enemigo suelto del camino
+## sin pista propia no toca la música: sigue sonando la que venía.
+## Al terminar la pelea espera unos segundos antes de volver a la base (para que no parpadee entre pistas).
 ## Sin class_name a propósito: lo instancia GameFeel.music_start_level().
 ##
-## Prioridad: jefe (grupo `boss`) > élite (ArmoredBrute, ShieldedSentinel) > combate.
+## Prioridad: jefe (grupo `boss`) > élite > cualquier otra pista invocada (arena o enemigo).
 
 const MusicScript = preload("res://core/music.gd")
 
@@ -36,7 +37,7 @@ func _process(delta: float) -> void:
 			MusicScript.set_situation(self, &"")
 
 
-## Devuelve &"boss", &"elite", &"combat" o vacío según los enemigos activos cerca del jugador.
+## Devuelve la pista invocada de más prioridad (arenas activas y enemigos con música cerca del jugador) o vacío.
 func _detect_threat() -> StringName:
 	var tree: SceneTree = get_tree()
 	if tree == null:
@@ -46,24 +47,57 @@ func _detect_threat() -> StringName:
 		return &""
 
 	var result: StringName = &""
+	for arena: Node in tree.get_nodes_in_group(&"music_arenas"):
+		result = _pick(result, arena.get(&"combat_music") as StringName)
+
 	for node: Node in tree.get_nodes_in_group(&"enemies"):
 		var enemy: Node2D = node as Node2D
 		if enemy == null or not is_instance_valid(enemy) or not enemy.is_inside_tree():
 			continue
 		if enemy.get(&"is_dead") == true:
 			continue
+		var track: StringName = _enemy_track(enemy)
+		if track == &"":
+			continue
 		if enemy.global_position.distance_to(player.global_position) > THREAT_RANGE:
 			continue
-		# Un enemigo que todavía no te vio no cuenta como combate
+		# Un enemigo que todavía no te vio no invoca nada
 		if "is_aggroed" in enemy and enemy.get(&"is_aggroed") != true:
 			continue
-		if enemy.is_in_group(&"boss"):
-			return &"boss"
-		if _is_elite(enemy):
-			result = &"elite"
-		elif result == &"":
-			result = &"combat"
+		result = _pick(result, track)
+		if result == &"boss":
+			return result
 	return result
+
+
+## Pista que invoca un enemigo: la suya propia, o la de jefe/élite por defecto.
+func _enemy_track(enemy: Node) -> StringName:
+	var own: Variant = enemy.get(&"combat_music")
+	if own is StringName and own != &"":
+		return own
+	if enemy.is_in_group(&"boss"):
+		return &"boss"
+	if _is_elite(enemy):
+		return &"elite"
+	return &""
+
+
+## Se queda con la pista de más prioridad entre dos.
+func _pick(current: StringName, candidate: StringName) -> StringName:
+	if candidate == &"" or not MusicScript.TRACKS.has(candidate):
+		return current
+	return candidate if _rank(candidate) > _rank(current) else current
+
+
+func _rank(track: StringName) -> int:
+	match track:
+		&"":
+			return 0
+		&"boss":
+			return 3
+		&"elite":
+			return 2
+	return 1
 
 
 ## Élite por nombre de clase global. No se usa `is ArmoredBrute`: esas clases extienden EnemyBase, que a su vez

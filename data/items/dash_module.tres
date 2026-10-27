@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "dash_module"
+item_name = "Módulo de Dash (Accesorio)"
+item_color = Color(0.4, 0.9, 1.0, 1)
+equip_slot = "ACCESSORY"
+elemental_infusion = ""
+tags = []
+modifiers = []
+grants_extra_jump = 0
+rarity = 2
+gold_value = 180
+description = "Propulsor de cintura. Con Shift (B en el mando) da un impulso horizontal corto; en el aire, uno por salto."

@@ -5,20 +5,30 @@ extends CharacterBody2D
 ## gestionar puntos de vida, aplicar fuerzas de retroceso (knockback)
 ## y procesar estados alterados a través de StatusReceiverComponent.
 
+const EnemyLevelScript = preload("res://entities/enemies/enemy_level.gd")
+
 signal health_changed(current_health: float, max_health: float)
 signal hit_received(payload: HitPayload)
 signal died
 
 @export_group("Identificación y UI")
 @export var entity_name: String = "Enemigo"
+## Nivel del enemigo (jerarquía; con 4 niveles o más por debajo del jugador no da experiencia). Ver `enemy_level.gd`.
+@export var enemy_level: int = 1
 
 @export_group("Estadísticas")
 @export var max_health: float = 50.0
 @export var move_speed: float = 100.0
-@export var exp_reward: float = 20.0
+@export var exp_reward: float = 15.0
+
+@export_group("Música")
+## Pista de Music.TRACKS que este enemigo invoca al pelear (&"combat", &"elite", &"boss"...).
+## Vacío = no cambia la música (los enemigos sueltos del camino). Los jefes (grupo `boss`) invocan &"boss" igual.
+@export var combat_music: StringName = &""
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
 const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
+const CodexScript = preload("res://core/codex/codex.gd")
 
 @export_group("Botín (Loot)")
 @export var loot_table: LootTable
@@ -43,7 +53,8 @@ func _ready() -> void:
 func _ensure_overhead_bar() -> void:
 	if overhead_bar == null:
 		overhead_bar = get_node_or_null("OverheadHealthBar") as Node2D
-	if overhead_bar == null:
+	# Opción "Barras de vida de enemigos" apagada: no se crea el nodo (un nodo menos por enemigo)
+	if overhead_bar == null and OverheadHealthBar.bars_enabled():
 		var bar_scene: PackedScene = load("res://entities/ui/overhead_health_bar.tscn")
 		if bar_scene != null:
 			overhead_bar = bar_scene.instantiate() as Node2D
@@ -55,7 +66,7 @@ func _ensure_overhead_bar() -> void:
 	if overhead_bar != null and overhead_bar.has_method("setup"):
 		var hc: HealthComponent = get_node_or_null("HealthComponent") as HealthComponent
 		if hc != null:
-			overhead_bar.call("setup", hc, entity_name)
+			overhead_bar.call("setup", hc, EnemyLevelScript.display_name(self))
 
 
 func _ensure_status_receiver() -> void:
@@ -142,12 +153,13 @@ func _deferred_die() -> void:
 		if type_name.is_empty():
 			type_name = "EnemyBase"
 		metrics_mgr.record_kill(type_name)
+	CodexScript.record_enemy(self)
 	died.emit()
 	queue_free()
 
 
 func _spawn_exp() -> void:
-	if not is_inside_tree():
+	if not is_inside_tree() or not EnemyLevelScript.gives_exp(self):
 		return
 	var tree: SceneTree = get_tree()
 	if tree == null:

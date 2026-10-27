@@ -1,6 +1,6 @@
 class_name ItemSlot
 extends PanelContainer
-## Casillero compacto de 40x40 px con marco metálico oscuro.
+## Casillero de 46x46 px con marco metálico oscuro.
 ## Muestra íconos de recursos (ItemData, RuneData, WeaponData), proyecta tooltip estilizado,
 ## y participa del sistema de "ítem en mano" (ver item_drag_controller.gd):
 ## - Como ORIGEN: al presionar con el botón izquierdo sobre un ítem lo agarra (arrastrar, o clic y clic).
@@ -59,7 +59,7 @@ var _tooltip_price_text: String = ""
 
 func _ready() -> void:
 	if custom_minimum_size == Vector2.ZERO:
-		custom_minimum_size = Vector2(40, 40)
+		custom_minimum_size = Vector2(46, 46)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_entered.connect(_on_mouse_entered)
 	mouse_exited.connect(_on_mouse_exited)
@@ -161,13 +161,12 @@ func update_visuals() -> void:
 	var info: Dictionary = _get_display_info()
 	var display_color: Color = info["color"]
 	var display_text: String = str(info["text"])
-	var tex: Texture2D = ItemIconsScript.get_icon_for(item_resource)
+	var tex: Texture2D = ItemIconsScript.get_slot_texture(item_resource)
 
 	if texture_rect != null and tex != null:
 		texture_rect.texture = tex
-		# Arte HD: filtro lineal; los íconos pixel art 16x16 de respaldo se amplían sin suavizado
-		var is_art: bool = ItemIconsScript.get_art_icon(item_resource) != null
-		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if is_art else CanvasItem.TEXTURE_FILTER_NEAREST
+		# Filtro lineal (antialias): sin él los íconos se ven con escalera al no caer en píxeles enteros
+		texture_rect.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		texture_rect.visible = true
 		if fallback_color != null:
 			fallback_color.visible = false
@@ -220,7 +219,7 @@ func _build_carry_payload() -> Dictionary:
 		"display_color": info["color"],
 		"display_text": info["text"],
 		"rarity_color": rarity_color,
-		"icon": ItemIconsScript.get_icon_for(item_resource)
+		"icon": ItemIconsScript.get_slot_texture(item_resource)
 	}
 
 

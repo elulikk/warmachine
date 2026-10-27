@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/clavo.png" id="3_sprite"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/nail_gun.tres"
+weapon_name = "Clavadora Neumática"
+family = 4
+grip = 0
+weapon_type = 0
+is_automatic = true
+damage = 11.0
+fire_rate = 7.0
+knockback_force = 45.0
+recoil_force = 18.0
+projectile_speed = 760.0
+armor_penetration = 0.1
+magazine_size = 36
+reload_time = 1.9
+spread_angle_degrees = 5.0
+innate_pierce = 2
+projectile_scene = ExtResource("2_proj")
+projectile_sprite = ExtResource("3_sprite")
+innate_status_effects = []
+max_sockets = 2
+socketed_runes = []
+rarity = 1
+gold_value = 170
+fire_sound = &"shot_nail"
+description = "Clavadora de obra robada de un galpón del puerto. Automática y a una mano: cada clavo atraviesa hasta dos enemigos más, ideal para pasillos llenos de ratas."

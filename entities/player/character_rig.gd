@@ -25,7 +25,9 @@ const RigArt = preload("res://core/art/rig_art.gd")
 const ArmorArt = preload("res://core/art/armor_art.gd")
 const HeroArt = preload("res://core/art/hero_art.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
+const LocomotionData = preload("res://core/art/locomotion_data.gd")
 const ArtScript = preload("res://core/art/art.gd")
+const ViewCullScript = preload("res://core/view_cull.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 
 ## Los PNG se exportan al triple de su tamaño en juego.
@@ -36,6 +38,8 @@ const PROP_TEX_SCALE: float = 0.5
 
 ## Distancia del hombro al centro de la mano con el brazo en reposo (px de juego).
 const ARM_REACH: float = 29.0
+## Metros de Mixamo -> px del rig para el rebote de la cadera (cuerpo de ~64 px = ~1.8 m).
+const GAIT_PX_PER_M: float = 36.0
 const BELT_PARTS: Dictionary = {
 	"frag_grenade": "belt_grenade_frag", "ice_grenade": "belt_grenade_cryo",
 	"acid_grenade": "belt_grenade_acid", "gas_bomb": "belt_gas_bomb"
@@ -80,7 +84,30 @@ var _glove_front: Sprite2D
 var _time: float = 0.0
 var _phase: float = 0.0
 var _was_on_floor: bool = true
+## Cuánto están abiertos los brazos por estar en el aire (0 = pose normal, 1 = abiertos hacia afuera y arriba).
+var _jump_open: float = 0.0
 var _land_squash: float = 0.0
+## Cuánto está agachado (0 = de pie, 1 = agachado del todo), suavizado.
+var _crouch: float = 0.0
+## Cuánto baja la cadera y el torso agachado (px de juego): rodilla de atrás en el piso, la de adelante arriba.
+const CROUCH_DROP: float = 19.0
+## Inclinación del torso hacia adelante al agacharse (rad).
+const CROUCH_LEAN: float = 0.28
+## Rodilla en tierra: cadera (rad, + = el pie va hacia atrás) y rodilla de cada pierna. 0 = lejana (rodilla
+## apoyada y espinilla en el piso hacia atrás), 1 = cercana (la de adelante, rodilla arriba y pie plantado).
+const KNEEL_HIP: Array[float] = [-0.68, -1.15]
+const KNEEL_KNEE: Array[float] = [2.18, 2.41]
+## Cuerpo a tierra (0 = de pie, 1 = acostado), suavizado. El esqueleto entero gira 90° con la cabeza hacia
+## adelante y el pecho contra el piso, corrido para quedar centrado sobre el jugador.
+var _prone: float = 0.0
+const PRONE_OFFSET: Vector2 = Vector2(-40.0, -8.0)
+## Inclinación de todo el cuerpo con el jetpack encendido al ir hacia adelante (rad); hacia atrás, la mitad.
+const JET_TILT: float = 0.24
+## Punto de giro de esa inclinación (la cintura, en coordenadas del esqueleto).
+const JET_TILT_PIVOT: Vector2 = Vector2(0.0, -34.0)
+var _jet_tilt: float = 0.0
+## Boca del jetpack, hija de la mochila: ahí cuelga el jugador el fuego (ver `jet_mount`).
+var _jet_mount: Node2D
 var _has_legs: bool = true
 var _hover: bool = false
 var _leg_base_y_l: float = -30.0
@@ -104,12 +131,20 @@ var _hand_sprite: Array[Sprite2D] = []
 var _hand_bone: Array[Node2D] = []
 var _neck_bone: Node2D
 var _recoil: float = 0.0
+## Pierna de atrás estirada hacia atrás (rad, + = hacia atrás) por la pista `leg` de la animación del arma.
+var _leg_back: float = 0.0
+## Pose de piernas del cuadro actual sacada de los clips de Mixamo (ver `_mixamo_gait`). Vacio = animacion de siempre.
+var _gait: Dictionary = {}
+## Tiempo que queda de postura de disparo (se renueva al disparar un arma de fuego).
+var _stance_t: float = 0.0
 var _swipe_t: float = 99.0  # tiempo desde el último golpe de un enemigo (play_attack)
 var _motion_body: Array = []
 var _motion_len: float = 0.0
 var _motion_t: float = 999.0
 var _fire_connected: bool = false
+var _off_fire_connected: bool = false
 var _aim_angle: float = 0.0
+var _aim_angle_off: float = 0.0
 var _reach_back: float = 0.0
 var _arm_len_up: Array[float] = [0.0, 0.0]
 var _arm_len_low: Array[float] = [0.0, 0.0]
@@ -184,6 +219,9 @@ func _build_nodes() -> void:
 	_wing_l = _make_sprite(_back, "WingL")
 	_wing_r = _make_sprite(_back, "WingR")
 	_back_sprite = _make_sprite(_back, "Pack")
+	_jet_mount = Node2D.new()
+	_jet_mount.name = "JetMount"
+	_back.add_child(_jet_mount)
 
 	_leg_l = _make_bone(self, "LegL", 0)
 	_leg_l_sprite = _make_sprite(_leg_l, "Leg")
@@ -340,6 +378,7 @@ func _apply_loadout() -> void:
 		var pack_size: Vector2 = (_rig_part(back_name).get("size", Vector2(26.0, 31.0))) as Vector2
 		_assign(_back_sprite, back_name, Vector2(pack_size.x * 0.5, 0.0))
 		_back_sprite.position = Vector2(back_shift, torso_top + 5.0)
+		_jet_mount.position = Vector2(back_shift, torso_top + 5.0 + pack_size.y - 4.0)
 
 	# Brazos: el origen del hueso es el hombro; la mano cuelga de la muñeca
 	if _articulated:
@@ -482,6 +521,11 @@ func _sync_gear() -> void:
 	_applied["gear_key"] = key
 
 
+## Boca del jetpack (sigue la mochila al inclinarse y al girar). Null antes de armar el esqueleto.
+func jet_mount() -> Node2D:
+	return _jet_mount
+
+
 func _id_of(item: ItemData) -> String:
 	return "" if item == null else item.item_id
 
@@ -493,6 +537,9 @@ func _id_of(item: ItemData) -> String:
 func _process(delta: float) -> void:
 	if _body == null:
 		return
+	# Un maniquí enemigo o aliado que está lejos de la cámara no se anima (el jugador y la vista previa sí)
+	if _player == null and _host != null and not preview_mode and not ViewCullScript.near(_host, 220.0):
+		return
 	_time += delta
 	if gear_driven:
 		_sync_gear()
@@ -500,6 +547,7 @@ func _process(delta: float) -> void:
 	_recoil = maxf(0.0, _recoil - delta * 7.0)
 	_motion_t += delta
 	_swipe_t += delta
+	_stance_t = maxf(0.0, _stance_t - delta)
 	_animate_body(delta)
 	_animate_arms()
 
@@ -545,13 +593,53 @@ func _animate_body(delta: float) -> void:
 			leg_l_target = deg_to_rad(22.0)
 			leg_r_target = deg_to_rad(-20.0)
 
+	var crouching: bool = _player != null and _player.is_crouching and not preview_mode
+	_crouch = move_toward(_crouch, 1.0 if crouching else 0.0, delta * 10.0)
+	var crouch_ease: float = smoothstep(0.0, 1.0, _crouch)
+	if crouch_ease > 0.0:
+		# Agachado: rodilla en tierra en vez de correr
+		leg_l_target = lerpf(leg_l_target, KNEEL_HIP[0], crouch_ease)
+		leg_r_target = lerpf(leg_r_target, KNEEL_HIP[1], crouch_ease)
+		lift_l *= 1.0 - crouch_ease
+		lift_r *= 1.0 - crouch_ease
+	var proning: bool = _player != null and _player.is_prone and not preview_mode
+	_prone = move_toward(_prone, 1.0 if proning else 0.0, delta * 7.0)
+	var prone_ease: float = smoothstep(0.0, 1.0, _prone)
+	if prone_ease > 0.0:
+		# Acostado: piernas estiradas; al arrastrarse se alternan como patadas cortas
+		var crawl: float = sin(_phase) * 0.22 * minf(speed / 40.0, 1.0)
+		leg_l_target = lerpf(leg_l_target, 0.06 + crawl, prone_ease)
+		leg_r_target = lerpf(leg_r_target, -0.04 - crawl, prone_ease)
+		lift_l *= 1.0 - prone_ease
+		lift_r *= 1.0 - prone_ease
+
+	# Marcha, carrera, salto y postura de disparo a partir de clips de Mixamo
+	_gait = {}
+	if _articulated and not preview_mode and not jetting and not _hover and prone_ease < 0.5:
+		_gait = _mixamo_gait(on_floor, vertical, run_amount, crouch_ease)
+	if not _gait.is_empty():
+		if bool(_gait.get("add", false)):
+			leg_l_target += float(_gait["leg_l"])
+			leg_r_target += float(_gait["leg_r"])
+		else:
+			leg_l_target = float(_gait["leg_l"])
+			leg_r_target = float(_gait["leg_r"])
+			lift_l = 0.0
+			lift_r = 0.0
+
+	# Melee: la pierna de atrás se estira buscando equilibrio mientras el arma va hacia atrás
+	_leg_back = 0.0
+	if _articulated and not preview_mode and not _motion_body.is_empty() and _motion_len > 0.0 and _motion_t < _motion_len:
+		_leg_back = deg_to_rad(WeaponMotion.sample(_motion_body, _motion_t / _motion_len, "leg"))
+	leg_r_target += _leg_back
+
 	var blend: float = minf(1.0, delta * 18.0)
 	_leg_l.rotation = lerp_angle(_leg_l.rotation, leg_l_target, blend)
 	_leg_r.rotation = lerp_angle(_leg_r.rotation, leg_r_target, blend)
 	if _articulated:
-		_animate_knees(on_floor, jetting, vertical, run_amount, blend)
-	_leg_l.position.y = _leg_base_y_l - lift_l
-	_leg_r.position.y = _leg_base_y_r - lift_r
+		_animate_knees(on_floor, jetting, vertical, run_amount, blend, prone_ease, speed)
+	_leg_l.position.y = _leg_base_y_l - lift_l + crouch_ease * CROUCH_DROP
+	_leg_r.position.y = _leg_base_y_r - lift_r + crouch_ease * CROUCH_DROP
 
 	# Cuerpo: respiración en reposo, rebote al correr, aplastamiento al caer
 	var bob: float = sin(_time * 2.4) * 0.5
@@ -560,9 +648,11 @@ func _animate_body(delta: float) -> void:
 	if _hover:
 		# Sin piernas (fantasma): flota y se mece
 		bob = -3.0 + sin(_time * 2.2) * 1.8
-	_body.position.y = bob + _land_squash * 1.5
+	if _gait.has("bob"):
+		bob = float(_gait["bob"])
+	_body.position.y = bob + _land_squash * 1.5 + crouch_ease * CROUCH_DROP
 	_body.scale = Vector2(1.0 + _land_squash * 0.06, 1.0 - _land_squash * 0.08)
-	_body.rotation = sin(_phase) * 0.03 * minf(run_amount, 1.0) if on_floor else 0.0
+	_body.rotation = sin(_phase) * 0.03 * minf(run_amount, 1.0) * (1.0 - prone_ease) if on_floor else 0.0
 	if swipe > 0.0:
 		_body.rotation += 0.22 * swipe
 		_body.position.x = 3.0 * swipe
@@ -574,14 +664,87 @@ func _animate_body(delta: float) -> void:
 			var u: float = _motion_t / _motion_len
 			lean = deg_to_rad(WeaponMotion.sample(_motion_body, u, "lean"))
 			push = WeaponMotion.sample(_motion_body, u, "x")
-		_body.rotation += lean - _recoil * 0.05
+		lean += float(_gait.get("lean", 0.0))
+		_body.rotation += lean - _recoil * 0.05 + crouch_ease * CROUCH_LEAN
 		_body.position.x = push - _recoil * 1.2
 		# El torso se inclina desde la cadera, no desde los pies
-		var hip: Vector2 = Vector2(0.0, _leg_base_y_r)
+		var hip: Vector2 = Vector2(0.0, _leg_base_y_r + crouch_ease * CROUCH_DROP)
 		_body.position += hip - hip.rotated(_body.rotation)
 
 	var back_node: Node2D = _back
 	back_node.position.y = _body.position.y * 0.6
+
+	# Jetpack: al avanzar se inclina todo el cuerpo hacia adelante (como empujado por la mochila)
+	# (solo el jugador: la vista previa y los maniquíes ubican el esqueleto por su cuenta)
+	if _player != null and not preview_mode:
+		var tilt_target: float = 0.0
+		if jetting:
+			var forward: float = clampf(_host.velocity.x * float(_player.facing_direction) / run_reference_speed, -1.0, 1.0)
+			tilt_target = JET_TILT * (forward if forward > 0.0 else forward * 0.5)
+		_jet_tilt = lerpf(_jet_tilt, tilt_target, minf(1.0, delta * 7.0))
+		rotation = _jet_tilt + prone_ease * PI * 0.5
+		position = JET_TILT_PIVOT - JET_TILT_PIVOT.rotated(_jet_tilt) + PRONE_OFFSET * prone_ease
+		if prone_ease > 0.0 and speed > 8.0:
+			# Arrastrándose: el cuerpo avanza a tirones
+			position.x += absf(sin(_phase)) * 1.5 * prone_ease
+
+
+## Pose de las piernas sacada de clips de Mixamo (`core/art/locomotion_data.gd`, generado). Devuelve:
+##   leg_l / leg_r   rotacion de la cadera (rad, + = el pie va hacia atras)
+##   flex_l / flex_r doblez de la rodilla (rad, + = el pie va hacia atras)
+##   add             true = se suma a la pose del rig (agachado) en vez de reemplazarla
+##   bob / lean      rebote de la cadera (px) e inclinacion del torso (rad), opcionales
+## Vacio si no corresponde (en reposo, jetpack, fantasma): queda la animacion de siempre.
+func _mixamo_gait(on_floor: bool, vertical: float, run_amount: float, crouch_ease: float) -> Dictionary:
+	if not on_floor:
+		# En el aire: pose de subida o de caida del clip de salto, algo atenuada
+		var air: Dictionary = LocomotionData.POSES["air_up" if vertical < 0.0 else "air_down"] as Dictionary
+		return _gait_from(air, 0.75, 1.0)
+	if run_amount > 0.05:
+		var u: float = fposmod(_phase, TAU) / TAU
+		var amount: float = clampf(run_amount / 0.35, 0.0, 1.0)
+		if crouch_ease > 0.5:
+			# Agachado en movimiento: solo la oscilacion del clip, encima de la sentadilla del rig
+			var c: Dictionary = LocomotionData.sample("crouch", u)
+			var out: Dictionary = {"add": true}
+			var osc_l: float = float(c["thigh_l"]) - LocomotionData.mean("crouch", "thigh_l")
+			var osc_r: float = float(c["thigh_r"]) - LocomotionData.mean("crouch", "thigh_r")
+			var sh_l: float = float(c["shin_l"]) - LocomotionData.mean("crouch", "shin_l")
+			var sh_r: float = float(c["shin_r"]) - LocomotionData.mean("crouch", "shin_r")
+			out["leg_l"] = -deg_to_rad(osc_l) * amount * 0.7
+			out["leg_r"] = -deg_to_rad(osc_r) * amount * 0.7
+			out["flex_l"] = deg_to_rad(osc_l - sh_l) * amount * 0.5
+			out["flex_r"] = deg_to_rad(osc_r - sh_r) * amount * 0.5
+			return out
+		var w_run: float = smoothstep(0.5, 0.9, run_amount)
+		var walk: Dictionary = LocomotionData.sample("walk", u)
+		var run: Dictionary = LocomotionData.sample("run", u)
+		var s: Dictionary = {}
+		for k: Variant in walk.keys():
+			s[k] = lerpf(float(walk[k]), float(run[k]), w_run)
+		var g: Dictionary = _gait_from(s, 0.9, amount)
+		g["bob"] = -float(s["hips"]) * GAIT_PX_PER_M * amount
+		g["lean"] = deg_to_rad(float(s["trunk"])) * 0.6 * amount
+		return g
+	if _stance_t > 0.0 and crouch_ease < 0.1:
+		# Quieto disparando: apoyo abierto del clip de disparo, que entra y sale suave
+		var fire: Dictionary = LocomotionData.POSES["fire"] as Dictionary
+		return _gait_from(fire, 1.0, clampf(_stance_t / 0.25, 0.0, 1.0))
+	return {}
+
+
+## Pose {thigh_l, thigh_r, shin_l, shin_r} en grados de Mixamo -> rotaciones del rig.
+## `strength` escala la pose; `weight` la mezcla con la postura neutra (piernas rectas).
+func _gait_from(pose: Dictionary, strength: float, weight: float) -> Dictionary:
+	var k: float = strength * weight
+	var th_l: float = float(pose["thigh_l"])
+	var th_r: float = float(pose["thigh_r"])
+	return {
+		"leg_l": -deg_to_rad(th_l) * k,
+		"leg_r": -deg_to_rad(th_r) * k,
+		"flex_l": deg_to_rad(maxf(0.0, th_l - float(pose["shin_l"]))) * k,
+		"flex_r": deg_to_rad(maxf(0.0, th_r - float(pose["shin_r"]))) * k,
+	}
 
 
 ## Golpe de los enemigos con el esqueleto modular: estiran los brazos hacia adelante y el cuerpo se lanza.
@@ -589,27 +752,37 @@ func play_attack() -> void:
 	_swipe_t = 0.0
 
 
-## Engancha el disparo del arma para que el cuerpo reaccione al retroceso (solo el jugador).
+## Engancha el disparo del arma (de las dos manos) para que el cuerpo reaccione al retroceso (solo el jugador).
 func _connect_fire_signal() -> void:
-	if _fire_connected or preview_mode or _player == null or _player.weapon_manager == null:
+	if preview_mode or _player == null or _player.weapon_manager == null:
 		return
-	_fire_connected = true
-	_player.weapon_manager.weapon_fired.connect(_on_weapon_fired)
+	var main: WeaponManager = _player.weapon_manager
+	if not _fire_connected:
+		_fire_connected = true
+		main.weapon_fired.connect(_on_weapon_fired.bind(main))
+	if not _off_fire_connected and main.offhand != null:
+		_off_fire_connected = true
+		main.offhand.weapon_fired.connect(_on_weapon_fired.bind(main.offhand))
 
 
-func _on_weapon_fired(_weapon: WeaponData) -> void:
+## `source` es el administrador de la mano que atacó: de ahí sale la animación del cuerpo (`last_motion`).
+func _on_weapon_fired(_weapon: WeaponData, source: WeaponManager = null) -> void:
 	var motion: Dictionary = {}
-	if _player != null and _player.weapon_manager != null:
+	if source != null:
+		motion = source.last_motion
+	elif _player != null and _player.weapon_manager != null:
 		motion = _player.weapon_manager.last_motion
 	_motion_body = motion.get("body", []) as Array
 	_motion_len = float(motion.get("length", 0.0))
 	_motion_t = 0.0
 	# Armas de fuego: retroceso del torso según el arma; melee: inclinación y avance del perfil
 	_recoil = float(motion.get("recoil", 1.0)) if _motion_body.is_empty() else 0.0
+	if _weapon != null and _weapon.weapon_type == WeaponData.WeaponType.RANGED:
+		_stance_t = 0.7
 
 
 ## Rodilla y tobillo del cuerpo articulado: la pierna que avanza dobla la rodilla; en el aire se encoge un poco.
-func _animate_knees(on_floor: bool, jetting: bool, vertical: float, run_amount: float, blend: float) -> void:
+func _animate_knees(on_floor: bool, jetting: bool, vertical: float, run_amount: float, blend: float, prone_ease: float = 0.0, speed: float = 0.0) -> void:
 	var flex: Array[float] = [0.0, 0.0]
 	if on_floor:
 		var amount: float = minf(run_amount, 1.0)
@@ -622,10 +795,27 @@ func _animate_knees(on_floor: bool, jetting: bool, vertical: float, run_amount: 
 	else:
 		flex = [deg_to_rad(10.0), deg_to_rad(16.0)]
 	var hips: Array[Node2D] = [_leg_l, _leg_r]
+	if _crouch > 0.0:
+		var bend: float = smoothstep(0.0, 1.0, _crouch)
+		flex[0] = lerpf(flex[0], KNEEL_KNEE[0], bend)
+		flex[1] = lerpf(flex[1], KNEEL_KNEE[1], bend)
+	if prone_ease > 0.0:
+		# Acostado: rodillas casi rectas; al arrastrarse cada una se dobla por turno
+		var amount: float = minf(speed / 40.0, 1.0)
+		flex[0] = lerpf(flex[0], 0.12 + maxf(0.0, sin(_phase)) * 0.7 * amount, prone_ease)
+		flex[1] = lerpf(flex[1], 0.08 + maxf(0.0, -sin(_phase)) * 0.7 * amount, prone_ease)
+	flex[1] += _leg_back * 0.2
+	if not _gait.is_empty():
+		if bool(_gait.get("add", false)):
+			flex[0] += float(_gait["flex_l"])
+			flex[1] += float(_gait["flex_r"])
+		else:
+			flex[0] = float(_gait["flex_l"])
+			flex[1] = float(_gait["flex_r"])
 	for i in range(2):
 		_shin[i].rotation = lerp_angle(_shin[i].rotation, flex[i], blend)
 		# El pie compensa parte del giro para no apuntar al suelo al levantar la pierna
-		_foot_bone[i].rotation = -(hips[i].rotation + _shin[i].rotation) * 0.45
+		_foot_bone[i].rotation = -(hips[i].rotation + _shin[i].rotation) * lerpf(0.45, 1.0, smoothstep(0.0, 1.0, _crouch))
 
 
 ## Orienta cada brazo hacia el punto que debe sostener. Sin arma queda colgando con el vaivén de la marcha.
@@ -680,13 +870,48 @@ func _animate_arms() -> void:
 		else:
 			_arm_back.z_index = 0 if preview_mode else (1 if two_handed else -2)
 
+	# Mano secundaria: el brazo de atrás agarra el arma secundaria (con un arma a dos manos no hay secundaria)
+	var off_holding: bool = false
+	var off_angle: float = 0.0
+	if not preview_mode and not two_handed and _player != null and _player.weapon_pivot != null and _player.weapon_manager != null:
+		var off: WeaponManager = _player.weapon_manager.offhand
+		var off_sprite: Sprite2D = _player.weapon_pivot.get_node_or_null("OffhandSprite") as Sprite2D
+		if off != null and off.current_weapon != null and off_sprite != null and off_sprite.visible and off_sprite.texture != null:
+			var off_pose: Dictionary = ItemIconsScript.get_weapon_pose(off.current_weapon)
+			if off_pose.has("hand"):
+				off_holding = true
+				var off_grip: Vector2 = off_pose.get("grip", Vector2.ZERO) as Vector2
+				var off_hand_tex: Vector2 = off_pose.get("hand", off_grip) as Vector2
+				hand_back = _body.to_local(off_sprite.to_global(off_hand_tex - off_grip))
+				off_angle = _body.global_transform.affine_inverse().basis_xform(off_sprite.global_transform.x).angle()
+				if not _articulated:
+					_arm_back.z_index = 1
+
+	# En el aire los brazos que están libres se abren hacia adelante y arriba; al aterrizar vuelven a la pose normal
+	var airborne: bool = not preview_mode and _host != null and not _was_on_floor
+	_jump_open = move_toward(_jump_open, 1.0 if airborne else 0.0, get_process_delta_time() * (8.0 if airborne else 6.0))
+	if _jump_open > 0.0:
+		var ease_open: float = smoothstep(0.0, 1.0, _jump_open)
+		if not holding:
+			var open_front: Vector2 = _shoulder_front + Vector2(ARM_REACH * 0.7, -ARM_REACH * 0.45)
+			hand_front = hand_front.lerp(open_front, ease_open)
+		if not two_handed and not off_holding:
+			var open_back: Vector2 = _shoulder_back + Vector2(ARM_REACH * 0.7, -ARM_REACH * 0.45)
+			hand_back = hand_back.lerp(open_back, ease_open)
+
 	if _articulated:
 		var blend: float = minf(1.0, get_process_delta_time() * 14.0)
 		_aim_angle = lerp_angle(_aim_angle, aim_angle, blend)
+		_aim_angle_off = lerp_angle(_aim_angle_off, off_angle, blend)
 		var hand_angle: float = _aim_angle if holding else 0.0
-		_aim_chain(1, _arm_front, _shoulder_front, hand_front, hand_angle, holding)
-		_aim_chain(0, _arm_back, _shoulder_back, hand_back, hand_angle, two_handed)
-		_hand_sprite[0].z_index = 3 if (holding and two_handed and not preview_mode) else 0
+		# Mano de adelante girada 45 grados antihorario respecto del arma (referencia de agarre de rifle)
+		_aim_chain(1, _arm_front, _shoulder_front, hand_front, hand_angle + (deg_to_rad(-45.0) if holding else 0.0), holding)
+		if off_holding:
+			_aim_chain(0, _arm_back, _shoulder_back, hand_back, _aim_angle_off, true)
+		else:
+			_aim_chain(0, _arm_back, _shoulder_back, hand_back, hand_angle, two_handed)
+		# Mano de atrás a dos manos: detrás del arma, solo asoman las puntas de los dedos (referencia de agarre)
+		_hand_sprite[0].z_index = 3 if off_holding and not preview_mode else 0
 		# La cabeza acompaña la puntería, sin llegar a girar entera
 		var look: float = clampf(_aim_angle, deg_to_rad(-70.0), deg_to_rad(70.0)) * 0.35 if holding else 0.0
 		_neck_bone.rotation = lerp_angle(_neck_bone.rotation, look, blend)

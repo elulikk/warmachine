@@ -11,6 +11,8 @@ signal projectile_recycled(projectile: Projectile)
 @export var initial_pool_size: int = 60
 
 var _pool: Array[Projectile] = []
+## Proyectiles en reposo listos para usar (el más recientemente devuelto sale primero).
+var _free: Array[Projectile] = []
 
 
 func _ready() -> void:
@@ -26,6 +28,7 @@ func _initialize_pool() -> void:
 		var proj: Projectile = _create_new_projectile()
 		_deactivate_projectile(proj)
 		_pool.append(proj)
+		_free.append(proj)
 
 
 func _create_new_projectile() -> Projectile:
@@ -44,14 +47,16 @@ func get_projectile(
 	speed: float = 520.0,
 	bounces: int = 0,
 	pierces: int = 0,
-	forks: int = 0
+	forks: int = 0,
+	sprite: Texture2D = null
 ) -> Node2D:
 	var proj: Projectile = null
 	
-	# Buscar el primer proyectil inactivo disponible en el pool
-	for candidate in _pool:
-		if candidate.process_mode == Node.PROCESS_MODE_DISABLED:
-			proj = candidate
+	# Sacar de la lista de libres (los liberados por cambio de escena se descartan)
+	while not _free.is_empty():
+		var candidate: Variant = _free.pop_back()
+		if is_instance_valid(candidate) and (candidate as Projectile).process_mode == Node.PROCESS_MODE_DISABLED:
+			proj = candidate as Projectile
 			break
 	
 	# Si la reserva se agotó por ráfagas intensas, instanciar uno de soporte adicional
@@ -59,7 +64,7 @@ func get_projectile(
 		proj = _create_new_projectile()
 		_pool.append(proj)
 	
-	_activate_projectile(proj, global_pos, direction, payload, speed, bounces, pierces, forks)
+	_activate_projectile(proj, global_pos, direction, payload, speed, bounces, pierces, forks, sprite)
 	projectile_spawned.emit(proj)
 	return proj
 
@@ -72,11 +77,12 @@ func _activate_projectile(
 	speed: float,
 	bounces: int = 0,
 	pierces: int = 0,
-	forks: int = 0
+	forks: int = 0,
+	sprite: Texture2D = null
 ) -> void:
 	proj.global_position = global_pos
 	proj.rotation = direction.angle()
-	proj.setup(speed, payload, bounces, pierces, forks)
+	proj.setup(speed, payload, bounces, pierces, forks, sprite)
 	proj.visible = true
 	proj.process_mode = Node.PROCESS_MODE_INHERIT
 	proj.set_deferred("monitoring", true)
@@ -98,5 +104,9 @@ func _deactivate_projectile(proj: Projectile) -> void:
 func recycle_projectile(proj: Projectile) -> void:
 	if proj == null:
 		return
+	# Solo vuelve a la lista de libres si estaba en uso (un reciclaje doble no lo duplica)
+	var was_active: bool = proj.process_mode != Node.PROCESS_MODE_DISABLED
 	_deactivate_projectile(proj)
+	if was_active:
+		_free.append(proj)
 	projectile_recycled.emit(proj)

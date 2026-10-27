@@ -92,6 +92,62 @@ static func _hide_decor(visuals: Node, keep: Array[String]) -> void:
 			(child as CanvasItem).visible = false
 
 
+## Cartel de checkpoint por capítulo (mundo). Sin entrada: queda el poste de `terminal`.
+const CHECKPOINT_SIGNS: Dictionary = {
+	1: "res://assets/art/world1/checkpoint_sign.png",
+}
+const LED_PATH: String = "res://assets/art/props/checkpoint_led.png"
+
+
+## Checkpoint con el cartel de su mundo y el LED de estado. Sin cartel para el capítulo, queda el poste `terminal`.
+static func apply_checkpoint(host: Node2D, chapter: int) -> void:
+	var visuals: Node2D = host.get_node_or_null("Visuals") as Node2D
+	if visuals == null:
+		visuals = host
+	if visuals.has_node("PropArt"):
+		return
+	var texture: Texture2D = null
+	if CHECKPOINT_SIGNS.has(chapter):
+		texture = ArtScript.tex(CHECKPOINT_SIGNS[chapter])
+	if texture == null:
+		apply(host, "terminal")
+		_swap_led(visuals, -86.0)
+		return
+	_hide_decor(visuals, ["NameTag", "PromptContainer"])
+	var art: Node2D = Node2D.new()
+	art.name = "PropArt"
+	visuals.add_child(art)
+	var sign_height: float = texture.get_height() * PROP_SCALE
+	var sprite: Sprite2D = Sprite2D.new()
+	sprite.texture = texture
+	sprite.scale = Vector2(PROP_SCALE, PROP_SCALE)
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	sprite.position = Vector2(0.0, -sign_height * 0.5)
+	art.add_child(sprite)
+	_swap_led(visuals, -sign_height)
+	# El aviso sube por encima del cartel
+	var prompt: Node2D = host.get_node_or_null("PromptUI") as Node2D
+	if prompt != null:
+		prompt.position.y = -sign_height - 24.0
+
+
+## Cambia el cuadradito de estado por el LED. La lente es blanca: `CheckpointTerminal` la tiñe de rojo o verde.
+static func _swap_led(visuals: Node2D, top_y: float) -> void:
+	var old: Node = visuals.get_node_or_null("StatusLight")
+	if old != null:
+		visuals.remove_child(old)
+		old.queue_free()
+	var led: Sprite2D = Sprite2D.new()
+	led.name = "StatusLight"
+	led.texture = ArtScript.tex(LED_PATH)
+	if led.texture == null:
+		return
+	led.scale = Vector2(PROP_SCALE, PROP_SCALE)
+	led.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	led.position = Vector2(0.0, top_y - led.texture.get_height() * PROP_SCALE * 0.5)
+	visuals.add_child(led)
+
+
 ## Punto de entrada: cambia el aspecto de un interactuable según su tipo.
 static func apply(host: Node2D, kind: String) -> void:
 	var visuals: Node2D = host.get_node_or_null("Visuals") as Node2D

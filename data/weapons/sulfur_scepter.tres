@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/art/world3/sulfur_ball.png" id="3_sprite"]
+[ext_resource type="PackedScene" path="res://combat/throwables/sulfur_burst.tscn" id="4_burst"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Cetro de Azufre"
+family = 0
+grip = 0
+is_automatic = false
+damage = 14.0
+fire_rate = 1.6
+knockback_force = 40.0
+recoil_force = 10.0
+projectile_speed = 430.0
+magazine_size = 8
+reload_time = 2.0
+innate_status_effects = Array[String](["FIRE"])
+impact_scene = ExtResource("4_burst")
+rarity = 3
+gold_value = 260
+projectile_scene = ExtResource("2_proj")
+projectile_sprite = ExtResource("3_sprite")
+description = "Cetro de cristal de azufre. Sus bolas estallan al chocar y queman a todos los enemigos cercanos. 8 cargas de maná."

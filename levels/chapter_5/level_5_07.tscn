@@ -1,4 +1,4 @@
-﻿[gd_scene format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://levels/level_base.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
@@ -21,7 +21,7 @@ size = Vector2(180, 20)
 [node name="Level_5_07" type="Node2D"]
 script = ExtResource("1_level")
 level_id = "5_07"
-level_title = "Sector 5-7"
+level_title = "Sector 07"
 chapter_number = 5
 next_level_path = "res://levels/chapter_5/level_5_08.tscn"
 
@@ -114,15 +114,6 @@ offset_top = -10.0
 offset_right = 90.0
 offset_bottom = 10.0
 color = Color(0.26, 0.15, 0.34, 1)
-
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 60.0
-offset_top = 400.0
-offset_right = 650.0
-offset_bottom = 430.0
-theme_override_colors/font_color = Color(0.85, 0.5, 1.0, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 5 • NÚCLEO DEL REACTOR • SECTOR 5-7"
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)

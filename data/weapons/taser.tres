@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/taser_probe.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/dardo.png" id="3_sprite"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/taser.tres"
+weapon_name = "Pistola Taser"
+family = 1
+grip = 0
+weapon_type = 0
+is_automatic = false
+damage = 8.0
+fire_rate = 1.4
+knockback_force = 30.0
+recoil_force = 20.0
+projectile_speed = 950.0
+magazine_size = 2
+reload_time = 1.7
+ice_duration = 1.5
+innate_status_effects = Array[String](["STUN"])
+projectile_scene = ExtResource("2_proj")
+projectile_sprite = ExtResource("3_sprite")
+max_sockets = 2
+socketed_runes = []
+rarity = 2
+gold_value = 210
+fire_sound = &"shot_taser"
+description = "Taser de la policía. Dispara dos electrodos de corto alcance: el enemigo que alcanza queda aturdido 1,5 s. Dos cargas y a recargar."

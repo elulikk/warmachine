@@ -1,8 +1,8 @@
 class_name BaseCamp
 extends Node2D
 const LevelSkinScript = preload("res://levels/level_skin.gd")
-## Campamento Base (Hub).
-## Zona de descanso y reabastecimiento entre expediciones.
+## La Caja (hub).
+## Pasillo de puertas: cada puerta es un mundo. Adentro está el campamento: descanso y reabastecimiento entre expediciones.
 ## Contiene al jugador, el baúl ilimitado (StashChest), el herrero (BlacksmithNPC) y la terminal de expediciones (MapSelector).
 
 @onready var player: Player = $Player
@@ -12,7 +12,7 @@ const LevelSkinScript = preload("res://levels/level_skin.gd")
 
 
 func _ready() -> void:
-	LevelSkinScript.apply(self, 0)
+	LevelSkinScript.apply(self, 0, "box_corridor.jpg")
 	GameFeel.music_set_base(self, &"camp")
 	# Asegurar que el estado del juego sea PLAYING y no pausado
 	get_tree().paused = false
@@ -31,11 +31,13 @@ func _ready() -> void:
 		if hud != null and player != null:
 			hud.setup_with_player(player)
 		
+		# En el campamento ya no hay sector a medias
+		SaveManager.clear_resume_point()
 		# Guardar estado consolidado luego de aplicar al jugador
 		sm.save_to_disk()
 		
 		if banner_label != null:
-			banner_label.text = "CAMPAMENTO BASE // OPERADOR: %s" % sm.character_name.to_upper()
+			banner_label.text = "LA CAJA // OPERADOR: %s" % sm.character_name.to_upper()
 		
 		print("[BaseCamp] Ingreso al campamento base. Operador: %s. Estado guardado a disco." % sm.character_name)
 

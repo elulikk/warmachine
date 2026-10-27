@@ -41,10 +41,21 @@ var stash_items: Array = []
 ## Lo escribe `TradeSession` (core/trade/trade_session.gd); una clave ausente significa estado inicial.
 var trade_state: Dictionary = {}
 var unlocked_levels: Array[String] = ["res://levels/chapter_1/level_1_01.tscn"]
+## Versión de la numeración de mundos guardada en el archivo. 1 = Periferia era chapter_1 y Ciudad de Jano chapter_4;
+## desde la 2, Ciudad de Jano es chapter_1 (mundo 1) y la Periferia es chapter_4 (mundo 4). Ver `_migrate_world_path`.
+const WORLD_NUMBERING_VERSION: int = 2
 
 var world_flags: Dictionary = {}
 var last_checkpoint_position: Vector2 = Vector2.ZERO
 var has_checkpoint: bool = false
+## Último checkpoint alcanzado en un sector (ruta de la escena y posición). Al cargar la partida se vuelve ahí
+## en vez de al campamento; se borra al terminar el sector o al pasar por el campamento.
+var resume_level_path: String = ""
+## Última escena de juego donde se guardó (un sector o el campamento). La usa el menú principal para el fondo.
+var last_scene: String = ""
+var resume_position: Vector2 = Vector2.ZERO
+## Lo activa el menú al cargar un slot: el sector que se abre usa `resume_position` una sola vez.
+var resume_pending: bool = false
 
 
 func _enter_tree() -> void:
@@ -190,6 +201,20 @@ static func get_respawn_point(default_pos: Vector2 = Vector2.ZERO) -> Vector2:
 	return default_pos
 
 
+## Anota el checkpoint como punto de reanudación de la partida guardada (lo escribe CheckpointTerminal).
+static func set_resume_point(level_path: String, pos: Vector2) -> void:
+	if instance != null and not level_path.is_empty():
+		instance.resume_level_path = level_path
+		instance.resume_position = pos
+
+
+static func clear_resume_point() -> void:
+	if instance != null:
+		instance.resume_level_path = ""
+		instance.resume_position = Vector2.ZERO
+		instance.resume_pending = false
+
+
 static func has_respawn_point() -> bool:
 	if instance != null:
 		return instance.has_checkpoint
@@ -242,12 +267,14 @@ func save_to_disk() -> bool:
 	var exp_val: float = 0.0
 	var exp_next_val: float = 100.0
 	var coins_val: int = 0
+	var crystals_val: int = 0
 	
 	if player != null and player.stats_manager != null:
 		level_val = player.stats_manager.level
 		exp_val = player.stats_manager.current_exp
 		exp_next_val = player.stats_manager.exp_to_next_level
 		coins_val = player.stats_manager.coins
+		crystals_val = player.stats_manager.time_crystals
 	
 	# Armas activas y sus runas
 	var weapons_data: Array[Dictionary] = []
@@ -268,7 +295,10 @@ func save_to_disk() -> bool:
 						"Katana": "res://data/weapons/katana.tres",
 						"Martillo Pesado": "res://data/weapons/heavy_hammer.tres",
 						"Espada de Hierro": "res://data/weapons/iron_sword.tres",
+						"Frostmourne": "res://data/weapons/frostmourne.tres",
 						"Lanzallamas de Plasma": "res://data/weapons/plasma_flamethrower.tres",
+						"Lanzallamas de Combustible": "res://data/weapons/fuel_flamethrower.tres",
+						"Pistola de Lava": "res://data/weapons/lava_pistol.tres",
 						"Bláster Corrosivo": "res://data/weapons/corrosive_blaster.tres"
 					}
 					path_to_save = str(known_paths.get(w.weapon_name, ""))
@@ -317,12 +347,16 @@ func save_to_disk() -> bool:
 		"character_name": character_name,
 		"timestamp": Time.get_datetime_string_from_system(false, true),
 		"unlocked_levels": unlocked_levels,
+		"world_numbering": WORLD_NUMBERING_VERSION,
 		"world_flags": world_flags,
+		"resume": {"level": resume_level_path, "x": resume_position.x, "y": resume_position.y},
+		"last_scene": _current_play_scene(),
 		"stats": {
 			"level": level_val,
 			"current_exp": exp_val,
 			"exp_to_next_level": exp_next_val,
-			"coins": coins_val
+			"coins": coins_val,
+			"time_crystals": crystals_val
 		},
 		"weapons": weapons_data,
 		"active_weapon": active_weapon_index,
@@ -351,6 +385,16 @@ func save_to_disk() -> bool:
 
 
 ## Carga y aplica los datos guardados de un slot específico.
+## Traduce una ruta de sector guardada con la numeración 1 (Ciudad de Jano era chapter_4 y la Periferia chapter_1)
+## a la numeración 2 (Ciudad de Jano es chapter_1 y la Periferia chapter_4).
+static func _migrate_world_path(path: String) -> String:
+	if path.begins_with("res://levels/chapter_1/level_1_"):
+		return path.replace("res://levels/chapter_1/level_1_", "res://levels/chapter_4/level_4_")
+	if path.begins_with("res://levels/chapter_4/level_4_"):
+		return path.replace("res://levels/chapter_4/level_4_", "res://levels/chapter_1/level_1_")
+	return path
+
+
 func load_from_disk(slot_id: int) -> bool:
 	_ensure_save_dir()
 	current_slot = clampi(slot_id, 1, MAX_SLOTS)
@@ -383,12 +427,24 @@ func load_from_disk(slot_id: int) -> bool:
 	
 	unlocked_levels.clear()
 	var raw_unlocked: Array = data.get("unlocked_levels", ["res://levels/chapter_1/level_1_01.tscn"])
+	var numbering: int = int(data.get("world_numbering", 1))
 	for ul in raw_unlocked:
-		unlocked_levels.append(str(ul))
-	if not unlocked_levels.has("res://levels/chapter_1/level_1_01.tscn"):
-		unlocked_levels.append("res://levels/chapter_1/level_1_01.tscn")
+		var level_path: String = str(ul)
+		if numbering < WORLD_NUMBERING_VERSION:
+			level_path = _migrate_world_path(level_path)
+		unlocked_levels.append(level_path)
 	
 	world_flags = data.get("world_flags", {})
+	last_scene = str(data.get("last_scene", ""))
+	resume_level_path = ""
+	resume_position = Vector2.ZERO
+	var raw_resume: Variant = data.get("resume", {})
+	if typeof(raw_resume) == TYPE_DICTIONARY:
+		var resume_dict: Dictionary = raw_resume as Dictionary
+		resume_level_path = str(resume_dict.get("level", ""))
+		resume_position = Vector2(float(resume_dict.get("x", 0.0)), float(resume_dict.get("y", 0.0)))
+		if numbering < WORLD_NUMBERING_VERSION and not resume_level_path.is_empty():
+			resume_level_path = _migrate_world_path(resume_level_path)
 	
 	stash_items.clear()
 	var raw_stash: Array = data.get("stash_items", [])
@@ -448,8 +504,10 @@ func apply_data_to_player(player: Player, data: Dictionary) -> void:
 	if player.stats_manager != null and not stats.is_empty():
 		player.stats_manager.level = clampi(int(stats.get("level", 1)), 1, StatsManager.MAX_LEVEL)
 		player.stats_manager.current_exp = float(stats.get("current_exp", 0.0))
-		player.stats_manager.exp_to_next_level = float(stats.get("exp_to_next_level", 150.0))
+		player.stats_manager.exp_to_next_level = float(stats.get("exp_to_next_level", 120.0))
 		player.stats_manager.coins = int(stats.get("coins", 0))
+		player.stats_manager.time_crystals = int(stats.get("time_crystals", 0))
+		player.stats_manager.crystals_changed.emit(player.stats_manager.time_crystals)
 		player.stats_manager.current_health = player.stats_manager.get_max_health()
 		player.stats_manager.coins_changed.emit(player.stats_manager.coins)
 		player.stats_manager.exp_changed.emit(player.stats_manager.current_exp, player.stats_manager.exp_to_next_level)
@@ -543,6 +601,11 @@ func get_slot_preview(slot_id: int) -> Dictionary:
 	var char_n: String = str(dict.get("character_name", "OPERADOR"))
 	var timestamp: String = str(dict.get("timestamp", "Desconocido"))
 	var lvl: int = int(stats.get("level", 1))
+	# Dónde estaba: la última escena guardada; en partidas viejas, el nivel donde se retoma
+	var where: String = str(dict.get("last_scene", ""))
+	var resume: Variant = dict.get("resume", {})
+	if where.is_empty() and resume is Dictionary:
+		where = str((resume as Dictionary).get("level", ""))
 	var cns: int = int(stats.get("coins", 0))
 	
 	return {
@@ -551,8 +614,19 @@ func get_slot_preview(slot_id: int) -> Dictionary:
 		"name": char_n,
 		"level": lvl,
 		"coins": cns,
-		"timestamp": timestamp
+		"timestamp": timestamp,
+		"last_scene": where,
+		"sectors": (dict.get("unlocked_levels", []) as Array).size()
 	}
+
+
+## Escena de juego actual si es un sector o el campamento; si no (salas de prueba, menú), la última conocida.
+func _current_play_scene() -> String:
+	var cur: Node = get_tree().current_scene
+	var path: String = cur.scene_file_path if cur != null else ""
+	if path.begins_with("res://levels/chapter_") or path.ends_with("base_camp.tscn"):
+		last_scene = path
+	return last_scene
 
 
 ## Elimina el archivo de guardado de un slot y reinicia variables si era el slot activo.
@@ -578,12 +652,15 @@ func delete_slot(slot_id: int) -> bool:
 
 
 func _init_new_profile() -> void:
+	# Partida nueva: el juego arranca en Ciudad de Jano (sector 01). Los demás mundos se abren al entrar a la Caja.
 	unlocked_levels = ["res://levels/chapter_1/level_1_01.tscn"]
 	stash_items.clear()
 	trade_state.clear()
 	world_flags.clear()
 	has_checkpoint = false
 	last_checkpoint_position = Vector2.ZERO
+	resume_level_path = ""
+	resume_position = Vector2.ZERO
 	var metrics_mgr: MetricsManager = MetricsManager.get_instance()
 	if metrics_mgr != null:
 		metrics_mgr.reset_metrics()

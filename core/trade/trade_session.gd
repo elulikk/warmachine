@@ -151,11 +151,28 @@ func _persist() -> void:
 
 func _build_stock() -> void:
 	stock.clear()
+	if bool(trader.get("sell_everything")):
+		_build_full_stock()
+		return
 	var limits: Dictionary = trader.get("stock_limits") as Dictionary
 	for path: String in trader.get("consumable_paths") as Array:
 		_add_offer(path, true, limits)
 	for path: String in trader.get("gear_paths") as Array:
 		_add_offer(path, false, limits)
+
+
+## Modo prueba (`sell_everything`): todo `.tres` de data/ que sea consumible, arma, equipo o runa, sin límite.
+func _build_full_stock() -> void:
+	var folders: Array[String] = [
+		"res://data/consumables", "res://data/weapons", "res://data/items", "res://data/items/throwables", "res://data/runes"
+	]
+	for folder: String in folders:
+		var is_consumable: bool = folder.ends_with("consumables")
+		for file: String in DirAccess.get_files_at(folder):
+			# En una exportación los recursos figuran como "x.tres.remap"
+			var clean: String = file.trim_suffix(".remap")
+			if clean.ends_with(".tres"):
+				_add_offer(folder + "/" + clean, is_consumable, {})
 
 
 func _add_offer(path: String, is_consumable: bool, limits: Dictionary) -> void:

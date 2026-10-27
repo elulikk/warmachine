@@ -4,6 +4,10 @@ extends Area2D
 ## Posee movimiento oscilatorio vertical (bobbing) y muestra el ícono pixel art del ítem.
 
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
+const PickupAuraScript = preload("res://entities/items/pickup_aura.gd")
+
+## Lado mayor del ícono del objeto en el suelo (px)
+const ICON_SIZE: float = 42.0
 
 @export var item_data: ItemData
 
@@ -34,6 +38,13 @@ func _apply_visuals() -> void:
 	if item_data == null:
 		return
 
+	# Aura que pulsa detrás del objeto, del color de su rareza
+	if visuals != null:
+		var aura: Node2D = PickupAuraScript.new()
+		aura.color = ItemTooltip.RARITY_COLORS.get(int(item_data.rarity), Color.WHITE) as Color
+		visuals.add_child(aura)
+		visuals.move_child(aura, 0)
+
 	if visual_rect != null:
 		visual_rect.color = item_data.item_color
 
@@ -52,11 +63,11 @@ func _apply_visuals() -> void:
 		if ItemIconsScript.get_art_icon(item_data) != null:
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 			var longest: float = maxf(float(icon.get_width()), float(icon.get_height()))
-			var fit: float = 30.0 / maxf(longest, 1.0)
+			var fit: float = ICON_SIZE / maxf(longest, 1.0)
 			sprite.scale = Vector2(fit, fit)
 		else:
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-			sprite.scale = Vector2(1.5, 1.5)
+			sprite.scale = Vector2(2.5, 2.5)
 		visuals.add_child(sprite)
 		if visual_rect != null:
 			visual_rect.visible = false

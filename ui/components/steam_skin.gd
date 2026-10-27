@@ -1,5 +1,6 @@
 extends RefCounted
-## Aspecto steampunk de la interfaz (texturas de `assets/art/ui/`, extraídas de las hojas de UI).
+## Aspecto de la interfaz: estilos armados con las texturas y colores del tema activo
+## (`ui/framework/ui_theme.gd`, valores en `ui/themes/steam_theme.tres`). Cambiar gráficos = cambiar el tema.
 ## Sin class_name a propósito: se carga por `preload` (ver DraggableWindow, ItemSlot y HUD).
 ##
 ## - Fábrica de estilos: `window_style()`, `slot_style()`, `inset_style()`, `button_style()`, `parchment_style()`.
@@ -9,19 +10,24 @@ extends RefCounted
 
 const ArtScript = preload("res://core/art/art.gd")
 
-const UI_DIR: String = "res://assets/art/ui/"
+const UiThemeScript = preload("res://ui/framework/ui_theme.gd")
 
-const COLOR_TEXT: Color = Color(0.96, 0.88, 0.70, 1.0)
-const COLOR_TEXT_DIM: Color = Color(0.74, 0.64, 0.50, 1.0)
-const COLOR_GOLD: Color = Color(1.0, 0.82, 0.36, 1.0)
-const COLOR_TITLE: Color = Color(0.98, 0.86, 0.60, 1.0)
-const COLOR_OUTLINE: Color = Color(0.10, 0.06, 0.04, 1.0)
-const COLOR_PARCHMENT_TEXT: Color = Color(0.20, 0.12, 0.06, 1.0)
-const COLOR_WOOD: Color = Color(0.23, 0.16, 0.13, 1.0)
-const COLOR_COPPER: Color = Color(0.72, 0.43, 0.28, 1.0)
+## Carpeta de texturas del tema activo (se mantiene por compatibilidad; las texturas se piden con `UiThemeScript.current().texture()`).
+static var UI_DIR: String = UiThemeScript.current().texture_dir
+
+## Colores: vienen del tema activo (`ui/themes/steam_theme.tres`). Mismos nombres que las constantes viejas.
+static var COLOR_TEXT: Color = UiThemeScript.current().text
+static var COLOR_TEXT_DIM: Color = UiThemeScript.current().text_dim
+static var COLOR_GOLD: Color = UiThemeScript.current().gold
+static var COLOR_TITLE: Color = UiThemeScript.current().title
+static var COLOR_OUTLINE: Color = UiThemeScript.current().outline
+static var COLOR_PARCHMENT_TEXT: Color = UiThemeScript.current().parchment_text
+static var COLOR_WOOD: Color = UiThemeScript.current().wood
+static var COLOR_COPPER: Color = UiThemeScript.current().copper
 
 static var _styles: Dictionary = {}
 static var _title_font: Font = null
+static var _arrow_down: Texture2D = null
 
 
 ## Marco de ventana (9-slice). Los márgenes de contenido dejan el interior libre de remaches.
@@ -96,16 +102,6 @@ static func hud_plate_style() -> StyleBox:
 	return box
 
 
-## Cartel de monedas (bolsa y engranajes).
-static func coin_style() -> StyleBox:
-	if _styles.has("coin"):
-		return _styles["coin"] as StyleBox
-	var box: StyleBox = _texture_box("coin_panel.png", Vector4(0, 0, 0, 0), Vector4(62, 10, 40, 10),
-			_flat_fallback(Color(0.16, 0.11, 0.09, 0.95), COLOR_COPPER, 2, 5))
-	_styles["coin"] = box
-	return box
-
-
 ## Casillero cuadrado pequeño de cobre (sockets de runas del HUD).
 static func socket_style() -> StyleBox:
 	if _styles.has("socket"):
@@ -152,7 +148,7 @@ static func close_style(state: String = "normal") -> StyleBox:
 	var key: String = "close_" + state
 	if _styles.has(key):
 		return _styles[key] as StyleBox
-	var tex: Texture2D = ArtScript.tex(UI_DIR + "close_btn.png")
+	var tex: Texture2D = UiThemeScript.current().texture("close_btn.png")
 	var result: StyleBox
 	if tex == null:
 		result = _flat_fallback(Color(0.6, 0.15, 0.15, 1.0), Color(0.9, 0.5, 0.3, 1.0), 1, 3)
@@ -172,12 +168,24 @@ static func close_style(state: String = "normal") -> StyleBox:
 ## Fuente de títulos: serif con peso (Windows), con respaldo de la fuente por defecto.
 static func title_font() -> Font:
 	if _title_font == null:
-		var system: SystemFont = SystemFont.new()
-		system.font_names = PackedStringArray(["Georgia", "Cambria", "Palatino Linotype", "Book Antiqua", "Times New Roman", "Serif"])
-		system.font_weight = 700
-		system.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
-		_title_font = system
+		_title_font = UiThemeScript.current().get_title_font()
 	return _title_font
+
+
+## Vuelve a leer el tema activo (después de `UiTheme.use(...)`): colores y estilos cacheados.
+static func reload_theme() -> void:
+	var theme: Resource = UiThemeScript.current()
+	UI_DIR = theme.texture_dir
+	COLOR_TEXT = theme.text
+	COLOR_TEXT_DIM = theme.text_dim
+	COLOR_GOLD = theme.gold
+	COLOR_TITLE = theme.title
+	COLOR_OUTLINE = theme.outline
+	COLOR_PARCHMENT_TEXT = theme.parchment_text
+	COLOR_WOOD = theme.wood
+	COLOR_COPPER = theme.copper
+	_styles.clear()
+	_title_font = null
 
 
 # ==============================================================================
@@ -253,6 +261,93 @@ static func _skin_button(button: Button) -> void:
 	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.5, 0.45, 1))
 	button.add_theme_color_override("font_outline_color", COLOR_OUTLINE)
 	button.add_theme_constant_override("outline_size", 2)
+	if button is OptionButton:
+		_skin_option_button(button as OptionButton)
+
+
+## Desplegables: el texto va en un recuadro hundido (como un campo de texto) y la flecha en un botón de
+## cobre aparte a la derecha. El botón es solo dibujo: el clic lo recibe el OptionButton entero.
+static func _skin_option_button(button: OptionButton) -> void:
+	if button.has_node(^"ArrowButton"):
+		return
+	const ARROW_W: float = 30.0
+	var empty: ImageTexture = ImageTexture.create_from_image(Image.create(1, 1, false, Image.FORMAT_RGBA8))
+	button.add_theme_icon_override("arrow", empty)
+	button.add_theme_constant_override("arrow_margin", 0)
+	button.custom_minimum_size.y = maxf(button.custom_minimum_size.y, 30.0)
+	var tints: Dictionary = {"normal": Color.WHITE, "hover": Color(1.15, 1.1, 1.05), "pressed": Color(0.8, 0.75, 0.7), "disabled": Color(0.6, 0.58, 0.56, 0.8)}
+	for state: String in tints:
+		# Marco de cobre por fuera, recuadro oscuro hundido por dentro
+		var box: StyleBoxFlat = StyleBoxFlat.new()
+		box.bg_color = Color(0.13, 0.085, 0.06) * (tints[state] as Color)
+		box.border_color = COLOR_COPPER * (tints[state] as Color)
+		box.set_border_width_all(3)
+		box.set_corner_radius_all(4)
+		box.shadow_color = Color(0, 0, 0, 0.4)
+		box.shadow_size = 2
+		box.content_margin_left = 12.0
+		box.content_margin_right = ARROW_W + 10.0
+		box.content_margin_top = 5.0
+		box.content_margin_bottom = 5.0
+		button.add_theme_stylebox_override(state, box)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
+	var plate: Panel = Panel.new()
+	plate.name = "ArrowButton"
+	plate.set_meta(&"steam_skinned", true)
+	plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var copper: StyleBoxFlat = StyleBoxFlat.new()
+	copper.bg_color = Color(0.48, 0.29, 0.17)
+	copper.border_color = Color(0.88, 0.62, 0.36)
+	copper.set_border_width_all(2)
+	copper.border_width_bottom = 3
+	copper.set_corner_radius_all(3)
+	copper.shadow_color = Color(0, 0, 0, 0.35)
+	copper.shadow_size = 2
+	plate.add_theme_stylebox_override("panel", copper)
+	button.add_child(plate)
+	plate.anchor_left = 1.0
+	plate.anchor_right = 1.0
+	plate.anchor_bottom = 1.0
+	plate.offset_left = -ARROW_W - 3.0
+	plate.offset_right = -3.0
+	plate.offset_top = 3.0
+	plate.offset_bottom = -3.0
+
+	var icon: TextureRect = TextureRect.new()
+	icon.texture = _down_arrow()
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.offset_left = 8.0
+	icon.offset_right = -8.0
+	icon.offset_top = 6.0
+	icon.offset_bottom = -6.0
+	plate.add_child(icon)
+	button.mouse_entered.connect(func() -> void: plate.modulate = Color(1.2, 1.12, 1.0))
+	button.mouse_exited.connect(func() -> void: plate.modulate = Color.WHITE)
+	button.button_down.connect(func() -> void: plate.modulate = Color(0.8, 0.75, 0.7))
+	button.button_up.connect(func() -> void: plate.modulate = Color.WHITE)
+
+
+## Triángulo dorado con contorno oscuro que apunta hacia abajo (la flecha del desplegable).
+static func _down_arrow() -> Texture2D:
+	if _arrow_down == null:
+		const W: int = 32
+		const H: int = 20
+		var img: Image = Image.create(W, H, false, Image.FORMAT_RGBA8)
+		for y: int in H:
+			for x: int in W:
+				# Distancia al borde del triángulo (base arriba, punta abajo), en píxeles
+				var half: float = (W * 0.5) * (1.0 - float(y) / H)
+				var d: float = minf(half - absf(x + 0.5 - W * 0.5), minf(float(y), float(H - y)))
+				if half - absf(x + 0.5 - W * 0.5) < 0.0:
+					continue
+				var col: Color = COLOR_OUTLINE if d < 2.0 or y < 2 else COLOR_GOLD.lerp(Color(0.85, 0.55, 0.25), float(y) / H)
+				img.set_pixel(x, y, col)
+		_arrow_down = ImageTexture.create_from_image(img)
+	return _arrow_down
 
 
 static func _skin_panel(panel: Control) -> void:
@@ -338,7 +433,7 @@ static func _separator() -> StyleBox:
 # ==============================================================================
 
 static func _texture_box(file: String, margins: Vector4, content: Vector4, fallback: StyleBox) -> StyleBox:
-	var tex: Texture2D = ArtScript.tex(UI_DIR + file)
+	var tex: Texture2D = UiThemeScript.current().texture(file)
 	if tex == null:
 		return fallback
 	var box: StyleBoxTexture = StyleBoxTexture.new()

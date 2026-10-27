@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://combat/throwables/throwable_base.tscn" id="1_base"]
+[ext_resource type="Script" path="res://combat/throwables/c4_charge.gd" id="2_script"]
+[ext_resource type="PackedScene" path="res://combat/throwables/c4_blast.tscn" id="3_fx"]
+
+[node name="C4Charge" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+throwable_id = "c4"
+fuse_time = 25.0
+detonate_on_enemy = false
+arming_time = 0.1
+effect_scene = ExtResource("3_fx")

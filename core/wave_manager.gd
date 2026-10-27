@@ -10,6 +10,8 @@ signal round_started(round_number: int, enemy_count: int)
 signal round_cleared(round_number: int)
 signal all_rounds_cleared
 
+const SpawnTelegraph := preload("res://combat/spawn_telegraph.gd")
+
 ## Escena del enemigo a instanciar (por defecto basic_runner.tscn).
 @export var enemy_scene: PackedScene = preload("res://entities/enemies/basic_runner.tscn")
 
@@ -27,6 +29,15 @@ signal all_rounds_cleared
 
 ## Dispersión horizontal aleatoria (px) para que los enemigos no nazcan apilados.
 @export var spawn_jitter: float = 30.0
+
+## Segundos de destello en el punto de nacimiento antes de que aparezca cada enemigo (0 = al instante).
+@export var spawn_warning: float = 1.0
+
+## Si es true los enemigos nacen fuera de la vista de la cámara, a un lado de la pantalla, y se acercan al jugador.
+## Lo activan las arenas. La altura sale del marcador; si no hay lugar a ningún lado, nace en el marcador.
+@export var spawn_offscreen: bool = false
+## Distancia (px) entre el borde de la pantalla y el nacimiento fuera de cámara (se suma un poco de jitter).
+@export var offscreen_margin: float = 40.0
 
 @export_group("Rondas")
 ## Tamaño de cada ronda (ej: [3, 4, 6]). Vacío = modo continuo.
@@ -58,6 +69,8 @@ var _round_index: int = -1
 var _pending_spawns: int = 0
 var _pending_elites: int = 0
 var _rounds_active: bool = false
+var _in_flight: int = 0       # Destellos mostrados cuyo enemigo todavía no nació
+var _generation: int = 0      # Sube en stop_and_clear para descartar destellos viejos
 
 
 func _ready() -> void:
@@ -106,6 +119,8 @@ func stop_and_clear() -> void:
 	_pending_elites = 0
 	_round_index = -1
 	current_round = 0
+	_in_flight = 0
+	_generation += 1
 	if respawn_timer != null:
 		respawn_timer.stop()
 	if rest_timer != null:
@@ -119,40 +134,112 @@ func stop_and_clear() -> void:
 ## Genera un nuevo enemigo en un punto de spawn aleatorio (modo continuo).
 func spawn_enemy() -> void:
 	_prune_invalid_enemies()
-	if alive_enemies.size() >= max_alive:
+	if alive_enemies.size() + _in_flight >= max_alive:
 		return
 	_spawn_one()
 
 
-## Instancia un enemigo en un marcador aleatorio. Retorna false si no pudo generarlo.
+## Elige un punto de spawn y genera un enemigo ahí. Retorna false si no pudo generarlo.
 ## Con `use_elite` genera `elite_scene` (si está asignada) en lugar de `enemy_scene`.
+## Si `spawn_warning` > 0 muestra primero un destello y el enemigo nace cuando termina.
 func _spawn_one(use_elite: bool = false) -> bool:
 	var scene: PackedScene = elite_scene if use_elite and elite_scene != null else enemy_scene
 	if scene == null or spawn_points.is_empty():
 		return false
 
 	var chosen_marker: Marker2D = spawn_points.pick_random()
-	var spawn_pos: Vector2 = chosen_marker.global_position
-	spawn_pos.x += randf_range(-spawn_jitter, spawn_jitter)
+	var spawn_pos: Vector2 = _marker_world_position(chosen_marker)
+	var offscreen_x: float = _pick_offscreen_x(spawn_pos.y) if spawn_offscreen else NAN
+	if is_nan(offscreen_x):
+		spawn_pos.x += randf_range(-spawn_jitter, spawn_jitter)
+	else:
+		spawn_pos.x = offscreen_x
 
+	if spawn_warning <= 0.0:
+		return _instantiate_enemy(scene, spawn_pos)
+
+	SpawnTelegraph.play(_get_container(), spawn_pos, spawn_warning)
+	_in_flight += 1
+	get_tree().create_timer(spawn_warning).timeout.connect(_on_telegraph_finished.bind(scene, spawn_pos, _generation))
+	return true
+
+
+## Coordenada X de un nacimiento justo fuera de la vista de la cámara, del lado que todavía cae dentro del nivel y
+## donde el cuerpo del enemigo cabe libre (sin un sólido de decoración encima). Retorna NAN si no hay lugar.
+func _pick_offscreen_x(spawn_y: float) -> float:
+	var camera: CameraFollow = get_tree().get_first_node_in_group(&"game_camera") as CameraFollow
+	if camera == null:
+		return NAN
+	var view: Vector2 = camera.get_horizontal_view()
+	var candidates: Array[float] = []
+	for attempt: int in 3:
+		var left_x: float = view.x - offscreen_margin - randf_range(0.0, spawn_jitter)
+		var right_x: float = view.y + offscreen_margin + randf_range(0.0, spawn_jitter)
+		if left_x >= camera.limit_left + offscreen_margin and _spawn_is_clear(left_x, spawn_y):
+			candidates.append(left_x)
+		if right_x <= camera.limit_right - offscreen_margin and _spawn_is_clear(right_x, spawn_y):
+			candidates.append(right_x)
+	if candidates.is_empty():
+		return NAN
+	return candidates.pick_random()
+
+
+## Cuerpo de un enemigo (24 x 18 px, como el de la rata) en esa posición sin chocar con nada del mundo.
+func _spawn_is_clear(x: float, y: float) -> bool:
+	var space: PhysicsDirectSpaceState2D = get_parent().get_world_2d().direct_space_state
+	var shape: RectangleShape2D = RectangleShape2D.new()
+	shape.size = Vector2(24.0, 18.0)
+	var query: PhysicsShapeQueryParameters2D = PhysicsShapeQueryParameters2D.new()
+	query.shape = shape
+	query.transform = Transform2D(0.0, Vector2(x, y - 9.0))
+	query.collision_mask = 1
+	return space.intersect_shape(query, 1).is_empty()
+
+
+## Posición en el mundo de un marcador. El WaveManager es un `Node` (no `Node2D`), así que la cadena de
+## transformaciones se corta en él: se aplica la del padre para que una arena movida arrastre sus marcadores.
+func _marker_world_position(marker: Marker2D) -> Vector2:
+	var base: Node2D = get_parent() as Node2D
+	if base != null and marker.get_parent() == self:
+		return base.to_global(marker.position)
+	return marker.global_position
+
+
+func _on_telegraph_finished(scene: PackedScene, spawn_pos: Vector2, generation: int) -> void:
+	if generation != _generation:
+		return # El gestor se detuvo mientras se mostraba el destello
+	_in_flight -= 1
+	if not _instantiate_enemy(scene, spawn_pos):
+		push_warning("[WaveManager] No se pudo generar un enemigo tras el destello.")
+	_check_round_cleared()
+
+
+func _get_container() -> Node:
+	var container: Node = get_tree().current_scene
+	if container == null:
+		container = owner if owner != null else get_parent()
+	if container == null:
+		container = get_tree().root
+	return container
+
+
+## Crea el enemigo en `spawn_pos` y lo agrega al nivel. Retorna false si la escena no es un enemigo válido.
+func _instantiate_enemy(scene: PackedScene, spawn_pos: Vector2) -> bool:
 	var enemy_instance: Node = scene.instantiate()
 	if not (enemy_instance is BasicRunner or enemy_instance is EnemyBase):
 		enemy_instance.queue_free()
 		return false
 
 	var enemy: Node2D = enemy_instance as Node2D
-	enemy.global_position = spawn_pos
 	if "is_aggroed" in enemy:
 		enemy.set("is_aggroed", aggro_on_spawn)
+	# Los de oleada no sueltan al jugador por distancia (ver entities/enemies/aggro_leash.gd)
+	enemy.set_meta(&"no_leash", true)
 	enemy.connect(&"died", _on_enemy_died.bind(enemy))
 	alive_enemies.append(enemy)
-
-	var container: Node = get_tree().current_scene
-	if container == null:
-		container = owner if owner != null else get_parent()
-	if container == null:
-		container = get_tree().root
-	container.add_child(enemy)
+	_get_container().add_child(enemy)
+	# Después de agregarlo: la posición global solo es correcta con el nodo ya en el árbol del contenedor
+	enemy.global_position = spawn_pos
 	return true
 
 
@@ -197,7 +284,7 @@ func _spawn_pending() -> void:
 
 func _check_round_cleared() -> void:
 	_prune_invalid_enemies()
-	if not _rounds_active or _pending_spawns > 0 or not alive_enemies.is_empty():
+	if not _rounds_active or _pending_spawns > 0 or _in_flight > 0 or not alive_enemies.is_empty():
 		return
 
 	_rounds_active = false
@@ -233,7 +320,7 @@ func _on_respawn_timeout() -> void:
 
 	spawn_enemy()
 	_prune_invalid_enemies()
-	if alive_enemies.size() < max_alive and respawn_timer.is_stopped():
+	if alive_enemies.size() + _in_flight < max_alive and respawn_timer.is_stopped():
 		respawn_timer.start(refill_interval)
 
 

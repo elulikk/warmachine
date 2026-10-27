@@ -1,0 +1,69 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/chunks/level_chunk.gd" id="chunk"]
+[ext_resource type="PackedScene" path="res://entities/enemies/city_gunman.tscn" id="gunman"]
+
+[sub_resource type="RectangleShape2D" id="R_120x80"]
+size = Vector2(120, 80)
+
+[sub_resource type="RectangleShape2D" id="R_1600x74"]
+size = Vector2(1600, 74)
+
+[node name="Chunk" type="Node2D"]
+script = ExtResource("chunk")
+width = 1600.0
+chunk_name = "PASILLO DE ASALTANTES"
+
+[node name="Geometry" type="Node2D" parent="."]
+
+[node name="Floor" type="StaticBody2D" parent="Geometry" groups=["world"]]
+position = Vector2(800.0, 593.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Floor"]
+shape = SubResource("R_1600x74")
+
+[node name="ColorRect" type="ColorRect" parent="Geometry/Floor"]
+offset_left = -800.0
+offset_top = -37.0
+offset_right = 800.0
+offset_bottom = 37.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Cover1" type="StaticBody2D" parent="Geometry" groups=["world"]]
+position = Vector2(600.0, 516.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Cover1"]
+shape = SubResource("R_120x80")
+
+[node name="ColorRect" type="ColorRect" parent="Geometry/Cover1"]
+offset_left = -60.0
+offset_top = -40.0
+offset_right = 60.0
+offset_bottom = 40.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Cover2" type="StaticBody2D" parent="Geometry" groups=["world"]]
+position = Vector2(1150.0, 516.0)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Cover2"]
+shape = SubResource("R_120x80")
+
+[node name="ColorRect" type="ColorRect" parent="Geometry/Cover2"]
+offset_left = -60.0
+offset_top = -40.0
+offset_right = 60.0
+offset_bottom = 40.0
+mouse_filter = 2
+color = Color(0.16, 0.17, 0.22, 1)
+
+[node name="Gunman1" parent="." instance=ExtResource("gunman")]
+position = Vector2(900.0, 555.0)
+
+[node name="Gunman2" parent="." instance=ExtResource("gunman")]
+position = Vector2(1400.0, 555.0)
+

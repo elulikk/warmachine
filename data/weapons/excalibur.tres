@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/light_slash.tscn" id="2_slash"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/excalibur.tres"
+weapon_name = "Excalibur"
+family = 11
+grip = 0
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 140.0
+swing_duration = 0.16
+crit_multiplier = 2.0
+melee_hitbox_scale = 1.0
+melee_reach = 10.0
+damage = 55.0
+fire_rate = 2.2
+knockback_force = 260.0
+recoil_force = 0.0
+projectile_speed = 0.0
+armor_penetration = 0.3
+magazine_size = 0
+reload_time = 0.0
+melee_projectile_scene = ExtResource("2_slash")
+melee_projectile_damage_mult = 0.6
+melee_projectile_speed = 720.0
+melee_projectile_pierce = 3
+fire_sound = &"slash_light"
+max_sockets = 3
+socketed_runes = []
+rarity = 4
+gold_value = 920
+description = "La espada del rey sacada de la piedra. Cada tajo lanza una media luna de luz hacia la mira que atraviesa a tres enemigos. Críticos x2."

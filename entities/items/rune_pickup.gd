@@ -4,6 +4,12 @@ extends Area2D
 ## Al entrar en contacto con el Jugador, intenta engarzarse en el primer socket disponible
 ## del arma actualmente equipada en WeaponManager.
 
+const ItemIconsScript = preload("res://ui/components/item_icons.gd")
+const PickupAuraScript = preload("res://entities/items/pickup_aura.gd")
+
+## Lado mayor del sprite de la runa en el suelo (px)
+const ICON_SIZE: float = 24.0
+
 @export var rune_data: RuneData
 
 @onready var visuals: Node2D = $Visuals
@@ -24,10 +30,32 @@ func _ready() -> void:
 func _apply_visuals() -> void:
 	if rune_data == null:
 		return
-	if color_rect != null:
-		color_rect.color = rune_data.rune_color
+	# Aura que pulsa detrás de la runa, del color de su rareza
+	if visuals != null:
+		var aura: Node2D = PickupAuraScript.new()
+		aura.color = ItemTooltip.RARITY_COLORS.get(int(rune_data.rarity), Color.WHITE) as Color
+		visuals.add_child(aura)
+		visuals.move_child(aura, 0)
 	if name_label != null:
 		name_label.text = rune_data.rune_name
+
+	# Sprite de arte de la runa (brillante); si no existe, quedan los cuadrados de respaldo
+	var icon: Texture2D = ItemIconsScript.get_art_icon(rune_data) as Texture2D
+	if icon != null and visuals != null:
+		var sprite: Sprite2D = Sprite2D.new()
+		sprite.name = "IconSprite"
+		sprite.texture = icon
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		var longest: float = maxf(float(icon.get_width()), float(icon.get_height()))
+		var fit: float = ICON_SIZE / maxf(longest, 1.0)
+		sprite.scale = Vector2(fit, fit)
+		visuals.add_child(sprite)
+		if color_rect != null:
+			color_rect.visible = false
+		if inner_rect != null:
+			inner_rect.visible = false
+	elif color_rect != null:
+		color_rect.color = rune_data.rune_color
 
 
 func _process(delta: float) -> void:

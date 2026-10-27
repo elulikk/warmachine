@@ -56,9 +56,15 @@ const REMAPPABLE: Dictionary = {
 	"move_left": "Mover a la izquierda",
 	"move_right": "Mover a la derecha",
 	"move_up": "Arriba / apuntar arriba",
-	"move_down": "Abajo",
+	"move_down": "Abajo (mantener: agacharse)",
+	"prone": "Cuerpo a tierra (o doble toque de abajo)",
 	"jump": "Saltar",
+	"dash": "Dash (con módulo)",
+	"eye_laser": "Rayo láser (con casco)",
+	"cloak": "Capa de invisibilidad",
+	"flute_song": "Canto de la flauta (con flauta)",
 	"attack": "Atacar / disparar",
+	"attack_secondary": "Mano secundaria",
 	"reload": "Recargar",
 	"use_tool": "Herramienta",
 	"throw_tactical": "Arrojadizo táctico",
@@ -73,7 +79,9 @@ const REMAPPABLE: Dictionary = {
 	"weapon_toggle": "Alternar arma",
 	"toggle_inventory": "Inventario",
 	"toggle_stats_window": "Estadísticas",
+	"toggle_codex": "Códice",
 	"toggle_help": "Ayuda",
+	"unstuck": "Destrabar personaje",
 }
 
 ## Casilleros de reasignación por acción.
@@ -89,9 +97,13 @@ const DEFAULTS: Dictionary = {
 	"quality": 2,
 	"msaa": 2,
 	"particles": 1.0,
+	"fire_style": 0,  ## estilo de fuego y ácido: 0 = sprites (liviano), 1 = partículas, 2 = shaders
+	"enemy_health_bars": true,  ## barras de vida sobre los enemigos (apagadas ahorran un nodo por enemigo)
+	"enemy_lod": true,  ## enemigos lejanos del jugador se dibujan como un solo sprite en vez del esqueleto
 	"fx_vignette": true,
 	"fx_grain": true,
 	"fx_bloom": false,
+	"parallax_bg": true,  ## fondos por capas con paralaje; apagado = imagen fija
 	"master_volume": 1.0,
 	"music_volume": 0.8,
 	"sfx_volume": 1.0,
@@ -145,6 +157,9 @@ static func load_and_apply(ctx: Node) -> void:
 		_loaded = true
 	_ensure_host(ctx)
 	apply_all(ctx)
+	# Al arrancar, la ventana en modo ventana se abre maximizada (una sola vez; no cambia la resolución guardada)
+	if get_int("display_mode") == DISPLAY_WINDOWED and DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_MAXIMIZED)
 
 
 static func save() -> void:
@@ -263,6 +278,10 @@ static func screen_labels() -> Array[String]:
 
 static func _apply_display(ctx: Node) -> void:
 	if DisplayServer.get_name() == "headless":
+		return
+	# Lanzamientos de prueba (smoke-test): la ventana queda como la deja override.cfg, chica, fuera de pantalla y sin foco
+	if OS.get_environment("WARMACHINE_QUIET") == "1":
+		DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_NO_FOCUS, true)
 		return
 	var mode: int = get_int("display_mode")
 	var window: Window = ctx.get_window() if ctx != null and ctx.is_inside_tree() else null

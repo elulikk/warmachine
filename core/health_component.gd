@@ -7,6 +7,8 @@ signal health_changed(current_health: float, max_health: float)
 signal shield_changed(current: float, max_shield: float)
 signal shield_broken
 signal damage_taken(amount: float, is_critical: bool, damage_type: String)
+## Daño que el escudo absorbió (no llega a la vida). Permite mostrar cuánto escudo se le sacó.
+signal shield_absorbed(amount: float, is_critical: bool, damage_type: String)
 ## Un impacto ya resuelto: con su payload (dirección del golpe) y el daño efectivo que entró a la vida.
 signal hit_resolved(payload: HitPayload, damage: float, is_critical: bool)
 signal died
@@ -140,8 +142,12 @@ func take_hit(payload: HitPayload) -> void:
 			shield_changed.emit(current_shield, max_shield)
 			shield_broken.emit()
 	
-	var shield_absorbed: bool = max_shield > 0.0 and incoming_damage > 0.0 and remaining_damage <= 0.0
-	
+	var absorbed_by_shield: float = incoming_damage - remaining_damage
+	if absorbed_by_shield > 0.0:
+		shield_absorbed.emit(absorbed_by_shield, is_crit, damage_type)
+
+	var shield_absorbed_all: bool = max_shield > 0.0 and incoming_damage > 0.0 and remaining_damage <= 0.0
+
 	# 3. Mitigación por Armadura (solo afecta daño que entra a la salud)
 	var effective_armor: float = maxf(0.0, armor * (1.0 - payload.armor_penetration))
 	var mitigation_mult: float = 100.0 / (100.0 + effective_armor)
@@ -161,7 +167,7 @@ func take_hit(payload: HitPayload) -> void:
 		GameFeel.on_player_hit(self, is_crit, final_damage)
 	
 	# 6. Sonido de impacto
-	_play_hit_sound(payload, is_crit, final_damage, effective_armor, shield_absorbed)
+	_play_hit_sound(payload, is_crit, final_damage, effective_armor, shield_absorbed_all)
 
 
 ## Sonido del impacto sobre un blanco no jugador. El jugador tiene su propio sonido en Player.take_damage.
@@ -233,7 +239,9 @@ func _play_death_feedback() -> void:
 	if entity == null or entity.is_in_group(&"player") or entity.is_in_group(&"allies"):
 		return
 	# Encolado: si mueren muchos juntos se reparte en los cuadros siguientes (combat/death_fx_queue.gd)
-	DeathFxQueueScript.burst(self, entity.global_position + Vector2(0.0, -16.0))
+	var script_name: String = str((entity.get_script() as Script).get_global_name()) if entity.get_script() != null else ""
+	var mechanical: bool = ["SniperTurret", "TrainingTurret", "TrainingDummy"].has(script_name) or entity.is_in_group(&"mechanical")
+	DeathFxQueueScript.burst(self, entity.global_position + Vector2(0.0, -16.0), mechanical)
 	GameFeel.shake(self, 2.5, 0.12)
 
 

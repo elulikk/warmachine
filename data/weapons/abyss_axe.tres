@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/ground_shockwave.tscn" id="2_shockwave"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_name = "Hacha del Abismo"
+weapon_type = 1
+is_automatic = false
+recoil_force = 0.0
+projectile_speed = 0.0
+magazine_size = 0
+reload_time = 0.0
+source_resource_path = "res://data/weapons/abyss_axe.tres"
+family = 12
+grip = 1
+swing_arc_degrees = 120.0
+swing_duration = 0.28
+crit_multiplier = 1.8
+creates_ground_shockwave = true
+shockwave_scene = ExtResource("2_shockwave")
+damage = 150.0
+fire_rate = 1.0
+knockback_force = 800.0
+armor_penetration = 0.4
+innate_status_effects = Array[String](["FIRE"])
+max_sockets = 3
+rarity = 4
+gold_value = 900
+description = "Hacha legendaria del Señor del Abismo. Cada golpe parte el suelo con una onda de choque ardiente."

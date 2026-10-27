@@ -132,7 +132,7 @@ func _return_weapon_to_player(weapon: WeaponData) -> void:
 	
 	if player.inventory_manager != null and player.inventory_manager.has_free_space():
 		player.inventory_manager.add_item(weapon)
-	elif player.weapon_manager != null and player.weapon_manager.weapons.size() < 3:
+	elif player.weapon_manager != null and player.weapon_manager.weapons.size() < InventoryWindow.ARSENAL_LIMIT:
 		player.weapon_manager.add_weapon(weapon, false)
 	elif player.inventory_manager != null:
 		player.inventory_manager.add_item(weapon)
@@ -142,9 +142,11 @@ func _on_weapon_runes_changed() -> void:
 	_update_display()
 
 
-## El yunque recibe armas desde la mochila o desde el arsenal.
-func _anvil_accepts(_res: Resource, payload: Dictionary, _slot: ItemSlot) -> bool:
+## El yunque recibe armas desde la mochila, el arsenal, la barra rápida o la mano 2.
+func _anvil_accepts(res: Resource, payload: Dictionary, _slot: ItemSlot) -> bool:
 	var src_context: String = str(payload.get("context_tag", ""))
+	if src_context == "hotbar" or src_context == "offhand":
+		return res is WeaponData
 	return src_context == "backpack" or src_context == "weapon"
 
 
@@ -211,6 +213,21 @@ func _on_anvil_item_dropped(source_data: Dictionary, _target_slot: ItemSlot) -> 
 			if src_index >= 0 and src_index < player.weapon_manager.weapons.size():
 				player.weapon_manager.weapons.remove_at(src_index)
 				player.weapon_manager.select_weapon(0)
+				set_anvil_weapon(wpn)
+		elif (src_context == "hotbar" or src_context == "offhand") and player.weapon_manager != null:
+			# Desde la barra rápida o la mano 2: el arma sale del arsenal (y de la mano 2) hacia el yunque
+			var wm: WeaponManager = player.weapon_manager
+			var arsenal_index: int = wm.weapons.find(wpn)
+			if arsenal_index >= 0:
+				var holding: WeaponData = wm.current_weapon
+				if wm.offhand_weapon == wpn:
+					wm.set_offhand_weapon(null)
+				wm.weapons.remove_at(arsenal_index)
+				wm.weapon_magazines.erase(wpn)
+				if holding != null and holding != wpn and wm.weapons.has(holding):
+					wm.select_weapon(wm.weapons.find(holding))
+				else:
+					wm.select_weapon(0)
 				set_anvil_weapon(wpn)
 		
 		var inv_win: InventoryWindow = get_tree().get_first_node_in_group(&"inventory_window") as InventoryWindow

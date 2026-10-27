@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/city_rat.tscn" id="1_rat"]
+[ext_resource type="Script" path="res://entities/enemies/giant_rat.gd" id="2_boss"]
+[ext_resource type="Resource" path="res://data/items/hamelin_flute.tres" id="3_flute"]
+
+[node name="GiantRat" instance=ExtResource("1_rat")]
+script = ExtResource("2_boss")
+dropped_item = ExtResource("3_flute")
+entity_name = "Rata Gigante"
+move_speed = 100.0
+gore_amount = 1.0
+hop_speed = 520.0
+contact_damage = 18.0
+enemy_level = 4
+
+[node name="HealthComponent" parent="." index="2"]
+max_health = 1100.0

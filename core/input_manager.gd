@@ -49,6 +49,45 @@ static func setup_inputs() -> void:
 		_create_joy_motion_event(JOY_AXIS_TRIGGER_RIGHT, 1.0) # R2 / RT
 	])
 
+	# Mano secundaria: clic derecho (o R3 en el mando). Con un arma en la mano secundaria el clic derecho dispara
+	# esa arma en vez de usar la herramienta (ver ThrowableManager). La herramienta sigue en F y L1.
+	_configure_action("attack_secondary", 0.2, [
+		_create_mouse_button_event(MOUSE_BUTTON_RIGHT),
+		_create_joy_button_event(JOY_BUTTON_RIGHT_STICK) # R3
+	])
+
+	# Dash: solo funciona con el Módulo de Dash equipado (ver Player.can_dash).
+	_configure_action("dash", 0.2, [
+		_create_key_event(KEY_SHIFT),
+		_create_joy_button_event(JOY_BUTTON_B) # B (Xbox) / Círculo (PS)
+	])
+
+	# Cuerpo a tierra (alternar). También con doble toque de abajo (ver Player._update_crouch).
+	_configure_action("prone", 0.2, [
+		_create_key_event(KEY_ALT)
+	])
+
+	# Rayo láser del Casco Láser (mantener) y Capa de Invisibilidad (alternar): solo con el ítem equipado.
+	_configure_action("eye_laser", 0.2, [
+		_create_key_event(KEY_P),
+		_create_joy_button_event(JOY_BUTTON_LEFT_STICK) # L3
+	])
+
+	_configure_action("cloak", 0.2, [
+		_create_key_event(KEY_PERIOD),
+		_create_joy_button_event(JOY_BUTTON_BACK) # Select / Back
+	])
+
+	# Canto de la plaga de la Flauta de Hamelin (solo con la flauta equipada)
+	_configure_action("flute_song", 0.2, [
+		_create_key_event(KEY_J)
+	])
+
+	# Destrabar: Ctrl+U saca al personaje de un atasco (ver Player.try_unstuck)
+	var unstuck_event: InputEventKey = _create_key_event(KEY_U)
+	unstuck_event.ctrl_pressed = true
+	_configure_action("unstuck", 0.2, [unstuck_event])
+
 	_configure_action("reload", 0.2, [
 		_create_key_event(KEY_R),
 		_create_joy_button_event(JOY_BUTTON_X) # X (Xbox) / Cuadrado (PS)
@@ -127,6 +166,11 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_X) # Botón X (Xbox) / Cuadrado (PS)
 	])
 
+	# Despedir a mercenarios contratados y drones de apoyo ([T]); ver AllyDismisser
+	_configure_action("dismiss_allies", 0.2, [
+		_create_key_event(KEY_T)
+	])
+
 	# 7. Firma de Contratos de Zona en Checkpoints ([F])
 	_configure_action("contract_sign", 0.2, [
 		_create_key_event(KEY_F),
@@ -145,29 +189,36 @@ static func setup_inputs() -> void:
 		_create_joy_button_event(JOY_BUTTON_BACK) # Back / Select en Gamepad
 	])
 
-	# 10. Arrojadizos Tácticos ([G], gatillo izquierdo). Los botones laterales del ratón
+	# 9b. Códice de enemigos y armas ([O]); ver ui/windows/codex_window.gd
+	_configure_action("toggle_codex", 0.2, [
+		_create_key_event(KEY_O)
+	])
+
+	# 10. Arrojadizos Tácticos ([G], clic central de la ruedita, gatillo izquierdo). Mantener para apuntar
+	# y cargar alcance; soltar para lanzar (ver ThrowableManager). Los botones laterales del ratón
 	# quedaron reservados para los consumibles (ver sección 12).
 	_configure_action("throw_tactical", 0.5, [
 		_create_key_event(KEY_G),
+		_create_mouse_button_event(MOUSE_BUTTON_MIDDLE),
 		_create_joy_motion_event(JOY_AXIS_TRIGGER_LEFT, 1.0) # L2 / LT
 	])
 
-	# 11. Herramientas de Movilidad Táctica (Click Derecho / Botón lateral XBUTTON2 / Gatillo o botón dedicado)
-	_configure_action("use_tool", 0.5, [
-		_create_mouse_button_event(MOUSE_BUTTON_RIGHT),
+	# 11. Herramientas de Movilidad Táctica (gancho): Ratón 5 (XBUTTON2) / [F] / L1
+	_enforce_action_events("use_tool", 0.5, [
+		_create_mouse_button_event(MOUSE_BUTTON_XBUTTON2),
 		_create_key_event(KEY_F),
 		_create_joy_button_event(JOY_BUTTON_LEFT_SHOULDER) # L1 / LB
 	])
 
 
-	# 12. Consumibles rápidos: botones laterales del ratón. M4 = consumible 1, M5 = consumible 2.
-	# Se fuerzan solo con el botón: las teclas 4 / 5 / 6 ahora eligen casillero de la barra.
+	# 12. Consumibles rápidos: M4 = consumible 1, [X] = consumible 2 (M5 quedó para el gancho).
+	# Las teclas 4 / 5 / 6 eligen casillero de la barra.
 	_enforce_action_events("consumable_1", 0.2, [
 		_create_mouse_button_event(MOUSE_BUTTON_XBUTTON1)
 	])
 
 	_enforce_action_events("consumable_2", 0.2, [
-		_create_mouse_button_event(MOUSE_BUTTON_XBUTTON2)
+		_create_key_event(KEY_X)
 	])
 
 

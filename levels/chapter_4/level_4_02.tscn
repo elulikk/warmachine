@@ -1,4 +1,4 @@
-﻿[gd_scene format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://levels/level_base.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
@@ -8,22 +8,47 @@
 [ext_resource type="Script" path="res://core/managers/save_manager.gd" id="6_save"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="7_zone"]
 [ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="8_gate"]
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="9_runner"]
+[ext_resource type="PackedScene" path="res://entities/items/pickup_item.tscn" id="10_pickup"]
+[ext_resource type="Resource" path="res://data/items/speed_boots.tres" id="11_boots"]
+[ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="12_checkpoint"]
+[ext_resource type="Script" path="res://core/arena_encounter.gd" id="13_arena"]
+[ext_resource type="Script" path="res://core/wave_manager.gd" id="14_wave"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
-size = Vector2(2600, 48)
+size = Vector2(8200, 74)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
 size = Vector2(40, 800)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
-size = Vector2(180, 20)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling1"]
+size = Vector2(1240, 100)
 
-[node name="Level_4_02" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling2"]
+size = Vector2(1440, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pedestal"]
+size = Vector2(64, 18)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_barrier"]
+size = Vector2(12, 400)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger1"]
+size = Vector2(800, 300)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger2"]
+size = Vector2(860, 300)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger3"]
+size = Vector2(900, 300)
+
+[node name="Level_1_02" type="Node2D"]
 script = ExtResource("1_level")
 level_id = "4_02"
-level_title = "Sector 4-2"
+level_title = "Sector 02"
 chapter_number = 4
 next_level_path = "res://levels/chapter_4/level_4_03.tscn"
+guaranteed_weapon_paths = Array[String](["res://data/weapons/combat_knife.tres", "res://data/weapons/rust_revolver.tres"])
 
 [node name="Background" type="CanvasLayer" parent="."]
 layer = -100
@@ -34,30 +59,30 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.05, 0.06, 1)
+color = Color(0.06, 0.08, 0.12, 1)
 
 [node name="Environment" type="Node2D" parent="."]
 
-[node name="MainFloor" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1300, 580)
+[node name="FloorMain" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(4000, 593)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/MainFloor"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorMain"]
 shape = SubResource("RectangleShape2D_floor")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/MainFloor"]
-offset_left = -1300.0
-offset_top = -24.0
-offset_right = 1300.0
-offset_bottom = 24.0
-color = Color(0.22, 0.12, 0.14, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -4100.0
+offset_top = -37.0
+offset_right = 4100.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
 
-[node name="TopBorder" type="ColorRect" parent="Environment/MainFloor"]
-offset_left = -1300.0
-offset_top = -24.0
-offset_right = 1300.0
-offset_bottom = -21.0
-color = Color(0.85, 0.25, 0.35, 1)
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -4100.0
+offset_top = -37.0
+offset_right = 4100.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
 
 [node name="LeftWall" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(-20, 240)
@@ -67,65 +92,264 @@ collision_mask = 0
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="RightWall" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(2580, 240)
+position = Vector2(8040, 240)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall"]
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="Platform1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(650, 470)
+[node name="Ceiling1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(2380, 280)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform1"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling1"]
+shape = SubResource("RectangleShape2D_ceiling1")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Platform1"]
-offset_left = -90.0
-offset_top = -10.0
-offset_right = 90.0
-offset_bottom = 10.0
-color = Color(0.32, 0.16, 0.18, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -620.0
+offset_top = -50.0
+offset_right = 620.0
+offset_bottom = 50.0
+color = Color(0.1, 0.12, 0.17, 1)
 
-[node name="Platform2" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1250, 390)
+[node name="BottomBorder" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -620.0
+offset_top = 47.0
+offset_right = 620.0
+offset_bottom = 50.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="Ceiling2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5080, 280)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform2"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling2"]
+shape = SubResource("RectangleShape2D_ceiling2")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Platform2"]
-offset_left = -90.0
-offset_top = -10.0
-offset_right = 90.0
-offset_bottom = 10.0
-color = Color(0.32, 0.16, 0.18, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling2"]
+offset_left = -720.0
+offset_top = -50.0
+offset_right = 720.0
+offset_bottom = 50.0
+color = Color(0.1, 0.12, 0.17, 1)
 
-[node name="Platform3" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1800, 450)
+[node name="BottomBorder" type="ColorRect" parent="Environment/Ceiling2"]
+offset_left = -720.0
+offset_top = 47.0
+offset_right = 720.0
+offset_bottom = 50.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="PedestalBoots" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(7450, 547)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform3"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalBoots"]
+shape = SubResource("RectangleShape2D_pedestal")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Platform3"]
-offset_left = -90.0
-offset_top = -10.0
-offset_right = 90.0
-offset_bottom = 10.0
-color = Color(0.32, 0.16, 0.18, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalBoots"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+color = Color(0.25, 0.3, 0.42, 1)
 
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 60.0
-offset_top = 400.0
-offset_right = 650.0
-offset_bottom = 430.0
-theme_override_colors/font_color = Color(1.0, 0.35, 0.45, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 4 • CIUDADELA BLINDADA • SECTOR 4-2"
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalBoots"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="ArenaMark1" type="ColorRect" parent="Environment"]
+offset_left = 800.0
+offset_top = 556.0
+offset_right = 1740.0
+offset_bottom = 560.0
+color = Color(1, 0.45, 0.35, 1)
+
+[node name="ArenaMark2" type="ColorRect" parent="Environment"]
+offset_left = 3300.0
+offset_top = 556.0
+offset_right = 4340.0
+offset_bottom = 560.0
+color = Color(1, 0.45, 0.35, 1)
+
+[node name="ArenaMark3" type="ColorRect" parent="Environment"]
+offset_left = 6100.0
+offset_top = 556.0
+offset_right = 7180.0
+offset_bottom = 560.0
+color = Color(1, 0.45, 0.35, 1)
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
+
+[node name="CheckpointStart" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(560, 556)
+checkpoint_id = "checkpoint_1_02_a"
+
+[node name="Arena1" type="Area2D" parent="."]
+script = ExtResource("13_arena")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="Arena1"]
+position = Vector2(1300, 406)
+shape = SubResource("RectangleShape2D_trigger1")
+
+[node name="Barriers" type="Node2D" parent="Arena1"]
+
+[node name="BarrierLeft" type="StaticBody2D" parent="Arena1/Barriers"]
+position = Vector2(800, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierLeft"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="BarrierRight" type="StaticBody2D" parent="Arena1/Barriers"]
+position = Vector2(1740, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena1/Barriers/BarrierRight"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="WaveManager" type="Node" parent="Arena1"]
+script = ExtResource("14_wave")
+refill_interval = 0.7
+round_sizes = Array[int]([4])
+rest_between_rounds = 4.0
+auto_start = false
+aggro_on_spawn = true
+
+[node name="Spawn1" type="Marker2D" parent="Arena1/WaveManager"]
+position = Vector2(1400, 555)
+
+[node name="Spawn2" type="Marker2D" parent="Arena1/WaveManager"]
+position = Vector2(1500, 555)
+
+[node name="Spawn3" type="Marker2D" parent="Arena1/WaveManager"]
+position = Vector2(1600, 555)
+
+[node name="CorridorRunner1" parent="." instance=ExtResource("9_runner")]
+position = Vector2(2250, 555)
+
+[node name="CorridorRunner2" parent="." instance=ExtResource("9_runner")]
+position = Vector2(2700, 555)
+
+[node name="CheckpointMid" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(3120, 556)
+checkpoint_id = "checkpoint_1_02_b"
+
+[node name="Arena2" type="Area2D" parent="."]
+script = ExtResource("13_arena")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="Arena2"]
+position = Vector2(3830, 406)
+shape = SubResource("RectangleShape2D_trigger2")
+
+[node name="Barriers" type="Node2D" parent="Arena2"]
+
+[node name="BarrierLeft" type="StaticBody2D" parent="Arena2/Barriers"]
+position = Vector2(3300, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierLeft"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="BarrierRight" type="StaticBody2D" parent="Arena2/Barriers"]
+position = Vector2(4340, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena2/Barriers/BarrierRight"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="WaveManager" type="Node" parent="Arena2"]
+script = ExtResource("14_wave")
+refill_interval = 0.7
+round_sizes = Array[int]([5, 6])
+rest_between_rounds = 4.0
+auto_start = false
+aggro_on_spawn = true
+
+[node name="Spawn1" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(3950, 555)
+
+[node name="Spawn2" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(4050, 555)
+
+[node name="Spawn3" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(4150, 555)
+
+[node name="Spawn4" type="Marker2D" parent="Arena2/WaveManager"]
+position = Vector2(4230, 555)
+
+[node name="CorridorRunner3" parent="." instance=ExtResource("9_runner")]
+position = Vector2(4800, 555)
+
+[node name="CorridorRunner4" parent="." instance=ExtResource("9_runner")]
+position = Vector2(5200, 555)
+
+[node name="CorridorRunner5" parent="." instance=ExtResource("9_runner")]
+position = Vector2(5600, 555)
+
+[node name="CheckpointFinal" parent="." instance=ExtResource("12_checkpoint")]
+position = Vector2(5920, 556)
+checkpoint_id = "checkpoint_1_02_c"
+
+[node name="Arena3" type="Area2D" parent="."]
+script = ExtResource("13_arena")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="Arena3"]
+position = Vector2(6650, 406)
+shape = SubResource("RectangleShape2D_trigger3")
+
+[node name="Barriers" type="Node2D" parent="Arena3"]
+
+[node name="BarrierLeft" type="StaticBody2D" parent="Arena3/Barriers"]
+position = Vector2(6100, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierLeft"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="BarrierRight" type="StaticBody2D" parent="Arena3/Barriers"]
+position = Vector2(7180, 356)
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Arena3/Barriers/BarrierRight"]
+shape = SubResource("RectangleShape2D_barrier")
+
+[node name="WaveManager" type="Node" parent="Arena3"]
+script = ExtResource("14_wave")
+refill_interval = 0.6
+round_sizes = Array[int]([7, 8])
+rest_between_rounds = 4.0
+auto_start = false
+aggro_on_spawn = true
+
+[node name="Spawn1" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(6720, 555)
+
+[node name="Spawn2" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(6800, 555)
+
+[node name="Spawn3" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(6880, 555)
+
+[node name="Spawn4" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(6960, 555)
+
+[node name="Spawn5" type="Marker2D" parent="Arena3/WaveManager"]
+position = Vector2(7040, 555)
+
+[node name="BootsPickup" parent="." instance=ExtResource("10_pickup")]
+position = Vector2(7450, 512)
+item_data = ExtResource("11_boots")
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(160, 545)
@@ -133,16 +357,16 @@ position = Vector2(160, 545)
 [node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
 position = Vector2(160, 510)
 zoom = Vector2(1.1, 1.1)
-limit_left = -50
-limit_top = -250
-limit_right = 2650
-limit_bottom = 650
+limit_left = 0
+limit_top = 100
+limit_right = 8020
+limit_bottom = 700
 position_smoothing_enabled = true
 script = ExtResource("3_camera")
 target = NodePath("../Player")
 
 [node name="ExitGate" parent="." instance=ExtResource("8_gate")]
-position = Vector2(2350, 556)
+position = Vector2(7850, 556)
 
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
 

@@ -8,6 +8,8 @@ extends RefCounted
 ## 2. Situación (`set_situation`): combate, élite o jefe. La fija el MusicDirector del nivel.
 ## 3. Base (`set_base`): la música de la escena (menú, campamento, exploración).
 ## `set_base` se llama al cargar una escena y limpia las anulaciones y la situación anteriores.
+## Excepción: si una pelea terminó hace poco y la nueva escena es de exploración, la pista de pelea
+## sigue sonando (ver CARRY_SECONDS) para que no se corte entre dos combates seguidos.
 ##
 ## Formato: Godot no lee .m4a, por eso las pistas están convertidas a .ogg. Si el editor todavía no
 ## las importó (run.bat arranca el juego sin pasar por el editor), se cargan directo del archivo.
@@ -23,6 +25,10 @@ const TRACKS: Dictionary = {
 	&"combat": {"path": "res://ost/combat.ogg", "loop": true, "db": 0.0},
 	&"elite": {"path": "res://ost/elite.ogg", "loop": true, "db": 0.0},
 	&"boss": {"path": "res://ost/boss.ogg", "loop": true, "db": 0.0},
+	# Discoteca del presente (4-7): el usuario pone el tema después; hasta entonces suena la exploración
+	&"club": {"path": "res://ost/club.ogg", "loop": true, "db": 0.0},
+	# Nivel 1-1 (Flow Music, "Monotonous Intro Style"). +1 dB para igualar la sonoridad de explore.ogg
+	&"nivel1": {"path": "res://ost/nivel1.ogg", "loop": true, "db": 1.0},
 	&"victory": {"path": "res://ost/victory.ogg", "loop": false, "db": 0.0},
 	&"death": {"path": "res://ost/death.ogg", "loop": false, "db": 0.0},
 }
@@ -32,6 +38,9 @@ const BASE_DB: float = -7.0
 const SILENT_DB: float = -60.0
 const FADE_IN_SECONDS: float = 1.4
 const FADE_OUT_SECONDS: float = 1.0
+## Segundos que la pista de pelea sigue sonando después de que termina, mientras se carga el
+## siguiente nivel y sus enemigos todavía no dan la pelea. Si no aparece una nueva, vuelve la exploración.
+const CARRY_SECONDS: float = 15.0
 
 static var _host: Node = null
 static var _players: Array[AudioStreamPlayer] = []
@@ -42,22 +51,39 @@ static var _situation: StringName = &""
 static var _overrides: Array[StringName] = []
 static var _current: StringName = &""
 static var _tween: Tween = null
+## Última pista de pelea que terminó, para arrastrarla al cambiar de nivel.
+static var _fight_track: StringName = &""
+## Invalida los temporizadores pendientes cada vez que cambia la pelea o la escena.
+static var _fight_gen: int = 0
 
 
 # ==============================================================================
 # API pública
 # ==============================================================================
 
-## Fija la música de la escena. Limpia anulaciones y situación previas.
+## Fija la música de la escena. Limpia anulaciones y situación previas, salvo una pelea
+## que acaba de terminar y pasa a otro nivel de exploración (se mantiene CARRY_SECONDS).
 static func set_base(ctx: Node, track: StringName) -> void:
+	var carried: StringName = _fight_track if track == &"explore" else &""
+	_fight_track = &""
+	_fight_gen += 1
 	_base = track
-	_situation = &""
+	_situation = carried
 	_overrides.clear()
+	if carried != &"":
+		_start_timer(ctx)
 	_apply(ctx)
 
 
 ## Fija la música de combate / élite / jefe (o vacío para volver a la base).
+## Al terminar una pelea, la pista se recuerda CARRY_SECONDS por si la siguiente escena arranca enseguida.
 static func set_situation(ctx: Node, track: StringName) -> void:
+	_fight_gen += 1
+	if track != &"":
+		_fight_track = &""
+	elif _situation != &"":
+		_fight_track = _situation
+		_start_timer(ctx)
 	if _situation == track:
 		return
 	_situation = track
@@ -109,6 +135,23 @@ static func resolved_track() -> StringName:
 # ==============================================================================
 # Reproducción
 # ==============================================================================
+
+## Programa la caducidad de la pista de pelea recordada. Si antes aparece otra pelea o cambia la escena,
+## el temporizador queda invalidado por `_fight_gen`.
+static func _start_timer(ctx: Node) -> void:
+	if ctx == null or not ctx.is_inside_tree():
+		return
+	var timer: SceneTreeTimer = ctx.get_tree().create_timer(CARRY_SECONDS)
+	timer.timeout.connect(_on_carry_timeout.bind(_fight_gen))
+
+
+static func _on_carry_timeout(gen: int) -> void:
+	if gen != _fight_gen:
+		return
+	_fight_track = &""
+	_situation = &""
+	_apply(_host)
+
 
 static func _apply(ctx: Node) -> void:
 	if ctx == null or not ctx.is_inside_tree():

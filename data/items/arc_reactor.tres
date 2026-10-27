@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "arc_reactor"
+item_name = "Reactor de Arco"
+item_color = Color(0.95, 0.75, 0.25, 1)
+equip_slot = "ACCESSORY"
+elemental_infusion = ""
+tags = ["IRON_SUIT"]
+modifiers = [{
+"is_percent": false,
+"stat": "max_health",
+"value": 25.0
+}, {
+"is_percent": false,
+"stat": "damage_multiplier",
+"value": 0.05
+}]
+grants_extra_jump = 0
+rarity = 3
+gold_value = 260
+description = "Reactor miniatura que alimenta el traje de hierro. +25 de vida y +5 % de daño."

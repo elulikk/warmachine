@@ -19,6 +19,22 @@ signal hired
 @export var move_speed: float = 160.0
 @export var gravity: float = 980.0
 
+@export_group("Invocación (zona de descanso)")
+## Las invocaciones se reparten alrededor del jugador, se separan entre sí y vagabundean (Fase J).
+## Una invocación nueva solo tiene que activar esto y usar rest_goal_x() / apply_separation().
+@export var is_summon: bool = false
+
+## Separación entre invocaciones: radio de empuje y aceleración (px/s²).
+const SEPARATION_RADIUS: float = 56.0
+const SEPARATION_ACCEL: float = 1400.0
+## Zona de descanso: primer casillero, distancia entre casilleros y vagabundeo alrededor del casillero.
+const SLOT_FIRST: float = 70.0
+const SLOT_SPACING: float = 48.0
+const WANDER_RANGE: float = 26.0
+const WANDER_PAUSE_MIN: float = 1.2
+const WANDER_PAUSE_MAX: float = 3.5
+const SLOT_REFRESH: float = 0.25
+
 @export_group("Efectos y Escenas")
 @export var damage_number_scene: PackedScene = preload("res://combat/damage_number.tscn")
 
@@ -35,10 +51,17 @@ var is_dead: bool = false
 var leash_timer: float = 0.0
 var original_visual_color: Color = Color.WHITE
 var _flash_tween: Tween = null
+var _slot_offset: float = 0.0
+var _slot_timer: float = 0.0
+var _wander_offset: float = 0.0
+var _wander_timer: float = 0.0
 
 
 func _ready() -> void:
 	add_to_group(&"allies")
+	if is_summon:
+		add_to_group(&"summons")
+		_wander_timer = randf_range(0.0, WANDER_PAUSE_MAX)
 	_ensure_components()
 	_configure_hurtbox()
 	if visual_rect != null:
@@ -48,6 +71,23 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if is_hired:
 		_process_leash_rescue(delta)
+
+
+## Tiempo de vida de una invocación: lo dicta el ítem que la invoca. Al vencer, la invocación muere.
+func set_lifetime(seconds: float) -> void:
+	if seconds <= 0.0:
+		return
+	var timer: Timer = Timer.new()
+	timer.one_shot = true
+	timer.wait_time = seconds
+	timer.timeout.connect(_on_lifetime_expired)
+	add_child(timer)
+	timer.start()
+
+
+func _on_lifetime_expired() -> void:
+	if not is_dead and is_inside_tree():
+		_on_died()
 
 
 func _ensure_components() -> void:
@@ -103,6 +143,61 @@ func _configure_hurtbox() -> void:
 		# Hurtbox activa solo cuando el aliado ha sido contratado
 		hurtbox.monitoring = is_hired
 		hurtbox.monitorable = is_hired
+
+
+## Empuje horizontal (-1 a 1) lejos de las demás invocaciones que están demasiado cerca.
+func get_separation_push() -> float:
+	var push: float = 0.0
+	for other: Node in get_tree().get_nodes_in_group(&"summons"):
+		if other == self or not other is Node2D:
+			continue
+		var offset: Vector2 = global_position - (other as Node2D).global_position
+		if absf(offset.y) > 48.0 or absf(offset.x) >= SEPARATION_RADIUS:
+			continue
+		var side: float = signf(offset.x)
+		if side == 0.0:
+			# Mismo punto exacto: el de menor id va a la izquierda, el otro a la derecha (siempre opuestos).
+			side = -1.0 if get_instance_id() < other.get_instance_id() else 1.0
+		push += side * (1.0 - absf(offset.x) / SEPARATION_RADIUS)
+	return clampf(push, -1.0, 1.0)
+
+
+## Suma el empuje de separación a la velocidad horizontal; se llama después de decidir el movimiento.
+func apply_separation(delta: float) -> void:
+	if not is_summon:
+		return
+	var push: float = get_separation_push()
+	if push != 0.0:
+		var limit: float = move_speed * 1.5
+		velocity.x = clampf(velocity.x + push * SEPARATION_ACCEL * delta, -limit, limit)
+
+
+## Posición X a la que la invocación quiere estar cuando no hay enemigos: el casillero que le toca
+## alrededor del jugador más un desvío que cambia cada tanto (se mueve y se detiene a ratos).
+func rest_goal_x(delta: float) -> float:
+	var player: Player = get_player()
+	if player == null or not is_instance_valid(player):
+		return global_position.x
+	_slot_timer -= delta
+	if _slot_timer <= 0.0:
+		_slot_timer = SLOT_REFRESH
+		_slot_offset = _compute_slot_offset()
+	_wander_timer -= delta
+	if _wander_timer <= 0.0:
+		_wander_timer = randf_range(WANDER_PAUSE_MIN, WANDER_PAUSE_MAX)
+		_wander_offset = randf_range(-WANDER_RANGE, WANDER_RANGE)
+	return player.global_position.x + _slot_offset + _wander_offset
+
+
+## Casilleros alternados izquierda / derecha del jugador, cada vez más lejos. El orden sale del id de instancia.
+func _compute_slot_offset() -> float:
+	var rank: int = 0
+	var mine: int = get_instance_id()
+	for other: Node in get_tree().get_nodes_in_group(&"summons"):
+		if other != self and other.get_instance_id() < mine:
+			rank += 1
+	var side: float = -1.0 if rank % 2 == 0 else 1.0
+	return side * (SLOT_FIRST + floorf(rank / 2.0) * SLOT_SPACING)
 
 
 ## Rescate por Leash: si la distancia horizontal supera leash_distance por más de 1.5s,

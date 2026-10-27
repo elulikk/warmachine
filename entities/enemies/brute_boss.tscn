@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/armored_brute.tscn" id="1_brute"]
+[ext_resource type="Script" path="res://entities/enemies/brute_boss.gd" id="2_boss"]
+
+[node name="BruteBoss" instance=ExtResource("1_brute")]
+script = ExtResource("2_boss")
+entity_name = "Coloso del Núcleo"
+enemy_level = 12

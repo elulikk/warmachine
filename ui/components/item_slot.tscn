@@ -19,9 +19,9 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [node name="ItemSlot" type="PanelContainer"]
-custom_minimum_size = Vector2(40, 40)
-offset_right = 40.0
-offset_bottom = 40.0
+custom_minimum_size = Vector2(46, 46)
+offset_right = 46.0
+offset_bottom = 46.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_slot_bg")
 script = ExtResource("1_slot")
 
@@ -30,14 +30,14 @@ layout_mode = 2
 
 [node name="FallbackColor" type="ColorRect" parent="CenterContainer"]
 visible = false
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.4, 0.5, 0.6, 1)
 
 [node name="TextureRect" type="TextureRect" parent="CenterContainer"]
 visible = false
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1

@@ -7,6 +7,8 @@ extends Node
 const SettingsScript = preload("res://core/settings.gd")
 const SceneLoaderScript = preload("res://core/scene_loader.gd")
 const ErrorLoggerScript = preload("res://core/error_logger.gd")
+const CrosshairCursorScript = preload("res://core/crosshair_cursor.gd")
+const AimReticleScript = preload("res://ui/aim_reticle.gd")
 const PerfMonitorScript = preload("res://core/debug/perf_monitor.gd")
 
 enum GameState { PLAYING, GAME_OVER, VICTORY }
@@ -47,6 +49,8 @@ func _ready() -> void:
 	instance = self
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	ErrorLoggerScript.install()
+	CrosshairCursorScript.install()
+	add_child(AimReticleScript.new())
 	_setup_overlay_ui()
 	_scene_loader = SceneLoaderScript.new() as CanvasLayer
 	_scene_loader.name = "SceneLoader"
@@ -90,7 +94,7 @@ func is_sandbox() -> bool:
 	if cur is TestLevel:
 		return true
 	var path: String = cur.scene_file_path
-	return path.ends_with("test_level.tscn") or path.ends_with("stress_room.tscn")
+	return path.ends_with("test_level.tscn") or path.ends_with("stress_room.tscn") or path.ends_with("cinematic_bench.tscn")
 
 
 ## Retorna true si la escena activa es el Menú Principal.
@@ -195,7 +199,9 @@ func on_player_died(player: Player) -> void:
 			player.respawn(spawn_pos)
 		return
 	
-	# Modo Campaña: pausar y desplegar overlay de derrota
+	# Modo Campaña: penalización de XP (10% del nivel actual), pausar y desplegar overlay de derrota
+	if player != null and player.stats_manager != null:
+		player.stats_manager.apply_death_exp_penalty()
 	current_state = GameState.GAME_OVER
 	game_over_triggered.emit()
 	state_changed.emit(current_state)
@@ -237,6 +243,8 @@ func complete_level(stats: Dictionary) -> void:
 		if metrics_mgr != null:
 			metrics_mgr.record_contract_completed()
 	
+	# Sector terminado: el checkpoint de reanudación ya no sirve
+	SaveManager.clear_resume_point()
 	var sm: SaveManager = SaveManager.get_instance()
 	if sm != null:
 		sm.save_to_disk()

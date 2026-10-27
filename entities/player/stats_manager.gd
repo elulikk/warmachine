@@ -9,6 +9,8 @@ signal leveled_up(new_level: int)
 ## Se emite solo cuando el nivel se gana jugando (no al cargar una partida).
 signal level_gained(new_level: int)
 signal coins_changed(new_coins: int)
+## Cristales de tiempo: la moneda de los Agentes del Tiempo (todavía no se gastan en nada).
+signal crystals_changed(new_crystals: int)
 signal stats_recalculated
 
 ## Nivel máximo del prototipo.
@@ -29,7 +31,7 @@ const DAMAGE_PER_LEVEL: float = 0.03
 @export_group("Progresión")
 @export var level: int = 1
 @export var current_exp: float = 0.0
-@export var exp_to_next_level: float = 150.0
+@export var exp_to_next_level: float = 120.0
 
 var current_health: float = 100.0
 var coins: int = 0
@@ -95,7 +97,17 @@ func get_damage_multiplier() -> float:
 	return maxf(0.1, (base_damage_multiplier + level_bonus + flat) * (1.0 + pct))
 
 
-## Retorna la armadura total del jugador (suma de ítems equipados). Mitiga daño recibido: 100 / (100 + armadura).
+## Daño mínimo que un golpe siempre hace pasando la armadura (si el golpe ya era menor, pasa tal cual).
+const MIN_DAMAGE_AFTER_ARMOR: float = 1.0
+
+
+## Daño que entra después de la armadura del jugador: cada punto de armadura resta 1 de daño por golpe
+## (2 de armadura = 2 puntos menos), con un piso de `MIN_DAMAGE_AFTER_ARMOR`.
+func reduce_damage_by_armor(amount: float) -> float:
+	return maxf(amount - get_armor(), minf(amount, MIN_DAMAGE_AFTER_ARMOR))
+
+
+## Retorna la armadura total del jugador (suma de ítems equipados). Cada punto resta 1 de daño por golpe recibido.
 func get_armor() -> float:
 	var flat: float = flat_modifiers.get("armor", 0.0)
 	var pct: float = percent_modifiers.get("armor", 0.0)
@@ -173,7 +185,7 @@ func add_experience(amount: float) -> void:
 		current_health = get_max_health()
 
 		# Progresión geométrica de experiencia para la siguiente meta
-		exp_to_next_level = roundf(exp_to_next_level * 1.5)
+		exp_to_next_level = roundf(exp_to_next_level * 1.7)
 
 		GameFeel.sfx(self, &"levelup", Vector2.INF, -2.0)
 		leveled_up.emit(level)
@@ -193,6 +205,18 @@ func add_experience(amount: float) -> void:
 # Gestión de Salud y Daño
 # ==============================================================================
 
+const DEATH_EXP_PENALTY: float = 0.10
+
+
+## Penalización por morir (estilo Path of Exile): se pierde el 10% de la experiencia que pide el nivel actual.
+## Nunca baja de nivel: la experiencia del nivel se queda como mínimo en 0.
+func apply_death_exp_penalty() -> void:
+	if level >= MAX_LEVEL:
+		return
+	current_exp = maxf(0.0, current_exp - exp_to_next_level * DEATH_EXP_PENALTY)
+	exp_changed.emit(current_exp, exp_to_next_level)
+
+
 ## Aplica daño recibido a la salud actual del jugador.
 func take_damage(amount: float) -> void:
 	var prev_health: float = current_health
@@ -205,6 +229,16 @@ func take_damage(amount: float) -> void:
 func heal(amount: float) -> void:
 	current_health = minf(get_max_health(), current_health + amount)
 	health_changed.emit(current_health, get_max_health())
+
+
+var time_crystals: int = 0
+
+
+func add_crystals(amount: int) -> void:
+	if amount <= 0:
+		return
+	time_crystals += amount
+	crystals_changed.emit(time_crystals)
 
 
 ## Añade monedas a la reserva del jugador y notifica al HUD.

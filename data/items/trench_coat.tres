@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "trench_coat"
+item_name = "Gabardina de Detective (Torso)"
+item_color = Color(0.69, 0.55, 0.36, 1)
+equip_slot = "CHEST"
+elemental_infusion = ""
+tags = []
+modifiers = [{
+"is_percent": false,
+"stat": "armor",
+"value": 3.0
+}, {
+"is_percent": false,
+"stat": "max_health",
+"value": 20.0
+}]
+grants_extra_jump = 0
+rarity = 1
+gold_value = 90
+description = "La gabardina de siempre, con forro grueso y los bolsillos llenos de recibos. +20 de vida máxima y 3 de armadura: cada golpe que recibís te hace 3 puntos de daño menos."

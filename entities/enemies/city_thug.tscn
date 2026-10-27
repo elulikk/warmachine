@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://entities/enemies/armored_brute.tscn" id="1_brute"]
+[ext_resource type="Resource" path="res://data/loot/city_elite_loot.tres" id="2_loot"]
+
+[node name="CityThug" instance=ExtResource("1_brute")]
+loot_table = ExtResource("2_loot")
+art_kind = "thug"
+brute_name = "Matón"
+brute_health = 170.0
+brute_armor = 15.0
+brute_speed = 58.0
+contact_damage = 16.0
+enemy_level = 3

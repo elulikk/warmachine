@@ -1,17 +1,19 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://combat/projectile.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/bala_pistola.png" id="3_sprite"]
 
 [resource]
 script = ExtResource("1_script")
+projectile_sprite = ExtResource("3_sprite")
 weapon_name = "Pistola 9 mm"
 family = 1
 grip = 0
 weapon_type = 0
 is_automatic = false
 damage = 13.0
-fire_rate = 3.0
+fire_rate = 3.5
 knockback_force = 170.0
 recoil_force = 35.0
 projectile_speed = 520.0

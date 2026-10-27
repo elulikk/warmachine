@@ -4,6 +4,13 @@ extends Area2D
 ## Al entrar en contacto con el Jugador, agrega el arma a su WeaponManager y la equipa.
 
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
+const PickupAuraScript = preload("res://entities/items/pickup_aura.gd")
+
+## Armas que entran al arsenal (las que llenan la barra rápida); el resto va a la mochila.
+const ARSENAL_LIMIT: int = 9
+
+## Lado mayor del ícono del arma en el suelo (px)
+const ICON_SIZE: float = 42.0
 
 @export var weapon_data: WeaponData
 
@@ -29,8 +36,14 @@ func _ready() -> void:
 func _apply_visuals() -> void:
 	if weapon_data == null:
 		return
-	
+
 	var rarity_color: Color = ItemTooltip.RARITY_COLORS.get(int(weapon_data.rarity), Color.WHITE) as Color
+	# Aura que pulsa detrás del arma, del color de su rareza
+	if visuals != null:
+		var aura: Node2D = PickupAuraScript.new()
+		aura.color = rarity_color
+		visuals.add_child(aura)
+		visuals.move_child(aura, 0)
 	if name_label != null:
 		name_label.text = weapon_data.weapon_name
 		name_label.add_theme_color_override("font_color", rarity_color)
@@ -41,18 +54,26 @@ func _apply_visuals() -> void:
 		var sprite: Sprite2D = Sprite2D.new()
 		sprite.name = "IconSprite"
 		sprite.texture = icon
-		# Arte HD: se reduce a ~30 px de lado mayor; los íconos 16x16 de respaldo conservan su ampliación pixelada
+		# Arte HD: se reduce a ICON_SIZE px de lado mayor; los íconos 16x16 de respaldo conservan su ampliación pixelada
 		if ItemIconsScript.get_art_icon(weapon_data) != null:
-			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+			# Los íconos simplificados de 32 px van con filtro de píxel; el arte HD, lineal
+			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if ItemIconsScript.is_icon_file(weapon_data) else CanvasItem.TEXTURE_FILTER_LINEAR
 			var longest: float = maxf(float(icon.get_width()), float(icon.get_height()))
-			var fit: float = 30.0 / maxf(longest, 1.0)
+			var fit: float = ICON_SIZE / maxf(longest, 1.0)
 			sprite.scale = Vector2(fit, fit)
 		else:
 			sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-			sprite.scale = Vector2(1.5, 1.5)
+			sprite.scale = Vector2(2.5, 2.5)
 		visuals.add_child(sprite)
 		if icon_label != null:
 			icon_label.visible = false
+		# Sin cuadrado de fondo ni bordes detrás del ícono
+		if background_rect != null:
+			background_rect.visible = false
+		for border_name: String in ["Border", "BorderBottom"]:
+			var border: ColorRect = visuals.get_node_or_null(border_name) as ColorRect
+			if border != null:
+				border.visible = false
 	elif icon_label != null:
 		if weapon_data.weapon_type == WeaponData.WeaponType.MELEE:
 			icon_label.text = "⚔️"
@@ -110,22 +131,22 @@ func _player_already_owns_weapon() -> bool:
 func _on_body_entered(body: Node2D) -> void:
 	if _collected or pickup_cooldown > 0.0 or weapon_data == null:
 		return
-	
+
 	if body is Player:
 		var player: Player = body as Player
 		var added_success: bool = false
 		if player.weapon_manager != null:
-			if player.weapon_manager.weapons.size() < 3:
+			if player.weapon_manager.weapons.size() < ARSENAL_LIMIT:
 				_collected = true
 				added_success = true
 				player.weapon_manager.add_weapon(weapon_data, true)
 				print("[WeaponPickup] Jugador recogió el arma: %s" % weapon_data.weapon_name)
-		
+
 		if not added_success and player.inventory_manager != null:
 			if player.inventory_manager.add_item(weapon_data):
 				_collected = true
 				print("[WeaponPickup] Arsenal lleno. Arma %s guardada en la mochila." % weapon_data.weapon_name)
-		
+
 		if _collected:
 			GameFeel.sfx(self, &"pickup_gear", Vector2.INF, -3.0)
 			var tw: Tween = create_tween()

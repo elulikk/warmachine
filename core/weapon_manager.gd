@@ -14,12 +14,19 @@ signal reload_completed
 ## La mano secundaria cambió de arma (o quedó libre). Lo emite el administrador de la mano principal.
 signal offhand_changed(weapon: WeaponData)
 
-const RELOAD_INDICATOR_SCRIPT: GDScript = preload("res://ui/reload_indicator.gd")
+const ChainLightning = preload("res://combat/chain_lightning.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const WeaponMotion = preload("res://core/art/weapon_motion.gd")
 const ShotFx = preload("res://combat/shot_fx.gd")
+const FireVfx = preload("res://combat/fire_vfx.gd")
 const ReloadDebris = preload("res://combat/reload_debris.gd")
 const SettingsScript = preload("res://core/settings.gd")
+const CodexScript = preload("res://core/codex/codex.gd")
+## Segundos que tarda la reserva en recuperar un cargador completo del arma.
+## Las recargas duran esto por el `reload_time` de cada arma (más lentas que lo que dice el recurso).
+const RELOAD_TIME_MULT: float = 1.5
+## Segundos que tarda la reserva en recuperar un cargador completo del arma (era 10).
+const RESERVE_SECONDS_PER_MAGAZINE: float = 30.0
 
 ## Mano que maneja este nodo. El `WeaponManager` del jugador es la mano principal (clic izquierdo) y crea por código
 ## un segundo `WeaponManager` hijo, `offhand`, para la mano secundaria (clic derecho, acción `attack_secondary`).
@@ -32,6 +39,9 @@ enum OffhandState { EMPTY, READY, BLOCKED_TWO_HANDS, BLOCKED_SAME_WEAPON }
 ## Posición del arma secundaria respecto de la principal (espacio del pivote: +x al apuntado, +y hacia abajo).
 ## Arte provisional: queda más atrás y un poco más abajo, sostenida por el brazo de atrás.
 const OFFHAND_SPRITE_OFFSET: Vector2 = Vector2(-2.0, 4.0)
+## Escudo levantado (clic derecho mantenido): desplazamiento del sprite desde la mano, en el pivote (+x = hacia la puntería).
+const SHIELD_RAISE_OFFSET: Vector2 = Vector2(14.0, -4.0)
+const SHIELD_RAISE_SPEED: float = 10.0
 
 ## Cuándo (fracción de `reload_time`) cae lo que suelta el arma al recargar, según qué suelta.
 const RELOAD_DROP_TIMING: Dictionary = {
@@ -49,8 +59,14 @@ const BODY_SCALE: float = 2.0
 ## Es menor que BODY_SCALE a propósito: las armas no necesitan crecer tanto como el cuerpo.
 const WEAPON_SCALE: float = 1.5
 
+## Martillo en el aire: velocidad de caída forzada (px/s) y tiempo máximo esperando el aterrizaje (s).
+const SLAM_FALL_SPEED: float = 1100.0
+const SLAM_MAX_WAIT: float = 1.5
+
 ## Cuánto se amplía el hitbox melee. Va de la mano con WEAPON_SCALE para que la punta del arma caiga dentro.
 const HITBOX_SCALE: float = 1.5
+## Fracción del alcance del arma que adelanta el dibujo (el resto es solo del hitbox): el brazo no se estira más que su largo.
+const MELEE_VISUAL_REACH: float = 0.35
 
 ## Distancia horizontal desde el pivote de apuntado hasta la mano que sostiene el arma.
 const HAND_OFFSET_X: float = 4.0 * BODY_SCALE
@@ -76,6 +92,12 @@ var free_ammo_active: bool = false
 ## mientras esté activo no se dispara ni se recarga.
 var hand_locked: bool = false
 var weapon_magazines: Dictionary[WeaponData, int] = {}
+## Munición de reserva por arma (balas fuera del cargador). Las recargas la consumen y se rellena sola con el
+## tiempo (`RESERVE_SECONDS_PER_MAGAZINE`): es "infinita" pero con tope, así no se puede abusar del arma.
+var weapon_reserves: Dictionary[WeaponData, int] = {}
+var _reserve_progress: Dictionary[WeaponData, float] = {}
+## Tope de reserva = tantos cargadores completos del arma (más adelante se puede mejorar).
+var reserve_magazines: int = 6
 var player: Player = null
 var projectile_pool: ProjectilePool = null
 
@@ -90,6 +112,14 @@ var last_motion: Dictionary = {}
 ## Disparos seguidos de la ráfaga actual (combo de retroceso de las automáticas, ver `PATTERNS` en weapon_motion.gd).
 var _burst_count: int = 0
 var _last_shot_msec: int = -100000
+## Desvío real de la bala hacia arriba al mantener el disparo (id del arma -> grados por disparo seguido y tope).
+## Se reinicia al pausar más que la ventana de `PATTERNS`, así que obliga a disparar en ráfagas.
+const SUSTAINED_CLIMB: Dictionary = {
+	"m4": {"step": 1.4, "max": 10.0},
+	"smg": {"step": 1.0, "max": 10.0},
+	"mp5": {"step": 1.0, "max": 9.0},
+	"thompson": {"step": 1.2, "max": 11.0},
+}
 var _swing_index: int = 0
 var _current_swing: Dictionary = {}
 
@@ -105,6 +135,8 @@ var main_manager: WeaponManager = null
 
 var _off_pressed: bool = false
 var _off_held: bool = false
+## 0 = escudo bajado, 1 = escudo levantado enfrente del personaje (ver `_update_shield_pose`).
+var _shield_raise: float = 0.0
 var _debris_tween: Tween = null
 var _offhand_sprite_name: String = "WeaponSprite"
 
@@ -115,7 +147,6 @@ func _ready() -> void:
 		return
 	player = owner as Player
 	GameFeel.sfx_prewarm(self)
-	_create_reload_indicator()
 	_ensure_weapons()
 	if not weapons.is_empty():
 		select_weapon(clampi(current_weapon_index, 0, weapons.size() - 1))
@@ -124,20 +155,6 @@ func _ready() -> void:
 		_update_weapon_visual()
 		weapon_changed.emit(null, -1)
 	_create_offhand_manager()
-
-
-## Crea la barra de recarga flotante sobre el jugador (hija del Player, diferida porque
-## el padre aún está montando sus hijos durante _ready). `y_offset` la sube para que las dos manos no se pisen.
-func _create_reload_indicator(y_offset: float = 0.0) -> void:
-	if player == null:
-		return
-	var indicator: Node2D = RELOAD_INDICATOR_SCRIPT.new() as Node2D
-	if indicator == null:
-		return
-	indicator.name = "ReloadIndicator" if hand == Hand.MAIN else "OffhandReloadIndicator"
-	indicator.call("setup", self)
-	indicator.set("offset_y", y_offset)
-	player.add_child.call_deferred(indicator)
 
 
 # ==============================================================================
@@ -155,13 +172,14 @@ func _create_offhand_manager() -> void:
 	off.player = player
 	off.weapon_pivot = weapon_pivot
 	off.weapon_magazines = weapon_magazines
+	off.weapon_reserves = weapon_reserves
 	off.infinite_ammo = infinite_ammo
 	off.free_ammo_active = free_ammo_active
 	offhand = off
 	add_child(off)
 
 
-## Mano secundaria: prepara muzzle propio, barra de recarga y sprite (oculto hasta que haya arma).
+## Mano secundaria: prepara muzzle propio y sprite (oculto hasta que haya arma).
 func _ready_offhand() -> void:
 	_offhand_sprite_name = "OffhandSprite"
 	if weapon_pivot != null:
@@ -169,7 +187,6 @@ func _ready_offhand() -> void:
 		marker.name = "OffhandMuzzle"
 		weapon_pivot.add_child(marker)
 		muzzle = marker
-	_create_reload_indicator(-9.0)
 	current_weapon = null
 	_update_weapon_visual()
 
@@ -244,6 +261,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if hand != Hand.OFF:
 		return
 	if event.is_action_pressed("attack_secondary"):
+		# Prioridad: la función secundaria del arma principal gana sobre el arma de la mano 2
+		if main_manager != null and main_manager.current_weapon != null and main_manager.current_weapon.has_secondary_function():
+			return
 		_off_pressed = true
 		_off_held = true
 
@@ -308,6 +328,7 @@ func add_weapon(weapon: WeaponData, auto_equip: bool = true) -> void:
 	var weapon_instance: WeaponData = weapon.duplicate()
 	weapon_instance.source_resource_path = src_path
 	weapons.append(weapon_instance)
+	CodexScript.record_weapon(weapon_instance)
 	print("[WeaponManager] Nueva arma adquirida: %s. Total armas: %d" % [weapon_instance.weapon_name, weapons.size()])
 	if auto_equip:
 		select_weapon(weapons.size() - 1)
@@ -323,6 +344,7 @@ func _process(delta: float) -> void:
 			finish_reload()
 	
 	if hand == Hand.MAIN:
+		_regen_reserves(delta)
 		_handle_debug_input()
 		_validate_offhand()
 	else:
@@ -330,7 +352,27 @@ func _process(delta: float) -> void:
 		_off_held = _off_held and Input.is_action_pressed("attack_secondary")
 		if current_weapon == null:
 			_off_pressed = false
+		_update_shield_pose(delta)
 	_handle_firing_input()
+
+
+## true si la mano secundaria sostiene un escudo y el clic derecho está mantenido: bloquea daño.
+func is_shield_raised() -> bool:
+	if hand != Hand.OFF or current_weapon == null or current_weapon.grip != WeaponData.Grip.SHIELD:
+		return false
+	return Input.is_action_pressed("attack_secondary")
+
+
+## Sube o baja el escudo según el clic derecho: levantado queda enfrente del personaje, en la dirección de la puntería.
+func _update_shield_pose(delta: float) -> void:
+	_shield_raise = move_toward(_shield_raise, 1.0 if is_shield_raised() else 0.0, delta * SHIELD_RAISE_SPEED)
+	if current_weapon == null or current_weapon.grip != WeaponData.Grip.SHIELD:
+		_shield_raise = 0.0
+		return
+	if _weapon_sprite == null or not is_instance_valid(_weapon_sprite):
+		return
+	_weapon_sprite.position = _sprite_rest_position + SHIELD_RAISE_OFFSET * _shield_raise
+	_weapon_sprite.rotation = lerp_angle(_sprite_rest_rotation, 0.0, _shield_raise)
 
 
 ## Obtiene la munición actual del arma especificada en el diccionario de cargadores.
@@ -353,6 +395,77 @@ func set_weapon_ammo(weapon: WeaponData, amount: int) -> void:
 		ammo_changed.emit(clamped_amount, max_mag)
 
 
+## Tope de la reserva de un arma con cargador (0 si no usa munición).
+func get_reserve_max(weapon: WeaponData) -> int:
+	if weapon == null or weapon.weapon_type == WeaponData.WeaponType.MELEE or weapon.magazine_size <= 0:
+		return 0
+	return weapon.magazine_size * reserve_magazines
+
+
+## Balas de reserva del arma (la primera vez arranca llena).
+func get_reserve(weapon: WeaponData) -> int:
+	if weapon == null:
+		return 0
+	if not weapon_reserves.has(weapon):
+		weapon_reserves[weapon] = get_reserve_max(weapon)
+	return weapon_reserves[weapon]
+
+
+func set_reserve(weapon: WeaponData, amount: int) -> void:
+	if weapon == null:
+		return
+	weapon_reserves[weapon] = clampi(amount, 0, get_reserve_max(weapon))
+	if weapon == current_weapon:
+		ammo_changed.emit(get_weapon_ammo(weapon), weapon.magazine_size)
+
+
+## Cargador y reserva de todas las armas al máximo (al subir de nivel).
+func refill_all_ammo() -> void:
+	for weapon: WeaponData in weapons:
+		if weapon == null or weapon.magazine_size <= 0 or weapon.weapon_type == WeaponData.WeaponType.MELEE:
+			continue
+		weapon_magazines[weapon] = weapon.magazine_size
+		weapon_reserves[weapon] = get_reserve_max(weapon)
+		_reserve_progress[weapon] = 0.0
+	if current_weapon != null and current_weapon.magazine_size > 0:
+		ammo_changed.emit(get_weapon_ammo(current_weapon), current_weapon.magazine_size)
+	if offhand != null and offhand.current_weapon != null:
+		offhand.ammo_changed.emit(get_weapon_ammo(offhand.current_weapon), offhand.current_weapon.magazine_size)
+
+
+## Repone `fraction` de cargador en cada arma: primero el cargador, el sobrante a la reserva (pods del Sandbox).
+func restock_ammo(fraction: float) -> void:
+	for weapon: WeaponData in weapons:
+		if weapon == null or weapon.magazine_size <= 0 or weapon.weapon_type == WeaponData.WeaponType.MELEE:
+			continue
+		var amount: int = maxi(1, ceili(float(weapon.magazine_size) * fraction))
+		var mag: int = get_weapon_ammo(weapon)
+		var to_mag: int = mini(amount, weapon.magazine_size - mag)
+		weapon_magazines[weapon] = mag + to_mag
+		weapon_reserves[weapon] = mini(get_reserve_max(weapon), get_reserve(weapon) + amount - to_mag)
+	if current_weapon != null and current_weapon.magazine_size > 0:
+		ammo_changed.emit(get_weapon_ammo(current_weapon), current_weapon.magazine_size)
+
+
+## La reserva de cada arma sube sola con el tiempo hasta su tope.
+func _regen_reserves(delta: float) -> void:
+	for weapon: WeaponData in weapons:
+		var cap: int = get_reserve_max(weapon)
+		if cap <= 0:
+			continue
+		var reserve: int = get_reserve(weapon)
+		if reserve >= cap:
+			_reserve_progress[weapon] = 0.0
+			continue
+		var progress: float = float(_reserve_progress.get(weapon, 0.0)) + delta * float(weapon.magazine_size) / RESERVE_SECONDS_PER_MAGAZINE
+		var gained: int = int(progress)
+		_reserve_progress[weapon] = progress - float(gained)
+		if gained > 0:
+			weapon_reserves[weapon] = mini(cap, reserve + gained)
+			if weapon == current_weapon:
+				ammo_changed.emit(get_weapon_ammo(weapon), weapon.magazine_size)
+
+
 ## Inicia el proceso de recarga si el arma tiene cargador y no está llena.
 func start_reload() -> void:
 	if current_weapon == null or is_reloading or free_ammo_active:
@@ -363,12 +476,16 @@ func start_reload() -> void:
 	var cur_ammo: int = get_weapon_ammo(current_weapon)
 	if cur_ammo >= current_weapon.magazine_size:
 		return
+	# Sin balas de reserva no hay recarga (infinite_ammo es el atajo de depuración)
+	if not infinite_ammo and get_reserve(current_weapon) <= 0:
+		return
 	
 	is_reloading = true
-	reload_timer = current_weapon.reload_time
-	reload_started.emit(current_weapon.reload_time)
+	var reload_secs: float = current_weapon.reload_time * RELOAD_TIME_MULT
+	reload_timer = reload_secs
+	reload_started.emit(reload_secs)
 	GameFeel.sfx(self, &"reload_out", Vector2.INF, -4.0)
-	_play_reload_animation(current_weapon.reload_time)
+	_play_reload_animation(reload_secs)
 	_schedule_reload_debris(current_weapon, current_weapon.magazine_size - cur_ammo)
 	weapon_changed.emit(current_weapon, current_weapon_index)
 
@@ -399,7 +516,11 @@ func finish_reload() -> void:
 	is_reloading = false
 	reload_timer = 0.0
 	if current_weapon != null and current_weapon.magazine_size > 0:
-		set_weapon_ammo(current_weapon, current_weapon.magazine_size)
+		var missing: int = current_weapon.magazine_size - get_weapon_ammo(current_weapon)
+		var taken: int = missing if infinite_ammo else mini(missing, get_reserve(current_weapon))
+		if not infinite_ammo:
+			weapon_reserves[current_weapon] = get_reserve(current_weapon) - taken
+		set_weapon_ammo(current_weapon, get_weapon_ammo(current_weapon) + taken)
 		reload_completed.emit()
 		GameFeel.sfx(self, &"reload_done", Vector2.INF, -3.0)
 		weapon_reloaded.emit(current_weapon)
@@ -491,7 +612,9 @@ func fire() -> void:
 	var pellets: int = maxi(1, current_weapon.pellets_per_shot)
 	var spread_deg: float = current_weapon.spread_angle_degrees
 	var base_angle: float = aim_dir.angle()
-	
+	_register_burst_shot()
+	var climb_rot: float = _sustained_climb_radians(aim_dir)
+
 	for i in range(pellets):
 		var pellet_dir: Vector2 = aim_dir
 		if pellets > 1 and spread_deg > 0.0:
@@ -501,6 +624,8 @@ func fire() -> void:
 		elif pellets == 1 and spread_deg > 0.0:
 			# Disparo único: desvío aleatorio dentro del cono (spread_deg es el ángulo total)
 			pellet_dir = aim_dir.rotated(deg_to_rad(randf_range(-0.5, 0.5) * spread_deg))
+
+		pellet_dir = pellet_dir.rotated(climb_rot)
 
 		var payload: HitPayload = HitPayload.new(
 			final_damage,
@@ -512,9 +637,15 @@ func fire() -> void:
 			3.0,
 			armor_pen
 		)
+		# Duración propia del arma para hielo, aturdimiento (Taser) y hechizo (dardos)
+		payload.ice_duration = current_weapon.ice_duration
+		payload.ice_speed_multiplier = current_weapon.ice_speed_multiplier
 		
-		if pool != null:
-			pool.get_projectile(spawn_pos, pellet_dir, payload, current_weapon.projectile_speed, bounces, pierces, forks)
+		# El pool solo reutiliza el proyectil estándar; las escenas propias (gotas) van por fuera.
+		if pool != null and current_weapon.projectile_scene.resource_path == "res://combat/projectile.tscn":
+			var pooled: Projectile = pool.get_projectile(spawn_pos, pellet_dir, payload, current_weapon.projectile_speed, bounces, pierces, forks, current_weapon.projectile_sprite) as Projectile
+			if pooled != null:
+				pooled.impact_scene = current_weapon.impact_scene
 		else:
 			# Fallback de reserva si no existe pool en la escena
 			var fallback_node: Node = current_weapon.projectile_scene.instantiate()
@@ -522,7 +653,8 @@ func fire() -> void:
 				var proj: Projectile = fallback_node as Projectile
 				proj.global_position = spawn_pos
 				proj.rotation = pellet_dir.angle()
-				proj.setup(current_weapon.projectile_speed, payload, bounces, pierces, forks)
+				proj.setup(current_weapon.projectile_speed, payload, bounces, pierces, forks, current_weapon.projectile_sprite)
+				proj.impact_scene = current_weapon.impact_scene
 				var container: Node = get_tree().current_scene
 				if container == null:
 					container = owner.get_parent() if owner != null else get_parent()
@@ -531,8 +663,13 @@ func fire() -> void:
 				container.add_child(fallback_node)
 	
 	_play_weapon_kick()
-	ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
-	ShotFx.muzzle_smoke(self, spawn_pos, aim_dir)
+	# Los lanzallamas (combustible y plasma) tienen su propio chorro: sin destello ni humo de bala encima.
+	if current_weapon.family == WeaponData.WeaponFamily.FLAMETHROWER or current_weapon.projectile_scene.resource_path == "res://combat/fuel_droplet.tscn":
+		FireVfx.spawn_jet(get_tree().current_scene, spawn_pos, aim_dir)
+	else:
+		if current_weapon.muzzle_flash:
+			ShotFx.muzzle_flash(self, spawn_pos, aim_dir)
+		ShotFx.muzzle_smoke(self, spawn_pos, aim_dir)
 	GameFeel.sfx_weapon_fire(self, current_weapon)
 
 	# 3. Aplicar fuerza de retroceso sobre el jugador
@@ -585,10 +722,23 @@ func _execute_melee_attack() -> void:
 	if _has_weapon_sprite():
 		_play_melee_swing(swung.swing_arc_degrees, swung.swing_duration)
 	weapon_fired.emit(swung)
-	await get_tree().create_timer(delay).timeout
+	if swung.creates_ground_shockwave and player != null and not player.is_on_floor():
+		await _wait_for_landing(swung)
+	else:
+		await get_tree().create_timer(delay).timeout
 	if current_weapon != swung or player == null or not is_instance_valid(player):
 		return
 	_melee_strike(true)
+
+
+## Martillo en el aire: fuerza la caída hasta tocar el piso (o hasta SLAM_MAX_WAIT) para que el golpe caiga al aterrizar.
+func _wait_for_landing(weapon: WeaponData) -> void:
+	var waited: float = 0.0
+	while current_weapon == weapon and player != null and is_instance_valid(player) and not player.is_on_floor() and waited < SLAM_MAX_WAIT:
+		# Se fija antes de que corra la física del jugador, así su desaceleración hacia la caída máxima no lo frena
+		player.velocity.y = SLAM_FALL_SPEED
+		await get_tree().physics_frame
+		waited += get_physics_process_delta_time()
 
 
 ## Crea el golpe efectivo del arma melee: hitbox, impulso y onda de choque.
@@ -617,9 +767,12 @@ func _melee_strike(visual_done: bool) -> void:
 		player,
 		payload_effects,
 		1,
-		3.0
+		3.0,
+		current_weapon.get_armor_penetration()
 	)
-	
+	payload.ice_duration = current_weapon.ice_duration
+	payload.ice_speed_multiplier = current_weapon.ice_speed_multiplier
+
 	var melee_scene: PackedScene = preload("res://combat/melee_hitbox.tscn")
 	var melee_instance: MeleeHitbox = melee_scene.instantiate() as MeleeHitbox
 	
@@ -635,6 +788,7 @@ func _melee_strike(visual_done: bool) -> void:
 	# El hitbox crece junto con el arma en mano
 	var hitbox_scale: float = HITBOX_SCALE * maxf(0.1, current_weapon.melee_hitbox_scale)
 	melee_instance.scale = Vector2(hitbox_scale, hitbox_scale)
+	melee_instance.apply_reach(current_weapon.get_melee_reach())
 	
 	if current_weapon.crit_multiplier > 1.0:
 		melee_instance.custom_crit_multiplier = current_weapon.crit_multiplier
@@ -646,6 +800,13 @@ func _melee_strike(visual_done: bool) -> void:
 		current_weapon.swing_duration,
 		aim_dir
 	)
+	# Rayo en cadena (Mjolnir): el primer enemigo golpeado del tajo lanza el rayo que rebota entre los cercanos
+	if current_weapon.chain_lightning_bounces > 0:
+		melee_instance.target_hit.connect(_on_chain_strike.bind(current_weapon, final_damage), CONNECT_ONE_SHOT)
+	# Ola o haz que sale con el tajo (Tridente de Poseidón, Excalibur)
+	if current_weapon.melee_projectile_scene != null:
+		_spawn_melee_projectile(spawn_pos, aim_dir, final_damage, payload_effects)
+
 	GameFeel.sfx_weapon_swing(self, current_weapon)
 
 	# El arma en mano hace el tajo con su propia estela; el rectángulo blanco del hitbox se oculta
@@ -667,8 +828,9 @@ func _melee_strike(visual_done: bool) -> void:
 	
 	# Mecánica Martillo Pesado: Onda de expansión física en el piso
 	if current_weapon.creates_ground_shockwave:
-		_spawn_ground_shockwave(spawn_pos, aim_dir)
-		GameFeel.shake(self, 6.0, 0.25)
+		_spawn_ground_shockwave(spawn_pos, aim_dir, _impact_world_position())
+		GameFeel.shake(self, 9.0, 0.3)
+		GameFeel.hit_stop(self, 0.07)
 
 	# Si tiene recoil force, empujar al jugador
 	if player != null and current_weapon.recoil_force > 0.0 and not player.knockback_immune:
@@ -676,8 +838,43 @@ func _melee_strike(visual_done: bool) -> void:
 	
 
 
+## Lanza el proyectil del tajo (`WeaponData.melee_projectile_scene`) con el daño, empuje y estados del arma.
+func _spawn_melee_projectile(origin: Vector2, aim_dir: Vector2, base_damage: float, effects: Array[String]) -> void:
+	var node: Node = current_weapon.melee_projectile_scene.instantiate()
+	var proj: Projectile = node as Projectile
+	if proj == null:
+		node.queue_free()
+		return
+	var dir: Vector2 = aim_dir
+	if current_weapon.melee_projectile_horizontal:
+		dir = Vector2(signf(aim_dir.x) if absf(aim_dir.x) > 0.05 else float(player.facing_direction), 0.0)
+	var payload: HitPayload = HitPayload.new(base_damage * current_weapon.melee_projectile_damage_mult,
+			current_weapon.knockback_force, dir, player, effects, 1, 3.0, current_weapon.get_armor_penetration())
+	payload.ice_duration = current_weapon.ice_duration
+	payload.ice_speed_multiplier = current_weapon.ice_speed_multiplier
+	# La escena trae su dibujo: se le pasa como sprite propio para que el proyectil no lo pise con el de balas
+	var sprite: Sprite2D = proj.get_node_or_null("Sprite2D") as Sprite2D
+	var tex: Texture2D = sprite.texture if sprite != null else null
+	proj.global_position = origin + dir * 24.0
+	proj.rotation = dir.angle()
+	proj.setup(current_weapon.melee_projectile_speed, payload, 0, current_weapon.melee_projectile_pierce, 0, tex)
+	var container: Node = get_tree().current_scene if get_tree().current_scene != null else get_tree().root
+	container.add_child(proj)
+	if current_weapon.fire_sound != &"":
+		GameFeel.sfx(self, current_weapon.fire_sound, Vector2.INF, -4.0)
+
+
+## Golpe melee conectado con un arma de rayo en cadena: dispara la cadena desde el enemigo alcanzado.
+func _on_chain_strike(target: Node, weapon: WeaponData, hit_damage: float) -> void:
+	if not (target is Node2D) or not is_instance_valid(target) or player == null:
+		return
+	ChainLightning.spawn(self, target as Node2D, player, hit_damage * weapon.chain_lightning_damage_mult,
+			weapon.chain_lightning_bounces, weapon.chain_lightning_range)
+
+
 ## Genera una onda de expansión física proyectada sobre el suelo más cercano.
-func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2) -> void:
+## Con `head_pos` (cabeza del arma en el mundo) la onda nace justo debajo de ella, sobre el suelo.
+func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2, head_pos: Vector2 = Vector2.INF) -> void:
 	var shock_scene: PackedScene = current_weapon.shockwave_scene
 	if shock_scene == null:
 		shock_scene = preload("res://combat/ground_shockwave.tscn")
@@ -692,10 +889,14 @@ func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2) -> void:
 	
 	# Proyectar rayo hacia abajo para encontrar la superficie del suelo
 	var ground_pos: Vector2 = from_pos + aim_dir * 32.0
+	var ray_lift: float = 16.0
+	if head_pos != Vector2.INF:
+		ground_pos = head_pos
+		ray_lift = 40.0
 	if player != null and player.is_inside_tree():
 		var space_state: PhysicsDirectSpaceState2D = player.get_world_2d().direct_space_state
 		var query: PhysicsRayQueryParameters2D = PhysicsRayQueryParameters2D.create(
-			ground_pos + Vector2(0.0, -16.0),
+			ground_pos + Vector2(0.0, -ray_lift),
 			ground_pos + Vector2(0.0, 120.0),
 			1 # Capa 1: Terreno
 		)
@@ -714,6 +915,16 @@ func _spawn_ground_shockwave(from_pos: Vector2, aim_dir: Vector2) -> void:
 
 
 
+
+
+## Punto de la cabeza del arma (`impact` del perfil, en px de la textura) en coordenadas del mundo; INF si no lo define.
+func _impact_world_position() -> Vector2:
+	var impact: Variant = WeaponMotion.profile_for(current_weapon).get("impact", null)
+	if impact == null or not _has_weapon_sprite():
+		return Vector2.INF
+	var pose: Dictionary = ItemIconsScript.get_weapon_pose(current_weapon)
+	var grip: Vector2 = pose.get("grip", Vector2.ZERO) as Vector2
+	return _weapon_sprite.to_global((impact as Vector2) * ItemIconsScript.held_ratio(current_weapon) - grip)
 
 
 ## Obtiene o genera la reserva de proyectiles en la escena actual.
@@ -768,6 +979,7 @@ func select_weapon(index: int) -> void:
 		GameFeel.sfx(self, &"weapon_swap", Vector2.INF, -6.0)
 	current_weapon_index = clamped_index
 	current_weapon = weapons[current_weapon_index]
+	CodexScript.record_weapon(current_weapon)
 	fire_cooldown_timer = 0.0
 	_update_weapon_visual()
 	_refresh_offhand()
@@ -824,7 +1036,7 @@ func _update_weapon_visual() -> void:
 ## Coloca el sprite del ícono del arma activa en la mano. Devuelve false si no hay ícono o pose.
 func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 	var pose: Dictionary = ItemIconsScript.get_weapon_pose(current_weapon)
-	var icon: Texture2D = ItemIconsScript.get_icon_for(current_weapon) as Texture2D
+	var icon: Texture2D = ItemIconsScript.get_held_texture(current_weapon)
 	if pose.is_empty() or icon == null:
 		return false
 
@@ -846,7 +1058,7 @@ func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 	# Arte HD (pose con "file"): filtro lineal; los íconos pixel art 16x16 conservan el filtro de vecino más cercano
 	_weapon_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR if pose.has("file") else CanvasItem.TEXTURE_FILTER_NEAREST
 	_weapon_sprite.offset = -grip
-	_weapon_sprite.scale = Vector2(scale_factor, scale_factor)
+	_weapon_sprite.scale = Vector2(scale_factor, -scale_factor if bool(pose.get("flip_v", false)) else scale_factor)
 	_sprite_rest_rotation = deg_to_rad(float(pose.get("rot_deg", 0.0)))
 	_sprite_rest_position = Vector2(HAND_OFFSET_X, 0.0)
 	# Cada arma se sostiene a su manera (ver weapon_motion.gd)
@@ -870,8 +1082,7 @@ func _apply_weapon_sprite(fallback_rect: ColorRect) -> bool:
 
 	# La boca del cañón queda en la punta del arma dibujada
 	if current_weapon.weapon_type == WeaponData.WeaponType.RANGED and muzzle != null:
-		var muzzle_y: float = OFFHAND_SPRITE_OFFSET.y if hand == Hand.OFF else 0.0
-		muzzle.position = Vector2(_sprite_rest_position.x + (tip_x - grip.x) * scale_factor, muzzle_y)
+		muzzle.position = Vector2(_sprite_rest_position.x + (tip_x - grip.x) * scale_factor, _sprite_rest_position.y)
 	return true
 
 
@@ -892,6 +1103,42 @@ func _has_weapon_sprite_node() -> bool:
 	return _weapon_sprite != null and is_instance_valid(_weapon_sprite)
 
 
+## Cuenta el disparo en la ráfaga actual: si pasó más de `window` s desde el anterior, la ráfaga empieza de cero.
+func _register_burst_shot() -> void:
+	var pattern: Dictionary = WeaponMotion.pattern_for(current_weapon)
+	if pattern.is_empty():
+		return
+	var now: int = Time.get_ticks_msec()
+	if now - _last_shot_msec <= int(float(pattern.get("window", 0.2)) * 1000.0):
+		_burst_count += 1
+	else:
+		_burst_count = 0
+	_last_shot_msec = now
+
+
+## Ángulo (rad) con que se desvía la bala por la ráfaga sostenida: hacia arriba de la pantalla, sea cual sea el lado al que apunta.
+func _sustained_climb_radians(aim_dir: Vector2) -> float:
+	var climb: Dictionary = SUSTAINED_CLIMB.get(WeaponMotion.id_of(current_weapon), {}) as Dictionary
+	if climb.is_empty():
+		return 0.0
+	var deg: float = minf(float(_burst_count) * float(climb.get("step", 1.0)), float(climb.get("max", 8.0)))
+	# Apuntando a la derecha, "arriba" es girar en sentido negativo; a la izquierda, en positivo
+	var side: float = -1.0 if aim_dir.x >= 0.0 else 1.0
+	return deg_to_rad(deg) * side
+
+
+## Grados de desvío que suma la ráfaga sostenida en este momento (0 si pasó la pausa de la ráfaga). La lee la mira.
+func get_aim_bloom_degrees() -> float:
+	var climb: Dictionary = SUSTAINED_CLIMB.get(WeaponMotion.id_of(current_weapon), {}) as Dictionary
+	if climb.is_empty():
+		return 0.0
+	var pattern: Dictionary = WeaponMotion.pattern_for(current_weapon)
+	var window_ms: int = int(float(pattern.get("window", 0.2)) * 1000.0)
+	if Time.get_ticks_msec() - _last_shot_msec > window_ms:
+		return 0.0
+	return minf(float(_burst_count) * float(climb.get("step", 1.0)), float(climb.get("max", 8.0)))
+
+
 ## Golpe de retroceso del arma de fuego al disparar: se echa hacia atrás y el cañón sube (ver `kick` en weapon_motion.gd).
 func _play_weapon_kick() -> void:
 	var kick: Dictionary = WeaponMotion.profile_for(current_weapon).get("kick", {}) as Dictionary
@@ -906,12 +1153,6 @@ func _play_weapon_kick() -> void:
 	var burst_offset: float = 0.0
 	var recover: float = 0.0
 	if not pattern.is_empty():
-		var now: int = Time.get_ticks_msec()
-		if now - _last_shot_msec <= int(float(pattern.get("window", 0.2)) * 1000.0):
-			_burst_count += 1
-		else:
-			_burst_count = 0
-		_last_shot_msec = now
 		var lift: float = minf(float(_burst_count) * float(pattern.get("climb_step", 1.0)), float(pattern.get("max_climb", 6.0)))
 		var sway: float = float(pattern.get("sway", 0.0)) * (1.0 if _burst_count % 2 == 0 else -1.0) * minf(float(_burst_count), 3.0) / 3.0
 		burst_offset = deg_to_rad(-lift + sway)
@@ -945,12 +1186,13 @@ func _play_melee_swing(arc_degrees: float, duration: float) -> void:
 		return
 	var half_arc: float = deg_to_rad(arc_degrees * 0.5)
 	var swing_time: float = maxf(duration, 0.05)
+	var reach: Vector2 = Vector2(current_weapon.get_melee_reach() * MELEE_VISUAL_REACH, 0.0)
 	_weapon_sprite.rotation = _sprite_rest_rotation - half_arc
 	_weapon_sprite.position = _sprite_rest_position + Vector2(-2.0, 0.0) * WEAPON_SCALE
 	_hand_tween = create_tween()
 	_hand_tween.set_parallel(true)
 	_hand_tween.tween_property(_weapon_sprite, "rotation", _sprite_rest_rotation + half_arc, swing_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_hand_tween.tween_property(_weapon_sprite, "position", _sprite_rest_position + Vector2(3.0, 0.0) * WEAPON_SCALE, swing_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_hand_tween.tween_property(_weapon_sprite, "position", _sprite_rest_position + Vector2(3.0, 0.0) * WEAPON_SCALE + reach, swing_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	# Vuelta suave a la posición de reposo
 	_hand_tween.chain().tween_property(_weapon_sprite, "rotation", _sprite_rest_rotation, 0.12)
 	_hand_tween.tween_property(_weapon_sprite, "position", _sprite_rest_position, 0.12)
@@ -971,7 +1213,9 @@ func swing_time_total(duration: float) -> float:
 ## Tajo animado con los fotogramas del perfil del arma: posición y rotación relativas al reposo.
 func _play_keyed_swing(keys: Array, total: float) -> void:
 	var first: Dictionary = keys[0] as Dictionary
-	_weapon_sprite.position = _sprite_rest_position + (first.get("pos", Vector2.ZERO) as Vector2)
+	# Alcance del arma: la mano se adelanta en todo el tajo menos en el último fotograma (vuelta al reposo)
+	var reach: Vector2 = Vector2(current_weapon.get_melee_reach() * MELEE_VISUAL_REACH, 0.0)
+	_weapon_sprite.position = _sprite_rest_position + (first.get("pos", Vector2.ZERO) as Vector2) + reach * 0.5
 	_weapon_sprite.rotation = _sprite_rest_rotation + deg_to_rad(float(first.get("rot", 0.0)))
 	_hand_tween = create_tween()
 	var prev_t: float = float(first.get("t", 0.0))
@@ -993,6 +1237,8 @@ func _play_keyed_swing(keys: Array, total: float) -> void:
 				trans = Tween.TRANS_SINE
 				ease_mode = Tween.EASE_IN_OUT
 		var target_pos: Vector2 = _sprite_rest_position + (key.get("pos", Vector2.ZERO) as Vector2)
+		if i < keys.size() - 1:
+			target_pos += reach
 		var target_rot: float = _sprite_rest_rotation + deg_to_rad(float(key.get("rot", 0.0)))
 		_hand_tween.tween_property(_weapon_sprite, "position", target_pos, seg).set_trans(trans).set_ease(ease_mode)
 		_hand_tween.parallel().tween_property(_weapon_sprite, "rotation", target_rot, seg).set_trans(trans).set_ease(ease_mode)
@@ -1063,7 +1309,7 @@ func _schedule_reload_debris(weapon: WeaponData, spent: int) -> void:
 	var drop: int = weapon.get_reload_drop()
 	if drop == WeaponData.ReloadDrop.NONE or SettingsScript.particle_scale() < ReloadDebris.MIN_DENSITY:
 		return
-	var delay: float = maxf(weapon.reload_time, 0.2) * float(RELOAD_DROP_TIMING.get(drop, 0.2))
+	var delay: float = maxf(weapon.reload_time * RELOAD_TIME_MULT, 0.2) * float(RELOAD_DROP_TIMING.get(drop, 0.2))
 	_debris_tween = create_tween()
 	_debris_tween.tween_interval(delay)
 	_debris_tween.tween_callback(_spawn_reload_debris.bind(weapon, drop, spent))

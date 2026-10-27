@@ -25,13 +25,13 @@ color = Color(0.07, 0.05, 0.05, 1)
 [node name="Enemies" type="Node2D" parent="."]
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(1600, 520)
+position = Vector2(900, 520)
 
 [node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
-position = Vector2(1600, 480)
+position = Vector2(900, 480)
 limit_left = -80
 limit_top = -300
-limit_right = 3280
+limit_right = 6480
 limit_bottom = 620
 position_smoothing_enabled = true
 script = ExtResource("3_camera")

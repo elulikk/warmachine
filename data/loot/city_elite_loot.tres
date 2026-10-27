@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="LootTable" format=3]
+
+[ext_resource type="Script" path="res://core/loot/loot_table.gd" id="1_table"]
+[ext_resource type="Script" path="res://core/loot/loot_entry.gd" id="2_entry"]
+[ext_resource type="Resource" path="res://data/weapons/nail_bat.tres" id="g_bat"]
+[ext_resource type="Resource" path="res://data/weapons/sawed_off.tres" id="g_sawed"]
+[ext_resource type="Resource" path="res://data/weapons/flare_gun.tres" id="g_flare"]
+[ext_resource type="Resource" path="res://data/weapons/thompson.tres" id="g_thompson"]
+[ext_resource type="Resource" path="res://data/weapons/nail_gun.tres" id="g_nailgun"]
+[ext_resource type="Resource" path="res://data/weapons/pipe_wrench.tres" id="g_wrench"]
+[ext_resource type="Resource" path="res://data/weapons/extinguisher.tres" id="g_extinguisher"]
+[ext_resource type="Resource" path="res://data/weapons/taser.tres" id="g_taser"]
+[ext_resource type="Resource" path="res://data/weapons/dart_venom.tres" id="g_dart_venom"]
+[ext_resource type="Resource" path="res://data/items/throwables/cluster_bomb.tres" id="g_cluster"]
+[ext_resource type="Resource" path="res://data/items/throwables/c4.tres" id="g_c4"]
+[ext_resource type="Resource" path="res://data/items/trench_coat.tres" id="g_coat"]
+[ext_resource type="Resource" path="res://data/items/fedora.tres" id="g_fedora"]
+[ext_resource type="Resource" path="res://data/items/brass_knuckles.tres" id="g_knuckles"]
+[ext_resource type="Resource" path="res://data/items/throwables/molotov.tres" id="g_molotov"]
+
+[sub_resource type="Resource" id="Resource_0"]
+script = ExtResource("2_entry")
+item_type = "COIN"
+drop_chance = 1.0
+min_amount = 3
+max_amount = 6
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_entry")
+item_type = "AMMO"
+drop_chance = 0.7
+min_amount = 1
+max_amount = 2
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_entry")
+item_type = "HEALTH"
+drop_chance = 0.2
+min_amount = 1
+max_amount = 1
+
+[resource]
+script = ExtResource("1_table")
+entries = Array[ExtResource("2_entry")]([SubResource("Resource_0"), SubResource("Resource_1"), SubResource("Resource_2")])
+gear_chance = 0.06
+gear_pool = Array[Resource]([ExtResource("g_bat"), ExtResource("g_sawed"), ExtResource("g_flare"), ExtResource("g_thompson"), ExtResource("g_nailgun"), ExtResource("g_wrench"), ExtResource("g_extinguisher"), ExtResource("g_taser"), ExtResource("g_dart_venom"), ExtResource("g_cluster"), ExtResource("g_c4"), ExtResource("g_coat"), ExtResource("g_fedora"), ExtResource("g_knuckles"), ExtResource("g_molotov")])
+early_gear_pool = Array[Resource]([ExtResource("g_bat"), ExtResource("g_wrench"), ExtResource("g_taser"), ExtResource("g_coat"), ExtResource("g_fedora"), ExtResource("g_knuckles"), ExtResource("g_molotov")])
+jackpot_chance = 0.002

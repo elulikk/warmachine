@@ -6,7 +6,8 @@ extends RefCounted
 ## Un arma sin perfil conserva la animación genérica (tajo en arco / retroceso por `recoil_force`).
 ##
 ## Perfil:
-##   pose    pisa datos de agarre de `weapon_art.gd` (`hand`, `support`, `two_hand`) en px de la textura.
+##   pose    pisa datos de agarre de `weapon_art.gd` (`hand`, `support`) en px de la textura. Cuántas manos ocupa
+##           el arma no va acá: sale de `WeaponData.grip` (ver `ItemIcons.get_weapon_pose`).
 ##   hold    pose de reposo del arma en mano. `pos` en px de juego (espacio del pivote), `rot_deg` en grados.
 ##           En armas de fuego solo cuenta `pos.x`: adelanta el arma y estira el brazo (pistolas a una mano).
 ##   swings  solo melee: lista de tajos que se alternan en orden (combo). Cada uno:
@@ -14,7 +15,11 @@ extends RefCounted
 ##             hit_delay  s hasta que el golpe es efectivo (hitbox, dash, onda); la animación arranca de inmediato
 ##             keys       fotogramas {t: 0..1 de la animación, pos: px desde el reposo, rot: grados desde el reposo,
 ##                        ease: "out" | "in" | "inout"}; el último debería volver a pos (0,0) y rot 0
-##             body       fotogramas del cuerpo {t, lean (grados, + = hacia adelante), x (px, + = adelante)}
+##             body       fotogramas del cuerpo {t, lean (grados, + = hacia adelante), x (px, + = adelante),
+##                        leg (grados, opcional: estira hacia atrás la pierna de atrás)}
+##   impact     solo martillo: punto de la textura (px) donde pega la cabeza; la onda de choque nace justo ahí
+##   fixed_aim  el pivote no se inclina con el cursor: queda horizontal mirando al lado del cursor, así el trayecto
+##           del arma es siempre el mismo (martillo)
 ##   scale   multiplica el tamaño del arma en mano (1.0 = el de `weapon_art.gd`)
 ##   kick    solo armas de fuego: {back (px), climb_deg, time (s), body (factor de retroceso del torso)}
 ##
@@ -24,6 +29,7 @@ extends RefCounted
 const PROFILES: Dictionary = {
 	"combat_knife": {
 		"scale": 0.72,
+		"pose": {"flip_v": true}, # el arte tiene el filo (serrucho) arriba: se da vuelta para que corte hacia abajo
 		"hold": {"pos": Vector2(1.0, 3.0), "rot_deg": -14.0},
 		"swings": [
 			{ # Tajo diagonal rápido
@@ -49,29 +55,90 @@ const PROFILES: Dictionary = {
 		]
 	},
 	"iron_sword": {
-		"hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -8.0},
+		"scale": 1.15,
+		"pose": {"support": Vector2(14.0, 48.7)},
+		"hold": {"pos": Vector2(5.0, 1.0), "rot_deg": -8.0},
 		"swings": [
-			{
+			{ # Tajo amplio descendente con cuerpo y brazos acompañando
 				"length": 2.4, "hit_delay": 0.02,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-6.0, -3.0), "rot": -60.0},
-					{"t": 0.38, "pos": Vector2(10.0, 3.0), "rot": 50.0, "ease": "out"},
-					{"t": 0.55, "pos": Vector2(11.0, 4.0), "rot": 62.0},
+					{"t": 0.0, "pos": Vector2(-12.0, -8.0), "rot": -105.0},
+					{"t": 0.36, "pos": Vector2(17.0, 7.0), "rot": 100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, 8.0), "rot": 112.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
-				"body": [{"t": 0.0, "lean": -4.0, "x": -1.5}, {"t": 0.38, "lean": 7.0, "x": 3.0}, {"t": 1.0, "lean": 0.0, "x": 0.0}]
+				"body": [
+					{"t": 0.0, "lean": -7.0, "x": -2.5},
+					{"t": 0.36, "lean": 12.0, "x": 7.5},
+					{"t": 0.58, "lean": 6.0, "x": 2.0},
+					{"t": 1.0, "lean": 0.0, "x": 0.0}
+				]
+			},
+			{ # Tajo amplio de revés con giro del torso
+				"length": 2.4, "hit_delay": 0.02,
+				"keys": [
+					{"t": 0.0, "pos": Vector2(-10.0, 9.0), "rot": 100.0},
+					{"t": 0.36, "pos": Vector2(17.0, -7.0), "rot": -100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, -8.0), "rot": -112.0},
+					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
+				],
+				"body": [
+					{"t": 0.0, "lean": 6.0, "x": -2.0},
+					{"t": 0.36, "lean": -10.0, "x": 7.0},
+					{"t": 0.58, "lean": -5.0, "x": 1.8},
+					{"t": 1.0, "lean": 0.0, "x": 0.0}
+				]
+			}
+		]
+	},
+	"frostmourne": {
+		"scale": 1.15,
+		"pose": {"support": Vector2(14.0, 48.7)},
+		"hold": {"pos": Vector2(5.0, 1.0), "rot_deg": -8.0},
+		"swings": [
+			{ # Tajo amplio descendente con cuerpo y brazos acompañando
+				"length": 2.4, "hit_delay": 0.02,
+				"keys": [
+					{"t": 0.0, "pos": Vector2(-12.0, -8.0), "rot": -105.0},
+					{"t": 0.36, "pos": Vector2(17.0, 7.0), "rot": 100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, 8.0), "rot": 112.0},
+					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
+				],
+				"body": [
+					{"t": 0.0, "lean": -7.0, "x": -2.5},
+					{"t": 0.36, "lean": 12.0, "x": 7.5},
+					{"t": 0.58, "lean": 6.0, "x": 2.0},
+					{"t": 1.0, "lean": 0.0, "x": 0.0}
+				]
+			},
+			{ # Tajo amplio de revés con giro del torso
+				"length": 2.4, "hit_delay": 0.02,
+				"keys": [
+					{"t": 0.0, "pos": Vector2(-10.0, 9.0), "rot": 100.0},
+					{"t": 0.36, "pos": Vector2(17.0, -7.0), "rot": -100.0, "ease": "out"},
+					{"t": 0.52, "pos": Vector2(19.0, -8.0), "rot": -112.0},
+					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
+				],
+				"body": [
+					{"t": 0.0, "lean": 6.0, "x": -2.0},
+					{"t": 0.36, "lean": -10.0, "x": 7.0},
+					{"t": 0.58, "lean": -5.0, "x": 1.8},
+					{"t": 1.0, "lean": 0.0, "x": 0.0}
+				]
 			}
 		]
 	},
 	"katana": {
-		"hold": {"pos": Vector2(0.0, 2.0), "rot_deg": -16.0},
+		"scale": 1.15,
+		"pose": {"support": Vector2(16.0, 26.1)},
+		"hold": {"pos": Vector2(5.0, 2.0), "rot_deg": -16.0},
 		"swings": [
 			{ # Tajo descendente desde arriba y atrás, con la embestida
 				"length": 3.2, "hit_delay": 0.0,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-8.0, -5.0), "rot": -75.0},
-					{"t": 0.26, "pos": Vector2(11.0, 3.0), "rot": 62.0, "ease": "out"},
-					{"t": 0.45, "pos": Vector2(13.0, 6.0), "rot": 88.0},
+					{"t": 0.0, "pos": Vector2(-12.0, -7.0), "rot": -105.0},
+					{"t": 0.26, "pos": Vector2(16.0, 5.0), "rot": 95.0, "ease": "out"},
+					{"t": 0.45, "pos": Vector2(18.0, 8.0), "rot": 115.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [{"t": 0.0, "lean": -5.0, "x": -2.0}, {"t": 0.26, "lean": 11.0, "x": 5.0}, {"t": 1.0, "lean": 0.0, "x": 0.0}]
@@ -79,9 +146,9 @@ const PROFILES: Dictionary = {
 			{ # Tajo ascendente de vuelta
 				"length": 3.2, "hit_delay": 0.0,
 				"keys": [
-					{"t": 0.0, "pos": Vector2(-4.0, 7.0), "rot": 62.0},
-					{"t": 0.26, "pos": Vector2(11.0, -5.0), "rot": -66.0, "ease": "out"},
-					{"t": 0.45, "pos": Vector2(13.0, -7.0), "rot": -88.0},
+					{"t": 0.0, "pos": Vector2(-8.0, 9.0), "rot": 95.0},
+					{"t": 0.26, "pos": Vector2(16.0, -7.0), "rot": -98.0, "ease": "out"},
+					{"t": 0.45, "pos": Vector2(18.0, -9.0), "rot": -115.0},
 					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
 				],
 				"body": [{"t": 0.0, "lean": 3.0, "x": -1.0}, {"t": 0.26, "lean": 9.0, "x": 5.0}, {"t": 1.0, "lean": 0.0, "x": 0.0}]
@@ -89,43 +156,93 @@ const PROFILES: Dictionary = {
 		]
 	},
 	"heavy_hammer": {
-		"pose": {"two_hand": true, "support": Vector2(108.0, 60.5)},
+		"pose": {"support": Vector2(108.0, 60.5)},
+		"fixed_aim": true,
+		"impact": Vector2(225.0, 60.5),
 		"hold": {"pos": Vector2(-2.0, -1.0), "rot_deg": -22.0},
 		"swings": [
-			{ # Se alza sobre el hombro y cae con todo el cuerpo; el golpe llega con el impacto
-				"length": 2.8, "hit_delay": 0.22,
-				"keys": [
-					{"t": 0.0, "pos": Vector2.ZERO, "rot": 0.0},
-					{"t": 0.30, "pos": Vector2(-10.0, -12.0), "rot": -118.0, "ease": "inout"},
-					{"t": 0.36, "pos": Vector2(-10.0, -12.0), "rot": -118.0},
-					{"t": 0.46, "pos": Vector2(9.0, 9.0), "rot": 52.0, "ease": "in"},
-					{"t": 0.60, "pos": Vector2(9.0, 9.0), "rot": 52.0},
-					{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
-				],
-				"body": [
-					{"t": 0.0, "lean": 0.0, "x": 0.0}, {"t": 0.30, "lean": -9.0, "x": -3.0},
-					{"t": 0.46, "lean": 14.0, "x": 6.0}, {"t": 0.62, "lean": 12.0, "x": 5.0}, {"t": 1.0, "lean": 0.0, "x": 0.0}
-				]
-			}
+				{ # Tira el martillo atrás con los brazos estirados, lo pasa por arriba y lo descarga contra el piso
+				  # con el torso inclinado hacia adelante. Apoya en t = 0.52 y el golpe efectivo cae en el apoyo (hit_delay ~ 0.57 * 0.28 * length)
+					"length": 3.3, "hit_delay": 0.53,
+					"keys": [
+						{"t": 0.0, "pos": Vector2.ZERO, "rot": 0.0},
+						{"t": 0.07, "pos": Vector2(-3.0, 2.0), "rot": -8.0, "ease": "inout"},
+						{"t": 0.27, "pos": Vector2(-30.0, 2.0), "rot": -150.0, "ease": "inout"},
+						{"t": 0.34, "pos": Vector2(-29.0, -2.0), "rot": -154.0},
+						{"t": 0.44, "pos": Vector2(-4.0, -27.0), "rot": -70.0, "ease": "inout"},
+						{"t": 0.52, "pos": Vector2(30.0, 31.0), "rot": 47.0, "ease": "in"},
+						{"t": 0.57, "pos": Vector2(31.0, 32.0), "rot": 41.0, "ease": "out"},
+						{"t": 0.68, "pos": Vector2(31.0, 32.0), "rot": 43.0},
+						{"t": 1.0, "pos": Vector2.ZERO, "rot": 0.0, "ease": "inout"}
+					],
+					"body": [
+						{"t": 0.0, "lean": 0.0, "x": 0.0, "leg": 0.0}, {"t": 0.07, "lean": -3.0, "x": -1.0, "leg": 6.0},
+						{"t": 0.27, "lean": -15.0, "x": -5.0, "leg": 38.0}, {"t": 0.34, "lean": -17.0, "x": -5.0, "leg": 42.0},
+						{"t": 0.44, "lean": -2.0, "x": 0.0, "leg": 30.0}, {"t": 0.52, "lean": 20.0, "x": 9.0, "leg": 10.0},
+						{"t": 0.57, "lean": 23.0, "x": 10.0, "leg": 6.0}, {"t": 0.70, "lean": 20.0, "x": 8.0, "leg": 0.0}, {"t": 1.0, "lean": 0.0, "x": 0.0, "leg": 0.0}
+					]
+				}
 		]
 	},
 	# --- Armas de fuego: retroceso propio ---
-	"pistol": {"pose": {"two_hand": false}, "hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 8.0, "time": 0.14, "body": 0.5}},
-	"pistol_9mm": {"pose": {"two_hand": false}, "hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 7.0, "time": 0.13, "body": 0.5}},
-	"desert_eagle": {"pose": {"two_hand": false}, "hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 3.2, "climb_deg": 12.0, "time": 0.2, "body": 0.9}},
-	"revolver": {"pose": {"two_hand": false}, "hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.6, "climb_deg": 10.0, "time": 0.18, "body": 0.7}},
-	"colt_44": {"pose": {"two_hand": false}, "hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.6, "climb_deg": 10.0, "time": 0.18, "body": 0.7}},
-	"rust_revolver": {"pose": {"two_hand": false}, "hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.4, "climb_deg": 9.0, "time": 0.18, "body": 0.7}},
+	"pistol": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 8.0, "time": 0.14, "body": 0.5}},
+	"lava_pistol": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 8.0, "time": 0.14, "body": 0.5}},
+	"pistol_9mm": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.0, "climb_deg": 7.0, "time": 0.13, "body": 0.5}},
+	"desert_eagle": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 3.2, "climb_deg": 12.0, "time": 0.2, "body": 0.9}},
+	"revolver": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.6, "climb_deg": 10.0, "time": 0.18, "body": 0.7}},
+	"colt_44": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.6, "climb_deg": 10.0, "time": 0.18, "body": 0.7}},
+	"rust_revolver": {"hold": {"pos": Vector2(7.0, 0.0), "rot_deg": 0.0}, "kick": {"back": 2.4, "climb_deg": 9.0, "time": 0.18, "body": 0.7}},
 	"smg": {"kick": {"back": 1.6, "climb_deg": 2.5, "time": 0.07, "body": 0.35}},
 	"mp5": {"kick": {"back": 1.6, "climb_deg": 2.5, "time": 0.07, "body": 0.35}},
 	"ak47": {"kick": {"back": 2.6, "climb_deg": 3.5, "time": 0.1, "body": 0.8}},
 	"m4": {"kick": {"back": 2.2, "climb_deg": 3.0, "time": 0.09, "body": 0.7}},
 	"scrap_carbine": {"kick": {"back": 2.4, "climb_deg": 4.0, "time": 0.11, "body": 0.8}},
+	"old_rifle": {"kick": {"back": 2.4, "climb_deg": 4.0, "time": 0.11, "body": 0.8}},
 	"shotgun": {"kick": {"back": 5.0, "climb_deg": 9.0, "time": 0.24, "body": 1.7}},
 	"heavy_sniper": {"kick": {"back": 6.0, "climb_deg": 6.0, "time": 0.36, "body": 2.0}},
 	"plasma_flamethrower": {"kick": {"back": 0.6, "climb_deg": 0.0, "time": 0.06, "body": 0.15}},
-	"corrosive_blaster": {"kick": {"back": 1.2, "climb_deg": 2.0, "time": 0.1, "body": 0.3}}
+	"fuel_flamethrower": {"kick": {"back": 0.6, "climb_deg": 0.0, "time": 0.06, "body": 0.15}},
+	"corrosive_blaster": {"kick": {"back": 1.2, "climb_deg": 2.0, "time": 0.1, "body": 0.3}},
+	"longbow": {"hold": {"pos": Vector2(8, 0), "rot_deg": 0.0}, "kick": {"back": 3.0, "climb_deg": 2.0, "time": 0.18, "body": 0.3}},
+	"javelin": {"kick": {"back": -6.0, "climb_deg": -6.0, "time": 0.22, "body": 1.2}},
+	"fire_staff": {"kick": {"back": 1.5, "climb_deg": 5.0, "time": 0.16, "body": 0.4}},
+	"ice_staff": {"kick": {"back": 1.5, "climb_deg": 5.0, "time": 0.16, "body": 0.4}},
+	# Mundo 3 (Abismo Ígneo). Las melee usan el perfil de otra arma (ver ALIASES)
+	"hell_crossbow": {"hold": {"pos": Vector2(4, 0), "rot_deg": 0.0}, "kick": {"back": 3.5, "climb_deg": 4.0, "time": 0.2, "body": 0.5}},
+	"hell_trident": {"kick": {"back": -6.0, "climb_deg": -6.0, "time": 0.22, "body": 1.2}},
+	"soul_staff": {"kick": {"back": 1.5, "climb_deg": 5.0, "time": 0.16, "body": 0.4}},
+	"sulfur_scepter": {"kick": {"back": 2.0, "climb_deg": 7.0, "time": 0.2, "body": 0.5}}
 }
+
+## Armas que reutilizan el perfil de otra (`base`); el resto de las claves pisan las del perfil base
+## (normalmente `pose` e `impact`, que van en px de la textura propia).
+const ALIASES: Dictionary = {
+	"scythe": {"base": "iron_sword", "pose": {"support": Vector2(115.0, 59.0)}, "hold": {"pos": Vector2(0.0, 1.0), "rot_deg": -14.0}},
+	"mangual": {"base": "iron_sword", "impact": Vector2(203.0, 46.0)},
+	"demon_sword": {"base": "iron_sword", "pose": {"support": Vector2(10.0, 36.0)}},
+	"abyss_axe": {"base": "heavy_hammer", "pose": {"support": Vector2(108.0, 58.0)}, "impact": Vector2(228.0, 58.0)},
+	"nail_bat": {"base": "heavy_hammer", "pose": {"support": Vector2(84.0, 32.0)}, "impact": Vector2(215.0, 32.0)},
+	"thompson": {"base": "smg"},
+	"sawed_off": {"base": "shotgun"},
+	"flare_gun": {"base": "pistol"},
+	"nail_gun": {"base": "pistol"},
+	"pipe_wrench": {"base": "iron_sword", "impact": Vector2(232.0, 45.0)},
+	"extinguisher": {"base": "fuel_flamethrower"},
+	"bazooka": {"base": "heavy_sniper"},
+	"bazooka_guided": {"base": "heavy_sniper"},
+	"dart_venom": {"base": "pistol"},
+	"dart_charm": {"base": "pistol"},
+	"taser": {"base": "pistol"},
+	"poseidon_trident": {"base": "heavy_hammer", "pose": {"support": Vector2(160.0, 31.5)}, "impact": Vector2(250.0, 31.5)},
+	"leviathan_axe": {"base": "javelin"},
+	"excalibur": {"base": "iron_sword", "impact": Vector2(240.0, 27.0)},
+	"gungnir": {"base": "javelin"},
+	"zeus_bolt": {"base": "javelin"},
+	"monkey_staff": {"base": "heavy_hammer", "pose": {"support": Vector2(150.0, 12.0)}, "impact": Vector2(250.0, 12.0)},
+	"mjolnir": {"base": "heavy_hammer", "pose": {"support": Vector2(120.0, 72.0)}, "impact": Vector2(215.0, 72.0)},
+}
+
+static var _alias_cache: Dictionary = {}
 
 
 ## Recarga propia por arma (en mano). Estilos:
@@ -141,24 +258,41 @@ const RELOADS: Dictionary = {
 	"revolver": {"style": "cylinder"},
 	"colt_44": {"style": "cylinder"},
 	"shotgun": {"style": "shells", "count": 4},
+	"sawed_off": {"style": "shells", "count": 2},
+	"flare_gun": {"style": "shells", "count": 1},
 	"heavy_sniper": {"style": "bolt"},
 	"ak47": {"style": "mag_rifle"},
 	"m4": {"style": "mag_rifle"},
 	"scrap_carbine": {"style": "mag_rifle"},
+	"old_rifle": {"style": "mag_rifle"},
 	"mp5": {"style": "mag_rifle"},
 	"plasma_flamethrower": {"style": "canister"},
+	"fuel_flamethrower": {"style": "canister"},
+	"extinguisher": {"style": "canister"},
+	"bazooka": {"style": "shells", "count": 1},
+	"bazooka_guided": {"style": "shells", "count": 1},
+	"taser": {"style": "shells", "count": 1},
 	"corrosive_blaster": {"style": "canister"},
+	"fire_staff": {"style": "canister"},
+	"ice_staff": {"style": "canister"},
+	"soul_staff": {"style": "canister"},
+	"sulfur_scepter": {"style": "canister"},
 }
 
 ## Secuencia de disparo sostenido de las automáticas (combo de retroceso): cada disparo dentro de `window` s
 ## del anterior sube el cañón `climb_step` grados más (hasta `max_climb`) y alterna un vaivén de `sway` grados.
-## Al dejar de disparar vuelve al reposo en `recover` s. Es solo visual: no cambia la dispersión.
+## Al dejar de disparar vuelve al reposo en `recover` s. El sprite es solo visual; el desvío real de la bala
+## (para M4, SMG y MP5) sale de `SUSTAINED_CLIMB` en weapon_manager.gd.
 const PATTERNS: Dictionary = {
 	"smg": {"window": 0.16, "climb_step": 0.9, "max_climb": 7.0, "sway": 1.4, "recover": 0.22},
+	"thompson": {"window": 0.2, "climb_step": 1.1, "max_climb": 9.0, "sway": 1.8, "recover": 0.26},
 	"mp5": {"window": 0.17, "climb_step": 0.8, "max_climb": 6.0, "sway": 1.2, "recover": 0.22},
 	"ak47": {"window": 0.2, "climb_step": 1.6, "max_climb": 11.0, "sway": 2.2, "recover": 0.3},
 	"m4": {"window": 0.19, "climb_step": 1.1, "max_climb": 8.0, "sway": 1.0, "recover": 0.26},
 	"plasma_flamethrower": {"window": 0.12, "climb_step": 0.3, "max_climb": 3.0, "sway": 2.6, "recover": 0.2},
+	"fuel_flamethrower": {"window": 0.12, "climb_step": 0.3, "max_climb": 3.0, "sway": 2.6, "recover": 0.2},
+	"extinguisher": {"window": 0.14, "climb_step": 0.2, "max_climb": 2.0, "sway": 2.0, "recover": 0.2},
+	"nail_gun": {"window": 0.2, "climb_step": 0.6, "max_climb": 4.0, "sway": 0.8, "recover": 0.2},
 }
 
 
@@ -172,7 +306,19 @@ static func id_of(weapon: WeaponData) -> String:
 
 ## Perfil del arma o un diccionario vacío.
 static func profile_for(weapon: WeaponData) -> Dictionary:
-	return PROFILES.get(id_of(weapon), {}) as Dictionary
+	var id: String = id_of(weapon)
+	if PROFILES.has(id):
+		return PROFILES[id] as Dictionary
+	if not ALIASES.has(id):
+		return {}
+	if not _alias_cache.has(id):
+		var alias: Dictionary = ALIASES[id] as Dictionary
+		var merged: Dictionary = (PROFILES.get(str(alias.get("base", "")), {}) as Dictionary).duplicate()
+		for key: Variant in alias:
+			if key != "base":
+				merged[key] = alias[key]
+		_alias_cache[id] = merged
+	return _alias_cache[id] as Dictionary
 
 
 ## Muestrea una lista de fotogramas {t, <field>} por interpolación lineal. `u` en 0..1.

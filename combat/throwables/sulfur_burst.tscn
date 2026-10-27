@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://combat/throwables/area_burst.gd" id="1_burst"]
+
+[node name="SulfurBurst" type="Area2D"]
+script = ExtResource("1_burst")
+radius = 80.0
+damage = 18.0
+status_effects = Array[String](["FIRE"])
+status_stacks = 3
+tick_damage = 3.0
+ignites_gas = true
+burst_color = Color(1, 0.85, 0.2, 1)
+visual_duration = 0.45

@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/mangual.tres"
+weapon_name = "Mangual"
+family = 12
+grip = 0
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 230.0
+swing_duration = 0.24
+crit_multiplier = 1.6
+melee_hitbox_scale = 1.15
+melee_reach = 34.0
+damage = 34.0
+fire_rate = 1.6
+knockback_force = 520.0
+recoil_force = 0.0
+projectile_speed = 0.0
+armor_penetration = 0.3
+innate_status_effects = []
+max_sockets = 2
+rarity = 2
+gold_value = 260
+description = "Bola de hierro con pinchos atada a una cadena. Se usa como una espada, pero el golpe llega mas lejos, abarca un arco enorme, empuja fuerte y atraviesa parte de la armadura."

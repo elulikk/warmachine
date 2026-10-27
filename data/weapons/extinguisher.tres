@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/foam_spray.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/espuma_co2.png" id="3_sprite"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/extinguisher.tres"
+weapon_name = "Matafuegos"
+family = 0
+grip = 1
+weapon_type = 0
+is_automatic = true
+damage = 2.0
+fire_rate = 10.0
+knockback_force = 240.0
+recoil_force = 6.0
+projectile_speed = 460.0
+magazine_size = 60
+reload_time = 2.4
+pellets_per_shot = 2
+spread_angle_degrees = 24.0
+projectile_scene = ExtResource("2_proj")
+projectile_sprite = ExtResource("3_sprite")
+innate_status_effects = Array[String](["ICE"])
+muzzle_flash = false
+max_sockets = 1
+socketed_runes = []
+rarity = 2
+gold_value = 150
+fire_sound = &"shot_extinguisher"
+description = "Matafuegos de CO2 de una oficina del Sindicato. Casi no lastima, pero el chorro helado ralentiza y empuja a todo lo que tenga enfrente: sirve para sacarse de encima a un grupo o tirar enemigos de los techos."

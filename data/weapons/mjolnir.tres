@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/mjolnir.tres"
+weapon_name = "Mjolnir"
+family = 12
+grip = 1
+weapon_type = 1
+is_automatic = false
+swing_arc_degrees = 120.0
+swing_duration = 0.28
+crit_multiplier = 1.5
+melee_dash_impulse = 0.0
+melee_phase_duration = 0.0
+creates_ground_shockwave = false
+chain_lightning_bounces = 7
+chain_lightning_damage_mult = 0.5
+chain_lightning_range = 280.0
+damage = 140.0
+fire_rate = 1.0
+knockback_force = 800.0
+recoil_force = 0.0
+projectile_speed = 0.0
+armor_penetration = 0.35
+magazine_size = 0
+reload_time = 0.0
+pellets_per_shot = 1
+spread_angle_degrees = 0.0
+innate_pierce = 0
+innate_status_effects = []
+max_sockets = 3
+socketed_runes = []
+rarity = 4
+gold_value = 1200
+description = "El martillo de Thor. Cada golpe cuerpo a cuerpo descarga un rayo que rebota hasta 7 veces entre los enemigos cercanos, con la mitad del daño del golpe."

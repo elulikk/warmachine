@@ -149,7 +149,7 @@ func _on_weapon_changed(weapon: WeaponData, _index: int = 0) -> void:
 				ammo_text = " (Recargando...)"
 			else:
 				var cur_ammo: int = player_node.weapon_manager.get_weapon_ammo(weapon)
-				ammo_text = " (%d / %d)" % [cur_ammo, weapon.magazine_size]
+				ammo_text = " (%d / %d +%d)" % [cur_ammo, weapon.magazine_size, player_node.weapon_manager.get_reserve(weapon)]
 		
 		weapon_label.text = "Arma: %s%s%s" % [weapon.weapon_name, ammo_text, infusion_text]
 

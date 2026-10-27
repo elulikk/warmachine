@@ -225,7 +225,7 @@ func _populate_data(res: Resource) -> void:
 			var stat_label: String = STAT_NAMES.get(s_name, s_name)
 			if is_pct:
 				lines.append("• %s: %s%.0f%%" % [stat_label, sign_char, s_val * 100.0])
-			elif s_name == "crit_chance":
+			elif s_name == "crit_chance" or s_name == "crit_multiplier":
 				lines.append("• %s: %s%.0f%%" % [stat_label, sign_char, s_val * 100.0])
 			elif s_name == "armor":
 				var reduction: float = s_val / (100.0 + s_val) * 100.0

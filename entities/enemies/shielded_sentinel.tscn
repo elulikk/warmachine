@@ -12,7 +12,8 @@ size = Vector2(28, 48)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hurtbox"]
 size = Vector2(32, 48)
 
-[node name="ShieldedSentinel" type="CharacterBody2D" groups=["enemies"]]
+[node name="ShieldedSentinel" type="CharacterBody2D" groups=["enemies"]
+enemy_level = 5]
 collision_layer = 2
 collision_mask = 1
 script = ExtResource("1_sentinel")
@@ -39,18 +40,9 @@ offset_right = 6.0
 offset_bottom = -20.0
 color = Color(0.4, 0.9, 1, 1)
 
-[node name="ShieldOutline" type="ReferenceRect" parent="Visuals"]
-offset_left = -18.0
-offset_top = -52.0
-offset_right = 18.0
-offset_bottom = 4.0
-border_color = Color(0.3, 0.85, 1, 0.9)
-border_width = 2.0
-editor_only = false
-
 [node name="HealthComponent" type="Node" parent="."]
 script = ExtResource("2_health")
-max_health = 60.0
+max_health = 70.0
 armor = 0.0
 max_shield = 130.0
 shield_recharge_delay = 3.0

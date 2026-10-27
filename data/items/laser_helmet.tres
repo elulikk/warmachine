@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "laser_helmet"
+item_name = "Casco Láser"
+item_color = Color(1, 0.25, 0.2, 1)
+equip_slot = "HEAD"
+elemental_infusion = ""
+tags = []
+modifiers = []
+grants_extra_jump = 0
+rarity = 3
+gold_value = 320
+description = "Visor con lentes de energía. Mantené P (L3 en el mando) para disparar un rayo óptico rubí desde los ojos hacia el cursor (estilo Cíclope) que empuja a los enemigos: atraviesa enemigos, se frena en las paredes y gasta una barra de energía que se recarga sola."

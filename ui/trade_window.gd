@@ -31,9 +31,9 @@ const COLOR_DIM: Color = Color(0.62, 0.58, 0.52, 1.0)
 const COLOR_OK: Color = Color(0.5, 1.0, 0.65, 1.0)
 const COLOR_WARN: Color = Color(1.0, 0.55, 0.4, 1.0)
 
-## [clave de categoría de TradeSession, texto]. Clave vacía = todo.
+## [clave de categoría de TradeSession, texto]. Clave vacía = todo (va al final: al abrir se parte de
+## la primera categoría con ítems, para que la lista no abrume de entrada).
 const CATEGORY_FILTERS: Array = [
-	["", "Todo"],
 	["WEAPON", "Armas"],
 	["HEAD", "Cabeza"],
 	["CHEST", "Pecho"],
@@ -45,6 +45,7 @@ const CATEGORY_FILTERS: Array = [
 	["CONSUMABLE", "Consumibles"],
 	["RUNE", "Runas"],
 	["OTHER", "Otros"],
+	["", "Todo"],
 ]
 const SORT_LABELS: Array[String] = ["Orden original", "Precio: menor", "Precio: mayor", "Rareza", "Nombre"]
 const SORT_ORIGINAL: int = 0
@@ -138,11 +139,14 @@ func open_trade(trader_data: Resource = null) -> void:
 	if player == null or player.stats_manager == null:
 		return
 	var data: Resource = trader_data if trader_data != null else DefaultTrader
-	if data != _trader:
+	var changed: bool = data != _trader
+	if changed:
 		_trader = data
 		_reset_filters()
 		_tab = TAB_BUY
 	_open_session()
+	if changed or not visible:
+		_apply_default_categories()
 
 	window_title = str(_trader.get("display_name"))
 	_greeting_label.text = str(_trader.get("greeting"))
@@ -426,6 +430,31 @@ func _reset_filters() -> void:
 		col.search.text = ""
 	if _buy_tab_button != null:
 		_buy_tab_button.button_pressed = true
+
+
+## Al abrir, cada columna arranca en la primera categoría que tenga algo (Armas, si hay) en vez de "Todo".
+func _apply_default_categories() -> void:
+	if _session == null:
+		return
+	var stock_res: Array[Resource] = []
+	for offer: Dictionary in (_session.get("stock") as Array):
+		stock_res.append(offer["res"] as Resource)
+	var player_res: Array[Resource] = []
+	for entry: Dictionary in (_session.call(&"get_player_entries") as Array[Dictionary]):
+		player_res.append(entry["res"] as Resource)
+	_select_first_populated(_trader_col, stock_res)
+	_select_first_populated(_player_col, player_res)
+
+
+func _select_first_populated(col: TradeColumn, resources: Array[Resource]) -> void:
+	var last: int = CATEGORY_FILTERS.size() - 1 # "Todo"
+	for i in range(last):
+		var key: String = str((CATEGORY_FILTERS[i] as Array)[0])
+		for res: Resource in resources:
+			if TradeSessionScript.category_of(res) == key:
+				col.category.select(i)
+				return
+	col.category.select(last)
 
 
 func _on_filter_changed(_value: Variant = null) -> void:
@@ -733,30 +762,49 @@ func _trader_zone_rejected(payload: Dictionary) -> void:
 	if _session == null:
 		return
 	var context: String = str(payload.get("context_tag", ""))
-	var index: int = int(payload.get("slot_index", -1))
-	if context == CTX_PLAYER and index >= 0 and index < _player_view.size():
-		_handle_result(_session.call(&"can_sell", _player_view[index], 1), Callable())
+	var sell_entry: Dictionary = _sell_entry_for(payload)
+	if not sell_entry.is_empty():
+		_handle_result(_session.call(&"can_sell", sell_entry, 1), Callable())
 	elif context == CTX_STOCK or context == CTX_BUYBACK:
 		_say("Para comprar, arrastralo a tu columna (la de la izquierda).", COLOR_WARN)
 
 
 ## Columna del comerciante: recibe ventas del jugador.
 func _trader_zone_accepts(_res: Resource, payload: Dictionary) -> bool:
-	if _session == null or str(payload.get("context_tag", "")) != CTX_PLAYER:
+	if _session == null:
 		return false
-	var index: int = int(payload.get("slot_index", -1))
-	if index < 0 or index >= _player_view.size():
+	var entry: Dictionary = _sell_entry_for(payload)
+	if entry.is_empty():
 		return false
-	return bool((_session.call(&"can_sell", _player_view[index], 1) as RefCounted).get("ok"))
+	return bool((_session.call(&"can_sell", entry, 1) as RefCounted).get("ok"))
 
 
 func _trader_zone_drop(payload: Dictionary) -> bool:
-	var index: int = int(payload.get("slot_index", -1))
-	if str(payload.get("context_tag", "")) != CTX_PLAYER or index < 0 or index >= _player_view.size():
+	var entry: Dictionary = _sell_entry_for(payload)
+	if entry.is_empty():
 		return false
-	if _player_view[index]["res"] != payload.get("resource"):
-		return false
-	return _do_sell(_player_view[index], Input.is_key_pressed(KEY_SHIFT))
+	return _do_sell(entry, Input.is_key_pressed(KEY_SHIFT))
+
+
+## Entrada de venta (de `get_player_entries`) que corresponde a lo arrastrado, o {} si no es vendible desde acá.
+## Las armas y consumibles de la barra rápida (y el arma de la mano 2) se buscan por identidad.
+func _sell_entry_for(payload: Dictionary) -> Dictionary:
+	var context: String = str(payload.get("context_tag", ""))
+	var res: Resource = payload.get("resource") as Resource
+	if context == CTX_PLAYER:
+		var index: int = int(payload.get("slot_index", -1))
+		if index >= 0 and index < _player_view.size() and _player_view[index]["res"] == res:
+			return _player_view[index]
+		return {}
+	if (context != "hotbar" and context != "offhand") or res == null or _session == null:
+		return {}
+	for entry: Dictionary in _player_view:
+		if entry["res"] == res and str(entry.get("context", "")) != "backpack":
+			return entry
+	for entry: Dictionary in (_session.call(&"get_player_entries") as Array[Dictionary]):
+		if entry["res"] == res and str(entry.get("context", "")) != "backpack":
+			return entry
+	return {}
 
 
 ## Clic derecho: acción rápida según la columna de origen.

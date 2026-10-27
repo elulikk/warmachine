@@ -1,4 +1,4 @@
-﻿[gd_scene format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://levels/level_base.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
@@ -18,10 +18,10 @@ size = Vector2(40, 800)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
 size = Vector2(180, 20)
 
-[node name="Level_1_09" type="Node2D"]
+[node name="Level_4_09" type="Node2D"]
 script = ExtResource("1_level")
 level_id = "1_09"
-level_title = "Sector 1-9"
+level_title = "Sector 09"
 chapter_number = 1
 next_level_path = "res://levels/chapter_1/level_1_10.tscn"
 
@@ -34,7 +34,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.06, 0.08, 0.12, 1)
+color = Color(0.1, 0.05, 0.06, 1)
 
 [node name="Environment" type="Node2D" parent="."]
 
@@ -50,14 +50,14 @@ offset_left = -1300.0
 offset_top = -24.0
 offset_right = 1300.0
 offset_bottom = 24.0
-color = Color(0.12, 0.16, 0.22, 1)
+color = Color(0.22, 0.12, 0.14, 1)
 
 [node name="TopBorder" type="ColorRect" parent="Environment/MainFloor"]
 offset_left = -1300.0
 offset_top = -24.0
 offset_right = 1300.0
 offset_bottom = -21.0
-color = Color(0.25, 0.55, 0.85, 1)
+color = Color(0.85, 0.25, 0.35, 1)
 
 [node name="LeftWall" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(-20, 240)
@@ -85,7 +85,7 @@ offset_left = -90.0
 offset_top = -10.0
 offset_right = 90.0
 offset_bottom = 10.0
-color = Color(0.18, 0.24, 0.35, 1)
+color = Color(0.32, 0.16, 0.18, 1)
 
 [node name="Platform2" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(1250, 390)
@@ -99,7 +99,7 @@ offset_left = -90.0
 offset_top = -10.0
 offset_right = 90.0
 offset_bottom = 10.0
-color = Color(0.18, 0.24, 0.35, 1)
+color = Color(0.32, 0.16, 0.18, 1)
 
 [node name="Platform3" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(1800, 450)
@@ -113,16 +113,7 @@ offset_left = -90.0
 offset_top = -10.0
 offset_right = 90.0
 offset_bottom = 10.0
-color = Color(0.18, 0.24, 0.35, 1)
-
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 60.0
-offset_top = 400.0
-offset_right = 650.0
-offset_bottom = 430.0
-theme_override_colors/font_color = Color(0.35, 0.8, 1.0, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 1 • PERIFERIA SUBTERRÁNEA • SECTOR 1-9"
+color = Color(0.32, 0.16, 0.18, 1)
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)

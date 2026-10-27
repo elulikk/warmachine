@@ -64,6 +64,10 @@ signal runes_changed
 ## Empuñadura: una mano (puede ir en la mano secundaria), dos manos (ocupa las dos) o escudo (solo mano secundaria).
 @export var grip: Grip = Grip.ONE_HAND
 
+## Escudo espejo (Fase Z): con el escudo levantado, los proyectiles enemigos que lo tocan rebotan hacia donde
+## apunta el jugador con la mitad del daño. Solo tiene efecto con `grip = SHIELD`.
+@export var reflects_projectiles: bool = false
+
 ## Indica si el arma dispara en ráfaga continua manteniendo presionado el gatillo (automática)
 ## o si requiere una pulsación por disparo (semiautomática).
 @export var is_automatic: bool = false
@@ -81,15 +85,39 @@ signal runes_changed
 ## Multiplicador del alcance y tamaño del hitbox del tajo (1.0 = estándar; el cuchillo usa menos).
 @export var melee_hitbox_scale: float = 1.0
 
+## Alcance extra del tajo en px de mundo: adelanta la mano (el arma en mano) y alarga el hitbox hacia donde se apunta.
+## 0 = sin extra. Varía por arma y se puede subir con mejoras (ver `get_melee_reach`).
+@export var melee_reach: float = 0.0
+
 ## Impulso horizontal de carrera inyectado al jugador al golpear (Katana: 380 px/s).
 @export var melee_dash_impulse: float = 0.0
 
 ## Duración de intangibilidad/fase contra enemigos al realizar el tajo (Katana: 0.15s).
 @export var melee_phase_duration: float = 0.0
 
+## Duración del hielo que aplica cada golpe melee (Frostmourne: 2.0 s). 0 = la del receptor (2.5 s).
+@export var ice_duration: float = 0.0
+
+## Velocidad restante bajo hielo tras cada golpe melee (0.5 = mitad). 0 = la del receptor.
+@export var ice_speed_multiplier: float = 0.0
+
 ## Si es true, al ejecutar o conectar el ataque genera una onda de choque en el suelo (Martillo Pesado).
 @export var creates_ground_shockwave: bool = false
 @export var shockwave_scene: PackedScene = null
+
+## Rayo en cadena (Mjolnir): al conectar el golpe melee, un rayo salta entre enemigos cercanos esta cantidad de
+## veces (0 = sin rayo). Cada salto hace `chain_lightning_damage_mult` x el daño del golpe y alcanza `chain_lightning_range` px.
+@export var chain_lightning_bounces: int = 0
+## Proyectil que sale con cada tajo (ola del Tridente de Poseidón, haz de luz de Excalibur). null = ninguno.
+## Usa el daño del tajo por `melee_projectile_damage_mult`, el empuje y los estados del arma.
+@export var melee_projectile_scene: PackedScene = null
+@export var melee_projectile_damage_mult: float = 0.5
+@export var melee_projectile_speed: float = 520.0
+@export var melee_projectile_pierce: int = 0
+## true = sale siempre horizontal hacia donde mira el jugador (una ola por el piso), no hacia la mira.
+@export var melee_projectile_horizontal: bool = false
+@export var chain_lightning_damage_mult: float = 0.5
+@export var chain_lightning_range: float = 260.0
 
 @export_group("Balística y Combate")
 ## Daño base que infligirá cada proyectil disparado.
@@ -126,11 +154,23 @@ signal runes_changed
 ## Cantidad de perforaciones innatas a enemigos que atraviesa el proyectil.
 @export var innate_pierce: int = 0
 
+## Rebotes innatos contra paredes y suelo (se suman a los de las runas).
+@export var innate_bounces: int = 0
+
 ## Escena del proyectil que será instanciada en cada disparo.
 @export var projectile_scene: PackedScene
 
+## Sprite de la bala de esta arma (res://assets/sprites/proyectiles/). Si está vacío se usa el atlas por defecto.
+@export var projectile_sprite: Texture2D = null
+
 ## Efectos de estado innatos transmitidos por los proyectiles de esta arma (ej: ["ICE"]).
 @export var innate_status_effects: Array[String] = []
+
+## Escena que aparece donde el proyectil termina (al chocar con un enemigo o con el mundo): área de fuego, veneno...
+## Un Node2D; si tiene `source_node` recibe al tirador (ver `AreaBurst`).
+@export var impact_scene: PackedScene = null
+## false = sin fogonazo de bala al disparar (solo humo), para armas de gas o aire como el Matafuegos.
+@export var muzzle_flash: bool = true
 
 @export_group("Sockets y Runas")
 ## Cantidad máxima de ranuras de engarce disponibles para runas.
@@ -142,10 +182,12 @@ signal runes_changed
 
 
 @export_group("Sonido")
-## Sonido real de disparo o tajo. Si es null se usa el efecto 8-bit sintetizado según las stats del arma.
+## Sonido de disparo por nombre de Sfx (p. ej. `shot_nail`). Vacío = se elige por la familia y los datos del arma.
+@export var fire_sound: StringName = &""
+## Sonido real de disparo o tajo. Si es null se usa el sonido de Sfx (`fire_sound` o el que toca por familia).
 @export var fire_stream: AudioStream = null
 
-## Sonido real al impactar a un enemigo. Si es null se usa el efecto 8-bit según el blanco.
+## Sonido real al impactar a un enemigo. Si es null se usa el sonido de Sfx según el blanco.
 @export var hit_stream: AudioStream = null
 
 
@@ -194,6 +236,11 @@ func get_total_bonus_damage() -> float:
 	return total
 
 
+## Alcance extra del tajo en px de mundo (por ahora solo el del recurso del arma).
+func get_melee_reach() -> float:
+	return maxf(melee_reach, 0.0)
+
+
 ## Retorna el daño base del arma incrementado por el daño de las runas.
 func get_effective_damage() -> float:
 	return damage + get_total_bonus_damage()
@@ -201,7 +248,7 @@ func get_effective_damage() -> float:
 
 ## Retorna el total de rebotes contra paredes acumulados de todas las runas.
 func get_total_bounces() -> int:
-	var total: int = 0
+	var total: int = innate_bounces
 	for rune in socketed_runes:
 		if rune != null:
 			total += rune.extra_bounces
@@ -257,6 +304,13 @@ func is_two_handed() -> bool:
 ## true si puede ir en la mano secundaria (una mano o escudo).
 func can_be_offhand() -> bool:
 	return grip == Grip.ONE_HAND or grip == Grip.SHIELD
+
+
+## true si el arma tiene una función propia en el clic derecho (apuntar, bloquear, etc.). Hoy ninguna la tiene:
+## es el punto de enganche de la regla de prioridad. Si la principal la tiene, el clic derecho es suyo y la
+## mano 2 no dispara (ver `WeaponManager._unhandled_input`).
+func has_secondary_function() -> bool:
+	return false
 
 
 ## true si puede ser el arma principal (todo menos el escudo).

@@ -272,7 +272,7 @@ func _render_levels_grid() -> void:
 		var lvl_path: String = str(lvl.get("path", ""))
 		var lvl_num: int = int(lvl.get("number", 1))
 		var is_boss: bool = bool(lvl.get("is_boss", false))
-		var title: String = str(lvl.get("title", "Sector %d-%02d" % [_current_chapter, lvl_num]))
+		var title: String = str(lvl.get("title", "Sector %02d" % lvl_num))
 		
 		var is_unlocked: bool = true
 		if sm != null:

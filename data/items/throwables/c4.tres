@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://core/item_data.gd" id="1_item"]
+[ext_resource type="PackedScene" path="res://combat/throwables/c4_charge.tscn" id="2_scene"]
+
+[resource]
+script = ExtResource("1_item")
+item_id = "c4"
+item_name = "C4"
+item_color = Color(0.78, 0.7, 0.5, 1)
+equip_slot = "TACTICAL"
+throwable_scene = ExtResource("2_scene")
+tags = Array[String](["THROWABLE", "REMOTE_DETONATE"])
+modifiers = Array[Dictionary]([])
+grants_extra_jump = 0
+rarity = 2
+gold_value = 60
+description = "Explosivo plástico con detonador. Se pega a la pared, al piso o al enemigo que toque. Volvé a apretar la tecla del arrojadizo para hacer estallar todas las cargas puestas (170 de daño en área). Si nadie las detona, explotan solas a los 25 s."

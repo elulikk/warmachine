@@ -26,6 +26,21 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 
 
+## Alarga el sensor hacia adelante `extra_world` px de mundo (alcance del arma). Se llama con la escala ya aplicada.
+func apply_reach(extra_world: float) -> void:
+	if extra_world <= 0.0 or collision_shape == null or collision_shape.shape == null:
+		return
+	var local_extra: float = extra_world / maxf(scale.x, 0.01)
+	var rect: RectangleShape2D = collision_shape.shape.duplicate() as RectangleShape2D
+	if rect == null:
+		return
+	rect.size.x += local_extra
+	collision_shape.shape = rect
+	collision_shape.position.x += local_extra * 0.5
+	if slash_visual != null:
+		slash_visual.scale.x = 1.0 + local_extra / 44.0
+
+
 func _process(delta: float) -> void:
 	if is_active:
 		elapsed_time += delta
@@ -108,8 +123,8 @@ func _check_projectile_parry(proj: Projectile) -> void:
 		if not is_hostile_proj and proj.payload != null and proj.payload.source_node != source_player:
 			is_hostile_proj = true
 		
-		# Incluso si se prueba contra cualquier proyectil activo no desviado:
-		if is_hostile_proj or not proj.is_parried:
+		# Solo se desvían balas enemigas: las propias (y las ya desviadas) pasan de largo
+		if is_hostile_proj and not proj.is_parried:
 			hit_targets.append(proj)
 			
 			# Ejecutar deflexión balística
@@ -138,7 +153,10 @@ func _handle_target_collision(target: Node) -> void:
 		if parent != null and parent.has_method("take_hit"):
 			receiver = parent
 	
-	if receiver != null and receiver != source_player and not hit_targets.has(receiver):
+	# Fuego amigo: un tajo de aliado (mercenario) no lastima al Jugador ni a otros aliados
+	var friendly: bool = source_player != null and source_player.is_in_group(&"allies") \
+		and (receiver.is_in_group(&"player") or receiver.is_in_group(&"allies"))
+	if receiver != null and receiver != source_player and not hit_targets.has(receiver) and not friendly:
 		if receiver.has_method("take_hit"):
 			hit_targets.append(receiver)
 			var delivery_payload: HitPayload = payload

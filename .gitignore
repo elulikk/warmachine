@@ -20,3 +20,10 @@ desktop.ini
 *.tmp
 .vscode/
 .claude/settings.local.json
+
+# Registro local de flow_tools.py y carpetas de trabajo de Flow
+art_source/flow_log.jsonl
+art_source/_inbox/
+art_source/**/_cut/
+
+override.cfg

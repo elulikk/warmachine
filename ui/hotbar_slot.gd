@@ -19,6 +19,8 @@ var index: int = 0
 var slot_index: int = 0
 var slot_type: String = "ANY"
 var context_tag: String = "hotbar"
+## Texto de la esquina del casillero; vacío = el número de casillero (index + 1).
+var key_text: String = ""
 ## Recurso guardado: WeaponData (del arsenal) o ConsumableData (del catálogo)
 var item: Resource = null
 ## Filtro que decide si un ítem entra al casillero: func(res, payload, slot) -> bool
@@ -38,6 +40,8 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	add_to_group(ItemDragControllerScript.TARGETS_GROUP)
 	gui_input.connect(_on_gui_input)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_hide_tooltip)
 
 	var box: VBoxContainer = VBoxContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -45,7 +49,7 @@ func _ready() -> void:
 	add_child(box)
 
 	var key_label: Label = _make_text_label(9, Color(0.7, 0.78, 0.9, 1.0))
-	key_label.text = str(index + 1)
+	key_label.text = key_text if not key_text.is_empty() else str(index + 1)
 	box.add_child(key_label)
 
 	_icon = TextureRect.new()
@@ -113,12 +117,32 @@ func _on_gui_input(event: InputEvent) -> void:
 	var mb: InputEventMouseButton = event as InputEventMouseButton
 	if mb.button_index == MOUSE_BUTTON_RIGHT:
 		accept_event()
+		_hide_tooltip()
 		right_clicked.emit(self)
 	elif mb.button_index == MOUSE_BUTTON_LEFT and item != null:
 		var controller: ItemDragControllerScript = ItemSlot.get_drag_controller(get_tree())
 		if controller != null:
+			_hide_tooltip()
 			# Solo se arrastra: un clic no levanta el ítem, así no choca con elegir casillero
 			controller.begin_press(self, item, build_carry_payload(), false)
+
+
+## Ficha de estadísticas del arma (la misma del inventario) al pasar el cursor. Los consumibles no tienen ficha.
+func _on_mouse_entered() -> void:
+	if not (item is WeaponData) or ItemSlot.is_carrying_item():
+		return
+	var tt: ItemTooltip = ItemSlot.get_shared_tooltip(get_tree())
+	if tt != null:
+		tt.display_resource(item, get_global_mouse_position())
+
+
+func _hide_tooltip() -> void:
+	if ItemSlot._shared_tooltip != null and is_instance_valid(ItemSlot._shared_tooltip):
+		ItemSlot._shared_tooltip.hide_tooltip()
+
+
+func _exit_tree() -> void:
+	_hide_tooltip()
 
 
 func build_carry_payload() -> Dictionary:

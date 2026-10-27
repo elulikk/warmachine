@@ -45,7 +45,7 @@ func _on_body_entered(body: Node2D) -> void:
 			if drone_instance is SupportDrone:
 				var drone: SupportDrone = drone_instance as SupportDrone
 				drone.target_player = player
-				drone.global_position = player.global_position + Vector2(-25.0, -35.0)
+				drone.global_position = player.global_position + drone.follow_offset
 				
 				var container: Node = get_tree().current_scene
 				if container == null:

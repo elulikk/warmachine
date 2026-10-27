@@ -107,6 +107,9 @@ func _is_in_range_and_los(entity: Node2D) -> bool:
 func _is_entity_alive(entity: Node2D) -> bool:
 	if entity == null or not is_instance_valid(entity) or entity.is_queued_for_deletion():
 		return false
+	# Invisible (Capa de Invisibilidad): no se puede apuntar
+	if entity.get(&"is_invisible") == true or bool(entity.get_meta(&"is_invisible", false)):
+		return false
 	
 	var health_comp: HealthComponent = entity.get_node_or_null("HealthComponent") as HealthComponent
 	if health_comp != null:

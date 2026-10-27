@@ -31,6 +31,13 @@ func apply_horizontal_movement(delta: float, input_dir: float, is_airborne: bool
 	if player == null or player.movement_data == null:
 		return
 	
+	# Empujón por contacto con enemigo: se conserva la velocidad que dio el golpe hasta que termine.
+	if player.is_knocked_back():
+		return
+	if player.is_dashing():
+		player.velocity.x = player.get_dash_velocity()
+		return
+
 	var effective_speed: float = player.get_current_move_speed()
 	
 	if player.has_magic_flight:
@@ -59,6 +66,10 @@ func apply_gravity(delta: float, is_falling: bool = false) -> void:
 		return
 	
 	if player.has_magic_flight:
+		return
+	
+	if player.is_dashing():
+		player.velocity.y = 0.0
 		return
 	
 	var data: PlayerMovementData = player.movement_data

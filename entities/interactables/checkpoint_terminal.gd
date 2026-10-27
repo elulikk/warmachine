@@ -5,11 +5,14 @@ extends Area2D
 ## Los contratos de zona viven en la terminal separada ContractTerminal.
 
 const PropSkin = preload("res://entities/props/prop_skin.gd")
+## Altura del borde de arriba del LED sobre el piso.
+const LED_TOP_Y: float = -44.0
+
 signal checkpoint_activated(checkpoint_id: String)
 
 @export var checkpoint_id: String = "checkpoint_track_mid"
 
-@onready var status_light: ColorRect = get_node_or_null("Visuals/StatusLight") as ColorRect
+@onready var status_light: CanvasItem = get_node_or_null("Visuals/StatusLight") as CanvasItem
 @onready var prompt_ui: Node2D = get_node_or_null("PromptUI") as Node2D
 
 var is_registered: bool = false
@@ -17,7 +20,18 @@ var _prompt_tween: Tween = null
 
 
 func _ready() -> void:
-	PropSkin.apply(self, "terminal")
+	# Del checkpoint solo queda el LED (rojo = sin tomar, verde = tomado): sin cartel, terminal ni aviso
+	var visuals: Node2D = get_node_or_null("Visuals") as Node2D
+	if visuals != null:
+		for child: Node in visuals.get_children():
+			if child.name != "StatusLight":
+				visuals.remove_child(child)
+				child.queue_free()
+		PropSkin._swap_led(visuals, LED_TOP_Y)
+	status_light = get_node_or_null("Visuals/StatusLight") as CanvasItem
+	if prompt_ui != null:
+		prompt_ui.queue_free()
+		prompt_ui = null
 	collision_layer = 0
 	collision_mask = 2 # Player
 
@@ -30,8 +44,6 @@ func _ready() -> void:
 	else:
 		_set_status(false, false)
 
-	if prompt_ui != null:
-		prompt_ui.visible = false
 
 
 func _on_body_entered(body: Node2D) -> void:
@@ -53,6 +65,14 @@ func _register_checkpoint() -> void:
 	if test_level != null:
 		test_level.initial_spawn_position = respawn_pos
 
+	# Al cargar la partida se vuelve a este checkpoint (solo en sectores de campaña, no en salas de prueba)
+	var scene: Node = get_tree().current_scene
+	if scene != null and scene.scene_file_path.begins_with("res://levels/chapter_"):
+		SaveManager.set_resume_point(scene.scene_file_path, respawn_pos)
+		var sm: SaveManager = SaveManager.get_instance()
+		if sm != null:
+			sm.save_to_disk()
+
 	# 2. Encender luz en verde y persistir flag
 	_set_status(true, true)
 	checkpoint_activated.emit(checkpoint_id)
@@ -64,7 +84,12 @@ func _set_status(registered: bool, persist_flag: bool = false) -> void:
 	is_registered = registered
 	if status_light != null:
 		# Rojo = inactivo (no registrado), Verde = registrado
-		status_light.color = Color(0.2, 1.0, 0.4, 1.0) if registered else Color(1.0, 0.22, 0.22, 1.0)
+		var tint: Color = Color(0.2, 1.0, 0.4, 1.0) if registered else Color(1.0, 0.22, 0.22, 1.0)
+		if status_light is ColorRect:
+			(status_light as ColorRect).color = tint
+		else:
+			# El LED es una lente blanca: el color va por modulate
+			status_light.modulate = tint
 
 	if persist_flag:
 		SaveManager.set_world_flag(checkpoint_id, true)

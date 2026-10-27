@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://core/weapon_data.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://combat/rocket_guided.tscn" id="2_proj"]
+[ext_resource type="Texture2D" path="res://assets/sprites/proyectiles/cohete.png" id="3_sprite"]
+[ext_resource type="PackedScene" path="res://combat/throwables/rocket_blast.tscn" id="4_blast"]
+
+[resource]
+script = ExtResource("1_script")
+source_resource_path = "res://data/weapons/bazooka_guided.tres"
+weapon_name = "Bazuca Dirigida"
+family = 0
+grip = 1
+weapon_type = 0
+is_automatic = false
+damage = 35.0
+fire_rate = 0.7
+knockback_force = 200.0
+recoil_force = 180.0
+projectile_speed = 300.0
+magazine_size = 1
+reload_time = 2.0
+spread_angle_degrees = 0.0
+projectile_scene = ExtResource("2_proj")
+projectile_sprite = ExtResource("3_sprite")
+impact_scene = ExtResource("4_blast")
+max_sockets = 1
+socketed_runes = []
+rarity = 4
+gold_value = 560
+fire_sound = &"shot_rocket"
+description = "Lanzacohetes con guía por láser. El cohete es más lento pero sigue a la mira mientras vuela: se puede doblar esquinas, subir a un techo o perseguir a un sicario que escapa."

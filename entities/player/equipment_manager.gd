@@ -1,5 +1,6 @@
 class_name EquipmentManager
 extends Node
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 ## Administrador de ranuras de equipamiento fijo para el Jugador (HEAD, CHEST, GLOVES, BOOTS, BACK,
 ## ACCESSORY_1, ACCESSORY_2, TACTICAL).
 ## Controla la aplicación y desuscripción de modificadores de estadísticas en el StatsManager
@@ -94,6 +95,7 @@ func drop_equipped_item(slot: String) -> ItemData:
 			if container == null:
 				container = get_tree().root
 			container.add_child(pickup)
+			LootLifetimeScript.arm(pickup)
 			print("[EquipmentManager] Ítem '%s' soltado junto al jugador para poder recogerlo." % unequipped_item.item_name)
 
 	return unequipped_item
@@ -163,8 +165,10 @@ func _apply_item_abilities(item: ItemData, is_equipping: bool) -> void:
 	match item.item_id:
 		"wall_jump_boots":
 			player.can_wall_jump = is_equipping
-		"jetpack":
-			player.has_jetpack = is_equipping
+		"jetpack", "iron_boots":
+			# Las Botas de Hierro vuelan como el jetpack: el vuelo sigue mientras quede alguno de los dos puesto
+			var other_jet: String = "iron_boots" if item.item_id == "jetpack" else "jetpack"
+			player.has_jetpack = is_equipping or _is_item_equipped(other_jet)
 			if is_equipping:
 				player.jetpack_fuel = player.max_jetpack_fuel
 		"feather_wings":
@@ -173,6 +177,26 @@ func _apply_item_abilities(item: ItemData, is_equipping: bool) -> void:
 				player.current_flaps = player.max_flaps
 		"flight_ring":
 			player.has_magic_flight = is_equipping
+		"dash_module":
+			player.can_dash = is_equipping
+		"laser_helmet":
+			player.has_eye_laser = is_equipping or _is_item_equipped("iron_chest")
+		"iron_chest":
+			# Unirrayo: el mismo rayo del Casco Láser, pero sale del reactor del pecho y es azul
+			player.laser_from_chest = is_equipping
+			player.has_eye_laser = is_equipping or _is_item_equipped("laser_helmet")
+		"invisibility_cloak":
+			player.has_cloak = is_equipping
+		"hamelin_flute":
+			player.has_hamelin_flute = is_equipping
+
+
+## true si hay un ítem con ese id puesto en alguna ranura.
+func _is_item_equipped(item_id: String) -> bool:
+	for equipped: Variant in equipped_items.values():
+		if equipped != null and (equipped as ItemData).item_id == item_id:
+			return true
+	return false
 
 
 ## Retorna el ítem equipado en una ranura específica.

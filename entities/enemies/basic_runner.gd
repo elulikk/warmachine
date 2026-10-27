@@ -1,19 +1,35 @@
 class_name BasicRunner
 extends CharacterBody2D
+const LootLifetimeScript = preload("res://core/loot/loot_lifetime.gd")
 ## Enemigo bípedo básico que persigue horizontalmente al jugador.
 ## Posee HealthComponent, Hurtbox, animación de parpadeo blanco (Hit Flash)
 ## y genera números de daño flotantes (DamageNumber) al recibir impactos.
 
+const AggroLeash = preload("res://entities/enemies/aggro_leash.gd")
+const FarStepScript = preload("res://core/far_step.gd")
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
+const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
+const MeleeAttackScript = preload("res://entities/enemies/melee_attack.gd")
+const EnemyLevelScript = preload("res://entities/enemies/enemy_level.gd")
 signal died
 
 const GearLootScript = preload("res://core/loot/gear_loot.gd")
 const DeathFxQueueScript = preload("res://combat/death_fx_queue.gd")
+const CodexScript = preload("res://core/codex/codex.gd")
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
 const CHASE_ACCEL: float = 900.0
+## Más abajo que esto (px) el enemigo cayó fuera del nivel.
+const OFFMAP_Y: float = 1100.0
 
 @export var entity_name: String = "Ladrón"
+## Nivel del enemigo (jerarquía; con 4 niveles o más por debajo del jugador no da experiencia). Ver `enemy_level.gd`.
+@export var enemy_level: int = 1
+## Velocidad del salto sobre obstáculos (540 = ~150 px de alto; las ratas saltan menos).
+@export var hop_speed: float = 540.0
+## Cuánta sangre y cuántos trozos suelta al recibir golpes y morir (1.0 = normal; las ratas y los asaltantes, menos).
+@export_range(0.1, 1.5, 0.05) var gore_amount: float = 1.0
 @export var move_speed: float = 65.0
 @export var aggro_range: float = 280.0
 @export var gravity: float = 980.0
@@ -22,10 +38,20 @@ const CHASE_ACCEL: float = 900.0
 @export var loot_table: LootTable
 @export var loot_drop_scene: PackedScene = preload("res://entities/items/loot_drop.tscn")
 @export var drop_rune_on_death: RuneData = null
+## Arma que deja SIEMPRE al morir (guion de un enemigo concreto, p. ej. el asaltante que tiene la primera de fuego
+## del nivel 1). Vacío = no deja ninguna; los demás de su tipo no la tienen.
+@export var dropped_weapon: WeaponData = null
+## Ítem (equipo, accesorio) que deja SIEMPRE al morir; pensado para jefes (la Rata Gigante deja la Flauta de Hamelin).
+@export var dropped_item: ItemData = null
 ## Tipo de arte de `EnemyArt` (ver enemy_art.gd): "runner", "zombie", "ghost", etc.
 @export var art_kind: String = "runner"
-## Daño por contacto con el jugador.
+## Daño del golpe cuerpo a cuerpo (ver `MeleeAttack`: se aplica al final del aviso, no por tocar al jugador).
 @export var contact_damage: float = 12.0
+## false = no tiene ataque cuerpo a cuerpo (los armados a distancia solo disparan).
+@export var melee_enabled: bool = true
+## Lo lee el jugador: tocar a este enemigo no lastima.
+var no_touch_damage: bool = true
+var _melee: Node = null
 
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var visual_rect: ColorRect = get_node_or_null("Visuals/ColorRect") as ColorRect
@@ -40,11 +66,16 @@ var original_color: Color = Color(0.46, 0.16, 0.52, 1.0) # Violeta oscuro
 var _flash_tween: Tween = null
 var contact_cooldown: float = 0.0
 var is_aggroed: bool = false
+## true si dejó de existir sin morir (se volvió aliado, cayó al vacío): no deja cadáver ni botín (ver `EnemyArt`).
+var no_corpse: bool = false
 
 
 func _ready() -> void:
-	EnemyArtScript.attach(self, art_kind)
+	var art: Node2D = EnemyArtScript.attach(self, art_kind)
 	_ensure_components()
+	MobScaleScript.apply(self, art)
+	if melee_enabled:
+		_melee = MeleeAttackScript.attach(self, art_kind)
 	if visual_rect != null:
 		original_color = visual_rect.color
 	
@@ -55,6 +86,13 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	delta = FarStepScript.delta_for(self, delta)
+	if delta <= 0.0:
+		return
+	# Caído a un charco o al vacío: se va sin cadáver ni botín (avisa con `died` para que las oleadas cuenten)
+	if global_position.y > OFFMAP_Y:
+		_vanish()
+		return
 	# 1. Aplicar gravedad vertical
 	if not is_on_floor():
 		velocity.y += gravity * delta
@@ -70,12 +108,19 @@ func _physics_process(delta: float) -> void:
 	
 	if target_player != null and is_instance_valid(target_player):
 		var dist: float = global_position.distance_to(target_player.global_position)
-		if dist <= aggro_range:
+		if target_player.is_invisible:
+			is_aggroed = false
+		elif dist <= aggro_range:
 			is_aggroed = true
+		elif is_aggroed and AggroLeash.should_drop(self, dist, aggro_range):
+			is_aggroed = false
 		
 		if is_aggroed:
 			var diff_x: float = target_player.global_position.x - global_position.x
-			if absf(diff_x) > 12.0:
+			if _melee != null and _melee.call("is_busy"):
+				# Armando el golpe: quieto y de frente al jugador
+				velocity.x = move_toward(velocity.x, 0.0, 900.0 * delta)
+			elif absf(diff_x) > 12.0:
 				var move_dir: float = signf(diff_x)
 				velocity.x = move_toward(velocity.x, move_dir * effective_speed, CHASE_ACCEL * delta)
 				if visuals != null:
@@ -90,19 +135,8 @@ func _physics_process(delta: float) -> void:
 	if contact_cooldown > 0.0:
 		contact_cooldown = maxf(0.0, contact_cooldown - delta)
 	
+	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
-	
-	# Daño por contacto si colisiona con el cuerpo del jugador (inhibido si el enemigo está aturdido)
-	var is_currently_stunned: bool = status_receiver != null and status_receiver.is_stunned
-	if contact_cooldown <= 0.0 and not is_currently_stunned:
-		for i in get_slide_collision_count():
-			var col: KinematicCollision2D = get_slide_collision(i)
-			var collider: Object = col.get_collider()
-			if collider is Player:
-				var player_ref: Player = collider as Player
-				player_ref.take_damage(contact_damage)
-				contact_cooldown = 0.8
-				break
 
 
 func _ensure_components() -> void:
@@ -118,7 +152,8 @@ func _ensure_components() -> void:
 	
 	if overhead_bar == null:
 		overhead_bar = get_node_or_null("OverheadHealthBar") as Node2D
-	if overhead_bar == null:
+	# Opción "Barras de vida de enemigos" apagada: no se crea el nodo (un nodo menos por enemigo)
+	if overhead_bar == null and OverheadHealthBar.bars_enabled():
 		var bar_scene: PackedScene = load("res://entities/ui/overhead_health_bar.tscn")
 		if bar_scene != null:
 			overhead_bar = bar_scene.instantiate() as Node2D
@@ -126,7 +161,7 @@ func _ensure_components() -> void:
 			overhead_bar.set("vertical_offset_y", -58.0)
 			add_child(overhead_bar)
 	if overhead_bar != null and health_component != null and overhead_bar.has_method("setup"):
-		overhead_bar.call("setup", health_component, entity_name)
+		overhead_bar.call("setup", health_component, EnemyLevelScript.display_name(self))
 
 
 ## Punto de entrada para impactos de combate.
@@ -185,7 +220,7 @@ func _spawn_damage_number(amount: float, is_critical: bool, damage_type: String)
 	var dmg_instance: Node = damage_number_scene.instantiate()
 	if dmg_instance is DamageNumber:
 		var dmg_num: DamageNumber = dmg_instance as DamageNumber
-		dmg_num.global_position = global_position + Vector2(0, -52.0)
+		dmg_num.global_position = global_position + Vector2(0, -52.0 * MobScaleScript.MOB_SCALE)
 		var container: Node = tree.current_scene
 		if container == null:
 			container = owner if owner != null else get_parent()
@@ -215,11 +250,61 @@ func _deferred_death_routine() -> void:
 	GearLootScript.try_drop(self, loot_table)
 	_spawn_exp_orb()
 	_spawn_rune_drop()
+	_spawn_dropped_weapon()
+	_spawn_dropped_item()
 	var metrics_mgr: MetricsManager = MetricsManager.get_instance()
 	if metrics_mgr != null:
 		metrics_mgr.record_kill("BasicRunner")
+	CodexScript.record_enemy(self)
 	died.emit()
 	queue_free()
+
+
+## Se va sin morir: sin botín, sin experiencia y sin cadáver. `died` avisa a las oleadas para que cuenten la baja.
+func _vanish() -> void:
+	if no_corpse:
+		return
+	no_corpse = true
+	visible = false
+	set_physics_process(false)
+	if hurtbox != null:
+		hurtbox.set_deferred("monitoring", false)
+		hurtbox.set_deferred("monitorable", false)
+	set_deferred("collision_layer", 0)
+	set_deferred("collision_mask", 0)
+	died.emit()
+	queue_free()
+
+
+## La Flauta de Hamelin (ver `HamelinFluteController`) convierte a las ratas cercanas en aliadas.
+func convert_to_ally() -> void:
+	_vanish()
+
+
+func _spawn_dropped_item() -> void:
+	if dropped_item == null or not is_inside_tree():
+		return
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	var pickup: PickupItem = (load("res://entities/items/pickup_item.tscn") as PackedScene).instantiate() as PickupItem
+	pickup.item_data = dropped_item
+	scene.add_child(pickup)
+	LootLifetimeScript.arm(pickup)
+	pickup.global_position = global_position + Vector2(0.0, -40.0)
+
+
+func _spawn_dropped_weapon() -> void:
+	if dropped_weapon == null or not is_inside_tree():
+		return
+	var scene: Node = get_tree().current_scene
+	if scene == null:
+		return
+	var pickup: WeaponPickup = (load("res://entities/items/weapon_pickup.tscn") as PackedScene).instantiate() as WeaponPickup
+	pickup.weapon_data = dropped_weapon
+	scene.add_child(pickup)
+	LootLifetimeScript.arm(pickup)
+	pickup.global_position = global_position + Vector2(0.0, -43.0)
 
 
 func _spawn_rune_drop() -> void:
@@ -238,6 +323,7 @@ func _spawn_rune_drop() -> void:
 			container = owner if owner != null else get_parent()
 		if container != null:
 			container.add_child(pickup)
+			LootLifetimeScript.arm(pickup)
 			print("[BasicRunner] ¡Runa '%s' dropeada al morir!" % drop_rune_on_death.rune_name)
 
 
@@ -267,7 +353,7 @@ func _spawn_loot() -> void:
 
 
 func _spawn_exp_orb() -> void:
-	if exp_orb_scene == null or not is_inside_tree():
+	if exp_orb_scene == null or not is_inside_tree() or not EnemyLevelScript.gives_exp(self):
 		return
 	var tree: SceneTree = get_tree()
 	if tree == null:

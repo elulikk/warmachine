@@ -1,4 +1,4 @@
-﻿[gd_scene format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://levels/level_base.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://entities/player/player.tscn" id="2_player"]
@@ -8,20 +8,45 @@
 [ext_resource type="Script" path="res://core/managers/save_manager.gd" id="6_save"]
 [ext_resource type="Script" path="res://core/managers/zone_modifier_manager.gd" id="7_zone"]
 [ext_resource type="PackedScene" path="res://entities/interactables/exit_gate.tscn" id="8_gate"]
+[ext_resource type="PackedScene" path="res://entities/enemies/basic_runner.tscn" id="9_runner"]
+[ext_resource type="PackedScene" path="res://entities/items/weapon_pickup.tscn" id="10_wpickup"]
+[ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="11_knife"]
+[ext_resource type="Resource" path="res://data/weapons/wooden_shield.tres" id="40_shield"]
+[ext_resource type="Resource" path="res://data/weapons/rust_revolver.tres" id="12_revolver"]
+[ext_resource type="PackedScene" path="res://entities/interactables/checkpoint_terminal.tscn" id="13_checkpoint"]
+[ext_resource type="PackedScene" path="res://entities/enemies/training_dummy.tscn" id="14_dummy"]
+[ext_resource type="PackedScene" path="res://entities/world/props/crate_large.tscn" id="prop_large"]
+[ext_resource type="PackedScene" path="res://entities/world/props/crate_medium.tscn" id="prop_medium"]
+[ext_resource type="PackedScene" path="res://entities/world/props/crate_small.tscn" id="prop_small"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_floor"]
-size = Vector2(2600, 48)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bedrock"]
+size = Vector2(8400, 60)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_seg1"]
+size = Vector2(1560, 74)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_seg_island"]
+size = Vector2(180, 74)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_seg_main"]
+size = Vector2(6160, 74)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
 size = Vector2(40, 800)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
-size = Vector2(180, 20)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pedestal"]
+size = Vector2(64, 18)
 
-[node name="Level_4_01" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling1"]
+size = Vector2(1700, 100)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ceiling2"]
+size = Vector2(1800, 100)
+
+[node name="Level_1_01" type="Node2D"]
 script = ExtResource("1_level")
 level_id = "4_01"
-level_title = "Sector 4-1"
+level_title = "Sector 01"
 chapter_number = 4
 next_level_path = "res://levels/chapter_4/level_4_02.tscn"
 
@@ -34,30 +59,93 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.1, 0.05, 0.06, 1)
+color = Color(0.06, 0.08, 0.12, 1)
 
 [node name="Environment" type="Node2D" parent="."]
 
-[node name="MainFloor" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1300, 580)
+[node name="Bedrock" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(4100, 660)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/MainFloor"]
-shape = SubResource("RectangleShape2D_floor")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Bedrock"]
+shape = SubResource("RectangleShape2D_bedrock")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/MainFloor"]
-offset_left = -1300.0
-offset_top = -24.0
-offset_right = 1300.0
-offset_bottom = 24.0
-color = Color(0.22, 0.12, 0.14, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/Bedrock"]
+offset_left = -4200.0
+offset_top = -30.0
+offset_right = 4200.0
+offset_bottom = 30.0
+color = Color(0.09, 0.1, 0.14, 1)
 
-[node name="TopBorder" type="ColorRect" parent="Environment/MainFloor"]
-offset_left = -1300.0
-offset_top = -24.0
-offset_right = 1300.0
-offset_bottom = -21.0
-color = Color(0.85, 0.25, 0.35, 1)
+[node name="TopBorder" type="ColorRect" parent="Environment/Bedrock"]
+offset_left = -4200.0
+offset_top = -30.0
+offset_right = 4200.0
+offset_bottom = -27.0
+color = Color(0.5, 0.3, 0.25, 1)
+
+[node name="FloorStart" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(780, 593)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorStart"]
+shape = SubResource("RectangleShape2D_seg1")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorStart"]
+offset_left = -780.0
+offset_top = -37.0
+offset_right = 780.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorStart"]
+offset_left = -780.0
+offset_top = -37.0
+offset_right = 780.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="FloorIsland" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(1790, 593)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorIsland"]
+shape = SubResource("RectangleShape2D_seg_island")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorIsland"]
+offset_left = -90.0
+offset_top = -37.0
+offset_right = 90.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorIsland"]
+offset_left = -90.0
+offset_top = -37.0
+offset_right = 90.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="FloorMain" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5140, 593)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/FloorMain"]
+shape = SubResource("RectangleShape2D_seg_main")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -3080.0
+offset_top = -37.0
+offset_right = 3080.0
+offset_bottom = 37.0
+color = Color(0.12, 0.16, 0.22, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/FloorMain"]
+offset_left = -3080.0
+offset_top = -37.0
+offset_right = 3080.0
+offset_bottom = -34.0
+color = Color(0.25, 0.55, 0.85, 1)
 
 [node name="LeftWall" type="StaticBody2D" parent="Environment" groups=["world"]]
 position = Vector2(-20, 240)
@@ -67,65 +155,179 @@ collision_mask = 0
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="RightWall" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(2580, 240)
+position = Vector2(8240, 240)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/RightWall"]
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="Platform1" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(650, 470)
+[node name="PedestalKnife" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(2700, 547)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform1"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalKnife"]
+shape = SubResource("RectangleShape2D_pedestal")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Platform1"]
-offset_left = -90.0
-offset_top = -10.0
-offset_right = 90.0
-offset_bottom = 10.0
-color = Color(0.32, 0.16, 0.18, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalKnife"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+color = Color(0.25, 0.3, 0.42, 1)
 
-[node name="Platform2" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1250, 390)
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalKnife"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="PedestalRevolver" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(5400, 547)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform2"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalRevolver"]
+shape = SubResource("RectangleShape2D_pedestal")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Platform2"]
-offset_left = -90.0
-offset_top = -10.0
-offset_right = 90.0
-offset_bottom = 10.0
-color = Color(0.32, 0.16, 0.18, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalRevolver"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+color = Color(0.25, 0.3, 0.42, 1)
 
-[node name="Platform3" type="StaticBody2D" parent="Environment" groups=["world"]]
-position = Vector2(1800, 450)
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalRevolver"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="Ceiling1" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(3750, 280)
 collision_mask = 0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Platform3"]
-shape = SubResource("RectangleShape2D_plat")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling1"]
+shape = SubResource("RectangleShape2D_ceiling1")
 
-[node name="ColorRect" type="ColorRect" parent="Environment/Platform3"]
-offset_left = -90.0
-offset_top = -10.0
-offset_right = 90.0
-offset_bottom = 10.0
-color = Color(0.32, 0.16, 0.18, 1)
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -850.0
+offset_top = -50.0
+offset_right = 850.0
+offset_bottom = 50.0
+color = Color(0.1, 0.12, 0.17, 1)
 
-[node name="SectorLabel" type="Label" parent="Environment"]
-offset_left = 60.0
-offset_top = 400.0
-offset_right = 650.0
-offset_bottom = 430.0
-theme_override_colors/font_color = Color(1.0, 0.35, 0.45, 1)
-theme_override_font_sizes/font_size = 14
-text = "CAPÍTULO 4 • CIUDADELA BLINDADA • SECTOR 4-1"
+[node name="BottomBorder" type="ColorRect" parent="Environment/Ceiling1"]
+offset_left = -850.0
+offset_top = 47.0
+offset_right = 850.0
+offset_bottom = 50.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="Ceiling2" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(6600, 280)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/Ceiling2"]
+shape = SubResource("RectangleShape2D_ceiling2")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/Ceiling2"]
+offset_left = -900.0
+offset_top = -50.0
+offset_right = 900.0
+offset_bottom = 50.0
+color = Color(0.1, 0.12, 0.17, 1)
+
+[node name="BottomBorder" type="ColorRect" parent="Environment/Ceiling2"]
+offset_left = -900.0
+offset_top = 47.0
+offset_right = 900.0
+offset_bottom = 50.0
+color = Color(0.25, 0.55, 0.85, 1)
 
 [node name="SpawnPoint" type="Marker2D" parent="."]
 position = Vector2(160, 545)
+
+[node name="KnifePickup" parent="." instance=ExtResource("10_wpickup")]
+position = Vector2(2700, 512)
+weapon_data = ExtResource("11_knife")
+
+[node name="PedestalShield" type="StaticBody2D" parent="Environment" groups=["world"]]
+position = Vector2(2830, 547)
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Environment/PedestalShield"]
+shape = SubResource("RectangleShape2D_pedestal")
+
+[node name="ColorRect" type="ColorRect" parent="Environment/PedestalShield"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = 9.0
+color = Color(0.25, 0.3, 0.42, 1)
+
+[node name="TopBorder" type="ColorRect" parent="Environment/PedestalShield"]
+offset_left = -32.0
+offset_top = -9.0
+offset_right = 32.0
+offset_bottom = -6.0
+color = Color(0.95, 0.8, 0.3, 1)
+
+[node name="JumpBlock1" parent="Environment" instance=ExtResource("prop_small")]
+position = Vector2(830, 556)
+size = Vector2(60, 40)
+
+[node name="JumpBlock2" parent="Environment" instance=ExtResource("prop_medium")]
+position = Vector2(1060, 556)
+size = Vector2(70, 70)
+
+[node name="JumpBlock3" parent="Environment" instance=ExtResource("prop_large")]
+position = Vector2(1290, 556)
+size = Vector2(80, 96)
+
+[node name="ShieldPickup" parent="." instance=ExtResource("10_wpickup")]
+position = Vector2(2830, 512)
+weapon_data = ExtResource("40_shield")
+
+[node name="KnifeRunner1" parent="." instance=ExtResource("9_runner")]
+position = Vector2(3350, 555)
+
+[node name="KnifeRunner2" parent="." instance=ExtResource("9_runner")]
+position = Vector2(3800, 555)
+
+[node name="KnifeRunner3" parent="." instance=ExtResource("9_runner")]
+position = Vector2(4250, 555)
+
+[node name="CheckpointJumps" parent="." instance=ExtResource("13_checkpoint")]
+position = Vector2(2350, 556)
+checkpoint_id = "checkpoint_1_01_a"
+
+[node name="CheckpointCorridor" parent="." instance=ExtResource("13_checkpoint")]
+position = Vector2(4820, 556)
+checkpoint_id = "checkpoint_1_01_b"
+
+[node name="RevolverPickup" parent="." instance=ExtResource("10_wpickup")]
+position = Vector2(5400, 512)
+weapon_data = ExtResource("12_revolver")
+
+[node name="PracticeDummy" parent="." instance=ExtResource("14_dummy")]
+position = Vector2(5900, 556)
+armor = 0.0
+max_shield = 0.0
+entity_name = "Muñeco de práctica"
+dummy_name = "Muñeco de práctica"
+
+[node name="PistolRunner1" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(6300, 555)
+
+[node name="PistolRunner2" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(6700, 555)
+
+[node name="PistolRunner3" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(7100, 555)
+
+[node name="PistolRunner4" parent="." groups=["arena_enemies"] instance=ExtResource("9_runner")]
+position = Vector2(7400, 555)
 
 [node name="Player" parent="." instance=ExtResource("2_player")]
 position = Vector2(160, 545)
@@ -133,16 +335,16 @@ position = Vector2(160, 545)
 [node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("target")]
 position = Vector2(160, 510)
 zoom = Vector2(1.1, 1.1)
-limit_left = -50
-limit_top = -250
-limit_right = 2650
-limit_bottom = 650
+limit_left = 0
+limit_top = 100
+limit_right = 8220
+limit_bottom = 700
 position_smoothing_enabled = true
 script = ExtResource("3_camera")
 target = NodePath("../Player")
 
 [node name="ExitGate" parent="." instance=ExtResource("8_gate")]
-position = Vector2(2350, 556)
+position = Vector2(7950, 556)
 
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
 

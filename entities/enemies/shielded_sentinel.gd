@@ -2,10 +2,15 @@ class_name ShieldedSentinel
 extends EnemyBase
 ## Enemigo de tipo Centinela con Escudo.
 ## 60 HP, 0 armadura, 130 de escudo de energía recargable.
-## Visual con contorno / aura celeste que parpadea o desaparece al emitirse shield_broken.
+## Escudo de energía: elipse celeste que reacciona al daño absorbido (ver entities/shield/energy_shield.gd).
 
 ## Aceleración hacia la velocidad de persecución (px/s²). Permite que el knockback se note antes de retomar la marcha.
+const AggroLeash = preload("res://entities/enemies/aggro_leash.gd")
+const FarStepScript = preload("res://core/far_step.gd")
 const EnemyArtScript = preload("res://entities/enemies/enemy_art.gd")
+const HopScript = preload("res://entities/enemies/obstacle_hop.gd")
+const MobScaleScript = preload("res://entities/enemies/mob_scale.gd")
+const EnergyShieldScript = preload("res://entities/shield/energy_shield.gd")
 const CHASE_ACCEL: float = 900.0
 
 @export var contact_damage: float = 14.0
@@ -15,28 +20,32 @@ const CHASE_ACCEL: float = 900.0
 
 @onready var health_component: HealthComponent = $HealthComponent
 @onready var visual_rect: ColorRect = $Visuals/ColorRect
-@onready var shield_outline: ReferenceRect = $Visuals/ShieldOutline
 @onready var visuals: Node2D = $Visuals
 
 var target_player: Player = null
 var original_color: Color = Color(0.2, 0.45, 0.75, 1.0)
 var _flash_tween: Tween = null
 var contact_cooldown: float = 0.0
+## Lo lee el jugador: tocar a este enemigo no lastima (golpea con `MeleeAttack`).
+var no_touch_damage: bool = true
+var _melee: Node = null
 var is_aggroed: bool = false
 
 
 func _ready() -> void:
-	EnemyArtScript.attach(self, "sentinel")
+	var art: Node2D = EnemyArtScript.attach(self, "sentinel")
 	entity_name = "Centinela de Escudo"
-	max_health = 60.0
+	max_health = 70.0
 	move_speed = 70.0
 	super._ready()
+	MobScaleScript.apply(self, art)
+	_melee = (load("res://entities/enemies/melee_attack.gd") as GDScript).call("attach", self, "sentinel") as Node
 	
 	if visual_rect != null:
 		original_color = visual_rect.color
 	
 	if health_component != null:
-		health_component.max_health = 60.0
+		health_component.max_health = 70.0
 		health_component.current_health = 60.0
 		health_component.armor = 0.0
 		health_component.max_shield = 130.0
@@ -46,22 +55,26 @@ func _ready() -> void:
 		
 		if not health_component.damage_taken.is_connected(_on_damage_taken):
 			health_component.damage_taken.connect(_on_damage_taken)
-		if not health_component.shield_broken.is_connected(_on_shield_broken):
-			health_component.shield_broken.connect(_on_shield_broken)
-		if not health_component.shield_changed.is_connected(_on_shield_changed):
-			health_component.shield_changed.connect(_on_shield_changed)
+		if not health_component.shield_absorbed.is_connected(_on_shield_absorbed):
+			health_component.shield_absorbed.connect(_on_shield_absorbed)
 		if not health_component.died.is_connected(die):
 			health_component.died.connect(die)
 		if overhead_bar != null and overhead_bar.has_method("setup"):
-			overhead_bar.call("setup", health_component, entity_name)
+			overhead_bar.call("setup", health_component, EnemyLevelScript.display_name(self))
 	
-	if shield_outline != null:
-		shield_outline.visible = true
-	
+	if visuals != null and health_component != null:
+		var energy_shield: Node2D = EnergyShieldScript.new()
+		energy_shield.name = "EnergyShield"
+		visuals.add_child(energy_shield)
+		energy_shield.setup(health_component, Vector2(0, -24) * MobScaleScript.MOB_SCALE, Vector2(24, 32) * MobScaleScript.MOB_SCALE)
+
 	target_player = get_tree().get_first_node_in_group(&"player") as Player
 
 
 func _physics_process(delta: float) -> void:
+	delta = FarStepScript.delta_for(self, delta)
+	if delta <= 0.0:
+		return
 	if is_dead:
 		return
 	
@@ -75,12 +88,18 @@ func _physics_process(delta: float) -> void:
 	
 	if target_player != null and is_instance_valid(target_player):
 		var dist: float = global_position.distance_to(target_player.global_position)
-		if dist <= aggro_range:
+		if target_player.is_invisible:
+			is_aggroed = false
+		elif dist <= aggro_range:
 			is_aggroed = true
+		elif is_aggroed and AggroLeash.should_drop(self, dist, aggro_range):
+			is_aggroed = false
 		
 		if is_aggroed:
 			var diff_x: float = target_player.global_position.x - global_position.x
-			if absf(diff_x) > 14.0:
+			if _melee != null and _melee.call("is_busy"):
+				velocity.x = move_toward(velocity.x, 0.0, 900.0 * delta)
+			elif absf(diff_x) > 14.0:
 				var move_dir: float = signf(diff_x)
 				velocity.x = move_toward(velocity.x, move_dir * effective_speed, CHASE_ACCEL * delta)
 				if visuals != null:
@@ -95,40 +114,19 @@ func _physics_process(delta: float) -> void:
 	if contact_cooldown > 0.0:
 		contact_cooldown = maxf(0.0, contact_cooldown - delta)
 	
+	HopScript.try_hop(self, signf(velocity.x))
 	move_and_slide()
-	
-	if contact_cooldown <= 0.0:
-		for i in get_slide_collision_count():
-			var col: KinematicCollision2D = get_slide_collision(i)
-			var collider: Object = col.get_collider()
-			if collider is Player:
-				var player_ref: Player = collider as Player
-				player_ref.take_damage(contact_damage)
-				contact_cooldown = 0.8
-				break
-
-
-func _on_shield_broken() -> void:
-	if shield_outline != null:
-		# Parpadeo rápido y desaparición del contorno celeste
-		var tw: Tween = create_tween()
-		tw.tween_property(shield_outline, "modulate:a", 0.0, 0.2)
-		tw.tween_callback(func() -> void: shield_outline.visible = false)
-
-
-func _on_shield_changed(cur: float, _max_s: float) -> void:
-	if shield_outline != null:
-		if cur > 0.0:
-			shield_outline.visible = true
-			shield_outline.modulate.a = clampf(cur / 130.0, 0.35, 1.0)
-		else:
-			shield_outline.visible = false
 
 
 func _on_damage_taken(amount: float, is_critical: bool, damage_type: String) -> void:
 	_play_hit_flash()
 	if damage_type != "FIRE_DOT" and amount > 0.0:
 		_spawn_damage_number(amount, is_critical, damage_type)
+
+
+## Cuánto escudo se le sacó: número celeste (no usa el "!" de crítico para no pisar el color).
+func _on_shield_absorbed(amount: float, _is_critical: bool, _damage_type: String) -> void:
+	_spawn_damage_number(amount, false, "SHIELD")
 
 
 func _play_hit_flash() -> void:
@@ -153,7 +151,7 @@ func _spawn_damage_number(amount: float, is_critical: bool, damage_type: String)
 	var dmg_instance: Node = damage_number_scene.instantiate()
 	if dmg_instance is DamageNumber:
 		var dmg_num: DamageNumber = dmg_instance as DamageNumber
-		dmg_num.global_position = global_position + Vector2(0, -56.0)
+		dmg_num.global_position = global_position + Vector2(0, -56.0 * MobScaleScript.MOB_SCALE)
 		var container: Node = tree.current_scene
 		if container == null:
 			container = owner if owner != null else get_parent()

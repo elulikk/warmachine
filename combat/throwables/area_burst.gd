@@ -29,12 +29,17 @@ extends Area2D
 @export_group("Visual")
 @export var burst_color: Color = Color(1.0, 0.6, 0.2, 1.0)
 @export var visual_duration: float = 0.4
+## Sprite de la explosión (vacío = dibujo procedural). Se carga en runtime y cae al dibujo si falta.
+@export_file("*.png") var sprite_path: String = ""
 
 var source_node: Node2D = null
 var _visual_progress: float = 0.0
+var _sprite: Texture2D = null
 
 
 func _ready() -> void:
+	if sprite_path != "" and ResourceLoader.exists(sprite_path):
+		_sprite = load(sprite_path) as Texture2D
 	collision_layer = 8 if ignites_gas else 0
 	collision_mask = 2
 	monitoring = true
@@ -76,6 +81,11 @@ func _apply_effects() -> void:
 		if not is_instance_valid(target):
 			continue
 		ThrowableUtil.deliver_hit(target, _build_payload(target))
+	# Obstáculos rompibles dentro del radio (la explosión llega hasta su borde)
+	for prop: Node in get_tree().get_nodes_in_group(&"destructible"):
+		var body: Node2D = prop as Node2D
+		if body != null and body.global_position.distance_to(global_position) <= radius + 50.0:
+			body.take_hit(_build_payload(body))
 
 
 func _build_payload(target: Node2D) -> HitPayload:
@@ -116,6 +126,13 @@ func _draw() -> void:
 	var eased: float = 1.0 - pow(1.0 - _visual_progress, 3.0)
 	var current_radius: float = radius * (0.25 + 0.75 * eased)
 	var fade: float = 1.0 - _visual_progress
+	
+	if _sprite != null:
+		# Sprite que se expande y se desvanece; la rotación fija por instancia evita repetirse.
+		var half: float = current_radius * 1.05
+		var tint: Color = Color(1.0, 1.0, 1.0, minf(1.0, fade * 1.6))
+		draw_texture_rect(_sprite, Rect2(Vector2(-half, -half), Vector2(half, half) * 2.0), false, tint)
+		return
 	
 	var fill: Color = burst_color
 	fill.a = 0.35 * fade

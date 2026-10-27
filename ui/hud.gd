@@ -2,21 +2,25 @@ class_name HUD
 extends CanvasLayer
 ## Interfaz de combate y estado (HUD) unificada para WARMACHINE.
 ## Conecta en tiempo real con las señales de HealthComponent, StatsManager y WeaponManager:
-## - Superior izquierda: barra de salud y valor numérico legible (HP).
-## - Superior derecha: contador de monedas de StatsManager.coins.
+## - Superior izquierda: nivel, nombre y EXP (la vida es el rectángulo rojo sobre la hotbar).
 ## - Inferior derecha: arma equipada y visualización gráfica de los 3 sockets de runas.
+## - Abajo a la derecha: contador de munición grande del arma en mano (ui/ammo_counter.gd) y, encima, el estado
+##   del equipo: arrojadizo y combustible del jetpack (ui/equipment_status.gd).
 ## - Centro inferior: barra de acceso rápido de 9 casilleros (ui/hotbar.gd), que reemplaza los botones de arma.
 
 const SteamSkin = preload("res://ui/components/steam_skin.gd")
+const WindowRegistryScript = preload("res://ui/framework/window_registry.gd")
 const ItemIconsScript = preload("res://ui/components/item_icons.gd")
 const HotbarScript = preload("res://ui/hotbar.gd")
+const AmmoCounterScript = preload("res://ui/ammo_counter.gd")
+const EquipmentStatusScript = preload("res://ui/equipment_status.gd")
+const BossHealthBarScript = preload("res://ui/boss_health_bar.gd")
 
 @onready var health_bar: ProgressBar = %HealthBar
 @onready var health_label: Label = %HealthLabel
 @onready var level_label: Label = %LevelLabel
 @onready var character_name_label: Label = get_node_or_null("%CharacterNameLabel") as Label
 @onready var exp_bar: ProgressBar = %ExpBar
-@onready var coins_label: Label = %CoinsLabel
 @onready var stats_label: Label = get_node_or_null("%StatsLabel") as Label
 
 @onready var weapon_name_label: Label = %WeaponNameLabel
@@ -40,9 +44,11 @@ var _current_bound_weapon: WeaponData = null
 var _is_reloading: bool = false
 var _level_banner: Label = null
 var _level_banner_tween: Tween = null
+var _sector_title: Label = null
 
 
 func _ready() -> void:
+	add_to_group(&"hud")  # las cinemáticas lo ocultan (core/cinematics/cinematic_player.gd)
 	# Capa 2: la 1 es el posprocesado del mundo (core/post_fx.gd), que no debe teñir el HUD
 	layer = maxi(layer, 2)
 	_apply_steam_skin()
@@ -54,6 +60,13 @@ func _ready() -> void:
 	if bottom_right != null:
 		bottom_right.visible = false
 	add_child(HotbarScript.new())
+	# Barra de vida del jefe, arriba al centro (aparece sola cuando un jefe pelea)
+	add_child(BossHealthBarScript.new())
+	add_child(AmmoCounterScript.new())
+	add_child(EquipmentStatusScript.new())
+	# Ventanas modulares (Códice, etc.): ver ui/framework/window_registry.gd
+	WindowRegistryScript.install(self)
+	_build_sector_title()
 	# Enlazar diferido con el jugador de la escena activa
 	_find_and_bind_player.call_deferred()
 	_update_character_name()
@@ -67,34 +80,21 @@ func _ready() -> void:
 		weapon_slot_3_btn.pressed.connect(func() -> void: _on_slot_button_pressed(2))
 
 
-## Aspecto steampunk: placas, tubo de salud, cartel de monedas y sockets con ícono de runa.
+## Aspecto steampunk: placas, tubo de salud, barra de EXP y sockets con ícono de runa.
 func _apply_steam_skin() -> void:
 	for path: String in ["TopLeftContainer/Panel", "BottomRightContainer/Panel"]:
 		var plate: PanelContainer = get_node_or_null(path) as PanelContainer
 		if plate != null:
 			plate.add_theme_stylebox_override("panel", SteamSkin.hud_plate_style())
-	var coins_panel: PanelContainer = get_node_or_null("TopRightContainer/Panel") as PanelContainer
-	if coins_panel != null:
-		coins_panel.add_theme_stylebox_override("panel", SteamSkin.coin_style())
-		coins_panel.custom_minimum_size = Vector2(190, 56)
-		var top_right: Control = get_node_or_null("TopRightContainer") as Control
-		if top_right != null:
-			top_right.offset_left = -214.0
-			top_right.offset_top = 10.0
-			top_right.offset_right = -16.0
-			top_right.offset_bottom = 70.0
-	if coins_label != null:
-		coins_label.add_theme_font_override("font", SteamSkin.title_font())
-		coins_label.add_theme_color_override("font_color", SteamSkin.COLOR_TITLE)
-		coins_label.add_theme_color_override("font_outline_color", SteamSkin.COLOR_OUTLINE)
-		coins_label.add_theme_constant_override("outline_size", 3)
-		coins_label.add_theme_font_size_override("font_size", 14)
 
+	# La vida ya no va en la esquina: es el rectángulo rojo sobre la hotbar (ui/hotbar.gd). La barra de aquí queda
+	# oculta pero sigue actualizándose (la leen los tests).
 	if health_bar != null:
-		health_bar.custom_minimum_size = Vector2(236, 28)
-		health_bar.add_theme_stylebox_override("background", SteamSkin.bar_style("bg"))
-		health_bar.add_theme_stylebox_override("fill", SteamSkin.bar_style("fill", Color(0.35, 0.95, 0.42, 1.0)))
+		health_bar.visible = false
+	if health_label != null:
+		health_label.visible = false
 	if exp_bar != null:
+		exp_bar.visible = false # la experiencia va en la barra bajo la hotbar (ui/hotbar.gd)
 		exp_bar.custom_minimum_size = Vector2(236, 8)
 		var exp_bg: StyleBoxFlat = StyleBoxFlat.new()
 		exp_bg.bg_color = Color(0.1, 0.07, 0.06, 1.0)
@@ -123,6 +123,33 @@ func _apply_steam_skin() -> void:
 		panel.add_child(icon)
 
 	SteamSkin.skin_tree(self)
+
+
+## Título del sector arriba al centro.
+func set_sector(title: String) -> void:
+	if _sector_title != null:
+		_sector_title.text = title
+		_sector_title.visible = not title.is_empty()
+
+
+func _build_sector_title() -> void:
+	_sector_title = Label.new()
+	_sector_title.name = "SectorTitle"
+	_sector_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sector_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_sector_title.anchor_left = 0.5
+	_sector_title.anchor_right = 0.5
+	_sector_title.offset_left = -200.0
+	_sector_title.offset_right = 200.0
+	_sector_title.offset_top = 14.0
+	_sector_title.offset_bottom = 42.0
+	_sector_title.add_theme_font_override("font", SteamSkin.title_font())
+	_sector_title.add_theme_font_size_override("font_size", 18)
+	_sector_title.add_theme_color_override("font_color", SteamSkin.COLOR_TITLE)
+	_sector_title.add_theme_color_override("font_outline_color", SteamSkin.COLOR_OUTLINE)
+	_sector_title.add_theme_constant_override("outline_size", 4)
+	_sector_title.visible = false
+	add_child(_sector_title)
 
 
 func _on_slot_button_pressed(index: int) -> void:
@@ -165,11 +192,9 @@ func setup_with_player(player: Player) -> void:
 			stats.health_changed.connect(_on_health_changed)
 		_on_health_changed(stats.current_health, stats.get_max_health())
 	
-	# 2. Conexión de Monedas y Progresión (StatsManager)
+	# 2. Conexión de Progresión (StatsManager). Las monedas se ven en el inventario (ui/inventory_window.gd)
 	if player.stats_manager != null:
 		var stats: StatsManager = player.stats_manager
-		if not stats.coins_changed.is_connected(_on_coins_changed):
-			stats.coins_changed.connect(_on_coins_changed)
 		if not stats.exp_changed.is_connected(_on_exp_changed):
 			stats.exp_changed.connect(_on_exp_changed)
 		if not stats.leveled_up.is_connected(_on_leveled_up):
@@ -178,9 +203,8 @@ func setup_with_player(player: Player) -> void:
 			stats.level_gained.connect(_show_level_up_banner)
 		if not stats.stats_recalculated.is_connected(_refresh_stats_label):
 			stats.stats_recalculated.connect(_refresh_stats_label)
-		
+
 		# Sincronización inicial
-		_on_coins_changed(stats.coins)
 		_on_exp_changed(stats.current_exp, stats.exp_to_next_level)
 		_on_leveled_up(stats.level)
 	
@@ -236,11 +260,6 @@ func _on_shield_changed(_cur_shield: float, _max_shld: float) -> void:
 		_on_health_changed(player_node.health_component.current_health, player_node.health_component.max_health)
 
 
-func _on_coins_changed(new_coins: int) -> void:
-	if coins_label != null:
-		coins_label.text = "🪙 Monedas: %d" % new_coins
-
-
 func _on_exp_changed(current: float, max_exp: float) -> void:
 	if exp_bar != null:
 		exp_bar.max_value = max_exp
@@ -253,7 +272,7 @@ func _on_leveled_up(new_level: int) -> void:
 	_refresh_stats_label()
 
 
-## Línea de estado bajo la barra de EXP: armadura (con su mitigación) y daño por disparo del arma activa.
+## Línea de estado bajo la barra de EXP: armadura (puntos de daño que resta por golpe) y daño por disparo del arma activa.
 func _refresh_stats_label() -> void:
 	if stats_label == null:
 		return
@@ -261,7 +280,7 @@ func _refresh_stats_label() -> void:
 	if player == null or player.stats_manager == null:
 		return
 	var stats: StatsManager = player.stats_manager
-	var line: String = "ARM %d (-%d%%)" % [roundi(stats.get_armor()), roundi(stats.get_armor_mitigation_percent())]
+	var line: String = "ARM %d (-%d)" % [roundi(stats.get_armor()), roundi(stats.get_armor())]
 	if _current_bound_weapon != null:
 		var shot_damage: float = _current_bound_weapon.get_effective_damage() * stats.get_damage_multiplier()
 		line += "  |  DMG %d" % roundi(shot_damage)
@@ -310,7 +329,11 @@ func _on_ammo_changed(current: int, max_mag: int) -> void:
 			ammo_label.text = "RECARGANDO..."
 			ammo_label.modulate = Color(1.0, 0.4, 0.3, 1.0)
 		else:
-			ammo_label.text = "%d / %d" % [current, max_mag]
+			var reserve_text: String = ""
+			var player_node: Player = get_tree().get_first_node_in_group(&"player") as Player
+			if player_node != null and player_node.weapon_manager != null:
+				reserve_text = "  +%d" % player_node.weapon_manager.get_reserve(_current_bound_weapon)
+			ammo_label.text = "%d / %d%s" % [current, max_mag, reserve_text]
 			ammo_label.modulate = Color(1.0, 0.85, 0.3, 1.0)
 
 

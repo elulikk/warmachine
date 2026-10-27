@@ -6,7 +6,9 @@
 [ext_resource type="Resource" path="res://data/weapons/scrap_carbine.tres" id="32_w"]
 [ext_resource type="Resource" path="res://data/weapons/pistol_9mm.tres" id="33_w"]
 [ext_resource type="Resource" path="res://data/weapons/colt_44.tres" id="34_w"]
-[ext_resource type="Resource" path="res://data/weapons/mp5.tres" id="35_w"]
+[ext_resource type="Resource" path="res://data/weapons/wooden_shield.tres" id="40_shield"]
+[ext_resource type="Resource" path="res://data/weapons/combat_knife.tres" id="e1_w"]
+[ext_resource type="Resource" uid="uid://bflcpdhmxp2gu" path="res://data/weapons/rust_revolver.tres" id="e2_w"]
 
 [sub_resource type="Resource" id="Resource_coin"]
 script = ExtResource("2_entry")
@@ -21,5 +23,8 @@ drop_chance = 0.5
 [resource]
 script = ExtResource("1_table")
 entries = Array[ExtResource("2_entry")]([SubResource("Resource_coin"), SubResource("Resource_ammo")])
+shield_chance = 0.05
+shield_item = ExtResource("40_shield")
 gear_chance = 0.03
-gear_pool = Array[Resource]([ExtResource("31_w"), ExtResource("32_w"), ExtResource("33_w"), ExtResource("34_w"), ExtResource("35_w")])
+gear_pool = Array[Resource]([ExtResource("31_w"), ExtResource("32_w"), ExtResource("33_w"), ExtResource("34_w")])
+early_gear_pool = Array[Resource]([ExtResource("e1_w"), ExtResource("e2_w"), ExtResource("33_w")])
